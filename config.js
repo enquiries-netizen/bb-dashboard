@@ -44,4 +44,4 @@ const CONFIG = {
 
 }; git add .
 git commit -m "Fix deploy author"
-git push origin master:main --force
+git push origin master:main --force 
