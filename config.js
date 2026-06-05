@@ -42,4 +42,6 @@ const CONFIG = {
     CASHFLOW_FORECAST:   'CashFlow_Forecast',
   }
 
-};
+}; git add .
+git commit -m "Fix deploy author"
+git push origin master:main --force
