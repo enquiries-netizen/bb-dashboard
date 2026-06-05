@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BB Building Services — Unified Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ═══════════════════════════════════════════════════════
+         HEADER
+    ════════════════════════════════════════════════════════ -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="header-logo-wrap">
+          <img src="assets/bb-logo.png" alt="BB Building Services" class="header-logo">
+        </div>
+        <div class="header-title-group">
+          <span class="header-company-name">BB Building Services</span>
+          <span class="header-tagline">From a Family You Can Trust</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="filter-group">
+          <span class="filter-label">Brand</span>
+          <div class="toggle-group" id="brand-filter">
+            <button class="toggle-btn active" data-value="ALL">ALL</button>
+            <button class="toggle-btn" data-value="BBBS">BBBS</button>
+            <button class="toggle-btn" data-value="RMH">RMH</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Period</span>
+          <select class="filter-select" id="date-filter">
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="this_quarter">This Quarter</option>
+            <option value="this_year">This Year</option>
+          </select>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" title="Refresh data">Refresh</button>
+      </div>
+    </header>
+
+    <div class="layout">
+
+      <!-- ═══════════════════════════════════════════════════
+           SIDEBAR NAVIGATION
+      ════════════════════════════════════════════════════ -->
+      <nav class="sidebar">
+        <div class="sidebar-section-label">Dashboard</div>
+        <ul class="nav-list">
+          <li class="nav-item active" data-page="p1">P1 — Executive Snapshot</li>
+          <li class="nav-item" data-page="p2">P2 — Sales &amp; Pipeline</li>
+          <li class="nav-item" data-page="p3">P3 — Quoting &amp; Estimating</li>
+          <li class="nav-item" data-page="p4">P4 — Job Performance</li>
+          <li class="nav-item" data-page="p5">P5 — Division Profitability</li>
+          <li class="nav-item" data-page="p6">P6 — Capacity &amp; Labour</li>
+          <li class="nav-item" data-page="p7">P7 — Client Satisfaction</li>
+          <li class="nav-item" data-page="p8">P8 — Weekly Overview</li>
+          <li class="nav-item" data-page="p9">P9 — Cash Flow</li>
+          <li class="nav-item" data-page="p10">P10 — Marketing</li>
+          <li class="nav-item" data-page="p11">P11 — Quality &amp; Variations</li>
+        </ul>
+        <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
+      </nav>
+
+      <!-- ═══════════════════════════════════════════════════
+           MAIN CONTENT
+      ════════════════════════════════════════════════════ -->
+      <main class="main">
+
+        <div id="loading-overlay" class="loading-overlay">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Loading dashboard data...</p>
+        </div>
+
+        <!-- ─── P1: Executive Snapshot ─────────────────────── -->
+        <section id="page-p1" class="page active">
+          <div class="page-header">
+            <span class="page-badge">P1</span>
+            <h1 class="page-title">Executive Snapshot</h1>
+          </div>
+
+          <div class="kpi-grid" id="p1-kpis">
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Leads</div>
+              <div class="kpi-value" id="kpi-leads">—</div>
+              <div class="kpi-sub" id="kpi-leads-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Revenue MTD</div>
+              <div class="kpi-value" id="kpi-revenue">—</div>
+              <div class="kpi-sub" id="kpi-revenue-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Quotes Sent</div>
+              <div class="kpi-value" id="kpi-quotes">—</div>
+              <div class="kpi-sub" id="kpi-quotes-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Jobs Won</div>
+              <div class="kpi-value" id="kpi-jobs-won">—</div>
+              <div class="kpi-sub" id="kpi-jobs-won-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Gross Margin %</div>
+              <div class="kpi-value" id="kpi-margin">—%</div>
+              <div class="kpi-sub" id="kpi-margin-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Active Jobs</div>
+              <div class="kpi-value" id="kpi-active-jobs">—</div>
+              <div class="kpi-sub" id="kpi-active-jobs-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="alerts-banner" id="p1-alerts"></div>
+
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Revenue vs Target</div>
+              <div class="chart-placeholder">
+                <span>Chart loads when data is available</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── P2: Sales & Pipeline ───────────────────────── -->
+        <section id="page-p2" class="page">
+          <div class="page-header">
+            <span class="page-badge">P2</span>
+            <h1 class="page-title">Sales &amp; Pipeline</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Sales &amp; Pipeline</p>
+            <p class="placeholder-text">Reads: GHL_Leads · GHL_Pipeline · Marketing_Paid · Marketing_Sources</p>
+            <p class="placeholder-status">Funnel, lead source bars, conversion table — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P3: Quoting & Estimating ──────────────────── -->
+        <section id="page-p3" class="page">
+          <div class="page-header">
+            <span class="page-badge">P3</span>
+            <h1 class="page-title">Quoting &amp; Estimating</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Quoting &amp; Estimating</p>
+            <p class="placeholder-text">Reads: GHL_Quotes · Xero_Projects · Estimating_Accuracy</p>
+            <p class="placeholder-status">Win rate, avg quote value, margin scatter — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P4: Job Performance ────────────────────────── -->
+        <section id="page-p4" class="page">
+          <div class="page-header">
+            <span class="page-badge">P4</span>
+            <h1 class="page-title">Job Performance</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Job Performance</p>
+            <p class="placeholder-text">Reads: Xero_Projects · Buildpass_Diaries · Variations_Log</p>
+            <p class="placeholder-status">Budget vs actual table, margin by division, job progress — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P5: Division Profitability ────────────────── -->
+        <section id="page-p5" class="page">
+          <div class="page-header">
+            <span class="page-badge">P5</span>
+            <h1 class="page-title">Division Profitability</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Division Profitability</p>
+            <p class="placeholder-text">Reads: Xero_Financials · Xero_Invoices · Xero_Overheads</p>
+            <p class="placeholder-status">Revenue by division, P&amp;L table, margin trend — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P6: Capacity & Labour ──────────────────────── -->
+        <section id="page-p6" class="page">
+          <div class="page-header">
+            <span class="page-badge">P6</span>
+            <h1 class="page-title">Capacity &amp; Labour</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Capacity &amp; Labour</p>
+            <p class="placeholder-text">Reads: Buildpass_Labour · Capacity</p>
+            <p class="placeholder-status">Utilisation gauge, hours by team member, hiring signal — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P7: Client Satisfaction ───────────────────── -->
+        <section id="page-p7" class="page">
+          <div class="page-header">
+            <span class="page-badge">P7</span>
+            <h1 class="page-title">Client Satisfaction</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Client Satisfaction</p>
+            <p class="placeholder-text">Reads: Client_Reviews</p>
+            <p class="placeholder-status">Avg rating, reviews by month, reply status table — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P8: Weekly Overview ────────────────────────── -->
+        <section id="page-p8" class="page">
+          <div class="page-header">
+            <span class="page-badge">P8</span>
+            <h1 class="page-title">Weekly Overview</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Weekly Overview</p>
+            <p class="placeholder-text">Reads: Weekly_Summary · Targets</p>
+            <p class="placeholder-status">Weekly table, lead trend line, revenue vs target bar — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P9: Cash Flow ─────────────────────────────── -->
+        <section id="page-p9" class="page">
+          <div class="page-header">
+            <span class="page-badge">P9</span>
+            <h1 class="page-title">Cash Flow &amp; Forecast</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Cash Flow &amp; Forecast</p>
+            <p class="placeholder-text">Reads: CashFlow_Forecast · Xero_Invoices · Xero_Overheads</p>
+            <p class="placeholder-status">13-week forecast, AR ageing, overheads bar — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P10: Marketing Performance ───────────────── -->
+        <section id="page-p10" class="page">
+          <div class="page-header">
+            <span class="page-badge">P10</span>
+            <h1 class="page-title">Marketing Performance</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Marketing Performance</p>
+            <p class="placeholder-text">Reads: Marketing_Sources · Marketing_Paid · GHL_Leads</p>
+            <p class="placeholder-status">Lead share pie, CPL by source, ROAS scorecard — builds in Section 3</p>
+          </div>
+        </section>
+
+        <!-- ─── P11: Quality & Variations ─────────────────── -->
+        <section id="page-p11" class="page">
+          <div class="page-header">
+            <span class="page-badge">P11</span>
+            <h1 class="page-title">Quality &amp; Variations</h1>
+          </div>
+          <div class="placeholder-page card">
+            <p class="placeholder-title">Quality &amp; Variations</p>
+            <p class="placeholder-text">Reads: Defects_Rework · Variations_Log · Buildpass_Diaries</p>
+            <p class="placeholder-status">Defects by division, rework hours, variations $ — builds in Section 3</p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Scripts: load in order — config first, then sheets, then app logic -->
+  <script src="config.js"></script>
+  <script src="sheets.js"></script>
+  <script>
+
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    const navItems = document.querySelectorAll('.nav-item');
+    const pages    = document.querySelectorAll('.page');
+
+    function showPage(pageId) {
+      pages.forEach(p => p.classList.remove('active'));
+      navItems.forEach(n => n.classList.remove('active'));
+      const page = document.getElementById('page-' + pageId);
+      const nav  = document.querySelector('[data-page="' + pageId + '"]');
+      if (page) page.classList.add('active');
+      if (nav)  nav.classList.add('active');
+    }
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        showPage(item.dataset.page);
+        init3DTilt();
+      });
+    });
+
+
+    // ═══════════════════════════════════════════════════════════
+    // BRAND FILTER
+    // ═══════════════════════════════════════════════════════════
+    const brandBtns = document.querySelectorAll('#brand-filter .toggle-btn');
+    let activeBrand = 'ALL';
+
+    brandBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        brandBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeBrand = btn.dataset.value;
+        loadCurrentPage();
+      });
+    });
+
+
+    // ═══════════════════════════════════════════════════════════
+    // 3D CARD TILT EFFECT
+    // Smooth mouse-over tilt — cards glide as you move over them.
+    // ═══════════════════════════════════════════════════════════
+    function init3DTilt() {
+      document.querySelectorAll('.card').forEach(card => {
+        // Remove old listeners by cloning
+        const fresh = card.cloneNode(true);
+        card.parentNode.replaceChild(fresh, card);
+
+        fresh.addEventListener('mousemove', e => {
+          const rect = fresh.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width  - 0.5;
+          const y = (e.clientY - rect.top)  / rect.height - 0.5;
+          fresh.style.transform = `perspective(900px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(8px)`;
+        });
+
+        fresh.addEventListener('mouseleave', () => {
+          fresh.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) translateZ(0px)';
+        });
+      });
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA LOADING
+    // ═══════════════════════════════════════════════════════════
+    function loadCurrentPage() {
+      const active = document.querySelector('.nav-item.active');
+      if (!active) return;
+      const page = active.dataset.page;
+      if (page === 'p1') loadP1();
+    }
+
+    async function loadP1() {
+      showLoading(true);
+      removeError('p1');
+      try {
+        const [summaryData, targetsData] = await Promise.all([
+          fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
+          fetchSheet(CONFIG.TABS.TARGETS)
+        ]);
+        renderP1(summaryData, targetsData);
+      } catch (err) {
+        console.error('P1 load error:', err);
+        showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP1(summary, targets) {
+      // Filter by active brand
+      const filtered = filterByBrand(summary, activeBrand);
+
+      // KPI values — populated in Section 3 when data is fully live
+      // For now shows placeholder dashes cleanly
+      const setKPI = (id, subId, val, sub) => {
+        const el = document.getElementById(id);
+        const subEl = document.getElementById(subId);
+        if (el) el.textContent = val !== null && val !== '' ? val : '—';
+        if (subEl) subEl.textContent = sub || '';
+      };
+
+      if (filtered.length === 0) {
+        setKPI('kpi-leads',       'kpi-leads-sub',      '—', 'No data yet');
+        setKPI('kpi-revenue',     'kpi-revenue-sub',    '—', 'No data yet');
+        setKPI('kpi-quotes',      'kpi-quotes-sub',     '—', 'No data yet');
+        setKPI('kpi-jobs-won',    'kpi-jobs-won-sub',   '—', 'No data yet');
+        setKPI('kpi-margin',      'kpi-margin-sub',     '—%', 'No data yet');
+        setKPI('kpi-active-jobs', 'kpi-active-jobs-sub','—', 'No data yet');
+        return;
+      }
+
+      // Section 3 will populate these with real calculated values
+      setKPI('kpi-leads',       'kpi-leads-sub',      filtered.length, 'rows loaded');
+      setKPI('kpi-revenue',     'kpi-revenue-sub',    '—', 'Xero data pending');
+      setKPI('kpi-quotes',      'kpi-quotes-sub',     '—', 'GHL_Quotes pending');
+      setKPI('kpi-jobs-won',    'kpi-jobs-won-sub',   '—', 'GHL_Pipeline pending');
+      setKPI('kpi-margin',      'kpi-margin-sub',     '—%', 'Xero data pending');
+      setKPI('kpi-active-jobs', 'kpi-active-jobs-sub','—', 'Xero_Projects pending');
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // UI HELPERS
+    // ═══════════════════════════════════════════════════════════
+    function showLoading(show) {
+      document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+    }
+
+    function showError(pageId, msg) {
+      const page = document.getElementById('page-' + pageId);
+      if (!page) return;
+      let banner = page.querySelector('.error-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.className = 'error-banner';
+        page.prepend(banner);
+      }
+      banner.textContent = msg;
+    }
+
+    function removeError(pageId) {
+      const banner = document.querySelector('#page-' + pageId + ' .error-banner');
+      if (banner) banner.remove();
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+      clearSheetsCache();
+      loadCurrentPage();
+    });
+
+
+    // ═══════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════
+    init3DTilt();
+    loadP1();
+
+  </script>
+</body>
+</html>
