@@ -7,14 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="app">
 
-    <!-- ═══════════════════════════════════════════════════════
-         HEADER
-    ════════════════════════════════════════════════════════ -->
     <header class="header">
       <div class="header-brand">
         <div class="header-logo-wrap">
@@ -25,7 +23,6 @@
           <span class="header-tagline">From a Family You Can Trust</span>
         </div>
       </div>
-
       <div class="header-controls">
         <div class="filter-group">
           <span class="filter-label">Brand</span>
@@ -50,9 +47,6 @@
 
     <div class="layout">
 
-      <!-- ═══════════════════════════════════════════════════
-           SIDEBAR NAVIGATION
-      ════════════════════════════════════════════════════ -->
       <nav class="sidebar">
         <div class="sidebar-section-label">Dashboard</div>
         <ul class="nav-list">
@@ -71,9 +65,6 @@
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
 
-      <!-- ═══════════════════════════════════════════════════
-           MAIN CONTENT
-      ════════════════════════════════════════════════════ -->
       <main class="main">
 
         <div id="loading-overlay" class="loading-overlay">
@@ -81,59 +72,57 @@
           <p class="loading-text">Loading dashboard data...</p>
         </div>
 
-        <!-- ─── P1: Executive Snapshot ─────────────────────── -->
+        <!-- P1: Executive Snapshot -->
         <section id="page-p1" class="page active">
           <div class="page-header">
             <span class="page-badge">P1</span>
             <h1 class="page-title">Executive Snapshot</h1>
           </div>
-
-          <div class="kpi-grid" id="p1-kpis">
+          <div class="kpi-grid">
             <div class="kpi-card card">
-              <div class="kpi-label">Total Leads</div>
-              <div class="kpi-value" id="kpi-leads">—</div>
-              <div class="kpi-sub" id="kpi-leads-sub">Loading...</div>
+              <div class="kpi-label">Revenue Target (MTD)</div>
+              <div class="kpi-value" id="kpi-revenue-target">—</div>
+              <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
-              <div class="kpi-label">Revenue MTD</div>
-              <div class="kpi-value" id="kpi-revenue">—</div>
-              <div class="kpi-sub" id="kpi-revenue-sub">Loading...</div>
+              <div class="kpi-label">Gross Margin Target</div>
+              <div class="kpi-value" id="kpi-margin-target">—</div>
+              <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
-              <div class="kpi-label">Quotes Sent</div>
-              <div class="kpi-value" id="kpi-quotes">—</div>
-              <div class="kpi-sub" id="kpi-quotes-sub">Loading...</div>
+              <div class="kpi-label">Lead Target</div>
+              <div class="kpi-value" id="kpi-lead-target">—</div>
+              <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
-              <div class="kpi-label">Jobs Won</div>
-              <div class="kpi-value" id="kpi-jobs-won">—</div>
-              <div class="kpi-sub" id="kpi-jobs-won-sub">Loading...</div>
+              <div class="kpi-label">Jobs Won Target</div>
+              <div class="kpi-value" id="kpi-jobs-target">—</div>
+              <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
-              <div class="kpi-label">Gross Margin %</div>
-              <div class="kpi-value" id="kpi-margin">—%</div>
-              <div class="kpi-sub" id="kpi-margin-sub">Loading...</div>
+              <div class="kpi-label">Quotes Target</div>
+              <div class="kpi-value" id="kpi-quote-target">—</div>
+              <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
-              <div class="kpi-label">Active Jobs</div>
-              <div class="kpi-value" id="kpi-active-jobs">—</div>
-              <div class="kpi-sub" id="kpi-active-jobs-sub">Loading...</div>
+              <div class="kpi-label">Active Jobs Target</div>
+              <div class="kpi-value" id="kpi-activejobs-target">—</div>
+              <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
             </div>
           </div>
-
-          <div class="alerts-banner" id="p1-alerts"></div>
-
           <div class="chart-row">
             <div class="chart-card card">
-              <div class="chart-title">Revenue vs Target</div>
-              <div class="chart-placeholder">
-                <span>Chart loads when data is available</span>
-              </div>
+              <div class="chart-title">Monthly Revenue Targets</div>
+              <canvas id="chart-p1-revenue" height="90"></canvas>
             </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">Annual Targets by Month</div>
+            <div id="p1-targets-table">Loading targets...</div>
           </div>
         </section>
 
-        <!-- ─── P2: Sales & Pipeline ───────────────────────── -->
+        <!-- P2: Sales & Pipeline -->
         <section id="page-p2" class="page">
           <div class="page-header">
             <span class="page-badge">P2</span>
@@ -142,11 +131,11 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Sales &amp; Pipeline</p>
             <p class="placeholder-text">Reads: GHL_Leads · GHL_Pipeline · Marketing_Paid · Marketing_Sources</p>
-            <p class="placeholder-status">Funnel, lead source bars, conversion table — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting GHL scenarios in Make.com — builds in Section 5</p>
           </div>
         </section>
 
-        <!-- ─── P3: Quoting & Estimating ──────────────────── -->
+        <!-- P3: Quoting & Estimating -->
         <section id="page-p3" class="page">
           <div class="page-header">
             <span class="page-badge">P3</span>
@@ -155,11 +144,11 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Quoting &amp; Estimating</p>
             <p class="placeholder-text">Reads: GHL_Quotes · Xero_Projects · Estimating_Accuracy</p>
-            <p class="placeholder-status">Win rate, avg quote value, margin scatter — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben — builds in Section 6</p>
           </div>
         </section>
 
-        <!-- ─── P4: Job Performance ────────────────────────── -->
+        <!-- P4: Job Performance -->
         <section id="page-p4" class="page">
           <div class="page-header">
             <span class="page-badge">P4</span>
@@ -168,11 +157,11 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Job Performance</p>
             <p class="placeholder-text">Reads: Xero_Projects · Buildpass_Diaries · Variations_Log</p>
-            <p class="placeholder-status">Budget vs actual table, margin by division, job progress — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval + Buildpass — builds in Section 6/7</p>
           </div>
         </section>
 
-        <!-- ─── P5: Division Profitability ────────────────── -->
+        <!-- P5: Division Profitability -->
         <section id="page-p5" class="page">
           <div class="page-header">
             <span class="page-badge">P5</span>
@@ -181,11 +170,11 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Division Profitability</p>
             <p class="placeholder-text">Reads: Xero_Financials · Xero_Invoices · Xero_Overheads</p>
-            <p class="placeholder-status">Revenue by division, P&amp;L table, margin trend — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben — builds in Section 4</p>
           </div>
         </section>
 
-        <!-- ─── P6: Capacity & Labour ──────────────────────── -->
+        <!-- P6: Capacity & Labour -->
         <section id="page-p6" class="page">
           <div class="page-header">
             <span class="page-badge">P6</span>
@@ -194,37 +183,95 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Capacity &amp; Labour</p>
             <p class="placeholder-text">Reads: Buildpass_Labour · Capacity</p>
-            <p class="placeholder-status">Utilisation gauge, hours by team member, hiring signal — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting Buildpass API workaround — builds in Section 7</p>
           </div>
         </section>
 
-        <!-- ─── P7: Client Satisfaction ───────────────────── -->
+        <!-- P7: Client Satisfaction -->
         <section id="page-p7" class="page">
           <div class="page-header">
             <span class="page-badge">P7</span>
             <h1 class="page-title">Client Satisfaction</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Client Satisfaction</p>
-            <p class="placeholder-text">Reads: Client_Reviews</p>
-            <p class="placeholder-status">Avg rating, reviews by month, reply status table — builds in Section 3</p>
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Average Rating</div>
+              <div class="kpi-value" id="kpi-avg-rating">—</div>
+              <div class="kpi-sub" id="kpi-avg-rating-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Reviews</div>
+              <div class="kpi-value" id="kpi-total-reviews">—</div>
+              <div class="kpi-sub" id="kpi-total-reviews-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">5-Star Reviews</div>
+              <div class="kpi-value" id="kpi-five-star">—</div>
+              <div class="kpi-sub" id="kpi-five-star-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Response Rate</div>
+              <div class="kpi-value" id="kpi-response-rate">—</div>
+              <div class="kpi-sub" id="kpi-response-rate-sub">Loading...</div>
+            </div>
+          </div>
+          <div class="chart-row two-col">
+            <div class="chart-card card">
+              <div class="chart-title">Rating Distribution</div>
+              <canvas id="chart-p7-distribution" height="180"></canvas>
+            </div>
+            <div class="chart-card card">
+              <div class="chart-title">Reviews by Month</div>
+              <canvas id="chart-p7-monthly" height="180"></canvas>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">Recent Reviews</div>
+            <div id="p7-reviews-table">Loading reviews...</div>
           </div>
         </section>
 
-        <!-- ─── P8: Weekly Overview ────────────────────────── -->
+        <!-- P8: Weekly Overview -->
         <section id="page-p8" class="page">
           <div class="page-header">
             <span class="page-badge">P8</span>
             <h1 class="page-title">Weekly Overview</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Weekly Overview</p>
-            <p class="placeholder-text">Reads: Weekly_Summary · Targets</p>
-            <p class="placeholder-status">Weekly table, lead trend line, revenue vs target bar — builds in Section 3</p>
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Leads This Week</div>
+              <div class="kpi-value" id="kpi-week-leads">—</div>
+              <div class="kpi-sub" id="kpi-week-leads-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Revenue This Week</div>
+              <div class="kpi-value" id="kpi-week-revenue">—</div>
+              <div class="kpi-sub" id="kpi-week-revenue-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Quotes Sent</div>
+              <div class="kpi-value" id="kpi-week-quotes">—</div>
+              <div class="kpi-sub" id="kpi-week-quotes-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Jobs Won</div>
+              <div class="kpi-value" id="kpi-week-jobs">—</div>
+              <div class="kpi-sub" id="kpi-week-jobs-sub">Loading...</div>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Weekly Leads &amp; Revenue Trend (Last 12 Weeks)</div>
+              <canvas id="chart-p8-leads" height="90"></canvas>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">Weekly Summary — Last 12 Weeks</div>
+            <div id="p8-weekly-table">Loading weekly data...</div>
           </div>
         </section>
 
-        <!-- ─── P9: Cash Flow ─────────────────────────────── -->
+        <!-- P9: Cash Flow -->
         <section id="page-p9" class="page">
           <div class="page-header">
             <span class="page-badge">P9</span>
@@ -233,24 +280,55 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Cash Flow &amp; Forecast</p>
             <p class="placeholder-text">Reads: CashFlow_Forecast · Xero_Invoices · Xero_Overheads</p>
-            <p class="placeholder-status">13-week forecast, AR ageing, overheads bar — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben — builds in Section 4</p>
           </div>
         </section>
 
-        <!-- ─── P10: Marketing Performance ───────────────── -->
+        <!-- P10: Marketing Performance -->
         <section id="page-p10" class="page">
           <div class="page-header">
             <span class="page-badge">P10</span>
             <h1 class="page-title">Marketing Performance</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Marketing Performance</p>
-            <p class="placeholder-text">Reads: Marketing_Sources · Marketing_Paid · GHL_Leads</p>
-            <p class="placeholder-status">Lead share pie, CPL by source, ROAS scorecard — builds in Section 3</p>
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Spend</div>
+              <div class="kpi-value" id="kpi-mkt-spend">—</div>
+              <div class="kpi-sub" id="kpi-mkt-spend-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Leads</div>
+              <div class="kpi-value" id="kpi-mkt-leads">—</div>
+              <div class="kpi-sub" id="kpi-mkt-leads-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Cost Per Lead</div>
+              <div class="kpi-value" id="kpi-mkt-cpl">—</div>
+              <div class="kpi-sub" id="kpi-mkt-cpl-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">ROAS</div>
+              <div class="kpi-value" id="kpi-mkt-roas">—</div>
+              <div class="kpi-sub" id="kpi-mkt-roas-sub">Loading...</div>
+            </div>
+          </div>
+          <div class="chart-row two-col">
+            <div class="chart-card card">
+              <div class="chart-title">Spend by Platform</div>
+              <canvas id="chart-p10-spend" height="200"></canvas>
+            </div>
+            <div class="chart-card card">
+              <div class="chart-title">Weekly Leads vs Spend</div>
+              <canvas id="chart-p10-trend" height="200"></canvas>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-title">Campaign Performance</div>
+            <div id="p10-campaign-table">Loading campaign data...</div>
           </div>
         </section>
 
-        <!-- ─── P11: Quality & Variations ─────────────────── -->
+        <!-- P11: Quality & Variations -->
         <section id="page-p11" class="page">
           <div class="page-header">
             <span class="page-badge">P11</span>
@@ -259,7 +337,7 @@
           <div class="placeholder-page card">
             <p class="placeholder-title">Quality &amp; Variations</p>
             <p class="placeholder-text">Reads: Defects_Rework · Variations_Log · Buildpass_Diaries</p>
-            <p class="placeholder-status">Defects by division, rework hours, variations $ — builds in Section 3</p>
+            <p class="placeholder-status">⏳ Awaiting Anne's manual tabs — builds in Section 8</p>
           </div>
         </section>
 
@@ -267,168 +345,301 @@
     </div>
   </div>
 
-  <!-- Scripts: load in order — config first, then sheets, then app logic -->
   <script src="config.js"></script>
   <script src="sheets.js"></script>
   <script>
 
-    // ═══════════════════════════════════════════════════════════
-    // NAVIGATION
-    // ═══════════════════════════════════════════════════════════
+    const _charts = {};
+    function makeChart(id, config) {
+      if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      _charts[id] = new Chart(ctx, config);
+    }
+
+    function col(row) {
+      const names = Array.prototype.slice.call(arguments, 1);
+      for (var i = 0; i < names.length; i++) {
+        var n = names[i];
+        if (row[n] !== undefined && row[n] !== null && String(row[n]).trim() !== '') return row[n];
+      }
+      return '';
+    }
+
+    function buildTable(rows, cols) {
+      if (!rows || rows.length === 0) return '<p class="no-data-msg">No data available yet.</p>';
+      var ths = cols.map(function(c) { return '<th>' + c.label + '</th>'; }).join('');
+      var trs = rows.map(function(r) {
+        var tds = cols.map(function(c) {
+          var keys = Array.isArray(c.key) ? c.key : [c.key];
+          var val  = col.apply(null, [r].concat(keys));
+          if (c.format) val = c.format(val, r);
+          return '<td>' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</td>';
+        }).join('');
+        return '<tr>' + tds + '</tr>';
+      }).join('');
+      return '<div class="table-wrap"><table class="data-table"><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
+    }
+
+    function buildAutoTable(rows) {
+      if (!rows || rows.length === 0) return '<p class="no-data-msg">No data available yet.</p>';
+      var keys = Object.keys(rows[0]);
+      return buildTable(rows, keys.map(function(k) {
+        return {
+          label: k.replace(/_/g, ' '),
+          key: k,
+          format: function(v) {
+            if (v === '' || v === null || v === undefined) return '—';
+            var lower = k.toLowerCase();
+            var n = parseNum(v);
+            if (n > 0 && (lower.includes('revenue') || lower.includes('spend') || lower.includes('cost') || lower.includes('budget') || lower.includes('amount'))) return formatCurrency(n);
+            if (n > 0 && n <= 100 && (lower.includes('margin') || lower.includes('rate') || lower.includes('ctr'))) return formatPct(n);
+            return v;
+          }
+        };
+      }));
+    }
+
     const navItems = document.querySelectorAll('.nav-item');
     const pages    = document.querySelectorAll('.page');
 
     function showPage(pageId) {
-      pages.forEach(p => p.classList.remove('active'));
-      navItems.forEach(n => n.classList.remove('active'));
-      const page = document.getElementById('page-' + pageId);
-      const nav  = document.querySelector('[data-page="' + pageId + '"]');
+      pages.forEach(function(p) { p.classList.remove('active'); });
+      navItems.forEach(function(n) { n.classList.remove('active'); });
+      var page = document.getElementById('page-' + pageId);
+      var nav  = document.querySelector('[data-page="' + pageId + '"]');
       if (page) page.classList.add('active');
       if (nav)  nav.classList.add('active');
     }
 
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
+    navItems.forEach(function(item) {
+      item.addEventListener('click', function() {
         showPage(item.dataset.page);
+        loadCurrentPage();
         init3DTilt();
       });
     });
 
-
-    // ═══════════════════════════════════════════════════════════
-    // BRAND FILTER
-    // ═══════════════════════════════════════════════════════════
-    const brandBtns = document.querySelectorAll('#brand-filter .toggle-btn');
+    const brandBtns  = document.querySelectorAll('#brand-filter .toggle-btn');
     let activeBrand = 'ALL';
 
-    brandBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        brandBtns.forEach(b => b.classList.remove('active'));
+    brandBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        brandBtns.forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         activeBrand = btn.dataset.value;
         loadCurrentPage();
       });
     });
 
+    document.getElementById('date-filter').addEventListener('change', function() { loadCurrentPage(); });
 
-    // ═══════════════════════════════════════════════════════════
-    // 3D CARD TILT EFFECT
-    // Smooth mouse-over tilt — cards glide as you move over them.
-    // ═══════════════════════════════════════════════════════════
     function init3DTilt() {
-      document.querySelectorAll('.card').forEach(card => {
-        // Remove old listeners by cloning
-        const fresh = card.cloneNode(true);
+      document.querySelectorAll('.kpi-card').forEach(function(card) {
+        var fresh = card.cloneNode(true);
         card.parentNode.replaceChild(fresh, card);
-
-        fresh.addEventListener('mousemove', e => {
-          const rect = fresh.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width  - 0.5;
-          const y = (e.clientY - rect.top)  / rect.height - 0.5;
-          fresh.style.transform = `perspective(900px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateZ(8px)`;
+        fresh.addEventListener('mousemove', function(e) {
+          var r = fresh.getBoundingClientRect();
+          var x = (e.clientX - r.left) / r.width  - 0.5;
+          var y = (e.clientY - r.top)  / r.height - 0.5;
+          fresh.style.transform = 'perspective(900px) rotateY(' + (x * 10) + 'deg) rotateX(' + (-y * 10) + 'deg) translateZ(8px)';
         });
-
-        fresh.addEventListener('mouseleave', () => {
+        fresh.addEventListener('mouseleave', function() {
           fresh.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) translateZ(0px)';
         });
       });
     }
 
-
-    // ═══════════════════════════════════════════════════════════
-    // DATA LOADING
-    // ═══════════════════════════════════════════════════════════
-    function loadCurrentPage() {
-      const active = document.querySelector('.nav-item.active');
-      if (!active) return;
-      const page = active.dataset.page;
-      if (page === 'p1') loadP1();
-    }
-
-    async function loadP1() {
-      showLoading(true);
-      removeError('p1');
-      try {
-        const [summaryData, targetsData] = await Promise.all([
-          fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
-          fetchSheet(CONFIG.TABS.TARGETS)
-        ]);
-        renderP1(summaryData, targetsData);
-      } catch (err) {
-        console.error('P1 load error:', err);
-        showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
-      } finally {
-        showLoading(false);
-        init3DTilt();
-      }
-    }
-
-    function renderP1(summary, targets) {
-      // Filter by active brand
-      const filtered = filterByBrand(summary, activeBrand);
-
-      // KPI values — populated in Section 3 when data is fully live
-      // For now shows placeholder dashes cleanly
-      const setKPI = (id, subId, val, sub) => {
-        const el = document.getElementById(id);
-        const subEl = document.getElementById(subId);
-        if (el) el.textContent = val !== null && val !== '' ? val : '—';
-        if (subEl) subEl.textContent = sub || '';
-      };
-
-      if (filtered.length === 0) {
-        setKPI('kpi-leads',       'kpi-leads-sub',      '—', 'No data yet');
-        setKPI('kpi-revenue',     'kpi-revenue-sub',    '—', 'No data yet');
-        setKPI('kpi-quotes',      'kpi-quotes-sub',     '—', 'No data yet');
-        setKPI('kpi-jobs-won',    'kpi-jobs-won-sub',   '—', 'No data yet');
-        setKPI('kpi-margin',      'kpi-margin-sub',     '—%', 'No data yet');
-        setKPI('kpi-active-jobs', 'kpi-active-jobs-sub','—', 'No data yet');
-        return;
-      }
-
-      // Section 3 will populate these with real calculated values
-      setKPI('kpi-leads',       'kpi-leads-sub',      filtered.length, 'rows loaded');
-      setKPI('kpi-revenue',     'kpi-revenue-sub',    '—', 'Xero data pending');
-      setKPI('kpi-quotes',      'kpi-quotes-sub',     '—', 'GHL_Quotes pending');
-      setKPI('kpi-jobs-won',    'kpi-jobs-won-sub',   '—', 'GHL_Pipeline pending');
-      setKPI('kpi-margin',      'kpi-margin-sub',     '—%', 'Xero data pending');
-      setKPI('kpi-active-jobs', 'kpi-active-jobs-sub','—', 'Xero_Projects pending');
-    }
-
-
-    // ═══════════════════════════════════════════════════════════
-    // UI HELPERS
-    // ═══════════════════════════════════════════════════════════
-    function showLoading(show) {
-      document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-    }
+    function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
 
     function showError(pageId, msg) {
-      const page = document.getElementById('page-' + pageId);
+      var page = document.getElementById('page-' + pageId);
       if (!page) return;
-      let banner = page.querySelector('.error-banner');
-      if (!banner) {
-        banner = document.createElement('div');
-        banner.className = 'error-banner';
-        page.prepend(banner);
-      }
+      var banner = page.querySelector('.error-banner');
+      if (!banner) { banner = document.createElement('div'); banner.className = 'error-banner'; page.prepend(banner); }
       banner.textContent = msg;
     }
 
-    function removeError(pageId) {
-      const banner = document.querySelector('#page-' + pageId + ' .error-banner');
-      if (banner) banner.remove();
+    function removeError(pageId) { var b = document.querySelector('#page-' + pageId + ' .error-banner'); if (b) b.remove(); }
+
+    function setKPI(id, subId, val, sub) {
+      var el = document.getElementById(id); var subEl = document.getElementById(subId);
+      if (el)    el.textContent    = (val !== null && val !== '' && val !== undefined) ? val : '—';
+      if (subEl) subEl.textContent = sub || '';
     }
 
-    document.getElementById('refresh-btn').addEventListener('click', () => {
-      clearSheetsCache();
-      loadCurrentPage();
-    });
+    function loadCurrentPage() {
+      var active = document.querySelector('.nav-item.active');
+      if (!active) return;
+      var loaders = { p1: loadP1, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var fn = loaders[active.dataset.page];
+      if (fn) fn();
+    }
 
+    async function loadP1() {
+      showLoading(true); removeError('p1');
+      try {
+        var targets = await fetchSheet(CONFIG.TABS.TARGETS);
+        renderP1(targets);
+      } catch(err) {
+        console.error('P1 load error:', err);
+        showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
+      } finally { showLoading(false); init3DTilt(); }
+    }
 
-    // ═══════════════════════════════════════════════════════════
-    // INIT
-    // ═══════════════════════════════════════════════════════════
+    function renderP1(targets) {
+      var filtered = filterByBrand(targets, activeBrand);
+      if (filtered.length === 0) {
+        ['kpi-revenue-target','kpi-margin-target','kpi-lead-target','kpi-jobs-target','kpi-quote-target','kpi-activejobs-target'].forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data yet in Targets tab'); });
+        document.getElementById('p1-targets-table').innerHTML = '<p class="no-data-msg">No targets data available yet. Anne is populating the Targets tab.</p>';
+        return;
+      }
+      var now = new Date();
+      var monthName = now.toLocaleString('en-AU', { month: 'long' });
+      var monthYear = now.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
+      var currentRow = filtered.find(function(r) {
+        var m = String(col(r, 'Month', 'month', 'MONTH', 'Period', 'period'));
+        return m.toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
+      }) || filtered[filtered.length - 1];
+      if (currentRow) {
+        var revTarget    = parseNum(col(currentRow, 'Revenue_Target', 'Revenue Target', 'Rev_Target', 'Rev Target', 'revenue_target'));
+        var marginTarget = parseNum(col(currentRow, 'Gross_Margin_Target', 'Margin_Target', 'Margin Target', 'GM_Target', 'GM Target', 'Gross Margin %'));
+        var leadsTarget  = parseNum(col(currentRow, 'Leads_Target', 'Lead_Target', 'Leads Target', 'Lead Target', 'New Leads', 'leads_target'));
+        var jobsTarget   = parseNum(col(currentRow, 'Jobs_Won_Target', 'Jobs_Target', 'Jobs Won Target', 'Jobs Target', 'jobs_target'));
+        var quotesTarget = parseNum(col(currentRow, 'Quotes_Target', 'Quote_Target', 'Quotes Sent Target', 'Quotes Target', 'quotes_target'));
+        var activeTarget = parseNum(col(currentRow, 'Active_Jobs_Target', 'Active Jobs Target', 'Active_Target', 'active_jobs_target'));
+        setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget    ? formatCurrency(revTarget)   : '—', revTarget    ? monthYear + ' target'   : 'Check Targets tab');
+        setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget ? formatPct(marginTarget)     : '—', marginTarget ? 'Gross margin target'    : 'Check Targets tab');
+        setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget  || '—',                              leadsTarget  ? 'New leads target'        : 'Check Targets tab');
+        setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget   || '—',                              jobsTarget   ? 'Jobs won target'         : 'Check Targets tab');
+        setKPI('kpi-quote-target',      'kpi-quote-target-sub',      quotesTarget || '—',                              quotesTarget ? 'Quotes sent target'      : 'Check Targets tab');
+        setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', activeTarget || '—',                              activeTarget ? 'Active jobs target'      : 'Check Targets tab');
+      }
+      var labels  = filtered.map(function(r) { return col(r, 'Month', 'month', 'MONTH', 'Period', 'period') || ''; });
+      var revData = filtered.map(function(r) { return parseNum(col(r, 'Revenue_Target', 'Revenue Target', 'Rev_Target', 'Rev Target', 'revenue_target')); });
+      makeChart('chart-p1-revenue', {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: 'Revenue Target', data: revData, backgroundColor: 'rgba(38,36,37,0.80)', borderWidth: 0, borderRadius: 5 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return '$' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v); } } } } }
+      });
+      document.getElementById('p1-targets-table').innerHTML = buildAutoTable(filtered);
+    }
+
+    async function loadP7() {
+      showLoading(true); removeError('p7');
+      try {
+        var reviews = await fetchSheet(CONFIG.TABS.CLIENT_REVIEWS);
+        renderP7(reviews);
+      } catch(err) { console.error('P7 load error:', err); showError('p7', 'Could not load Client Reviews data.');
+      } finally { showLoading(false); init3DTilt(); }
+    }
+
+    function renderP7(reviews) {
+      var filtered = filterByBrand(reviews, activeBrand);
+      if (filtered.length === 0) {
+        ['kpi-avg-rating','kpi-total-reviews','kpi-five-star','kpi-response-rate'].forEach(function(id) { setKPI(id, id + '-sub', '—', 'No review data yet'); });
+        document.getElementById('p7-reviews-table').innerHTML = '<p class="no-data-msg">No client reviews available yet.</p>';
+        return;
+      }
+      var ratings = filtered.map(function(r) { return parseNum(col(r, 'Rating','rating','Score','Stars','star_rating','Review Rating')); }).filter(function(n) { return n > 0; });
+      var avgRating    = ratings.length ? ratings.reduce(function(a,b){return a+b;},0) / ratings.length : 0;
+      var fiveStar     = ratings.filter(function(n){return n>=5;}).length;
+      var responded    = filtered.filter(function(r){ var v=String(col(r,'Responded','responded','Response','Replied','replied')||'').toLowerCase(); return v==='yes'||v==='true'||v==='1'||v==='y'; }).length;
+      var responseRate = filtered.length ? Math.round(responded/filtered.length*100) : 0;
+      setKPI('kpi-avg-rating',    'kpi-avg-rating-sub',    avgRating ? avgRating.toFixed(1)+' / 5.0' : '—', 'From '+ratings.length+' rated reviews');
+      setKPI('kpi-total-reviews', 'kpi-total-reviews-sub', filtered.length, 'All time');
+      setKPI('kpi-five-star',     'kpi-five-star-sub',     fiveStar, Math.round(fiveStar/filtered.length*100)+'% of all reviews');
+      setKPI('kpi-response-rate', 'kpi-response-rate-sub', responseRate+'%', responded+' of '+filtered.length+' replied');
+      var dist = [1,2,3,4,5].map(function(n){ return ratings.filter(function(r){return Math.round(r)===n;}).length; });
+      makeChart('chart-p7-distribution', { type:'bar', data:{ labels:['1 ★','2 ★','3 ★','4 ★','5 ★'], datasets:[{ label:'Reviews', data:dist, backgroundColor:['#c0392b','#e67e22','#f1c40f','#27ae60','#1a7a43'], borderWidth:0, borderRadius:4 }] }, options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} } });
+      var byMonth={};
+      filtered.forEach(function(r){ var d=col(r,'Date','date','Review_Date','Submitted','Created','created_at'); if(!d)return; var p=new Date(d); if(isNaN(p))return; var k=p.toLocaleString('en-AU',{month:'short',year:'2-digit'}); byMonth[k]=(byMonth[k]||0)+1; });
+      var monthLabels=Object.keys(byMonth).slice(-12);
+      makeChart('chart-p7-monthly', { type:'line', data:{ labels:monthLabels, datasets:[{ label:'Reviews', data:monthLabels.map(function(k){return byMonth[k];}), borderColor:'#262425', backgroundColor:'rgba(38,36,37,0.08)', tension:0.3, fill:true, pointRadius:4, pointBackgroundColor:'#262425' }] }, options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} } });
+      var sorted=filtered.slice().sort(function(a,b){ var da=new Date(col(a,'Date','date','Review_Date','Submitted','Created','created_at')||0); var db=new Date(col(b,'Date','date','Review_Date','Submitted','Created','created_at')||0); return db-da; }).slice(0,25);
+      document.getElementById('p7-reviews-table').innerHTML = buildTable(sorted, [
+        { label:'Date', key:['Date','date','Review_Date','Submitted','Created','created_at'], format:function(v){var d=new Date(v);return isNaN(d)?v:d.toLocaleDateString('en-AU');} },
+        { label:'Client', key:['Client_Name','Client','Name','Customer','customer_name','Contact'] },
+        { label:'Division', key:['Division','division','Service','Category'] },
+        { label:'Platform', key:['Platform','platform','Source','source'] },
+        { label:'Rating', key:['Rating','rating','Score','Stars','star_rating','Review Rating'], format:function(v){var n=Math.min(5,Math.max(0,Math.round(parseNum(v))));return v?'★'.repeat(n)+'☆'.repeat(5-n)+' ('+v+')':'—';} },
+        { label:'Review', key:['Review','Review_Text','Comment','review_text','Feedback','Body'], format:function(v){return v?(v.length>100?v.substring(0,100)+'…':v):'—';} },
+        { label:'Responded', key:['Responded','responded','Reply','Replied','Response'] }
+      ]);
+    }
+
+    async function loadP8() {
+      showLoading(true); removeError('p8');
+      try {
+        var results = await Promise.all([fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY), fetchSheet(CONFIG.TABS.TARGETS)]);
+        renderP8(results[0], results[1]);
+      } catch(err) { console.error('P8 load error:', err); showError('p8','Could not load Weekly Overview data.');
+      } finally { showLoading(false); init3DTilt(); }
+    }
+
+    function renderP8(weekly, targets) {
+      var filtered = filterByBrand(weekly, activeBrand);
+      if (filtered.length === 0) {
+        ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id){ setKPI(id,id+'-sub','—','No weekly data yet'); });
+        document.getElementById('p8-weekly-table').innerHTML = '<p class="no-data-msg">No weekly summary data available yet.</p>';
+        return;
+      }
+      var latest    = filtered[filtered.length-1];
+      var weekLabel = col(latest,'Week','week','Week_Label','Week Start','week_start','Period') || 'Latest Week';
+      var weekLeads  = parseNum(col(latest,'Total_Leads','Leads','New_Leads','New Leads','leads','total_leads'));
+      var weekRev    = parseNum(col(latest,'Revenue','revenue','Total_Revenue','Revenue_WTD','Revenue WTD'));
+      var weekQuotes = parseNum(col(latest,'Quotes_Sent','Quotes','quotes_sent','Quotes Sent'));
+      var weekJobs   = parseNum(col(latest,'Jobs_Won','Jobs Won','jobs_won','Won','Jobs Won WTD'));
+      setKPI('kpi-week-leads',   'kpi-week-leads-sub',   weekLeads  ||'—', weekLabel);
+      setKPI('kpi-week-revenue', 'kpi-week-revenue-sub', weekRev?formatCurrency(weekRev):'—', weekLabel);
+      setKPI('kpi-week-quotes',  'kpi-week-quotes-sub',  weekQuotes ||'—', weekLabel);
+      setKPI('kpi-week-jobs',    'kpi-week-jobs-sub',    weekJobs   ||'—', weekLabel);
+      var last12=filtered.slice(-12);
+      var chartLabels=last12.map(function(r){return col(r,'Week','week','Week_Label','Week Start','week_start','Period')||'';});
+      var leadsData  =last12.map(function(r){return parseNum(col(r,'Total_Leads','Leads','New_Leads','New Leads','leads','total_leads'));});
+      var revenueData=last12.map(function(r){return parseNum(col(r,'Revenue','revenue','Total_Revenue','Revenue_WTD','Revenue WTD'));});
+      makeChart('chart-p8-leads', { type:'bar', data:{ labels:chartLabels, datasets:[{ label:'Leads', data:leadsData, backgroundColor:'rgba(38,36,37,0.80)', borderWidth:0, borderRadius:4, yAxisID:'y' },{ label:'Revenue ($)', data:revenueData, type:'line', borderColor:'#888', backgroundColor:'transparent', tension:0.3, pointRadius:3, yAxisID:'y1' }] }, options:{ responsive:true, plugins:{legend:{position:'top'}}, scales:{ y:{beginAtZero:true,position:'left',title:{display:true,text:'Leads'}}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return '$'+(v>=1000?(v/1000).toFixed(0)+'k':v);}}} } } });
+      document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(filtered.slice(-12).reverse());
+    }
+
+    async function loadP10() {
+      showLoading(true); removeError('p10');
+      try {
+        var marketing = await fetchSheet(CONFIG.TABS.MARKETING_PAID);
+        renderP10(marketing);
+      } catch(err) { console.error('P10 load error:', err); showError('p10','Could not load Marketing data.');
+      } finally { showLoading(false); init3DTilt(); }
+    }
+
+    function renderP10(marketing) {
+      var filtered = filterByBrand(marketing, activeBrand);
+      if (filtered.length === 0) {
+        ['kpi-mkt-spend','kpi-mkt-leads','kpi-mkt-cpl','kpi-mkt-roas'].forEach(function(id){ setKPI(id,id+'-sub','—','No marketing data yet'); });
+        document.getElementById('p10-campaign-table').innerHTML = '<p class="no-data-msg">No paid marketing data available yet. Check Marketing_Paid tab and Make.com Scenario 13.</p>';
+        return;
+      }
+      var totalSpend=filtered.reduce(function(s,r){return s+parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost','Budget','budget'));},0);
+      var totalLeads=filtered.reduce(function(s,r){return s+parseNum(col(r,'Leads','leads','Conversions','Results','Lead Count','lead_count'));},0);
+      var totalRev  =filtered.reduce(function(s,r){return s+parseNum(col(r,'Revenue','revenue','Attributed_Revenue','Attributed Revenue','value'));},0);
+      var avgCPL=totalLeads>0?totalSpend/totalLeads:0;
+      var roas  =totalSpend>0&&totalRev>0?totalRev/totalSpend:0;
+      setKPI('kpi-mkt-spend','kpi-mkt-spend-sub',formatCurrency(totalSpend),'Total paid ad spend');
+      setKPI('kpi-mkt-leads','kpi-mkt-leads-sub',totalLeads||'—','Leads generated');
+      setKPI('kpi-mkt-cpl',  'kpi-mkt-cpl-sub',  avgCPL?formatCurrency(avgCPL):'—','Cost per lead');
+      setKPI('kpi-mkt-roas', 'kpi-mkt-roas-sub',  roas?roas.toFixed(2)+'x':'—', roas?'Return on ad spend':'Add revenue column for ROAS');
+      var byPlatform={};
+      filtered.forEach(function(r){ var p=col(r,'Platform','platform','Source','Channel','source','channel')||'Other'; byPlatform[p]=(byPlatform[p]||0)+parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost')); });
+      var platLabels=Object.keys(byPlatform);
+      makeChart('chart-p10-spend', { type:'doughnut', data:{ labels:platLabels, datasets:[{ data:platLabels.map(function(k){return byPlatform[k];}), backgroundColor:['#262425','#555','#888','#aaa','#ccc'], borderWidth:3, borderColor:'#fff' }] }, options:{ responsive:true, plugins:{legend:{position:'bottom',labels:{padding:12}}} } });
+      var byWeek={};
+      filtered.forEach(function(r){ var d=col(r,'Week','week','Date','date','Period','Week_Start','week_start')||''; if(!d)return; if(!byWeek[d])byWeek[d]={spend:0,leads:0}; byWeek[d].spend+=parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost')); byWeek[d].leads+=parseNum(col(r,'Leads','leads','Conversions','Results','Lead Count')); });
+      var weekKeys=Object.keys(byWeek).slice(-12);
+      makeChart('chart-p10-trend', { type:'bar', data:{ labels:weekKeys, datasets:[{ label:'Spend ($)', data:weekKeys.map(function(k){return byWeek[k].spend;}), backgroundColor:'rgba(38,36,37,0.80)', borderWidth:0, borderRadius:4, yAxisID:'y' },{ label:'Leads', data:weekKeys.map(function(k){return byWeek[k].leads;}), type:'line', borderColor:'#888', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'y1' }] }, options:{ responsive:true, plugins:{legend:{position:'top'}}, scales:{ y:{beginAtZero:true,position:'left',ticks:{callback:function(v){return '$'+v;}}}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}} } } });
+      document.getElementById('p10-campaign-table').innerHTML = buildAutoTable(filtered);
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', function() { clearSheetsCache(); loadCurrentPage(); });
+
     init3DTilt();
     loadP1();
 
