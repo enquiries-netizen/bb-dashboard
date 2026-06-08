@@ -39,5 +39,7 @@ const CONFIG = {
     ESTIMATING_ACCURACY: 'Estimating_Accuracy',
     VARIATIONS_LOG:      'Variations_Log',
     DEFECTS_REWORK:      'Defects_Rework',
-    CASHFLOW_FORECAST:   'CashFlow_Forecast',
+    CASHFLOW_FORECAST:  'CashFlow_Forecast',
   }
+
+};
