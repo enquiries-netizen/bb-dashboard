@@ -50,18 +50,40 @@ function clearSheetsCache() {
 
 /**
  * Filters rows by brand.
- * The Master Sheet has pre-aggregated rows per brand (ALL / BBBS / RMH).
- * We always filter to the exact brand — 'ALL' shows the aggregated ALL rows,
- * not every row. This prevents triple-counting.
+ *
+ * Two types of tabs exist:
+ * 1. Pre-aggregated tabs (Weekly_Summary, Targets) — have explicit ALL/BBBS/RMH rows.
+ *    When ALL is selected, return only the "ALL" rows to avoid triple-counting.
+ * 2. Raw campaign tabs (Marketing_Paid) — have individual rows per brand, no "ALL" row.
+ *    When ALL is selected, return all rows so totals aggregate correctly.
+ *
  * For tabs with no Brand column, all rows are returned.
  */
 function filterByBrand(rows, brand) {
   if (!rows || rows.length === 0) return rows;
-  const hasBrandCol = rows[0]['Brand'] !== undefined || rows[0]['brand'] !== undefined;
+  var hasBrandCol = rows[0]['Brand'] !== undefined || rows[0]['brand'] !== undefined;
   if (!hasBrandCol) return rows;
-  const target = (brand || 'ALL').toUpperCase();
-  return rows.filter(r => {
-    const b = String(r['Brand'] || r['brand'] || '').toUpperCase().trim();
+
+  var target = (brand || 'ALL').toUpperCase();
+
+  if (target === 'ALL') {
+    // Check if this tab has pre-aggregated "ALL" rows
+    var hasAllRows = rows.some(function(r) {
+      return String(r['Brand'] || r['brand'] || '').toUpperCase().trim() === 'ALL';
+    });
+    if (hasAllRows) {
+      // Return only the pre-aggregated ALL rows (prevents triple-counting)
+      return rows.filter(function(r) {
+        return String(r['Brand'] || r['brand'] || '').toUpperCase().trim() === 'ALL';
+      });
+    } else {
+      // No pre-aggregated ALL rows — return everything (e.g. Marketing_Paid)
+      return rows;
+    }
+  }
+
+  return rows.filter(function(r) {
+    var b = String(r['Brand'] || r['brand'] || '').toUpperCase().trim();
     return b === target;
   });
 }
