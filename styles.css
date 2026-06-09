@@ -402,11 +402,14 @@ select {
 
 .kpi-value {
   font-family: var(--font-heading);
-  font-size: 30px;
+  font-size: clamp(14px, 1.5vw, 20px);
   font-weight: 700;
   color: var(--charcoal);
   line-height: 1;
   margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-sub {
@@ -665,21 +668,219 @@ select {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   RESPONSIVE — mobile (Ben may check on phone)
+   MEDIUM SCREENS — GHL iframe embedded view (~900px–1200px)
+   KPI grid wraps to 3 cols so cards are wide enough to show values
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1200px) and (min-width: 769px) {
+  :root { --sidebar-w: 180px; }
+
+  .nav-item              { padding: 9px 12px; font-size: 11px; }
+  .sidebar-section-label { padding: 14px 12px 6px; }
+
+  .main { padding: 18px 16px; }
+
+  .kpi-grid  { grid-template-columns: repeat(3, 1fr); }
+  .kpi-value { font-size: 18px; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   HAMBURGER BUTTON — hidden on desktop, shown on mobile
+═══════════════════════════════════════════════════════════════ */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 4px 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.hamburger-btn span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: rgba(188, 189, 190, 0.8);
+  border-radius: 2px;
+  transition: all var(--ease);
+}
+
+/* Sidebar overlay (darkens the rest of the screen when sidebar is open) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 199;
+}
+.sidebar-overlay.visible { display: block; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — mobile (iPhone)
+   !important required — iOS Safari ignores overrides without it
+   when base styles use overflow:hidden + height:100vh.
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  :root { --sidebar-w: 0px; }
 
-  .sidebar { display: none; }
+  /* ── Core scroll fix — most important lines ──────── */
+  html, body {
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
 
-  .header-tagline   { display: none; }
-  .filter-label     { display: none; }
-  .header-controls  { gap: 10px; }
+  .app {
+    height: auto !important;
+    min-height: 100svh;
+    flex-direction: column;
+  }
 
-  .main { padding: 16px; }
+  .layout {
+    height: auto !important;
+    overflow: visible !important;
+    flex-direction: column;
+    flex: unset;
+  }
 
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .chart-row.two-col { grid-template-columns: 1fr; }
+  .main {
+    overflow: visible !important;
+    height: auto !important;
+    flex: unset;
+    width: 100%;
+    padding: 14px 12px;
+  }
 
-  .page-title { font-size: 16px; }
+  /* ── Header ──────────────────────────────────────── */
+  .header {
+    height: auto !important;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    gap: 0;
+    row-gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-brand {
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .header-logo-wrap { width: 36px; height: 36px; }
+  .header-logo      { width: 30px; height: 30px; }
+
+  .header-company-name { font-size: 13px; }
+  .header-tagline      { display: none !important; }
+
+  /* Show hamburger on mobile */
+  .hamburger-btn { display: flex; }
+
+  /* Controls row — scrollable horizontally */
+  .header-controls {
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    margin-left: 0 !important;
+  }
+  .header-controls::-webkit-scrollbar { display: none; }
+
+  .filter-group  { flex-shrink: 0; gap: 4px; }
+  .filter-label  { font-size: 9px; }
+
+  .filter-select {
+    font-size: 12px;
+    padding: 6px 8px;
+    min-width: 100px;
+  }
+
+  .toggle-btn { padding: 5px 10px; font-size: 10px; }
+
+  .refresh-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+
+  /* ── Sidebar: fixed slide-in overlay ─────────────── */
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 78% !important;
+    max-width: 260px;
+    height: 100% !important;
+    z-index: 200;
+    transition: left 0.25s ease-out;
+    overflow-y: auto !important;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22);
+    padding-top: 14px;
+    flex-shrink: 0;
+  }
+
+  .sidebar.mobile-open { left: 0 !important; }
+
+  /* ── KPI cards ───────────────────────────────────── */
+  .kpi-grid  { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi-card  { padding: 14px 12px; }
+  .kpi-label { font-size: 9.5px; }
+  .kpi-value { font-size: 20px; }
+  .kpi-sub   { font-size: 9.5px; }
+
+  /* ── Charts ──────────────────────────────────────── */
+  .chart-row         { grid-template-columns: 1fr !important; }
+  .chart-row.two-col { grid-template-columns: 1fr !important; }
+  .chart-card        { padding: 14px 12px; }
+
+  /* ── Tables ──────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 540px; font-size: 11.5px; }
+
+  /* ── Section & placeholder cards ─────────────────── */
+  .section-card     { padding: 14px 12px; margin-bottom: 16px; }
+  .placeholder-page { padding: 32px 20px; }
+
+  /* ── Page header ─────────────────────────────────── */
+  .page-header { margin-bottom: 14px; }
+  .page-title  { font-size: 15px; }
+
+  /* ── Last updated footer ─────────────────────────── */
+  .last-updated-bar {
+    margin: 8px -12px -14px;
+    padding: 6px 12px;
+    font-size: 9.5px;
+    text-align: center;
+    position: static;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   LAST UPDATED FOOTER BAR
+═══════════════════════════════════════════════════════════════ */
+.last-updated-bar {
+  position: sticky;
+  bottom: 0;
+  margin: 8px -28px -28px;   /* bleed to main padding edges */
+  padding: 8px 28px;
+  background: rgba(239, 239, 239, 0.96);
+  border-top: 1px solid var(--border);
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-align: right;
+  backdrop-filter: blur(4px);
+  z-index: 10;
 }
