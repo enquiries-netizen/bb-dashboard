@@ -13,6 +13,9 @@
 <body>
   <div class="app">
 
+    <!-- ═══════════════════════════════════════════════════════
+         HEADER
+    ════════════════════════════════════════════════════════ -->
     <header class="header">
       <div class="header-brand">
         <div class="header-logo-wrap">
@@ -33,13 +36,22 @@
           </div>
         </div>
         <div class="filter-group">
-          <span class="filter-label">Period</span>
-          <select class="filter-select" id="date-filter">
-            <option value="this_month">This Month</option>
-            <option value="last_month">Last Month</option>
-            <option value="this_quarter">This Quarter</option>
-            <option value="this_year">This Year</option>
-          </select>
+          <span class="filter-label">Month</span>
+          <div class="toggle-group month-filter" id="month-filter">
+            <button class="toggle-btn active" data-month="ALL">All</button>
+            <button class="toggle-btn" data-month="Jan">Jan</button>
+            <button class="toggle-btn" data-month="Feb">Feb</button>
+            <button class="toggle-btn" data-month="Mar">Mar</button>
+            <button class="toggle-btn" data-month="Apr">Apr</button>
+            <button class="toggle-btn" data-month="May">May</button>
+            <button class="toggle-btn" data-month="Jun">Jun</button>
+            <button class="toggle-btn" data-month="Jul">Jul</button>
+            <button class="toggle-btn" data-month="Aug">Aug</button>
+            <button class="toggle-btn" data-month="Sep">Sep</button>
+            <button class="toggle-btn" data-month="Oct">Oct</button>
+            <button class="toggle-btn" data-month="Nov">Nov</button>
+            <button class="toggle-btn" data-month="Dec">Dec</button>
+          </div>
         </div>
         <button class="refresh-btn" id="refresh-btn" title="Refresh data">Refresh</button>
       </div>
@@ -47,6 +59,9 @@
 
     <div class="layout">
 
+      <!-- ═══════════════════════════════════════════════════
+           SIDEBAR NAVIGATION
+      ════════════════════════════════════════════════════ -->
       <nav class="sidebar">
         <div class="sidebar-section-label">Dashboard</div>
         <ul class="nav-list">
@@ -65,6 +80,9 @@
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
 
+      <!-- ═══════════════════════════════════════════════════
+           MAIN CONTENT
+      ════════════════════════════════════════════════════ -->
       <main class="main">
 
         <div id="loading-overlay" class="loading-overlay">
@@ -72,12 +90,13 @@
           <p class="loading-text">Loading dashboard data...</p>
         </div>
 
-        <!-- P1: Executive Snapshot -->
+        <!-- ─── P1: Executive Snapshot (Targets tab) ──────── -->
         <section id="page-p1" class="page active">
           <div class="page-header">
             <span class="page-badge">P1</span>
             <h1 class="page-title">Executive Snapshot</h1>
           </div>
+
           <div class="kpi-grid">
             <div class="kpi-card card">
               <div class="kpi-label">Revenue Target (MTD)</div>
@@ -110,19 +129,21 @@
               <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
             </div>
           </div>
+
           <div class="chart-row">
             <div class="chart-card card">
               <div class="chart-title">Monthly Revenue Targets</div>
               <canvas id="chart-p1-revenue" height="90"></canvas>
             </div>
           </div>
+
           <div class="section-card">
             <div class="section-title">Annual Targets by Month</div>
             <div id="p1-targets-table">Loading targets...</div>
           </div>
         </section>
 
-        <!-- P2: Sales & Pipeline -->
+        <!-- ─── P2: Sales & Pipeline ───────────────────────── -->
         <section id="page-p2" class="page">
           <div class="page-header">
             <span class="page-badge">P2</span>
@@ -135,7 +156,7 @@
           </div>
         </section>
 
-        <!-- P3: Quoting & Estimating -->
+        <!-- ─── P3: Quoting & Estimating ──────────────────── -->
         <section id="page-p3" class="page">
           <div class="page-header">
             <span class="page-badge">P3</span>
@@ -148,7 +169,7 @@
           </div>
         </section>
 
-        <!-- P4: Job Performance -->
+        <!-- ─── P4: Job Performance ────────────────────────── -->
         <section id="page-p4" class="page">
           <div class="page-header">
             <span class="page-badge">P4</span>
@@ -161,7 +182,7 @@
           </div>
         </section>
 
-        <!-- P5: Division Profitability -->
+        <!-- ─── P5: Division Profitability ────────────────── -->
         <section id="page-p5" class="page">
           <div class="page-header">
             <span class="page-badge">P5</span>
@@ -174,7 +195,7 @@
           </div>
         </section>
 
-        <!-- P6: Capacity & Labour -->
+        <!-- ─── P6: Capacity & Labour ──────────────────────── -->
         <section id="page-p6" class="page">
           <div class="page-header">
             <span class="page-badge">P6</span>
@@ -187,12 +208,13 @@
           </div>
         </section>
 
-        <!-- P7: Client Satisfaction -->
+        <!-- ─── P7: Client Satisfaction ───────────────────── -->
         <section id="page-p7" class="page">
           <div class="page-header">
             <span class="page-badge">P7</span>
             <h1 class="page-title">Client Satisfaction</h1>
           </div>
+
           <div class="kpi-grid">
             <div class="kpi-card card">
               <div class="kpi-label">Average Rating</div>
@@ -215,6 +237,7 @@
               <div class="kpi-sub" id="kpi-response-rate-sub">Loading...</div>
             </div>
           </div>
+
           <div class="chart-row two-col">
             <div class="chart-card card">
               <div class="chart-title">Rating Distribution</div>
@@ -225,18 +248,20 @@
               <canvas id="chart-p7-monthly" height="180"></canvas>
             </div>
           </div>
+
           <div class="section-card">
             <div class="section-title">Recent Reviews</div>
             <div id="p7-reviews-table">Loading reviews...</div>
           </div>
         </section>
 
-        <!-- P8: Weekly Overview -->
+        <!-- ─── P8: Weekly Overview ────────────────────────── -->
         <section id="page-p8" class="page">
           <div class="page-header">
             <span class="page-badge">P8</span>
             <h1 class="page-title">Weekly Overview</h1>
           </div>
+
           <div class="kpi-grid">
             <div class="kpi-card card">
               <div class="kpi-label">Leads This Week</div>
@@ -259,19 +284,21 @@
               <div class="kpi-sub" id="kpi-week-jobs-sub">Loading...</div>
             </div>
           </div>
+
           <div class="chart-row">
             <div class="chart-card card">
               <div class="chart-title">Weekly Leads &amp; Revenue Trend (Last 12 Weeks)</div>
               <canvas id="chart-p8-leads" height="90"></canvas>
             </div>
           </div>
+
           <div class="section-card">
             <div class="section-title">Weekly Summary — Last 12 Weeks</div>
             <div id="p8-weekly-table">Loading weekly data...</div>
           </div>
         </section>
 
-        <!-- P9: Cash Flow -->
+        <!-- ─── P9: Cash Flow ─────────────────────────────── -->
         <section id="page-p9" class="page">
           <div class="page-header">
             <span class="page-badge">P9</span>
@@ -284,12 +311,13 @@
           </div>
         </section>
 
-        <!-- P10: Marketing Performance -->
+        <!-- ─── P10: Marketing Performance ───────────────── -->
         <section id="page-p10" class="page">
           <div class="page-header">
             <span class="page-badge">P10</span>
             <h1 class="page-title">Marketing Performance</h1>
           </div>
+
           <div class="kpi-grid">
             <div class="kpi-card card">
               <div class="kpi-label">Total Spend</div>
@@ -312,6 +340,7 @@
               <div class="kpi-sub" id="kpi-mkt-roas-sub">Loading...</div>
             </div>
           </div>
+
           <div class="chart-row two-col">
             <div class="chart-card card">
               <div class="chart-title">Spend by Platform</div>
@@ -322,13 +351,14 @@
               <canvas id="chart-p10-trend" height="200"></canvas>
             </div>
           </div>
+
           <div class="section-card">
             <div class="section-title">Campaign Performance</div>
             <div id="p10-campaign-table">Loading campaign data...</div>
           </div>
         </section>
 
-        <!-- P11: Quality & Variations -->
+        <!-- ─── P11: Quality & Variations ─────────────────── -->
         <section id="page-p11" class="page">
           <div class="page-header">
             <span class="page-badge">P11</span>
@@ -345,11 +375,18 @@
     </div>
   </div>
 
+  <!-- Load order: config → sheets → app logic -->
   <script src="config.js"></script>
   <script src="sheets.js"></script>
   <script>
 
+    // ═══════════════════════════════════════════════════════════
+    // CHART REGISTRY
+    // Tracks Chart.js instances so we can destroy before re-create.
+    // Prevents "Canvas is already in use" errors on page refresh.
+    // ═══════════════════════════════════════════════════════════
     const _charts = {};
+
     function makeChart(id, config) {
       if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
       const ctx = document.getElementById(id);
@@ -357,17 +394,32 @@
       _charts[id] = new Chart(ctx, config);
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // COLUMN HELPER
+    // Tries multiple possible column names in order.
+    // Handles inconsistent naming across Make.com scenarios.
+    // ═══════════════════════════════════════════════════════════
     function col(row) {
       const names = Array.prototype.slice.call(arguments, 1);
       for (var i = 0; i < names.length; i++) {
         var n = names[i];
-        if (row[n] !== undefined && row[n] !== null && String(row[n]).trim() !== '') return row[n];
+        if (row[n] !== undefined && row[n] !== null && String(row[n]).trim() !== '') {
+          return row[n];
+        }
       }
       return '';
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // TABLE BUILDER
+    // cols = [{ label, key (string or array), format (optional) }]
+    // ═══════════════════════════════════════════════════════════
     function buildTable(rows, cols) {
-      if (!rows || rows.length === 0) return '<p class="no-data-msg">No data available yet.</p>';
+      if (!rows || rows.length === 0) {
+        return '<p class="no-data-msg">No data available yet.</p>';
+      }
       var ths = cols.map(function(c) { return '<th>' + c.label + '</th>'; }).join('');
       var trs = rows.map(function(r) {
         var tds = cols.map(function(c) {
@@ -378,30 +430,42 @@
         }).join('');
         return '<tr>' + tds + '</tr>';
       }).join('');
-      return '<div class="table-wrap"><table class="data-table"><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
+      return '<div class="table-wrap"><table class="data-table">' +
+             '<thead><tr>' + ths + '</tr></thead>' +
+             '<tbody>' + trs + '</tbody></table></div>';
     }
 
+    // Auto-builds a table from all columns in the raw sheet rows
     function buildAutoTable(rows) {
       if (!rows || rows.length === 0) return '<p class="no-data-msg">No data available yet.</p>';
       var keys = Object.keys(rows[0]);
       return buildTable(rows, keys.map(function(k) {
         return {
           label: k.replace(/_/g, ' '),
-          key: k,
+          key:   k,
           format: function(v) {
             if (v === '' || v === null || v === undefined) return '—';
             var lower = k.toLowerCase();
-            var n = parseNum(v);
-            if (n > 0 && (lower.includes('revenue') || lower.includes('spend') || lower.includes('cost') || lower.includes('budget') || lower.includes('amount'))) return formatCurrency(n);
-            if (n > 0 && n <= 100 && (lower.includes('margin') || lower.includes('rate') || lower.includes('ctr'))) return formatPct(n);
+            var n     = parseNum(v);
+            if (n > 0 && (lower.includes('revenue') || lower.includes('spend') ||
+                lower.includes('cost') || lower.includes('budget') || lower.includes('amount'))) {
+              return formatCurrency(n);
+            }
+            if (n > 0 && n <= 100 && (lower.includes('margin') || lower.includes('rate') || lower.includes('ctr'))) {
+              return formatPct(n);
+            }
             return v;
           }
         };
       }));
     }
 
-    const navItems = document.querySelectorAll('.nav-item');
-    const pages    = document.querySelectorAll('.page');
+
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    var navItems = document.querySelectorAll('.nav-item');
+    var pages    = document.querySelectorAll('.page');
 
     function showPage(pageId) {
       pages.forEach(function(p) { p.classList.remove('active'); });
@@ -420,8 +484,12 @@
       });
     });
 
-    const brandBtns  = document.querySelectorAll('#brand-filter .toggle-btn');
-    let activeBrand = 'ALL';
+
+    // ═══════════════════════════════════════════════════════════
+    // BRAND + PERIOD FILTERS
+    // ═══════════════════════════════════════════════════════════
+    var brandBtns  = document.querySelectorAll('#brand-filter .toggle-btn');
+    var activeBrand = 'ALL';
 
     brandBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -432,8 +500,37 @@
       });
     });
 
-    document.getElementById('date-filter').addEventListener('change', function() { loadCurrentPage(); });
+    // ═══ MONTH FILTER — multi-select ═══════════════════════════
+    var monthBtns    = document.querySelectorAll('#month-filter .toggle-btn');
+    var activeMonths = []; // empty = All months
 
+    monthBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var m = btn.dataset.month;
+        if (m === 'ALL') {
+          activeMonths = [];
+          monthBtns.forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+        } else {
+          document.querySelector('#month-filter [data-month="ALL"]').classList.remove('active');
+          var idx = activeMonths.indexOf(m);
+          if (idx === -1) { activeMonths.push(m); btn.classList.add('active'); }
+          else            { activeMonths.splice(idx, 1); btn.classList.remove('active'); }
+          if (activeMonths.length === 0) {
+            document.querySelector('#month-filter [data-month="ALL"]').classList.add('active');
+          }
+        }
+        loadCurrentPage();
+      });
+    });
+
+
+    // ═══════════════════════════════════════════════════════════
+    // 3D CARD TILT
+    // Applied only to .kpi-card — NOT .chart-card or .section-card.
+    // Restricting to KPI cards prevents the clone from destroying
+    // Chart.js canvas elements inside chart cards.
+    // ═══════════════════════════════════════════════════════════
     function init3DTilt() {
       document.querySelectorAll('.kpi-card').forEach(function(card) {
         var fresh = card.cloneNode(true);
@@ -450,24 +547,42 @@
       });
     }
 
-    function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
+
+    // ═══════════════════════════════════════════════════════════
+    // UI HELPERS
+    // ═══════════════════════════════════════════════════════════
+    function showLoading(show) {
+      document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+    }
 
     function showError(pageId, msg) {
       var page = document.getElementById('page-' + pageId);
       if (!page) return;
       var banner = page.querySelector('.error-banner');
-      if (!banner) { banner = document.createElement('div'); banner.className = 'error-banner'; page.prepend(banner); }
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.className = 'error-banner';
+        page.prepend(banner);
+      }
       banner.textContent = msg;
     }
 
-    function removeError(pageId) { var b = document.querySelector('#page-' + pageId + ' .error-banner'); if (b) b.remove(); }
+    function removeError(pageId) {
+      var banner = document.querySelector('#page-' + pageId + ' .error-banner');
+      if (banner) banner.remove();
+    }
 
     function setKPI(id, subId, val, sub) {
-      var el = document.getElementById(id); var subEl = document.getElementById(subId);
+      var el    = document.getElementById(id);
+      var subEl = document.getElementById(subId);
       if (el)    el.textContent    = (val !== null && val !== '' && val !== undefined) ? val : '—';
       if (subEl) subEl.textContent = sub || '';
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // PAGE LOAD ROUTER
+    // ═══════════════════════════════════════════════════════════
     function loadCurrentPage() {
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
@@ -476,170 +591,491 @@
       if (fn) fn();
     }
 
+
+    // ═══════════════════════════════════════════════════════════════
+    // P1 — EXECUTIVE SNAPSHOT
+    // Source: Targets tab (Anne's monthly targets ✅)
+    // KPIs:   Revenue Target, Margin Target, Lead Target,
+    //         Jobs Won Target, Quotes Target, Active Jobs Target
+    // Chart:  Monthly revenue targets bar chart
+    // Table:  All targets by month
+    // ═══════════════════════════════════════════════════════════════
     async function loadP1() {
-      showLoading(true); removeError('p1');
+      showLoading(true);
+      removeError('p1');
       try {
         var targets = await fetchSheet(CONFIG.TABS.TARGETS);
         renderP1(targets);
-      } catch(err) {
+      } catch (err) {
         console.error('P1 load error:', err);
         showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
-      } finally { showLoading(false); init3DTilt(); }
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
     }
 
     function renderP1(targets) {
-      var filtered = filterByBrand(targets, activeBrand);
+      var branded  = filterByBrand(targets, activeBrand);
+      var filtered = filterByMonths(branded, activeMonths);
+
       if (filtered.length === 0) {
-        ['kpi-revenue-target','kpi-margin-target','kpi-lead-target','kpi-jobs-target','kpi-quote-target','kpi-activejobs-target'].forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data yet in Targets tab'); });
-        document.getElementById('p1-targets-table').innerHTML = '<p class="no-data-msg">No targets data available yet. Anne is populating the Targets tab.</p>';
+        ['kpi-revenue-target','kpi-margin-target','kpi-lead-target',
+         'kpi-jobs-target','kpi-quote-target','kpi-activejobs-target'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', 'No data for selection');
+        });
+        document.getElementById('p1-targets-table').innerHTML =
+          '<p class="no-data-msg">No targets data for the selected filters.</p>';
         return;
       }
-      var now = new Date();
+
+      // Use current month row for KPI cards, fallback to last row
+      var now       = new Date();
       var monthName = now.toLocaleString('en-AU', { month: 'long' });
       var monthYear = now.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
+
       var currentRow = filtered.find(function(r) {
-        var m = String(col(r, 'Month', 'month', 'MONTH', 'Period', 'period'));
-        return m.toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
+        return String(r['Month'] || '').toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
       }) || filtered[filtered.length - 1];
+
       if (currentRow) {
-        var revTarget    = parseNum(col(currentRow, 'Revenue_Target', 'Revenue Target', 'Rev_Target', 'Rev Target', 'revenue_target'));
-        var marginTarget = parseNum(col(currentRow, 'Gross_Margin_Target', 'Margin_Target', 'Margin Target', 'GM_Target', 'GM Target', 'Gross Margin %'));
-        var leadsTarget  = parseNum(col(currentRow, 'Leads_Target', 'Lead_Target', 'Leads Target', 'Lead Target', 'New Leads', 'leads_target'));
-        var jobsTarget   = parseNum(col(currentRow, 'Jobs_Won_Target', 'Jobs_Target', 'Jobs Won Target', 'Jobs Target', 'jobs_target'));
-        var quotesTarget = parseNum(col(currentRow, 'Quotes_Target', 'Quote_Target', 'Quotes Sent Target', 'Quotes Target', 'quotes_target'));
-        var activeTarget = parseNum(col(currentRow, 'Active_Jobs_Target', 'Active Jobs Target', 'Active_Target', 'active_jobs_target'));
-        setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget    ? formatCurrency(revTarget)   : '—', revTarget    ? monthYear + ' target'   : 'Check Targets tab');
-        setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget ? formatPct(marginTarget)     : '—', marginTarget ? 'Gross margin target'    : 'Check Targets tab');
-        setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget  || '—',                              leadsTarget  ? 'New leads target'        : 'Check Targets tab');
-        setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget   || '—',                              jobsTarget   ? 'Jobs won target'         : 'Check Targets tab');
-        setKPI('kpi-quote-target',      'kpi-quote-target-sub',      quotesTarget || '—',                              quotesTarget ? 'Quotes sent target'      : 'Check Targets tab');
-        setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', activeTarget || '—',                              activeTarget ? 'Active jobs target'      : 'Check Targets tab');
+        var revTarget    = parseNum(currentRow['Revenue Target ($)']);
+        var marginTarget = parseNum(currentRow['Gross Margin Target %']);
+        var leadsTarget  = parseNum(currentRow['Leads Target (monthly)']);
+        var jobsTarget   = parseNum(currentRow['Jobs Won Target']);
+        var profitTarget = parseNum(currentRow['Profit Target ($)']);
+        var overheadTarget = parseNum(currentRow['Overhead Budget $ (Monthly Expenses)']);
+
+        setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget      ? formatCurrency(revTarget)    : '—', revTarget      ? monthYear + ' target'     : 'Check Targets tab');
+        setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget   ? formatPct(marginTarget)      : '—', marginTarget   ? 'Gross margin target'      : 'Check Targets tab');
+        setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget    || '—',                               leadsTarget    ? 'Monthly leads target'      : 'Check Targets tab');
+        setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget     || '—',                               jobsTarget     ? 'Jobs won target'           : 'Check Targets tab');
+        setKPI('kpi-quote-target',      'kpi-quote-target-sub',      profitTarget   ? formatCurrency(profitTarget) : '—', profitTarget   ? 'Profit target'             : 'Check Targets tab');
+        setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', overheadTarget ? formatCurrency(overheadTarget): '—', overheadTarget ? 'Monthly overhead budget'  : 'Check Targets tab');
       }
-      var labels  = filtered.map(function(r) { return col(r, 'Month', 'month', 'MONTH', 'Period', 'period') || ''; });
-      var revData = filtered.map(function(r) { return parseNum(col(r, 'Revenue_Target', 'Revenue Target', 'Rev_Target', 'Rev Target', 'revenue_target')); });
+
+      // Revenue target bar chart — one bar per month
+      var labels  = filtered.map(function(r) { return (r['Month'] || '') + ' ' + (r['Year'] || ''); });
+      var revData = filtered.map(function(r) { return parseNum(r['Revenue Target ($)']); });
+
       makeChart('chart-p1-revenue', {
         type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Revenue Target', data: revData, backgroundColor: 'rgba(38,36,37,0.80)', borderWidth: 0, borderRadius: 5 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return '$' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v); } } } } }
+        data: {
+          labels: labels,
+          datasets: [{
+            label:           'Revenue Target',
+            data:            revData,
+            backgroundColor: 'rgba(38, 36, 37, 0.80)',
+            borderColor:     '#262425',
+            borderWidth:     0,
+            borderRadius:    5
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(v) {
+                  return '$' + (v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v);
+                }
+              }
+            }
+          }
+        }
       });
+
+      // Auto-render all columns from Targets tab
       document.getElementById('p1-targets-table').innerHTML = buildAutoTable(filtered);
     }
 
+
+    // ═══════════════════════════════════════════════════════════════
+    // P7 — CLIENT SATISFACTION
+    // Source: Client_Reviews tab (live in Make.com ✅)
+    // KPIs:   Avg Rating, Total Reviews, 5-Star Count, Response Rate
+    // Charts: Rating distribution bar, Reviews by month line
+    // Table:  Most recent 25 reviews
+    // ═══════════════════════════════════════════════════════════════
     async function loadP7() {
-      showLoading(true); removeError('p7');
+      showLoading(true);
+      removeError('p7');
       try {
         var reviews = await fetchSheet(CONFIG.TABS.CLIENT_REVIEWS);
         renderP7(reviews);
-      } catch(err) { console.error('P7 load error:', err); showError('p7', 'Could not load Client Reviews data.');
-      } finally { showLoading(false); init3DTilt(); }
+      } catch (err) {
+        console.error('P7 load error:', err);
+        showError('p7', 'Could not load Client Reviews data.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
     }
 
     function renderP7(reviews) {
       var filtered = filterByBrand(reviews, activeBrand);
+
       if (filtered.length === 0) {
-        ['kpi-avg-rating','kpi-total-reviews','kpi-five-star','kpi-response-rate'].forEach(function(id) { setKPI(id, id + '-sub', '—', 'No review data yet'); });
-        document.getElementById('p7-reviews-table').innerHTML = '<p class="no-data-msg">No client reviews available yet.</p>';
+        ['kpi-avg-rating','kpi-total-reviews','kpi-five-star','kpi-response-rate'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', 'No review data yet');
+        });
+        document.getElementById('p7-reviews-table').innerHTML =
+          '<p class="no-data-msg">No client reviews available yet.</p>';
         return;
       }
-      var ratings = filtered.map(function(r) { return parseNum(col(r, 'Rating','rating','Score','Stars','star_rating','Review Rating')); }).filter(function(n) { return n > 0; });
-      var avgRating    = ratings.length ? ratings.reduce(function(a,b){return a+b;},0) / ratings.length : 0;
-      var fiveStar     = ratings.filter(function(n){return n>=5;}).length;
-      var responded    = filtered.filter(function(r){ var v=String(col(r,'Responded','responded','Response','Replied','replied')||'').toLowerCase(); return v==='yes'||v==='true'||v==='1'||v==='y'; }).length;
-      var responseRate = filtered.length ? Math.round(responded/filtered.length*100) : 0;
-      setKPI('kpi-avg-rating',    'kpi-avg-rating-sub',    avgRating ? avgRating.toFixed(1)+' / 5.0' : '—', 'From '+ratings.length+' rated reviews');
+
+      // Ratings array (only non-zero values)
+      var ratings = filtered
+        .map(function(r) { return parseNum(col(r, 'Rating', 'rating', 'Score', 'Stars', 'star_rating', 'Review Rating')); })
+        .filter(function(n) { return n > 0; });
+
+      var avgRating    = ratings.length ? ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length : 0;
+      var fiveStar     = ratings.filter(function(n) { return n >= 5; }).length;
+      var responded    = filtered.filter(function(r) {
+        var v = String(col(r, 'Responded', 'responded', 'Response', 'Replied', 'replied') || '').toLowerCase();
+        return v === 'yes' || v === 'true' || v === '1' || v === 'y';
+      }).length;
+      var responseRate = filtered.length ? Math.round(responded / filtered.length * 100) : 0;
+
+      setKPI('kpi-avg-rating',    'kpi-avg-rating-sub',    avgRating ? avgRating.toFixed(1) + ' / 5.0' : '—', 'From ' + ratings.length + ' rated reviews');
       setKPI('kpi-total-reviews', 'kpi-total-reviews-sub', filtered.length, 'All time');
-      setKPI('kpi-five-star',     'kpi-five-star-sub',     fiveStar, Math.round(fiveStar/filtered.length*100)+'% of all reviews');
-      setKPI('kpi-response-rate', 'kpi-response-rate-sub', responseRate+'%', responded+' of '+filtered.length+' replied');
-      var dist = [1,2,3,4,5].map(function(n){ return ratings.filter(function(r){return Math.round(r)===n;}).length; });
-      makeChart('chart-p7-distribution', { type:'bar', data:{ labels:['1 ★','2 ★','3 ★','4 ★','5 ★'], datasets:[{ label:'Reviews', data:dist, backgroundColor:['#c0392b','#e67e22','#f1c40f','#27ae60','#1a7a43'], borderWidth:0, borderRadius:4 }] }, options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} } });
-      var byMonth={};
-      filtered.forEach(function(r){ var d=col(r,'Date','date','Review_Date','Submitted','Created','created_at'); if(!d)return; var p=new Date(d); if(isNaN(p))return; var k=p.toLocaleString('en-AU',{month:'short',year:'2-digit'}); byMonth[k]=(byMonth[k]||0)+1; });
-      var monthLabels=Object.keys(byMonth).slice(-12);
-      makeChart('chart-p7-monthly', { type:'line', data:{ labels:monthLabels, datasets:[{ label:'Reviews', data:monthLabels.map(function(k){return byMonth[k];}), borderColor:'#262425', backgroundColor:'rgba(38,36,37,0.08)', tension:0.3, fill:true, pointRadius:4, pointBackgroundColor:'#262425' }] }, options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} } });
-      var sorted=filtered.slice().sort(function(a,b){ var da=new Date(col(a,'Date','date','Review_Date','Submitted','Created','created_at')||0); var db=new Date(col(b,'Date','date','Review_Date','Submitted','Created','created_at')||0); return db-da; }).slice(0,25);
+      setKPI('kpi-five-star',     'kpi-five-star-sub',     fiveStar, Math.round(fiveStar / filtered.length * 100) + '% of all reviews');
+      setKPI('kpi-response-rate', 'kpi-response-rate-sub', responseRate + '%', responded + ' of ' + filtered.length + ' replied');
+
+      // Rating distribution bar chart (1–5 stars)
+      var dist = [1, 2, 3, 4, 5].map(function(n) {
+        return ratings.filter(function(r) { return Math.round(r) === n; }).length;
+      });
+      makeChart('chart-p7-distribution', {
+        type: 'bar',
+        data: {
+          labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
+          datasets: [{
+            label:           'Reviews',
+            data:            dist,
+            backgroundColor: ['#c0392b', '#e67e22', '#f1c40f', '#27ae60', '#1a7a43'],
+            borderWidth:     0,
+            borderRadius:    4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+
+      // Reviews by month line chart (last 12 months)
+      var byMonth = {};
+      filtered.forEach(function(r) {
+        var d = col(r, 'Date', 'date', 'Review_Date', 'Submitted', 'Created', 'created_at');
+        if (!d) return;
+        var parsed = new Date(d);
+        if (isNaN(parsed)) return;
+        var key = parsed.toLocaleString('en-AU', { month: 'short', year: '2-digit' });
+        byMonth[key] = (byMonth[key] || 0) + 1;
+      });
+      var monthLabels = Object.keys(byMonth).slice(-12);
+
+      makeChart('chart-p7-monthly', {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label:           'Reviews',
+            data:            monthLabels.map(function(k) { return byMonth[k]; }),
+            borderColor:     '#262425',
+            backgroundColor: 'rgba(38,36,37,0.08)',
+            tension:         0.3,
+            fill:            true,
+            pointRadius:     4,
+            pointBackgroundColor: '#262425'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+
+      // Reviews table — most recent first, max 25
+      var sorted = filtered.slice().sort(function(a, b) {
+        var da = new Date(col(a, 'Date','date','Review_Date','Submitted','Created','created_at') || 0);
+        var db = new Date(col(b, 'Date','date','Review_Date','Submitted','Created','created_at') || 0);
+        return db - da;
+      }).slice(0, 25);
+
       document.getElementById('p7-reviews-table').innerHTML = buildTable(sorted, [
-        { label:'Date', key:['Date','date','Review_Date','Submitted','Created','created_at'], format:function(v){var d=new Date(v);return isNaN(d)?v:d.toLocaleDateString('en-AU');} },
-        { label:'Client', key:['Client_Name','Client','Name','Customer','customer_name','Contact'] },
-        { label:'Division', key:['Division','division','Service','Category'] },
-        { label:'Platform', key:['Platform','platform','Source','source'] },
-        { label:'Rating', key:['Rating','rating','Score','Stars','star_rating','Review Rating'], format:function(v){var n=Math.min(5,Math.max(0,Math.round(parseNum(v))));return v?'★'.repeat(n)+'☆'.repeat(5-n)+' ('+v+')':'—';} },
-        { label:'Review', key:['Review','Review_Text','Comment','review_text','Feedback','Body'], format:function(v){return v?(v.length>100?v.substring(0,100)+'…':v):'—';} },
-        { label:'Responded', key:['Responded','responded','Reply','Replied','Response'] }
+        {
+          label: 'Date',
+          key:   ['Date','date','Review_Date','Submitted','Created','created_at'],
+          format: function(v) { var d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('en-AU'); }
+        },
+        { label: 'Client',   key: ['Client_Name','Client','Name','Customer','customer_name','Contact'] },
+        { label: 'Division', key: ['Division','division','Service','Category'] },
+        { label: 'Platform', key: ['Platform','platform','Source','source'] },
+        {
+          label: 'Rating',
+          key:   ['Rating','rating','Score','Stars','star_rating','Review Rating'],
+          format: function(v) {
+            var n = Math.min(5, Math.max(0, Math.round(parseNum(v))));
+            return v ? '★'.repeat(n) + '☆'.repeat(5 - n) + ' (' + v + ')' : '—';
+          }
+        },
+        {
+          label:  'Review',
+          key:    ['Review','Review_Text','Comment','review_text','Feedback','Body'],
+          format: function(v) { return v ? (v.length > 100 ? v.substring(0, 100) + '…' : v) : '—'; }
+        },
+        { label: 'Responded', key: ['Responded','responded','Reply','Replied','Response'] }
       ]);
     }
 
+
+    // ═══════════════════════════════════════════════════════════════
+    // P8 — WEEKLY OVERVIEW
+    // Source: Weekly_Summary tab (AppScript ✅) + Targets tab
+    // KPIs:   Latest week — Leads, Revenue, Quotes, Jobs Won
+    // Chart:  12-week leads + revenue combo bar/line
+    // Table:  Last 12 weeks, newest first
+    // ═══════════════════════════════════════════════════════════════
     async function loadP8() {
-      showLoading(true); removeError('p8');
+      showLoading(true);
+      removeError('p8');
       try {
-        var results = await Promise.all([fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY), fetchSheet(CONFIG.TABS.TARGETS)]);
+        var results  = await Promise.all([
+          fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
+          fetchSheet(CONFIG.TABS.TARGETS)
+        ]);
         renderP8(results[0], results[1]);
-      } catch(err) { console.error('P8 load error:', err); showError('p8','Could not load Weekly Overview data.');
-      } finally { showLoading(false); init3DTilt(); }
+      } catch (err) {
+        console.error('P8 load error:', err);
+        showError('p8', 'Could not load Weekly Overview data.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
     }
 
     function renderP8(weekly, targets) {
-      var filtered = filterByBrand(weekly, activeBrand);
+      var branded  = filterByBrand(weekly, activeBrand);
+      var filtered = filterByMonths(branded, activeMonths);
+
       if (filtered.length === 0) {
-        ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id){ setKPI(id,id+'-sub','—','No weekly data yet'); });
-        document.getElementById('p8-weekly-table').innerHTML = '<p class="no-data-msg">No weekly summary data available yet.</p>';
+        ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', 'No data for selection');
+        });
+        document.getElementById('p8-weekly-table').innerHTML =
+          '<p class="no-data-msg">No weekly summary data for selected filters.</p>';
         return;
       }
-      var latest    = filtered[filtered.length-1];
-      var weekLabel = col(latest,'Week','week','Week_Label','Week Start','week_start','Period') || 'Latest Week';
-      var weekLeads  = parseNum(col(latest,'Total_Leads','Leads','New_Leads','New Leads','leads','total_leads'));
-      var weekRev    = parseNum(col(latest,'Revenue','revenue','Total_Revenue','Revenue_WTD','Revenue WTD'));
-      var weekQuotes = parseNum(col(latest,'Quotes_Sent','Quotes','quotes_sent','Quotes Sent'));
-      var weekJobs   = parseNum(col(latest,'Jobs_Won','Jobs Won','jobs_won','Won','Jobs Won WTD'));
-      setKPI('kpi-week-leads',   'kpi-week-leads-sub',   weekLeads  ||'—', weekLabel);
-      setKPI('kpi-week-revenue', 'kpi-week-revenue-sub', weekRev?formatCurrency(weekRev):'—', weekLabel);
-      setKPI('kpi-week-quotes',  'kpi-week-quotes-sub',  weekQuotes ||'—', weekLabel);
-      setKPI('kpi-week-jobs',    'kpi-week-jobs-sub',    weekJobs   ||'—', weekLabel);
-      var last12=filtered.slice(-12);
-      var chartLabels=last12.map(function(r){return col(r,'Week','week','Week_Label','Week Start','week_start','Period')||'';});
-      var leadsData  =last12.map(function(r){return parseNum(col(r,'Total_Leads','Leads','New_Leads','New Leads','leads','total_leads'));});
-      var revenueData=last12.map(function(r){return parseNum(col(r,'Revenue','revenue','Total_Revenue','Revenue_WTD','Revenue WTD'));});
-      makeChart('chart-p8-leads', { type:'bar', data:{ labels:chartLabels, datasets:[{ label:'Leads', data:leadsData, backgroundColor:'rgba(38,36,37,0.80)', borderWidth:0, borderRadius:4, yAxisID:'y' },{ label:'Revenue ($)', data:revenueData, type:'line', borderColor:'#888', backgroundColor:'transparent', tension:0.3, pointRadius:3, yAxisID:'y1' }] }, options:{ responsive:true, plugins:{legend:{position:'top'}}, scales:{ y:{beginAtZero:true,position:'left',title:{display:true,text:'Leads'}}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return '$'+(v>=1000?(v/1000).toFixed(0)+'k':v);}}} } } });
-      document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(filtered.slice(-12).reverse());
+
+      // Latest week = last row
+      var latest    = filtered[filtered.length - 1];
+      var weekLabel = latest['Week'] || 'Latest Week';
+
+      // Exact column names from Weekly_Summary tab
+      var weekLeads  = parseNum(latest['Leads (week)']);
+      var weekRev    = parseNum(latest['Revenue ($)']);
+      var weekQuotes = parseNum(latest['Quotes Sent']);
+      var weekJobs   = parseNum(latest['Jobs Won']);
+
+      setKPI('kpi-week-leads',   'kpi-week-leads-sub',   weekLeads  || '—',                       weekLabel);
+      setKPI('kpi-week-revenue', 'kpi-week-revenue-sub', weekRev ? formatCurrency(weekRev) : '—', weekLabel);
+      setKPI('kpi-week-quotes',  'kpi-week-quotes-sub',  weekQuotes || '—',                       weekLabel);
+      setKPI('kpi-week-jobs',    'kpi-week-jobs-sub',    weekJobs   || '—',                       weekLabel);
+
+      // 12-week combo chart: leads (bars) + revenue (line)
+      var last12      = filtered.slice(-12);
+      var chartLabels = last12.map(function(r) { return r['Week'] || ''; });
+      var leadsData   = last12.map(function(r) { return parseNum(r['Leads (week)']); });
+      var revenueData = last12.map(function(r) { return parseNum(r['Revenue ($)']); });
+
+      makeChart('chart-p8-leads', {
+        type: 'bar',
+        data: {
+          labels:   chartLabels,
+          datasets: [
+            {
+              label:           'Leads',
+              data:            leadsData,
+              backgroundColor: 'rgba(38, 36, 37, 0.80)',
+              borderWidth:     0,
+              borderRadius:    4,
+              yAxisID:         'y'
+            },
+            {
+              label:           'Revenue ($)',
+              data:            revenueData,
+              type:            'line',
+              borderColor:     '#888',
+              backgroundColor: 'transparent',
+              tension:         0.3,
+              pointRadius:     3,
+              yAxisID:         'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Leads' } },
+            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false },
+                  ticks: { callback: function(v) { return '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v); } } }
+          }
+        }
+      });
+
+      // Table: last 12 weeks, newest first
+      document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(
+        filtered.slice(-12).reverse()
+      );
     }
 
+
+    // ═══════════════════════════════════════════════════════════════
+    // P10 — MARKETING PERFORMANCE
+    // Source: Marketing_Paid tab (Make.com Scenario 13 ✅)
+    // KPIs:   Total Spend, Total Leads, CPL, ROAS
+    // Charts: Spend by platform doughnut, Leads vs Spend trend
+    // Table:  All campaign data
+    // ═══════════════════════════════════════════════════════════════
     async function loadP10() {
-      showLoading(true); removeError('p10');
+      showLoading(true);
+      removeError('p10');
       try {
         var marketing = await fetchSheet(CONFIG.TABS.MARKETING_PAID);
         renderP10(marketing);
-      } catch(err) { console.error('P10 load error:', err); showError('p10','Could not load Marketing data.');
-      } finally { showLoading(false); init3DTilt(); }
+      } catch (err) {
+        console.error('P10 load error:', err);
+        showError('p10', 'Could not load Marketing data.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
     }
 
     function renderP10(marketing) {
-      var filtered = filterByBrand(marketing, activeBrand);
+      var branded  = filterByBrand(marketing, activeBrand);
+      var filtered = filterByMonths(branded, activeMonths);
+
       if (filtered.length === 0) {
-        ['kpi-mkt-spend','kpi-mkt-leads','kpi-mkt-cpl','kpi-mkt-roas'].forEach(function(id){ setKPI(id,id+'-sub','—','No marketing data yet'); });
-        document.getElementById('p10-campaign-table').innerHTML = '<p class="no-data-msg">No paid marketing data available yet. Check Marketing_Paid tab and Make.com Scenario 13.</p>';
+        ['kpi-mkt-spend','kpi-mkt-leads','kpi-mkt-cpl','kpi-mkt-roas'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', 'No data for selection');
+        });
+        document.getElementById('p10-campaign-table').innerHTML =
+          '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
         return;
       }
-      var totalSpend=filtered.reduce(function(s,r){return s+parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost','Budget','budget'));},0);
-      var totalLeads=filtered.reduce(function(s,r){return s+parseNum(col(r,'Leads','leads','Conversions','Results','Lead Count','lead_count'));},0);
-      var totalRev  =filtered.reduce(function(s,r){return s+parseNum(col(r,'Revenue','revenue','Attributed_Revenue','Attributed Revenue','value'));},0);
-      var avgCPL=totalLeads>0?totalSpend/totalLeads:0;
-      var roas  =totalSpend>0&&totalRev>0?totalRev/totalSpend:0;
-      setKPI('kpi-mkt-spend','kpi-mkt-spend-sub',formatCurrency(totalSpend),'Total paid ad spend');
-      setKPI('kpi-mkt-leads','kpi-mkt-leads-sub',totalLeads||'—','Leads generated');
-      setKPI('kpi-mkt-cpl',  'kpi-mkt-cpl-sub',  avgCPL?formatCurrency(avgCPL):'—','Cost per lead');
-      setKPI('kpi-mkt-roas', 'kpi-mkt-roas-sub',  roas?roas.toFixed(2)+'x':'—', roas?'Return on ad spend':'Add revenue column for ROAS');
-      var byPlatform={};
-      filtered.forEach(function(r){ var p=col(r,'Platform','platform','Source','Channel','source','channel')||'Other'; byPlatform[p]=(byPlatform[p]||0)+parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost')); });
-      var platLabels=Object.keys(byPlatform);
-      makeChart('chart-p10-spend', { type:'doughnut', data:{ labels:platLabels, datasets:[{ data:platLabels.map(function(k){return byPlatform[k];}), backgroundColor:['#262425','#555','#888','#aaa','#ccc'], borderWidth:3, borderColor:'#fff' }] }, options:{ responsive:true, plugins:{legend:{position:'bottom',labels:{padding:12}}} } });
-      var byWeek={};
-      filtered.forEach(function(r){ var d=col(r,'Week','week','Date','date','Period','Week_Start','week_start')||''; if(!d)return; if(!byWeek[d])byWeek[d]={spend:0,leads:0}; byWeek[d].spend+=parseNum(col(r,'Spend','spend','Cost','Amount Spent','Amount_Spent','cost')); byWeek[d].leads+=parseNum(col(r,'Leads','leads','Conversions','Results','Lead Count')); });
-      var weekKeys=Object.keys(byWeek).slice(-12);
-      makeChart('chart-p10-trend', { type:'bar', data:{ labels:weekKeys, datasets:[{ label:'Spend ($)', data:weekKeys.map(function(k){return byWeek[k].spend;}), backgroundColor:'rgba(38,36,37,0.80)', borderWidth:0, borderRadius:4, yAxisID:'y' },{ label:'Leads', data:weekKeys.map(function(k){return byWeek[k].leads;}), type:'line', borderColor:'#888', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'y1' }] }, options:{ responsive:true, plugins:{legend:{position:'top'}}, scales:{ y:{beginAtZero:true,position:'left',ticks:{callback:function(v){return '$'+v;}}}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}} } } });
+
+      // Exact column names from Marketing_Paid tab
+      var totalSpend = filtered.reduce(function(s, r) { return s + parseNum(r['Ad Spend ($)']); }, 0);
+      var totalLeads = filtered.reduce(function(s, r) { return s + parseNum(r['Leads Generated']); }, 0);
+      var totalRev   = filtered.reduce(function(s, r) { return s + parseNum(r['Revenue from Won Jobs $']); }, 0);
+      var totalRoas  = filtered.reduce(function(s, r) { return s + parseNum(r['ROAS']); }, 0);
+      var avgRoas    = filtered.length > 0 ? totalRoas / filtered.length : 0;
+
+      var avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
+
+      setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub', formatCurrency(totalSpend),          'Total paid ad spend');
+      setKPI('kpi-mkt-leads', 'kpi-mkt-leads-sub', totalLeads || '—',                   'Leads generated');
+      setKPI('kpi-mkt-cpl',   'kpi-mkt-cpl-sub',   avgCPL ? formatCurrency(avgCPL) : '—', 'Cost per lead');
+      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',  avgRoas ? avgRoas.toFixed(2) + 'x' : '—',
+             avgRoas ? 'Avg return on ad spend' : 'No ROAS data yet');
+
+      // Spend by platform — doughnut chart
+      var byPlatform = {};
+      filtered.forEach(function(r) {
+        var p = r['Platform'] || 'Other';
+        byPlatform[p] = (byPlatform[p] || 0) + parseNum(r['Ad Spend ($)']);
+      });
+      var platLabels = Object.keys(byPlatform);
+      var platColors = ['#262425', '#555', '#888', '#aaa', '#ccc'];
+
+      makeChart('chart-p10-spend', {
+        type: 'doughnut',
+        data: {
+          labels: platLabels,
+          datasets: [{
+            data:            platLabels.map(function(k) { return byPlatform[k]; }),
+            backgroundColor: platColors.slice(0, platLabels.length),
+            borderWidth:     3,
+            borderColor:     '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { padding: 12 } } }
+        }
+      });
+
+      // Leads vs Spend by month — combo chart
+      var byMonth = {};
+      filtered.forEach(function(r) {
+        var d = r['Month'] || r['Date'] || '';
+        if (!d) return;
+        if (!byMonth[d]) byMonth[d] = { spend: 0, leads: 0 };
+        byMonth[d].spend += parseNum(r['Ad Spend ($)']);
+        byMonth[d].leads += parseNum(r['Leads Generated']);
+      });
+      var monthKeys = Object.keys(byMonth);
+
+      makeChart('chart-p10-trend', {
+        type: 'bar',
+        data: {
+          labels: monthKeys,
+          datasets: [
+            {
+              label:           'Spend ($)',
+              data:            monthKeys.map(function(k) { return byMonth[k].spend; }),
+              backgroundColor: 'rgba(38,36,37,0.80)',
+              borderWidth:     0,
+              borderRadius:    4,
+              yAxisID:         'y'
+            },
+            {
+              label:           'Leads',
+              data:            monthKeys.map(function(k) { return byMonth[k].leads; }),
+              type:            'line',
+              borderColor:     '#888',
+              backgroundColor: 'transparent',
+              tension:         0.3,
+              pointRadius:     4,
+              yAxisID:         'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y:  { beginAtZero: true, position: 'left',  ticks: { callback: function(v) { return '$' + v; } } },
+            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+
+      // Full campaign table
       document.getElementById('p10-campaign-table').innerHTML = buildAutoTable(filtered);
     }
 
-    document.getElementById('refresh-btn').addEventListener('click', function() { clearSheetsCache(); loadCurrentPage(); });
 
+    // ═══════════════════════════════════════════════════════════
+    // REFRESH BUTTON
+    // ═══════════════════════════════════════════════════════════
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+      clearSheetsCache();
+      loadCurrentPage();
+    });
+
+
+    // ═══════════════════════════════════════════════════════════
+    // INITIALISE
+    // ═══════════════════════════════════════════════════════════
     init3DTilt();
     loadP1();
 
