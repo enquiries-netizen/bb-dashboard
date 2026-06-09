@@ -67,6 +67,25 @@ function filterByBrand(rows, brand) {
 }
 
 /**
+ * Filters rows by selected year.
+ * year = 'ALL' means show all years.
+ */
+function filterByYear(rows, year) {
+  if (!year || year === 'ALL') return rows;
+  return rows.filter(function(r) {
+    var y = String(r['Year'] || r['year'] || '');
+    if (y) return y === String(year);
+    // Try extracting from date columns
+    var dateStr = r['Week Start'] || r['week_start'] || r['Date'] || r['date'] || '';
+    if (dateStr) {
+      var parts = String(dateStr).split('/');
+      if (parts.length === 3) return parts[2] === String(year);
+    }
+    return true;
+  });
+}
+
+/**
  * Filters rows by selected months.
  * months = [] means show all. months = ['Apr','May'] shows only those months.
  * Reads from Month column or extracts from date columns.

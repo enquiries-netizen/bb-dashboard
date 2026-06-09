@@ -227,16 +227,6 @@ select {
   border-color: rgba(210, 212, 213, 0.5);
 }
 
-/* Month filter — scrollable row */
-.month-filter {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  max-width: 380px;
-  padding-bottom: 2px;
-  gap: 3px;
-}
-.month-filter::-webkit-scrollbar { height: 2px; }
-.month-filter::-webkit-scrollbar-thumb { background: rgba(188,189,190,0.3); }
 
 
 /* ═══════════════════════════════════════════════════════════════

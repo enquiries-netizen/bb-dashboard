@@ -37,21 +37,30 @@
         </div>
         <div class="filter-group">
           <span class="filter-label">Month</span>
-          <div class="toggle-group month-filter" id="month-filter">
-            <button class="toggle-btn active" data-month="ALL">All</button>
-            <button class="toggle-btn" data-month="Jan">Jan</button>
-            <button class="toggle-btn" data-month="Feb">Feb</button>
-            <button class="toggle-btn" data-month="Mar">Mar</button>
-            <button class="toggle-btn" data-month="Apr">Apr</button>
-            <button class="toggle-btn" data-month="May">May</button>
-            <button class="toggle-btn" data-month="Jun">Jun</button>
-            <button class="toggle-btn" data-month="Jul">Jul</button>
-            <button class="toggle-btn" data-month="Aug">Aug</button>
-            <button class="toggle-btn" data-month="Sep">Sep</button>
-            <button class="toggle-btn" data-month="Oct">Oct</button>
-            <button class="toggle-btn" data-month="Nov">Nov</button>
-            <button class="toggle-btn" data-month="Dec">Dec</button>
-          </div>
+          <select class="filter-select" id="month-select">
+            <option value="ALL">All Months</option>
+            <option value="Jan">January</option>
+            <option value="Feb">February</option>
+            <option value="Mar">March</option>
+            <option value="Apr">April</option>
+            <option value="May">May</option>
+            <option value="Jun">June</option>
+            <option value="Jul">July</option>
+            <option value="Aug">August</option>
+            <option value="Sep">September</option>
+            <option value="Oct">October</option>
+            <option value="Nov">November</option>
+            <option value="Dec">December</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Year</span>
+          <select class="filter-select" id="year-select">
+            <option value="ALL">All Years</option>
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
         </div>
         <button class="refresh-btn" id="refresh-btn" title="Refresh data">Refresh</button>
       </div>
@@ -500,28 +509,19 @@
       });
     });
 
-    // ═══ MONTH FILTER — multi-select ═══════════════════════════
-    var monthBtns    = document.querySelectorAll('#month-filter .toggle-btn');
+    // ═══ MONTH + YEAR DROPDOWNS ═════════════════════════════════
     var activeMonths = []; // empty = All months
+    var activeYear   = 'ALL';
 
-    monthBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var m = btn.dataset.month;
-        if (m === 'ALL') {
-          activeMonths = [];
-          monthBtns.forEach(function(b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-        } else {
-          document.querySelector('#month-filter [data-month="ALL"]').classList.remove('active');
-          var idx = activeMonths.indexOf(m);
-          if (idx === -1) { activeMonths.push(m); btn.classList.add('active'); }
-          else            { activeMonths.splice(idx, 1); btn.classList.remove('active'); }
-          if (activeMonths.length === 0) {
-            document.querySelector('#month-filter [data-month="ALL"]').classList.add('active');
-          }
-        }
-        loadCurrentPage();
-      });
+    document.getElementById('month-select').addEventListener('change', function() {
+      var val = this.value;
+      activeMonths = (val === 'ALL') ? [] : [val];
+      loadCurrentPage();
+    });
+
+    document.getElementById('year-select').addEventListener('change', function() {
+      activeYear = this.value;
+      loadCurrentPage();
     });
 
 
@@ -617,7 +617,7 @@
 
     function renderP1(targets) {
       var branded  = filterByBrand(targets, activeBrand);
-      var filtered = filterByMonths(branded, activeMonths);
+      var filtered = filterByMonths(filterByYear(branded, activeYear), activeMonths);
 
       if (filtered.length === 0) {
         ['kpi-revenue-target','kpi-margin-target','kpi-lead-target',
@@ -629,66 +629,95 @@
         return;
       }
 
-      // Use current month row for KPI cards, fallback to last row
+      // KPI cards: SUM across all divisions for current month
       var now       = new Date();
       var monthName = now.toLocaleString('en-AU', { month: 'long' });
       var monthYear = now.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
 
-      var currentRow = filtered.find(function(r) {
+      var kpiRows = filtered.filter(function(r) {
         return String(r['Month'] || '').toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
-      }) || filtered[filtered.length - 1];
-
-      if (currentRow) {
-        var revTarget    = parseNum(currentRow['Revenue Target ($)']);
-        var marginTarget = parseNum(currentRow['Gross Margin Target %']);
-        var leadsTarget  = parseNum(currentRow['Leads Target (monthly)']);
-        var jobsTarget   = parseNum(currentRow['Jobs Won Target']);
-        var profitTarget = parseNum(currentRow['Profit Target ($)']);
-        var overheadTarget = parseNum(currentRow['Overhead Budget $ (Monthly Expenses)']);
-
-        setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget      ? formatCurrency(revTarget)    : '—', revTarget      ? monthYear + ' target'     : 'Check Targets tab');
-        setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget   ? formatPct(marginTarget)      : '—', marginTarget   ? 'Gross margin target'      : 'Check Targets tab');
-        setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget    || '—',                               leadsTarget    ? 'Monthly leads target'      : 'Check Targets tab');
-        setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget     || '—',                               jobsTarget     ? 'Jobs won target'           : 'Check Targets tab');
-        setKPI('kpi-quote-target',      'kpi-quote-target-sub',      profitTarget   ? formatCurrency(profitTarget) : '—', profitTarget   ? 'Profit target'             : 'Check Targets tab');
-        setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', overheadTarget ? formatCurrency(overheadTarget): '—', overheadTarget ? 'Monthly overhead budget'  : 'Check Targets tab');
+      });
+      if (kpiRows.length === 0) {
+        // Fallback: use last month's rows (group by last month label)
+        var lastMonth = filtered[filtered.length - 1]['Month'];
+        kpiRows = filtered.filter(function(r) { return r['Month'] === lastMonth; });
+        monthYear = lastMonth + ' ' + (filtered[filtered.length - 1]['Year'] || '');
       }
 
-      // Revenue target bar chart — one bar per month
-      var labels  = filtered.map(function(r) { return (r['Month'] || '') + ' ' + (r['Year'] || ''); });
-      var revData = filtered.map(function(r) { return parseNum(r['Revenue Target ($)']); });
+      // Sum numeric KPIs across all division rows for this month
+      var revTarget      = kpiRows.reduce(function(s,r){ return s + parseNum(r['Revenue Target ($)']); }, 0);
+      var leadsTarget    = kpiRows.reduce(function(s,r){ return s + parseNum(r['Leads Target (monthly)']); }, 0);
+      var jobsTarget     = kpiRows.reduce(function(s,r){ return s + parseNum(r['Jobs Won Target']); }, 0);
+      var profitTarget   = kpiRows.reduce(function(s,r){ return s + parseNum(r['Profit Target ($)']); }, 0);
+      var overheadTarget = kpiRows.reduce(function(s,r){ return s + parseNum(r['Overhead Budget $ (Monthly Expenses)']); }, 0);
+      // Margin % is the same across divisions — just use first row
+      var marginTarget   = parseNum(kpiRows[0]['Gross Margin Target %']);
 
-      makeChart('chart-p1-revenue', {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label:           'Revenue Target',
-            data:            revData,
-            backgroundColor: 'rgba(38, 36, 37, 0.80)',
-            borderColor:     '#262425',
-            borderWidth:     0,
-            borderRadius:    5
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(v) {
-                  return '$' + (v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v);
-                }
-              }
-            }
-          }
-        }
+      setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget      ? formatCurrency(revTarget)     : '—', revTarget      ? monthYear + ' target'     : 'Check Targets tab');
+      setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget   ? formatPct(marginTarget)       : '—', marginTarget   ? 'Gross margin target'      : 'Check Targets tab');
+      setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget    || '—',                                leadsTarget    ? 'Monthly leads target'      : 'Check Targets tab');
+      setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget     || '—',                                jobsTarget     ? 'Jobs won target'           : 'Check Targets tab');
+      setKPI('kpi-quote-target',      'kpi-quote-target-sub',      profitTarget   ? formatCurrency(profitTarget)  : '—', profitTarget   ? 'Profit target'             : 'Check Targets tab');
+      setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', overheadTarget ? formatCurrency(overheadTarget): '—', overheadTarget ? 'Monthly overhead budget'   : 'Check Targets tab');
+
+      // ── Chart ────────────────────────────────────────────────────
+      // Get unique months in order
+      var monthOrder = [];
+      filtered.forEach(function(r) {
+        var key = (r['Month'] || '') + ' ' + (r['Year'] || '');
+        if (monthOrder.indexOf(key) === -1) monthOrder.push(key);
       });
 
-      // Auto-render all columns from Targets tab
-      document.getElementById('p1-targets-table').innerHTML = buildAutoTable(filtered);
+      var chartData, chartOptions;
+      var yTicks = { callback: function(v) { return '$' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v); } };
+
+      if (activeBrand === 'BBBS') {
+        // Grouped bars: Roofing vs Sheds per month
+        var roofData  = monthOrder.map(function(m) {
+          var row = filtered.find(function(r) { return r['Month'] + ' ' + r['Year'] === m && r['Division'] === 'Roofing'; });
+          return row ? parseNum(row['Revenue Target ($)']) : 0;
+        });
+        var shedsData = monthOrder.map(function(m) {
+          var row = filtered.find(function(r) { return r['Month'] + ' ' + r['Year'] === m && r['Division'] === 'Sheds'; });
+          return row ? parseNum(row['Revenue Target ($)']) : 0;
+        });
+        chartData = {
+          labels: monthOrder,
+          datasets: [
+            { label: 'Roofing', data: roofData,  backgroundColor: 'rgba(38,36,37,0.85)', borderRadius: 4 },
+            { label: 'Sheds',   data: shedsData, backgroundColor: 'rgba(38,36,37,0.40)', borderRadius: 4 }
+          ]
+        };
+        chartOptions = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: yTicks } } };
+      } else {
+        // Single summed bar per month (RMH or ALL)
+        var revData = monthOrder.map(function(m) {
+          return filtered.filter(function(r) { return r['Month'] + ' ' + r['Year'] === m; })
+                         .reduce(function(s,r) { return s + parseNum(r['Revenue Target ($)']); }, 0);
+        });
+        chartData = {
+          labels: monthOrder,
+          datasets: [{ label: 'Revenue Target', data: revData, backgroundColor: 'rgba(38,36,37,0.80)', borderRadius: 5, borderWidth: 0 }]
+        };
+        chartOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: yTicks } } };
+      }
+
+      makeChart('chart-p1-revenue', { type: 'bar', data: chartData, options: chartOptions });
+
+      // ── Table — explicit columns only, no metadata ───────────────
+      var tableCols = [
+        { label: 'Month',    key: 'Month' },
+        { label: 'Division', key: 'Division' },
+        { label: 'Revenue Target',    key: 'Revenue Target ($)',                  format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
+        { label: 'Profit Target',     key: 'Profit Target ($)',                   format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
+        { label: 'Gross Margin',      key: 'Gross Margin Target %',               format: function(v){ return v || '—'; } },
+        { label: 'Leads Target',      key: 'Leads Target (monthly)',              format: function(v){ return v || '—'; } },
+        { label: 'Jobs Won Target',   key: 'Jobs Won Target',                     format: function(v){ return v || '—'; } },
+        { label: 'Win Rate',          key: 'Win Rate target',                     format: function(v){ return v || '—'; } },
+        { label: 'Overhead Budget',   key: 'Overhead Budget $ (Monthly Expenses)',format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
+        { label: 'Labour Hrs Budget', key: 'Labour Hour Budget',                  format: function(v){ return v || '—'; } }
+      ];
+      document.getElementById('p1-targets-table').innerHTML = buildTable(filtered, tableCols);
     }
 
 
