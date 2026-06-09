@@ -16,7 +16,7 @@ const CONFIG = {
   SHEET_ID: '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8',
 
   // Google Sheets API Key (restricted to Vercel domain)
-  AAPI_KEY: 'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk',
+  API_KEY: 'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk',
 
   // ─── Tab Names ─────────────────────────────────────────────
   // Must match the exact tab names in Google Sheets (case sensitive)
