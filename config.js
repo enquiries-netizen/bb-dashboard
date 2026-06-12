@@ -30,7 +30,7 @@ const CONFIG = {
     XERO_INVOICES:       'Xero_Invoices',
     XERO_PROJECTS:       'Xero_Projects',
     XERO_OVERHEADS:      'Xero_Overheads',
-    BUILDPASS_SCHEDULE:  'Buildpass_Schedule',
+    BUILDPASS_SCHEDULE:  'Buildpass_Schedules',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     BUILDPASS_DIARIES:   'Buildpass_Diaries',
     CAPACITY:            'Capacity',
