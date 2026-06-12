@@ -192,10 +192,45 @@
             <span class="page-badge">P4</span>
             <h1 class="page-title">Job Performance</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Job Performance</p>
-            <p class="placeholder-text">Reads: Xero_Projects · Buildpass_Diaries · Variations_Log</p>
-            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval + Buildpass — builds in Section 6/7</p>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Active Jobs</div>
+              <div class="kpi-value" id="kpi-p4-active">—</div>
+              <div class="kpi-sub" id="kpi-p4-active-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">On Track</div>
+              <div class="kpi-value" id="kpi-p4-ontrack">—</div>
+              <div class="kpi-sub" id="kpi-p4-ontrack-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Overdue Milestones</div>
+              <div class="kpi-value" id="kpi-p4-overdue">—</div>
+              <div class="kpi-sub" id="kpi-p4-overdue-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Labour Cost</div>
+              <div class="kpi-value" id="kpi-p4-labour">—</div>
+              <div class="kpi-sub" id="kpi-p4-labour-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Job Completion Overview</div>
+              <canvas id="chart-p4-completion" height="110"></canvas>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Milestone Schedule &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#c0392b">⚠ = Overdue</span></div>
+            <div id="p4-schedule-table">Loading schedule data...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Labour Cost by Job</div>
+            <div id="p4-labour-table">Loading labour data...</div>
           </div>
         </section>
 
@@ -594,7 +629,7 @@
     function loadCurrentPage() {
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
-      var loaders = { p1: loadP1, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p4: loadP4, p7: loadP7, p8: loadP8, p10: loadP10 };
       var fn = loaders[active.dataset.page];
       if (fn) fn();
     }
@@ -971,6 +1006,250 @@
       document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(
         filtered.slice(-12).reverse()
       );
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P4 — JOB PERFORMANCE
+    // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b)
+    // KPIs:    Active Jobs, On Track, Overdue Milestones, Total Labour Cost
+    // Chart:   Horizontal bar — % complete per job (red = has overdue milestone)
+    // Tables:  Milestone schedule (overdue rows highlighted), Labour cost by job
+    // ═══════════════════════════════════════════════════════════════
+    async function loadP4() {
+      showLoading(true);
+      removeError('p4');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
+        ]);
+        renderP4(results[0], results[1]);
+      } catch (err) {
+        console.error('P4 load error:', err);
+        showError('p4', 'Could not load Job Performance data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP4(schedule, labour) {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // ── Filter by brand ───────────────────────────────────────
+      var schedFiltered  = filterByBrand(schedule, activeBrand);
+      var labourFiltered = filterByBrand(labour,   activeBrand);
+
+      // ── Helper: is a schedule row overdue? ────────────────────
+      function isOverdue(row) {
+        var status = String(col(row, 'Status', 'status') || '').toLowerCase();
+        if (status === 'complete' || status === 'completed' ||
+            status === 'cancelled' || status === 'canceled') return false;
+        var endStr = col(row, 'Planned End Date', 'End Date', 'endDate', 'end_date');
+        if (!endStr) return false;
+        var end = new Date(endStr);
+        return !isNaN(end) && end < today;
+      }
+
+      // ── Unique projects from schedule ─────────────────────────
+      var projects = [];
+      schedFiltered.forEach(function(r) {
+        var name = col(r, 'Project Name', 'project_name', 'project');
+        if (name && projects.indexOf(name) === -1) projects.push(name);
+      });
+
+      var overdueItems = schedFiltered.filter(isOverdue);
+      var overdueProjects = [];
+      overdueItems.forEach(function(r) {
+        var name = col(r, 'Project Name', 'project_name', 'project');
+        if (name && overdueProjects.indexOf(name) === -1) overdueProjects.push(name);
+      });
+      var onTrackCount = projects.filter(function(p) {
+        return overdueProjects.indexOf(p) === -1;
+      }).length;
+
+      // ── Total labour cost ─────────────────────────────────────
+      var totalLabour = labourFiltered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Labour Cost', 'Cost', 'Total Cost', 'cost', 'Amount', 'amount'));
+      }, 0);
+
+      // ── KPI Cards ─────────────────────────────────────────────
+      if (schedFiltered.length === 0 && labourFiltered.length === 0) {
+        ['kpi-p4-active','kpi-p4-ontrack','kpi-p4-overdue','kpi-p4-labour'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', 'Run Make.com Scenario 10 to populate');
+        });
+        document.getElementById('p4-schedule-table').innerHTML =
+          '<p class="no-data-msg">No schedule data yet — run Make.com Scenario 10 to populate the Buildpass_Schedule tab.</p>';
+        document.getElementById('p4-labour-table').innerHTML =
+          '<p class="no-data-msg">No labour data yet — run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
+        return;
+      }
+
+      setKPI('kpi-p4-active',
+             'kpi-p4-active-sub',
+             projects.length || '—',
+             'Jobs with schedule data');
+      setKPI('kpi-p4-ontrack',
+             'kpi-p4-ontrack-sub',
+             schedFiltered.length > 0 ? onTrackCount : '—',
+             onTrackCount === projects.length ? 'All jobs on track' : 'No overdue milestones');
+      setKPI('kpi-p4-overdue',
+             'kpi-p4-overdue-sub',
+             overdueItems.length > 0 ? overdueItems.length : (schedFiltered.length > 0 ? '0' : '—'),
+             overdueItems.length > 0
+               ? overdueItems.length + ' milestone' + (overdueItems.length !== 1 ? 's' : '') + ' past due date'
+               : 'All milestones on track');
+      setKPI('kpi-p4-labour',
+             'kpi-p4-labour-sub',
+             totalLabour ? formatCurrency(totalLabour) : '—',
+             'Total labour cost (all jobs)');
+
+      // ── Completion Chart ──────────────────────────────────────
+      // Average % complete per project, sorted ascending (least done first)
+      var projectCompletion = projects.map(function(p) {
+        var items = schedFiltered.filter(function(r) {
+          return col(r, 'Project Name', 'project_name', 'project') === p;
+        });
+        var validItems = items.filter(function(r) {
+          return String(col(r, '% Complete', 'percent_complete', 'Percent Complete') || '').toLowerCase() !== 'n/a';
+        });
+        var totalPct = validItems.reduce(function(s, r) {
+          return s + parseNum(col(r, '% Complete', 'percent_complete', 'Percent Complete'));
+        }, 0);
+        var avg = validItems.length ? Math.round(totalPct / validItems.length) : 0;
+        return { project: p, avg: avg, overdue: overdueProjects.indexOf(p) !== -1 };
+      }).sort(function(a, b) { return a.avg - b.avg; });
+
+      if (projectCompletion.length > 0) {
+        var chartLabels = projectCompletion.map(function(p) {
+          return p.project.length > 35 ? p.project.substring(0, 35) + '…' : p.project;
+        });
+        makeChart('chart-p4-completion', {
+          type: 'bar',
+          data: {
+            labels: chartLabels,
+            datasets: [{
+              label: '% Complete',
+              data:  projectCompletion.map(function(p) { return p.avg; }),
+              backgroundColor: projectCompletion.map(function(p) {
+                return p.overdue ? 'rgba(192,57,43,0.80)' : 'rgba(38,36,37,0.80)';
+              }),
+              borderWidth: 0,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '% complete'; } } }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { callback: function(v) { return v + '%'; } }
+              }
+            }
+          }
+        });
+      }
+
+      // ── Milestone Schedule Table ───────────────────────────────
+      if (schedFiltered.length > 0) {
+        var sortedSched = schedFiltered.slice().sort(function(a, b) {
+          var pa = col(a, 'Project Name', 'project_name', 'project') || '';
+          var pb = col(b, 'Project Name', 'project_name', 'project') || '';
+          if (pa !== pb) return pa < pb ? -1 : 1;
+          // Within a project, sort by planned end date ascending
+          var ea = new Date(col(a, 'Planned End Date', 'End Date', 'endDate') || 0);
+          var eb = new Date(col(b, 'Planned End Date', 'End Date', 'endDate') || 0);
+          return ea - eb;
+        });
+
+        var html = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+          '<th>Project</th><th>Milestone</th><th>Start</th><th>End</th><th>Status</th><th>% Done</th><th>Brand</th>' +
+          '</tr></thead><tbody>';
+
+        sortedSched.forEach(function(r) {
+          var overdueRow = isOverdue(r);
+          var project    = col(r, 'Project Name', 'project_name', 'project') || '—';
+          var milestone  = col(r, 'Milestone/Task Name', 'Task Name', 'title', 'name') || '—';
+          var startRaw   = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date');
+          var endRaw     = col(r, 'Planned End Date', 'End Date', 'endDate', 'end_date');
+          var status     = col(r, 'Status', 'status') || '—';
+          var pctRaw     = col(r, '% Complete', 'percent_complete', 'Percent Complete');
+          var brand      = col(r, 'Brand', 'brand') || '—';
+
+          var startFmt = startRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(startRaw) : '—';
+          var endFmt   = endRaw   ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(endRaw)   : '—';
+
+          var statusLower = String(status).toLowerCase();
+          var statusStyle = '';
+          if (statusLower === 'complete' || statusLower === 'completed') {
+            statusStyle = ' style="color:#1a7a43;font-weight:600"';
+          } else if (overdueRow) {
+            statusStyle = ' style="color:#c0392b;font-weight:600"';
+          } else if (statusLower === 'in progress') {
+            statusStyle = ' style="color:#2471a3;font-weight:600"';
+          }
+
+          var pctStr = String(pctRaw || '').toLowerCase();
+          var pctFmt = pctStr === 'n/a' ? 'N/A' : (parseNum(pctRaw) >= 0 && pctRaw !== '' ? parseNum(pctRaw) + '%' : '—');
+
+          html += '<tr' + (overdueRow ? ' style="background:rgba(192,57,43,0.06)"' : '') + '>' +
+            '<td>' + project + '</td>' +
+            '<td>' + milestone + '</td>' +
+            '<td>' + startFmt + '</td>' +
+            '<td>' + endFmt + '</td>' +
+            '<td><span' + statusStyle + '>' + status + (overdueRow ? ' ⚠' : '') + '</span></td>' +
+            '<td>' + pctFmt + '</td>' +
+            '<td>' + brand + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('p4-schedule-table').innerHTML = html;
+      } else {
+        document.getElementById('p4-schedule-table').innerHTML =
+          '<p class="no-data-msg">No schedule data yet — run Make.com Scenario 10 to populate the Buildpass_Schedule tab.</p>';
+      }
+
+      // ── Labour Cost by Job Table ───────────────────────────────
+      if (labourFiltered.length > 0) {
+        var labourByProject = {};
+        labourFiltered.forEach(function(r) {
+          var project = col(r, 'Project Name', 'Project', 'project_name', 'project') || '';
+          if (!project) return;
+          if (!labourByProject[project]) {
+            labourByProject[project] = {
+              project:  project,
+              brand:    col(r, 'Brand', 'brand') || '',
+              division: col(r, 'Division', 'division') || '',
+              hours: 0,
+              cost:  0
+            };
+          }
+          labourByProject[project].hours += parseNum(col(r, 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+          labourByProject[project].cost  += parseNum(col(r, 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
+        });
+
+        var labourRows = Object.values(labourByProject)
+          .sort(function(a, b) { return b.cost - a.cost; });
+
+        document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
+          { label: 'Project',  key: 'project' },
+          { label: 'Hours',    key: 'hours',    format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : '—'; } },
+          { label: 'Cost',     key: 'cost',     format: function(v) { return v ? formatCurrency(v) : '—'; } },
+          { label: 'Brand',    key: 'brand' },
+          { label: 'Division', key: 'division' }
+        ]);
+      } else {
+        document.getElementById('p4-labour-table').innerHTML =
+          '<p class="no-data-msg">No labour data yet — run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
+      }
     }
 
 
