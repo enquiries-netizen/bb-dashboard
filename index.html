@@ -1021,10 +1021,11 @@
       removeError('p4');
       try {
         var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
-          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
-        ]);
-        renderP4(results[0], results[1]);
+        fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
+        fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
+        fetchSheet(CONFIG.TABS.XERO_PROJECTS)
+      ]);
+      renderP4(results[0], results[1], results[2]);
       } catch (err) {
         console.error('P4 load error:', err);
         showError('p4', 'Could not load Job Performance data. Check sheet permissions.');
@@ -1034,7 +1035,7 @@
       }
     }
 
-    function renderP4(schedule, labour) {
+    function renderP4(schedule, labour, xeroProjects) {
       var today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -1072,7 +1073,10 @@
 
       // ── Total labour cost ─────────────────────────────────────
       var totalLabour = labourFiltered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Labour Cost', 'Cost', 'Total Cost', 'cost', 'Amount', 'amount'));
+        var hrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+        var rate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
+        var cost = (hrs && rate) ? hrs * rate : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'cost', 'Amount', 'amount'));
+        return s + cost;
       }, 0);
 
       // ── KPI Cards ─────────────────────────────────────────────
@@ -1171,7 +1175,7 @@
         });
 
         var html = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Baseline End</th><th>Slippage</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Division</th>' +
+          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Baseline End</th><th>Slippage</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
           '</tr></thead><tbody>';
 
         sortedSched.forEach(function(r) {
@@ -1183,25 +1187,23 @@
           var status     = col(r, 'Status', 'status') || '—';
           var pctRaw     = col(r, '% Complete', '% Done', 'percent_complete', 'Percent Complete');
           var brand      = col(r, 'Brand', 'brand') || '—';
-          var division   = col(r, 'Division', 'division') || '—';
-          var actualRaw  = col(r, 'Actual Completion Date', 'Actual Done', 'Actual End date', 'Actual End Date', 'actual_completion', 'Completed Date');
+          var department = col(r, 'Department', 'department') || '—';
+          var actualEndRaw = col(r, 'Actual End date', 'Actual End Date');
           var baselineEndRaw = col(r, 'Baseline End Date', 'Baseline End date', 'Baseline End', 'baselineEndDate');
 
           var startFmt = startRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(startRaw) : '—';
           var endFmt   = endRaw   ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(endRaw)   : '—';
-          var actualFmt      = actualRaw      ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(actualRaw)      : '—';
+          var actualEndFmt = actualEndRaw ? new Date(actualEndRaw).toLocaleDateString('en-AU') : '—';
           var baselineEndFmt = baselineEndRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(baselineEndRaw) : '—';
 
-          // Slippage: days between original baseline end and current planned end
-          var slippageDays = '—'; var slippageStyle = '';
-          if (baselineEndRaw && endRaw) {
-            var bEnd = new Date(baselineEndRaw), pEnd = new Date(endRaw);
-            if (!isNaN(bEnd) && !isNaN(pEnd)) {
-              var diff = Math.round((pEnd - bEnd) / 86400000);
-              if (diff > 0)      { slippageDays = '+' + diff + 'd';            slippageStyle = ' style="color:#c0392b;font-weight:600"'; }
-              else if (diff < 0) { slippageDays = Math.abs(diff) + 'd ahead';  slippageStyle = ' style="color:#27ae60"'; }
-              else               { slippageDays = 'On track'; }
-            }
+          var slippageDays = col(r, 'Slippage', 'slippage');
+          var slippageStr = '—';
+          var slippageStyle = '';
+          if (slippageDays !== '' && slippageDays !== null && slippageDays !== undefined) {
+            var d = parseInt(slippageDays, 10);
+            if (d > 0) { slippageStr = '+' + d + ' days'; slippageStyle = ' style="color:#c0392b;font-weight:600"'; }
+            else if (d < 0) { slippageStr = Math.abs(d) + ' days early'; slippageStyle = ' style="color:#1a7a43;font-weight:600"'; }
+            else if (!isNaN(d)) { slippageStr = 'On Time'; slippageStyle = ' style="color:#1a7a43;font-weight:600"'; }
           }
 
           var statusLower = String(status).toLowerCase();
@@ -1223,12 +1225,12 @@
             '<td>' + startFmt + '</td>' +
             '<td>' + endFmt + '</td>' +
             '<td>' + baselineEndFmt + '</td>' +
-            '<td><span' + slippageStyle + '>' + slippageDays + '</span></td>' +
-            '<td>' + actualFmt + '</td>' +
+            '<td><span' + slippageStyle + '>' + slippageStr + '</span></td>' +
+            '<td>' + actualEndFmt + '</td>' +
             '<td><span' + statusStyle + '>' + status + (overdueRow ? ' ⚠' : '') + '</span></td>' +
             '<td>' + pctFmt + '</td>' +
             '<td>' + brand + '</td>' +
-            '<td>' + division + '</td>' +
+            '<td>' + department + '</td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';
@@ -1242,31 +1244,41 @@
       if (labourFiltered.length > 0) {
         var labourByProject = {};
         labourFiltered.forEach(function(r) {
-          var project = col(r, 'Project Name', 'Project', 'project_name', 'project') || '';
+          var project = col(r, 'Xero Project ID', 'Site / Area', 'Project Name', 'Project', 'project_name', 'project') || '';
           if (!project) return;
           if (!labourByProject[project]) {
             labourByProject[project] = {
               project:  project,
               brand:    col(r, 'Brand', 'brand') || '',
-              division: col(r, 'Division', 'division') || '',
+              department: col(r, 'Department', 'department') || '',
               hours: 0,
               cost:  0
             };
           }
-          labourByProject[project].hours += parseNum(col(r, 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
-          labourByProject[project].cost  += parseNum(col(r, 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
+          var lHrs  = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+          var lRate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
+          var lCost = (lHrs && lRate) ? lHrs * lRate : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
+          labourByProject[project].hours += lHrs;
+          labourByProject[project].cost  += lCost;
         });
 
-        var labourRows = Object.values(labourByProject)
+        Object.values(labourByProject).forEach(function(p) {
+  var rev = parseNum(col(xeroProjects.find(function(x){ return col(x,'Project ID','project_id') === p.project; }) || {}, 'Revenue','revenue'));
+  p.revenue   = rev || 0;
+  p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
+});
+var labourRows = Object.values(labourByProject)
           .sort(function(a, b) { return b.cost - a.cost; });
 
-        document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
-          { label: 'Project',  key: 'project' },
-          { label: 'Hours',    key: 'hours',    format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : '—'; } },
-          { label: 'Cost',     key: 'cost',     format: function(v) { return v ? formatCurrency(v) : '—'; } },
-          { label: 'Brand',    key: 'brand' },
-          { label: 'Division', key: 'division' }
-        ]);
+          document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
+  { label: 'Project',  key: 'project' },
+  { label: 'Hours',    key: 'hours',    format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : '—'; } },
+  { label: 'Labour Cost', key: 'cost', format: function(v) { return v ? formatCurrency(v) : '—'; } },
+  { label: 'Revenue',  key: 'revenue',  format: function(v) { return v ? formatCurrency(v) : '—'; } },
+  { label: 'Labour %', key: 'labourPct', format: function(v) { return v ? v.toFixed(1) + '%' : '—'; } },
+  { label: 'Brand',    key: 'brand' },
+  { label: 'Department', key: 'department' }
+]);
       } else {
         document.getElementById('p4-labour-table').innerHTML =
           '<p class="no-data-msg">No labour data yet — run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
