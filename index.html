@@ -1175,7 +1175,7 @@
         });
 
         var html = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Baseline End</th><th>Slippage</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
+          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Slippage</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
           '</tr></thead><tbody>';
 
         sortedSched.forEach(function(r) {
@@ -1189,12 +1189,10 @@
           var brand      = col(r, 'Brand', 'brand') || '—';
           var department = col(r, 'Department', 'department') || '—';
           var actualEndRaw = col(r, 'Actual End date', 'Actual End Date');
-          var baselineEndRaw = col(r, 'Baseline End Date', 'Baseline End date', 'Baseline End', 'baselineEndDate');
 
           var startFmt = startRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(startRaw) : '—';
           var endFmt   = endRaw   ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(endRaw)   : '—';
           var actualEndFmt = actualEndRaw ? new Date(actualEndRaw).toLocaleDateString('en-AU') : '—';
-          var baselineEndFmt = baselineEndRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(baselineEndRaw) : '—';
 
           var slippageDays = col(r, 'Slippage', 'slippage');
           var slippageStr = '—';
@@ -1224,7 +1222,6 @@
             '<td>' + milestone + '</td>' +
             '<td>' + startFmt + '</td>' +
             '<td>' + endFmt + '</td>' +
-            '<td>' + baselineEndFmt + '</td>' +
             '<td><span' + slippageStyle + '>' + slippageStr + '</span></td>' +
             '<td>' + actualEndFmt + '</td>' +
             '<td><span' + statusStyle + '>' + status + (overdueRow ? ' ⚠' : '') + '</span></td>' +
