@@ -249,14 +249,8 @@
 
         <!-- ─── P6: Capacity & Labour ──────────────────────── -->
         <section id="page-p6" class="page">
-          <div class="page-header">
-            <span class="page-badge">P6</span>
-            <h1 class="page-title">Capacity &amp; Labour</h1>
-          </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Capacity &amp; Labour</p>
-            <p class="placeholder-text">Reads: Buildpass_Labour · Capacity</p>
-            <p class="placeholder-status">⏳ Awaiting Buildpass API workaround — builds in Section 7</p>
+          <div id="p6-content">
+            <p class="no-data-msg">Loading capacity &amp; labour data...</p>
           </div>
         </section>
 
@@ -629,7 +623,7 @@
     function loadCurrentPage() {
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
-      var loaders = { p1: loadP1, p4: loadP4, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
       var fn = loaders[active.dataset.page];
       if (fn) fn();
     }
@@ -1407,6 +1401,158 @@ var labourRows = Object.values(labourByProject)
 
       // Full campaign table
       document.getElementById('p10-campaign-table').innerHTML = buildAutoTable(filtered);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P6 — CAPACITY & LABOUR
+    // Sources: Capacity tab, Buildpass_Labour tab
+    // Tables:  Capacity summary by week, Labour detail
+    // ═══════════════════════════════════════════════════════════════
+    async function loadP6() {
+      showLoading(true);
+      removeError('p6');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.CAPACITY),
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
+        ]);
+        var data = {
+          'Capacity':         { rows: results[0] },
+          'Buildpass_Labour': { rows: results[1] }
+        };
+        document.getElementById('p6-content').innerHTML = renderP6(data);
+      } catch (err) {
+        console.error('P6 load error:', err);
+        showError('p6', 'Could not load Capacity & Labour data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP6(data) {
+      // ── Read Capacity tab ──────────────────────────────────
+      var capRows = (data['Capacity'] || {}).rows || [];
+      // ── Read Buildpass_Labour tab for month filter ─────────
+      var labRows = (data['Buildpass_Labour'] || {}).rows || [];
+
+      // Build month list from Buildpass_Labour col O
+      var months = [];
+      labRows.forEach(function(r) {
+        var m = col(r, 'Month', 'month');
+        if (m && months.indexOf(m) === -1) months.push(m);
+      });
+      months.sort();
+
+      // Build brand list
+      var brands = ['All', 'BBBS', 'RMH'];
+
+      var html = '<div class="page-header"><h1>P6 — Capacity &amp; Labour</h1></div>';
+
+      // ── Filters ────────────────────────────────────────────
+      html += '<div class="filters-bar">';
+      html += '<label>Month: <select id="p6-month-filter" onchange="renderP6Filter()"><option value="">All</option>';
+      months.forEach(function(m) { html += '<option value="' + m + '">' + m + '</option>'; });
+      html += '</select></label>';
+      html += '<label style="margin-left:16px">Brand: <select id="p6-brand-filter" onchange="renderP6Filter()"><option value="">All</option>';
+      brands.forEach(function(b) { html += '<option value="' + b + '">' + b + '</option>'; });
+      html += '</select></label>';
+      html += '</div>';
+
+      // ── Capacity Summary Table ─────────────────────────────
+      html += '<h2 style="margin-top:24px">Capacity Summary (by Week)</h2>';
+      html += '<div id="p6-capacity-table">';
+      html += buildCapacityTable(capRows, '', '');
+      html += '</div>';
+
+      // ── Labour Detail Table ────────────────────────────────
+      html += '<h2 style="margin-top:32px">Labour Detail</h2>';
+      html += '<div id="p6-labour-table">';
+      html += buildLabourTable(labRows, '', '');
+      html += '</div>';
+
+      // Store data for filter re-renders
+      window._p6Cap = capRows;
+      window._p6Lab = labRows;
+
+      return html;
+    }
+
+    function renderP6Filter() {
+      var month = document.getElementById('p6-month-filter').value;
+      var brand = document.getElementById('p6-brand-filter').value;
+      document.getElementById('p6-capacity-table').innerHTML = buildCapacityTable(window._p6Cap, month, brand);
+      document.getElementById('p6-labour-table').innerHTML   = buildLabourTable(window._p6Lab, month, brand);
+    }
+
+    function buildCapacityTable(rows, monthFilter, brandFilter) {
+      // Filter capacity by brand only (no month col in Capacity tab)
+      var filtered = rows.filter(function(r) {
+        var b = col(r, 'Brand', 'brand') || '';
+        return (!brandFilter || b === brandFilter);
+      });
+
+      if (!filtered.length) return '<p class="no-data">No capacity data available.</p>';
+
+      var t = '<div class="table-wrap"><table class="data-table"><thead><tr>';
+      t += '<th>Week</th><th>Brand</th><th>Employee</th><th>Dept</th>';
+      t += '<th>Hrs Available</th><th>Hrs Logged</th><th>Utilisation</th><th>Hire Signal</th>';
+      t += '</tr></thead><tbody>';
+
+      filtered.forEach(function(r) {
+        var util = parseInt(col(r, 'Utilisation %', 'utilisation %') || '0');
+        var utilStyle = util > 100 ? 'color:#c0392b;font-weight:600'
+                      : util > 90  ? 'color:#c0392b;font-weight:600'
+                      : util > 75  ? 'color:#e67e22;font-weight:600'
+                      : util < 50  ? 'color:#2980b9;font-weight:600'
+                      : 'color:#1a7a43;font-weight:600';
+        t += '<tr>';
+        t += '<td>' + (col(r,'Week','week')||'—') + '</td>';
+        t += '<td>' + (col(r,'Brand','brand')||'—') + '</td>';
+        t += '<td>' + (col(r,'Employee Name','employee name')||'—') + '</td>';
+        t += '<td>' + (col(r,'Department','department')||'—') + '</td>';
+        t += '<td style="text-align:center">' + (col(r,'Hours Available','hours available')||'38') + '</td>';
+        t += '<td style="text-align:center">' + (col(r,'Hours Logged','hours logged')||'—') + '</td>';
+        t += '<td style="text-align:center;' + utilStyle + '">' + (col(r,'Utilisation %','utilisation %')||'—') + '</td>';
+        t += '<td>' + (col(r,'Hire Signal Flag','hire signal flag')||'') + '</td>';
+        t += '</tr>';
+      });
+
+      t += '</tbody></table></div>';
+      return t;
+    }
+
+    function buildLabourTable(rows, monthFilter, brandFilter) {
+      var filtered = rows.filter(function(r) {
+        var m = col(r,'Month','month') || '';
+        var b = col(r,'Brand','brand') || '';
+        return (!monthFilter || m === monthFilter) && (!brandFilter || b === brandFilter);
+      });
+
+      if (!filtered.length) return '<p class="no-data">No labour data for selected filters.</p>';
+
+      var t = '<div class="table-wrap"><table class="data-table"><thead><tr>';
+      t += '<th>Employee</th><th>Brand</th><th>Department</th><th>Week</th>';
+      t += '<th>Month</th><th>Shift Date</th><th>Hours</th><th>Hourly Rate</th><th>Labour Cost (Wk)</th>';
+      t += '</tr></thead><tbody>';
+
+      filtered.forEach(function(r) {
+        t += '<tr>';
+        t += '<td>' + (col(r,'Employee Name','employee name')||'—') + '</td>';
+        t += '<td>' + (col(r,'Brand','brand')||'—') + '</td>';
+        t += '<td>' + (col(r,'Department','department')||'—') + '</td>';
+        t += '<td style="text-align:center">' + (col(r,'Week Number','week number')||'—') + '</td>';
+        t += '<td>' + (col(r,'Month','month')||'—') + '</td>';
+        t += '<td>' + (col(r,'Shift Date','shift date')||'—') + '</td>';
+        t += '<td style="text-align:center">' + (col(r,'Hours','hours')||'—') + '</td>';
+        t += '<td style="text-align:right">$' + (col(r,'Hourly Rate ($)','hourly rate ($)')||'—') + '</td>';
+        t += '<td style="text-align:right">$' + (col(r,'Labour Cost Weekly($)','labour cost weekly($)')||'—') + '</td>';
+        t += '</tr>';
+      });
+
+      t += '</tbody></table></div>';
+      return t;
     }
 
 
