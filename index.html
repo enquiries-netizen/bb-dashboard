@@ -1628,7 +1628,6 @@ var labourRows = Object.values(labourByProject)
         t += '<td>' + (col(r,'Brand','brand')||'—') + '</td>';
         t += '<td>' + (col(r,'Employee Name','employee name')||'—') + '</td>';
         t += '<td>' + (col(r,'Department','department')||'—') + '</td>';
-        t += '<td style="text-align:center">' + (col(r,'Hours Available','hours available')||'38') + '</td>';
         t += '<td style="text-align:center">' + (col(r,'Hours Logged','hours logged')||'—') + '</td>';
         t += '<td style="text-align:center;' + utilStyle + '">' + (col(r,'Utilisation %','utilisation %')||'—') + '</td>';
         t += '<td>' + (col(r,'Hire Signal Flag','hire signal flag')||'') + '</td>';
@@ -1662,7 +1661,6 @@ var labourRows = Object.values(labourByProject)
         t += '<td>' + (col(r,'Month','month')||'—') + '</td>';
         t += '<td>' + (col(r,'Shift Date','shift date')||'—') + '</td>';
         t += '<td style="text-align:center">' + (col(r,'Hours','hours')||'—') + '</td>';
-        t += '<td style="text-align:right">$' + (col(r,'Hourly Rate ($)','hourly rate ($)')||'—') + '</td>';
         t += '<td style="text-align:right">$' + (col(r,'Labour Cost Weekly($)','labour cost weekly($)')||'—') + '</td>';
         t += '</tr>';
       });
