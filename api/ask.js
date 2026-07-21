@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     'Current page data:\n' + JSON.stringify(pageData).slice(0, 30000) + '\n\nQuestion: ' + question;
 
   const r = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,6 +23,9 @@ export default async function handler(req, res) {
     }
   );
   const data = await r.json();
-  const answer = (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text) || 'Sorry, I could not generate an answer.';
+  let answer = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text;
+  if (!answer) {
+    answer = 'BeeBee error: ' + (data.error ? data.error.message : JSON.stringify(data).slice(0, 300));
+  }
   return res.status(200).json({ answer });
 }
