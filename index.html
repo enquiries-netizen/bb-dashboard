@@ -1460,6 +1460,16 @@ var labourRows = Object.values(labourByProject)
       html += '</select></label>';
       html += '</div>';
 
+      html += '<div class="info-legend" style="background:#f8f9fa;border-left:4px solid #6c3d91;padding:16px;margin:16px 0;border-radius:4px">';
+      html += '<strong>Hire Signal Guide:</strong>';
+      html += '<ul style="margin:8px 0 0 0;padding-left:20px;line-height:2">';
+      html += '<li>🔴 <strong>At Capacity</strong> — Fully loaded. Do not assign more work. If this shows consistently across multiple people, it\'s a signal to hire.</li>';
+      html += '<li>🟡 <strong>High</strong> — Busy but manageable. Watch closely — one more job tips them into At Capacity.</li>';
+      html += '<li>🔵 <strong>Low Utilisation</strong> — Underutilised. Check for scheduling gaps or missing timesheets.</li>';
+      html += '<li>No flag — Healthy utilisation (50–75%). No action needed.</li>';
+      html += '</ul>';
+      html += '</div>';
+
       // ── Capacity Summary Table ─────────────────────────────
       html += '<h2 style="margin-top:24px">Capacity Summary (by Week)</h2>';
       html += '<div id="p6-capacity-table">';
