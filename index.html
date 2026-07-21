@@ -1685,5 +1685,47 @@ var labourRows = Object.values(labourByProject)
     loadP1();
 
   </script>
+
+  <script>
+    document.body.insertAdjacentHTML('beforeend',
+      '<div id="ai-fab" onclick="toggleAI()" style="position:fixed;bottom:24px;right:24px;background:#6c3d91;color:#fff;border-radius:50px;padding:14px 22px;cursor:pointer;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999">🐝 Ask BeeBee</div>' +
+      '<div id="ai-panel" style="display:none;position:fixed;bottom:80px;right:24px;width:340px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);padding:16px;z-index:9999">' +
+      '<p style="margin:0 0 10px;font-weight:600;color:#333">🐝 BeeBee — Dashboard Assistant</p>' +
+      '<textarea id="ai-q" rows="2" placeholder="e.g. Who is overloaded this week?" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></textarea>' +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+      '<button onclick="askAI()" style="flex:1;background:#6c3d91;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Ask</button>' +
+      '<button onclick="askAI(true)" style="flex:1;background:#1d9e75;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">🔊 Ask &amp; Speak</button>' +
+      '</div>' +
+      '<div id="ai-answer" style="margin-top:10px;font-size:13px;line-height:1.6;color:#333;max-height:220px;overflow-y:auto"></div>' +
+      '</div>');
+
+    function toggleAI() {
+      var p = document.getElementById('ai-panel');
+      p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function askAI(speak) {
+      var q = document.getElementById('ai-q').value.trim();
+      if (!q) return;
+      var out = document.getElementById('ai-answer');
+      out.textContent = 'BeeBee is thinking...';
+      var pageData = { capacity: window._p6Cap || [], labour: (window._p6Lab || []).slice(0, 200) };
+      fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, pageData: pageData })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        out.textContent = d.answer || d.error || 'No answer.';
+        if (speak && window.speechSynthesis) {
+          var u = new SpeechSynthesisUtterance(d.answer);
+          u.lang = 'en-AU';
+          speechSynthesis.speak(u);
+        }
+      })
+      .catch(function(e){ out.textContent = 'Error: ' + e.message; });
+    }
+  </script>
 </body>
 </html>
