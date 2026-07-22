@@ -1123,6 +1123,13 @@
              'Total labour cost (all jobs)');
 
       // ── Completion Chart ──────────────────────────────────────
+      // Continuous grayscale: low % = light, high % = dark
+      function getJobBarColor(pct) {
+        var lightness = 75 - (pct / 100) * 65;
+        if (lightness < 10) lightness = 10;
+        return 'hsl(0, 0%, ' + Math.round(lightness) + '%)';
+      }
+
       // Average % complete per project, sorted ascending (least done first)
       var projectCompletion = projects.map(function(p) {
         var items = schedFiltered.filter(function(r) {
@@ -1150,7 +1157,7 @@
               label: '% Complete',
               data:  projectCompletion.map(function(p) { return p.avg; }),
               backgroundColor: projectCompletion.map(function(p) {
-                return p.avg < 25 ? '#555' : '#1a1a1a';
+                return getJobBarColor(p.avg);
               }),
               borderWidth: 0,
               borderRadius: 4
