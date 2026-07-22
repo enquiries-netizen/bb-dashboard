@@ -1670,39 +1670,52 @@ var labourRows = Object.values(labourByProject)
     }
 
     function renderP10(marketing) {
-      var branded  = filterByBrand(marketing, activeBrand);
-      var filtered = filterByMonths(branded, activeMonths);
+      // One shared filtered set for KPIs + charts (Brand / Year / Month)
+      var filtered = filterByMonths(
+        filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
+        activeMonths
+      );
       window._currentPage = { name: 'P10: Marketing', data: { marketing: filtered } };
 
-      if (filtered.length === 0) {
-        ['kpi-mkt-spend','kpi-mkt-leads','kpi-mkt-cpl','kpi-mkt-roas'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', 'No data for selection');
+      function clearP10Charts() {
+        ['chart-p10-spend', 'chart-p10-trend'].forEach(function(id) {
+          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
+      }
+
+      // KPIs from the same filtered rows — show $0 / 0 when empty (not "No data")
+      var totalSpend = filtered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+      }, 0);
+      var totalLeads = filtered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
+      }, 0);
+      var totalRoas = filtered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'ROAS', 'roas'));
+      }, 0);
+      var avgRoas = filtered.length > 0 ? totalRoas / filtered.length : 0;
+      var avgCPL  = totalLeads > 0 ? totalSpend / totalLeads : 0;
+
+      setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub', formatCurrency(totalSpend), 'Total paid ad spend');
+      setKPI('kpi-mkt-leads', 'kpi-mkt-leads-sub', String(totalLeads),         'Leads generated');
+      setKPI('kpi-mkt-cpl',   'kpi-mkt-cpl-sub',   formatCurrency(avgCPL),     'Cost per lead');
+      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',  avgRoas.toFixed(2) + 'x',
+             filtered.length ? 'Avg return on ad spend' : 'No matching campaigns');
+
+      // Always clear/rebuild charts from filtered rows (never leave stale Chart.js data)
+      clearP10Charts();
+
+      if (filtered.length === 0) {
         document.getElementById('p10-campaign-table').innerHTML =
           '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
         return;
       }
 
-      // Exact column names from Marketing_Paid tab
-      var totalSpend = filtered.reduce(function(s, r) { return s + parseNum(r['Ad Spend ($)']); }, 0);
-      var totalLeads = filtered.reduce(function(s, r) { return s + parseNum(r['Leads Generated']); }, 0);
-      var totalRev   = filtered.reduce(function(s, r) { return s + parseNum(r['Revenue from Won Jobs $']); }, 0);
-      var totalRoas  = filtered.reduce(function(s, r) { return s + parseNum(r['ROAS']); }, 0);
-      var avgRoas    = filtered.length > 0 ? totalRoas / filtered.length : 0;
-
-      var avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
-
-      setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub', formatCurrency(totalSpend),          'Total paid ad spend');
-      setKPI('kpi-mkt-leads', 'kpi-mkt-leads-sub', totalLeads || '—',                   'Leads generated');
-      setKPI('kpi-mkt-cpl',   'kpi-mkt-cpl-sub',   avgCPL ? formatCurrency(avgCPL) : '—', 'Cost per lead');
-      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',  avgRoas ? avgRoas.toFixed(2) + 'x' : '—',
-             avgRoas ? 'Avg return on ad spend' : 'No ROAS data yet');
-
       // Spend by platform — doughnut chart
       var byPlatform = {};
       filtered.forEach(function(r) {
-        var p = r['Platform'] || 'Other';
-        byPlatform[p] = (byPlatform[p] || 0) + parseNum(r['Ad Spend ($)']);
+        var p = col(r, 'Platform', 'platform') || 'Other';
+        byPlatform[p] = (byPlatform[p] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
       });
       var platLabels = Object.keys(byPlatform);
       var platColors = ['#262425', '#555', '#888', '#aaa', '#ccc'];
@@ -1727,11 +1740,11 @@ var labourRows = Object.values(labourByProject)
       // Leads vs Spend by month — combo chart
       var byMonth = {};
       filtered.forEach(function(r) {
-        var d = r['Month'] || r['Date'] || '';
+        var d = col(r, 'Month', 'month', 'Date', 'date') || '';
         if (!d) return;
         if (!byMonth[d]) byMonth[d] = { spend: 0, leads: 0 };
-        byMonth[d].spend += parseNum(r['Ad Spend ($)']);
-        byMonth[d].leads += parseNum(r['Leads Generated']);
+        byMonth[d].spend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+        byMonth[d].leads += parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
       });
       var monthKeys = Object.keys(byMonth);
 

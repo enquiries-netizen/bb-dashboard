@@ -142,10 +142,11 @@ function filterByYear(rows, year) {
 function filterByMonths(rows, months) {
   if (!months || months.length === 0) return rows;
   return rows.filter(function(r) {
-    var m = getRowMonth(r);
+    var m = String(getRowMonth(r) || '').trim();
     if (!m) return false;
     return months.some(function(sel) {
-      return m.toLowerCase().startsWith(sel.toLowerCase().substring(0, 3));
+      var needle = String(sel || '').trim().toLowerCase().substring(0, 3);
+      return needle && m.toLowerCase().startsWith(needle);
     });
   });
 }
@@ -154,7 +155,11 @@ function filterByMonths(rows, months) {
 function getRowMonth(row) {
   // Try Month column first (Targets, Marketing_Paid)
   var m = row['Month'] || row['month'] || '';
-  if (m) return String(m).substring(0, 3);
+  if (m) {
+    // Trim so " April" / "June " still normalize to Apr / Jun
+    var token = String(m).trim().split(/[\s\/\-]/)[0] || '';
+    return token.substring(0, 3);
+  }
 
   var parsed = parseRowDateParts(getRowDateStr(row));
   return parsed ? parsed.month : '';
