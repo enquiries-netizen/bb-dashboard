@@ -166,10 +166,61 @@
             <span class="page-badge">P2</span>
             <h1 class="page-title">Sales &amp; Pipeline</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Sales &amp; Pipeline</p>
-            <p class="placeholder-text">Reads: GHL_Leads · GHL_Pipeline · Marketing_Paid · Marketing_Sources</p>
-            <p class="placeholder-status">⏳ Awaiting GHL scenarios in Make.com, builds in Section 5</p>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Leads</div>
+              <div class="kpi-value" id="kpi-p2-leads">—</div>
+              <div class="kpi-sub" id="kpi-p2-leads-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Quotes Sent</div>
+              <div class="kpi-value" id="kpi-p2-quotes">—</div>
+              <div class="kpi-sub" id="kpi-p2-quotes-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Jobs Won</div>
+              <div class="kpi-value" id="kpi-p2-won">—</div>
+              <div class="kpi-sub" id="kpi-p2-won-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Win Rate %</div>
+              <div class="kpi-value" id="kpi-p2-winrate">—</div>
+              <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Ad Spend</div>
+              <div class="kpi-value" id="kpi-p2-spend">—</div>
+              <div class="kpi-sub" id="kpi-p2-spend-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Average Cost Per Lead</div>
+              <div class="kpi-value" id="kpi-p2-cpl">—</div>
+              <div class="kpi-sub" id="kpi-p2-cpl-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="chart-row two-col">
+            <div class="chart-card card">
+              <div class="chart-title">Lead Source Breakdown</div>
+              <canvas id="chart-p2-sources" height="200"></canvas>
+            </div>
+            <div class="chart-card card">
+              <div class="chart-title">Pipeline Funnel</div>
+              <canvas id="chart-p2-funnel" height="200"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Ad Spend vs Cost Per Lead by Campaign</div>
+              <canvas id="chart-p2-campaigns" height="110"></canvas>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Pipeline Detail</div>
+            <div id="p2-pipeline-table">Loading pipeline data...</div>
           </div>
         </section>
 
@@ -626,9 +677,8 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p2: loadP2, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
       var placeholders = {
-        p2: 'P2: Sales & Pipeline',
         p3: 'P3: Quoting & Estimating',
         p5: 'P5: Division Profitability',
         p9: 'P9: Cash Flow',
@@ -1017,6 +1067,277 @@
       document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(
         filtered.slice(-12).reverse()
       );
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P2 — SALES & PIPELINE
+    // Sources: GHL_Leads, GHL_Pipeline, Marketing_Paid, Marketing_Sources
+    // KPIs:    Total Leads, Quotes Sent, Jobs Won, Win Rate, Ad Spend, Avg CPL
+    // Charts:  Lead sources, pipeline funnel, ad spend vs CPL by campaign
+    // Table:   Pipeline detail (no GHL ID / Probability %)
+    // ═══════════════════════════════════════════════════════════════
+    async function loadP2() {
+      showLoading(true);
+      removeError('p2');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.GHL_LEADS),
+          fetchSheet(CONFIG.TABS.GHL_PIPELINE),
+          fetchSheet(CONFIG.TABS.MARKETING_PAID),
+          fetchSheet(CONFIG.TABS.MARKETING_SOURCES)
+        ]);
+        renderP2(results[0], results[1], results[2], results[3]);
+      } catch (err) {
+        console.error('P2 load error:', err);
+        showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP2(leads, pipeline, marketing, sources) {
+      function applyFilters(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows, activeBrand), activeYear), activeMonths);
+      }
+
+      var leadsFiltered = applyFilters(leads || []);
+      var pipeFiltered  = applyFilters(pipeline || []);
+      var mktFiltered   = applyFilters(marketing || []);
+      var srcFiltered   = applyFilters(sources || []);
+
+      window._currentPage = {
+        name: 'P2: Sales & Pipeline',
+        data: {
+          leads:     leadsFiltered.slice(0, 200),
+          pipeline:  pipeFiltered.slice(0, 200),
+          marketing: mktFiltered.slice(0, 100),
+          sources:   srcFiltered.slice(0, 100)
+        }
+      };
+
+      function stageOf(r) {
+        return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
+      }
+      function isQuotedStage(s) {
+        var t = s.toLowerCase();
+        return t === 'quoted' || t.indexOf('quoted') !== -1 || t.indexOf('quote') !== -1;
+      }
+      function isWonStage(s) {
+        var t = s.toLowerCase();
+        return t === 'won' || t.indexOf('won') !== -1;
+      }
+      function isContactedStage(s) {
+        var t = s.toLowerCase();
+        return t === 'contacted' || t.indexOf('contacted') !== -1 || t.indexOf('initial inquiry') !== -1;
+      }
+
+      // ── KPI cards ─────────────────────────────────────────────
+      var totalLeads = leadsFiltered.length;
+      var quotesSent = leadsFiltered.filter(function(r) {
+        var stage = stageOf(r);
+        if (isQuotedStage(stage) || isWonStage(stage)) return true;
+        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
+      }).length;
+      var jobsWon = leadsFiltered.filter(function(r) { return isWonStage(stageOf(r)); }).length;
+      var winRate = totalLeads > 0 ? (jobsWon / totalLeads) * 100 : 0;
+
+      var totalSpend = mktFiltered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+      }, 0);
+      var cplVals = mktFiltered.map(function(r) {
+        return parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
+      }).filter(function(n) { return n > 0; });
+      var avgCPL = cplVals.length
+        ? cplVals.reduce(function(s, n) { return s + n; }, 0) / cplVals.length
+        : (function() {
+            var leadsGen = mktFiltered.reduce(function(s, r) {
+              return s + parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
+            }, 0);
+            return leadsGen > 0 ? totalSpend / leadsGen : 0;
+          })();
+
+      var kpiIds = ['kpi-p2-leads','kpi-p2-quotes','kpi-p2-won','kpi-p2-winrate','kpi-p2-spend','kpi-p2-cpl'];
+      if (totalLeads === 0 && pipeFiltered.length === 0 && mktFiltered.length === 0) {
+        kpiIds.forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
+        document.getElementById('p2-pipeline-table').innerHTML =
+          '<p class="no-data-msg">No sales &amp; pipeline data for selected filters.</p>';
+        return;
+      }
+
+      setKPI('kpi-p2-leads',   'kpi-p2-leads-sub',   totalLeads || '—', 'From GHL leads');
+      setKPI('kpi-p2-quotes',  'kpi-p2-quotes-sub',  quotesSent || '—', 'Quoted / quote sent');
+      setKPI('kpi-p2-won',     'kpi-p2-won-sub',     jobsWon || '—',    'Won pipeline stage');
+      setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', totalLeads ? formatPct(winRate) : '—', 'Jobs won / total leads');
+      setKPI('kpi-p2-spend',   'kpi-p2-spend-sub',   totalSpend ? formatCurrency(totalSpend) : '—', 'Paid ad spend');
+      setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
+
+      // ── Chart 1: Lead Source breakdown ────────────────────────
+      var bySource = {};
+      leadsFiltered.forEach(function(r) {
+        var src = col(r, 'Lead Source', 'lead_source', 'Source', 'source') || 'Unknown';
+        bySource[src] = (bySource[src] || 0) + 1;
+      });
+      var sourceEntries = Object.keys(bySource).map(function(k) {
+        return { source: k, count: bySource[k] };
+      }).sort(function(a, b) { return b.count - a.count; });
+      var maxSrc = sourceEntries.length ? sourceEntries[0].count : 1;
+
+      function getCountBarColor(count, max) {
+        var pct = max > 0 ? (count / max) * 100 : 0;
+        var lightness = 75 - (pct / 100) * 65;
+        if (lightness < 10) lightness = 10;
+        return 'hsl(0, 0%, ' + Math.round(lightness) + '%)';
+      }
+
+      if (sourceEntries.length > 0) {
+        makeChart('chart-p2-sources', {
+          type: 'bar',
+          data: {
+            labels: sourceEntries.map(function(e) {
+              return e.source.length > 28 ? e.source.substring(0, 28) + '…' : e.source;
+            }),
+            datasets: [{
+              label: 'Leads',
+              data: sourceEntries.map(function(e) { return e.count; }),
+              backgroundColor: sourceEntries.map(function(e) { return getCountBarColor(e.count, maxSrc); }),
+              borderWidth: 0,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' leads'; } } }
+            },
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      }
+
+      // ── Chart 2: Pipeline funnel ──────────────────────────────
+      var funnelRows = pipeFiltered.length > 0 ? pipeFiltered : leadsFiltered;
+      var funnelCounts = { Contacted: 0, Quoted: 0, Won: 0 };
+      funnelRows.forEach(function(r) {
+        var s = stageOf(r);
+        if (isWonStage(s)) funnelCounts.Won++;
+        else if (isQuotedStage(s)) funnelCounts.Quoted++;
+        else if (isContactedStage(s)) funnelCounts.Contacted++;
+      });
+      var funnelLabels = ['Contacted', 'Quoted', 'Won'];
+      var funnelColors = ['#1a1a1a', '#1a1a1a', '#1d9e75'];
+
+      makeChart('chart-p2-funnel', {
+        type: 'bar',
+        data: {
+          labels: funnelLabels,
+          datasets: [{
+            label: 'Leads',
+            data: funnelLabels.map(function(k) { return funnelCounts[k]; }),
+            backgroundColor: funnelColors,
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' in stage'; } } }
+          },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      // ── Chart 3: Ad spend vs CPL by campaign ───────────────────
+      var byCampaign = {};
+      mktFiltered.forEach(function(r) {
+        var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
+        if (!byCampaign[name]) byCampaign[name] = { spend: 0, cplSum: 0, cplN: 0 };
+        byCampaign[name].spend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+        var cpl = parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
+        if (cpl > 0) { byCampaign[name].cplSum += cpl; byCampaign[name].cplN++; }
+      });
+      var campEntries = Object.keys(byCampaign).map(function(k) {
+        var c = byCampaign[k];
+        return {
+          name: k,
+          spend: c.spend,
+          cpl: c.cplN ? c.cplSum / c.cplN : 0
+        };
+      }).sort(function(a, b) { return b.spend - a.spend; }).slice(0, 12);
+
+      if (campEntries.length > 0) {
+        makeChart('chart-p2-campaigns', {
+          type: 'bar',
+          data: {
+            labels: campEntries.map(function(e) {
+              return e.name.length > 30 ? e.name.substring(0, 30) + '…' : e.name;
+            }),
+            datasets: [
+              {
+                label: 'Ad Spend ($)',
+                data: campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; }),
+                backgroundColor: '#1a1a1a',
+                borderWidth: 0,
+                borderRadius: 4
+              },
+              {
+                label: 'Cost Per Lead ($)',
+                data: campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; }),
+                backgroundColor: '#555555',
+                borderWidth: 0,
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw); }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: function(v) { return '$' + v; } }
+              }
+            }
+          }
+        });
+      }
+
+      // ── Pipeline detail table (no GHL ID / Probability %) ─────
+      if (pipeFiltered.length > 0) {
+        document.getElementById('p2-pipeline-table').innerHTML = buildTable(pipeFiltered, [
+          { label: 'Contact Name', key: ['Contact Name', 'contact_name', 'Full Name', 'Name'] },
+          { label: 'Brand', key: ['Brand', 'brand'] },
+          { label: 'Department', key: ['Department', 'department', 'Deparment'] },
+          { label: 'Pipeline Stage', key: ['Pipeline Stage', 'pipeline_stage', 'Stage'] },
+          {
+            label: 'Value ($)',
+            key: ['Value ($)', 'Value', 'value', 'Deal Value'],
+            format: function(v) { return v !== '' && v != null ? formatCurrency(parseNum(v)) : '—'; }
+          },
+          {
+            label: 'Weighted Value ($)',
+            key: ['Weighted Value ($)', 'Weighted Value', 'weighted_value'],
+            format: function(v) { return v !== '' && v != null ? formatCurrency(parseNum(v)) : '—'; }
+          },
+          { label: 'Status', key: ['Status', 'status'] },
+          { label: 'Assigned to', key: ['Assigned to', 'Assigned To', 'assigned_to', 'Owner', 'owner'] }
+        ]);
+      } else {
+        document.getElementById('p2-pipeline-table').innerHTML =
+          '<p class="no-data-msg">No pipeline data for selected filters.</p>';
+      }
     }
 
 

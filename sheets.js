@@ -97,11 +97,14 @@ function filterByYear(rows, year) {
   return rows.filter(function(r) {
     var y = String(r['Year'] || r['year'] || '');
     if (y) return y === String(year);
-    // Try extracting from date columns
-    var dateStr = r['Week Start'] || r['week_start'] || r['Date'] || r['date'] || '';
+    // Try extracting from date columns (incl. GHL Date Created / Created Date)
+    var dateStr = r['Week Start'] || r['week_start'] || r['Date'] || r['date'] ||
+                  r['Date Created'] || r['Created Date'] || r['Close Date'] || '';
     if (dateStr) {
       var parts = String(dateStr).split('/');
       if (parts.length === 3) return parts[2] === String(year);
+      var d = new Date(dateStr);
+      if (!isNaN(d)) return String(d.getFullYear()) === String(year);
     }
     return true;
   });
@@ -129,8 +132,9 @@ function getRowMonth(row) {
   var m = row['Month'] || row['month'] || '';
   if (m) return String(m).substring(0, 3);
 
-  // Try parsing from Week Start or Date column (Weekly_Summary, Marketing_Paid)
-  var dateStr = row['Week Start'] || row['week_start'] || row['Date'] || row['date'] || '';
+  // Try parsing from date columns (Weekly_Summary, Marketing_Paid, GHL_*)
+  var dateStr = row['Week Start'] || row['week_start'] || row['Date'] || row['date'] ||
+                row['Date Created'] || row['Created Date'] || row['Close Date'] || '';
   if (dateStr) {
     // Handle DD/MM/YYYY format
     var parts = String(dateStr).split('/');
