@@ -1824,6 +1824,52 @@ var labourRows = Object.values(labourByProject)
 
     refreshBbPanel();
 
+    function playGeminiPcm(base64) {
+      var binary = atob(base64);
+      var len = binary.length;
+      var bytes = new Uint8Array(len);
+      for (var i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      var samples = new Int16Array(bytes.buffer);
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var buffer = ctx.createBuffer(1, samples.length, 24000);
+      var channel = buffer.getChannelData(0);
+      for (var j = 0; j < samples.length; j++) channel[j] = samples[j] / 32768;
+      var source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      return source;
+    }
+
+    function speakBrowserFallback(text) {
+      if (!window.speechSynthesis || !text) return;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-AU';
+      speechSynthesis.speak(u);
+    }
+
+    function speakWithFallback(text) {
+      if (!text) return;
+      fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        if (d.audio) {
+          try {
+            playGeminiPcm(d.audio);
+          } catch (e) {
+            speakBrowserFallback(text);
+          }
+        } else {
+          speakBrowserFallback(text);
+        }
+      })
+      .catch(function(){ speakBrowserFallback(text); });
+    }
+
     function askAI(speak) {
       var q = document.getElementById('ai-q').value.trim();
       if (!q) return;
@@ -1843,12 +1889,9 @@ var labourRows = Object.values(labourByProject)
       })
       .then(function(r){ return r.json(); })
       .then(function(d) {
-        out.textContent = d.answer || d.error || 'No answer.';
-        if (speak && window.speechSynthesis) {
-          var u = new SpeechSynthesisUtterance(d.answer);
-          u.lang = 'en-AU';
-          speechSynthesis.speak(u);
-        }
+        var answer = d.answer || d.error || 'No answer.';
+        out.textContent = answer;
+        if (speak) speakWithFallback(d.answer || answer);
       })
       .catch(function(e){ out.textContent = 'Error: ' + e.message; });
     }
