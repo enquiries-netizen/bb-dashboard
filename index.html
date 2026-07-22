@@ -1132,7 +1132,7 @@
               label: '% Complete',
               data:  projectCompletion.map(function(p) { return p.avg; }),
               backgroundColor: projectCompletion.map(function(p) {
-                return p.overdue ? 'rgba(192,57,43,0.80)' : 'rgba(38,36,37,0.80)';
+                return p.avg < 25 ? '#555' : '#1a1a1a';
               }),
               borderWidth: 0,
               borderRadius: 4
