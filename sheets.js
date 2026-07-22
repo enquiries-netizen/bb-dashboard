@@ -88,25 +88,48 @@ function filterByBrand(rows, brand) {
   });
 }
 
+var _MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/** Prefer create/activity dates over close dates when filtering GHL rows. */
+function getRowDateStr(row) {
+  return row['Week Start'] || row['week_start'] || row['Date'] || row['date'] ||
+         row['Date Created'] || row['Created Date'] || row['Last Activity Date'] ||
+         row['Expected Close Date'] || row['Close Date'] || '';
+}
+
+/** Parse DD/MM/YYYY (or Date) into { year, month } where month is Jan..Dec. */
+function parseRowDateParts(dateStr) {
+  if (!dateStr) return null;
+  var s = String(dateStr).trim();
+  var parts = s.split('/');
+  if (parts.length === 3) {
+    var day = parseInt(parts[0], 10);
+    var mon = parseInt(parts[1], 10);
+    var yr  = parseInt(parts[2], 10);
+    if (mon >= 1 && mon <= 12 && yr > 1900) {
+      return { year: String(yr), month: _MONTH_ABBR[mon - 1] };
+    }
+  }
+  var d = new Date(s);
+  if (!isNaN(d)) {
+    return { year: String(d.getFullYear()), month: _MONTH_ABBR[d.getMonth()] };
+  }
+  return null;
+}
+
 /**
  * Filters rows by selected year.
  * year = 'ALL' means show all years.
+ * Rows with no year/date info are excluded when a year is selected.
  */
 function filterByYear(rows, year) {
   if (!year || year === 'ALL') return rows;
   return rows.filter(function(r) {
-    var y = String(r['Year'] || r['year'] || '');
+    var y = String(r['Year'] || r['year'] || '').trim();
     if (y) return y === String(year);
-    // Try extracting from date columns (incl. GHL Date Created / Created Date)
-    var dateStr = r['Week Start'] || r['week_start'] || r['Date'] || r['date'] ||
-                  r['Date Created'] || r['Created Date'] || r['Close Date'] || '';
-    if (dateStr) {
-      var parts = String(dateStr).split('/');
-      if (parts.length === 3) return parts[2] === String(year);
-      var d = new Date(dateStr);
-      if (!isNaN(d)) return String(d.getFullYear()) === String(year);
-    }
-    return true;
+    var parsed = parseRowDateParts(getRowDateStr(r));
+    if (parsed) return parsed.year === String(year);
+    return false;
   });
 }
 
@@ -114,12 +137,13 @@ function filterByYear(rows, year) {
  * Filters rows by selected months.
  * months = [] means show all. months = ['Apr','May'] shows only those months.
  * Reads from Month column or extracts from date columns.
+ * Rows with no month/date info are excluded when months are selected.
  */
 function filterByMonths(rows, months) {
   if (!months || months.length === 0) return rows;
   return rows.filter(function(r) {
     var m = getRowMonth(r);
-    if (!m) return true; // no month info — keep row
+    if (!m) return false;
     return months.some(function(sel) {
       return m.toLowerCase().startsWith(sel.toLowerCase().substring(0, 3));
     });
@@ -132,20 +156,8 @@ function getRowMonth(row) {
   var m = row['Month'] || row['month'] || '';
   if (m) return String(m).substring(0, 3);
 
-  // Try parsing from date columns (Weekly_Summary, Marketing_Paid, GHL_*)
-  var dateStr = row['Week Start'] || row['week_start'] || row['Date'] || row['date'] ||
-                row['Date Created'] || row['Created Date'] || row['Close Date'] || '';
-  if (dateStr) {
-    // Handle DD/MM/YYYY format
-    var parts = String(dateStr).split('/');
-    if (parts.length === 3) {
-      var d = new Date(parts[2] + '-' + parts[1] + '-' + parts[0]);
-      if (!isNaN(d)) return d.toLocaleString('en-AU', { month: 'short' });
-    }
-    var d2 = new Date(dateStr);
-    if (!isNaN(d2)) return d2.toLocaleString('en-AU', { month: 'short' });
-  }
-  return '';
+  var parsed = parseRowDateParts(getRowDateStr(row));
+  return parsed ? parsed.month : '';
 }
 
 /**

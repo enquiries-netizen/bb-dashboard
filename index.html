@@ -600,16 +600,20 @@
     });
 
     // ═══ MONTH + YEAR DROPDOWNS ═════════════════════════════════
-    var activeMonths = []; // empty = All months
-    var activeYear   = 'ALL';
+    // Sync from DOM so the selected <option> is the source of truth on load
+    // (year dropdown defaults to 2026 in the HTML).
+    var monthSelectEl = document.getElementById('month-select');
+    var yearSelectEl  = document.getElementById('year-select');
+    var activeMonths  = (monthSelectEl && monthSelectEl.value !== 'ALL') ? [monthSelectEl.value] : [];
+    var activeYear    = (yearSelectEl && yearSelectEl.value) ? yearSelectEl.value : 'ALL';
 
-    document.getElementById('month-select').addEventListener('change', function() {
+    monthSelectEl.addEventListener('change', function() {
       var val = this.value;
       activeMonths = (val === 'ALL') ? [] : [val];
       loadCurrentPage();
     });
 
-    document.getElementById('year-select').addEventListener('change', function() {
+    yearSelectEl.addEventListener('change', function() {
       activeYear = this.value;
       loadCurrentPage();
     });
@@ -1120,27 +1124,36 @@
       function stageOf(r) {
         return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
       }
+      function statusOf(r) {
+        return String(col(r, 'Status', 'status') || '').trim();
+      }
       function isQuotedStage(s) {
         var t = s.toLowerCase();
-        return t === 'quoted' || t.indexOf('quoted') !== -1 || t.indexOf('quote') !== -1;
+        return t === 'quoted' || t.indexOf('quoted') !== -1;
       }
-      function isWonStage(s) {
-        var t = s.toLowerCase();
-        return t === 'won' || t.indexOf('won') !== -1;
+      function isWonStatus(status) {
+        return status.toLowerCase() === 'won';
       }
       function isContactedStage(s) {
         var t = s.toLowerCase();
         return t === 'contacted' || t.indexOf('contacted') !== -1 || t.indexOf('initial inquiry') !== -1;
+      }
+      function clearP2Charts() {
+        ['chart-p2-sources', 'chart-p2-funnel', 'chart-p2-campaigns'].forEach(function(id) {
+          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        });
       }
 
       // ── KPI cards ─────────────────────────────────────────────
       var totalLeads = leadsFiltered.length;
       var quotesSent = leadsFiltered.filter(function(r) {
         var stage = stageOf(r);
-        if (isQuotedStage(stage) || isWonStage(stage)) return true;
+        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
         return !!col(r, 'Quote Sent Date', 'quote_sent_date');
       }).length;
-      var jobsWon = leadsFiltered.filter(function(r) { return isWonStage(stageOf(r)); }).length;
+      var jobsWon = leadsFiltered.filter(function(r) {
+        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
+      }).length;
       var winRate = totalLeads > 0 ? (jobsWon / totalLeads) * 100 : 0;
 
       var totalSpend = mktFiltered.reduce(function(s, r) {
@@ -1158,22 +1171,24 @@
             return leadsGen > 0 ? totalSpend / leadsGen : 0;
           })();
 
-      var kpiIds = ['kpi-p2-leads','kpi-p2-quotes','kpi-p2-won','kpi-p2-winrate','kpi-p2-spend','kpi-p2-cpl'];
-      if (totalLeads === 0 && pipeFiltered.length === 0 && mktFiltered.length === 0) {
-        kpiIds.forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
-        document.getElementById('p2-pipeline-table').innerHTML =
-          '<p class="no-data-msg">No sales &amp; pipeline data for selected filters.</p>';
-        return;
+      var noData = totalLeads === 0 && pipeFiltered.length === 0 && mktFiltered.length === 0;
+      if (noData) {
+        ['kpi-p2-leads','kpi-p2-quotes','kpi-p2-won','kpi-p2-winrate','kpi-p2-spend','kpi-p2-cpl']
+          .forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
+      } else {
+        setKPI('kpi-p2-leads',   'kpi-p2-leads-sub',   totalLeads || '—', 'From GHL leads');
+        setKPI('kpi-p2-quotes',  'kpi-p2-quotes-sub',  quotesSent || '—', 'Quoted / quote sent');
+        setKPI('kpi-p2-won',     'kpi-p2-won-sub',     jobsWon || '—',    'Status = Won');
+        setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', totalLeads ? formatPct(winRate) : '—', 'Jobs won / total leads');
+        setKPI('kpi-p2-spend',   'kpi-p2-spend-sub',   totalSpend ? formatCurrency(totalSpend) : '—', 'Paid ad spend');
+        setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
       }
 
-      setKPI('kpi-p2-leads',   'kpi-p2-leads-sub',   totalLeads || '—', 'From GHL leads');
-      setKPI('kpi-p2-quotes',  'kpi-p2-quotes-sub',  quotesSent || '—', 'Quoted / quote sent');
-      setKPI('kpi-p2-won',     'kpi-p2-won-sub',     jobsWon || '—',    'Won pipeline stage');
-      setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', totalLeads ? formatPct(winRate) : '—', 'Jobs won / total leads');
-      setKPI('kpi-p2-spend',   'kpi-p2-spend-sub',   totalSpend ? formatCurrency(totalSpend) : '—', 'Paid ad spend');
-      setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
+      // Always rebuild all three charts from the currently filtered rows
+      // (never leave stale Chart.js instances when a filter empties a series).
+      clearP2Charts();
 
-      // ── Chart 1: Lead Source breakdown ────────────────────────
+      // ── Chart 1: Lead Source breakdown (filtered GHL_Leads) ───
       var bySource = {};
       leadsFiltered.forEach(function(r) {
         var src = col(r, 'Lead Source', 'lead_source', 'Source', 'source') || 'Unknown';
@@ -1191,40 +1206,46 @@
         return 'hsl(0, 0%, ' + Math.round(lightness) + '%)';
       }
 
-      if (sourceEntries.length > 0) {
-        makeChart('chart-p2-sources', {
-          type: 'bar',
-          data: {
-            labels: sourceEntries.map(function(e) {
-              return e.source.length > 28 ? e.source.substring(0, 28) + '…' : e.source;
-            }),
-            datasets: [{
-              label: 'Leads',
-              data: sourceEntries.map(function(e) { return e.count; }),
-              backgroundColor: sourceEntries.map(function(e) { return getCountBarColor(e.count, maxSrc); }),
-              borderWidth: 0,
-              borderRadius: 4
-            }]
+      makeChart('chart-p2-sources', {
+        type: 'bar',
+        data: {
+          labels: sourceEntries.length
+            ? sourceEntries.map(function(e) {
+                return e.source.length > 28 ? e.source.substring(0, 28) + '…' : e.source;
+              })
+            : ['No leads'],
+          datasets: [{
+            label: 'Leads',
+            data: sourceEntries.length ? sourceEntries.map(function(e) { return e.count; }) : [0],
+            backgroundColor: sourceEntries.length
+              ? sourceEntries.map(function(e) { return getCountBarColor(e.count, maxSrc); })
+              : ['#cccccc'],
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' leads'; } } }
           },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' leads'; } } }
-            },
-            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-          }
-        });
-      }
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
 
-      // ── Chart 2: Pipeline funnel ──────────────────────────────
-      var funnelRows = pipeFiltered.length > 0 ? pipeFiltered : leadsFiltered;
+      // ── Chart 2: Pipeline funnel (filtered GHL_Pipeline only) ─
+      // Contacted / Quoted = Pipeline Stage; Won = Status === "Won"
+      // (Won checked first so a won deal is not also counted as Quoted).
       var funnelCounts = { Contacted: 0, Quoted: 0, Won: 0 };
-      funnelRows.forEach(function(r) {
+      pipeFiltered.forEach(function(r) {
+        if (isWonStatus(statusOf(r))) {
+          funnelCounts.Won++;
+          return;
+        }
         var s = stageOf(r);
-        if (isWonStage(s)) funnelCounts.Won++;
-        else if (isQuotedStage(s)) funnelCounts.Quoted++;
+        if (isQuotedStage(s)) funnelCounts.Quoted++;
         else if (isContactedStage(s)) funnelCounts.Contacted++;
       });
       var funnelLabels = ['Contacted', 'Quoted', 'Won'];
@@ -1252,7 +1273,7 @@
         }
       });
 
-      // ── Chart 3: Ad spend vs CPL by campaign ───────────────────
+      // ── Chart 3: Ad spend vs CPL by campaign (filtered) ───────
       var byCampaign = {};
       mktFiltered.forEach(function(r) {
         var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
@@ -1270,51 +1291,55 @@
         };
       }).sort(function(a, b) { return b.spend - a.spend; }).slice(0, 12);
 
-      if (campEntries.length > 0) {
-        makeChart('chart-p2-campaigns', {
-          type: 'bar',
-          data: {
-            labels: campEntries.map(function(e) {
-              return e.name.length > 30 ? e.name.substring(0, 30) + '…' : e.name;
-            }),
-            datasets: [
-              {
-                label: 'Ad Spend ($)',
-                data: campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; }),
-                backgroundColor: '#1a1a1a',
-                borderWidth: 0,
-                borderRadius: 4
-              },
-              {
-                label: 'Cost Per Lead ($)',
-                data: campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; }),
-                backgroundColor: '#555555',
-                borderWidth: 0,
-                borderRadius: 4
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                callbacks: {
-                  label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw); }
-                }
-              }
+      makeChart('chart-p2-campaigns', {
+        type: 'bar',
+        data: {
+          labels: campEntries.length
+            ? campEntries.map(function(e) {
+                return e.name.length > 30 ? e.name.substring(0, 30) + '…' : e.name;
+              })
+            : ['No campaigns'],
+          datasets: [
+            {
+              label: 'Ad Spend ($)',
+              data: campEntries.length
+                ? campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; })
+                : [0],
+              backgroundColor: '#1a1a1a',
+              borderWidth: 0,
+              borderRadius: 4
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { callback: function(v) { return '$' + v; } }
+            {
+              label: 'Cost Per Lead ($)',
+              data: campEntries.length
+                ? campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; })
+                : [0],
+              backgroundColor: '#555555',
+              borderWidth: 0,
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw); }
               }
             }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: function(v) { return '$' + v; } }
+            }
           }
-        });
-      }
+        }
+      });
 
-      // ── Pipeline detail table (no GHL ID / Probability %) ─────
+      // ── Pipeline detail table (no GHL ID / Probability % / Assigned to) ─
       if (pipeFiltered.length > 0) {
         document.getElementById('p2-pipeline-table').innerHTML = buildTable(pipeFiltered, [
           { label: 'Contact Name', key: ['Contact Name', 'contact_name', 'Full Name', 'Name'] },
