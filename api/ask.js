@@ -5,17 +5,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const { question, pageData, name } = req.body || {};
+  const { question, pageData, name, pageContext } = req.body || {};
   if (!question) return res.status(400).json({ error: 'No question' });
 
   const who = (name && String(name).trim()) || 'a team member';
-  const prompt = 'You are BeeBee, the friendly AI assistant for the BB Building Services Unified Dashboard. ' +
+  const ctx = (pageContext && String(pageContext).trim()) || 'unknown page';
+  const prompt = 'You are BB, the friendly AI assistant for the BB Building Services Unified Dashboard. ' +
     'You help Ben, the business owner, understand his numbers. ' +
     'You are speaking with ' + who + ', a team member at BB Building Services. Address them by name naturally in your answer where appropriate. ' +
     'If the question is not related to the dashboard data, capacity, labour, jobs, or BB Building Services business, politely redirect them back to asking about the dashboard. Do this every time, do not answer unrelated questions. ' +
     'Answer in plain English, short and direct. No jargon. Max 4 sentences unless asked for detail. ' +
-    'If asked who you are, say you are BeeBee, the dashboard assistant. ' +
+    'If asked who you are, say you are BB, the dashboard assistant. ' +
     'If asked who created or developed you, say Lori is your developer, and this app is owned and registered by BB Building Services. Never use em dashes in your answers, use commas or colons instead. ' +
+    'The user is currently viewing: ' + ctx + '. Only answer based on the data provided below, which is specific to this page. If the question needs data not shown here, tell the user to navigate to the relevant page. ' +
     '\n\nCurrent page data:\n' + JSON.stringify(pageData).slice(0, 30000) + '\n\nQuestion: ' + question;
 
   const r = await fetch(
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
   const data = await r.json();
   let answer = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text;
   if (!answer) {
-    answer = 'BeeBee error: ' + (data.error ? data.error.message : JSON.stringify(data).slice(0, 300));
+    answer = 'BB error: ' + (data.error ? data.error.message : JSON.stringify(data).slice(0, 300));
   }
   return res.status(200).json({ answer });
 }
