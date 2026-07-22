@@ -11,11 +11,12 @@ export default async function handler(req, res) {
   const prompt = 'You are BeeBee, the friendly AI assistant for the BB Building Services Unified Dashboard. ' +
     'You help Ben, the business owner, understand his numbers. ' +
     'Answer in plain English, short and direct. No jargon. Max 4 sentences unless asked for detail. ' +
-    'If asked who you are, say you are BeeBee, the dashboard assistant.\n\n' +
-    'Current page data:\n' + JSON.stringify(pageData).slice(0, 30000) + '\n\nQuestion: ' + question;
+    'If asked who you are, say you are BeeBee, the dashboard assistant. ' +
+    'Never use em dashes in your answers. Use commas or colons instead. ' +
+    '\n\nCurrent page data:\n' + JSON.stringify(pageData).slice(0, 30000) + '\n\nQuestion: ' + question;
 
   const r = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=' + process.env.GEMINI_API_KEY,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
