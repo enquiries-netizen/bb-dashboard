@@ -1331,8 +1331,7 @@
             key: ['Weighted Value ($)', 'Weighted Value', 'weighted_value'],
             format: function(v) { return v !== '' && v != null ? formatCurrency(parseNum(v)) : '—'; }
           },
-          { label: 'Status', key: ['Status', 'status'] },
-          { label: 'Assigned to', key: ['Assigned to', 'Assigned To', 'assigned_to', 'Owner', 'owner'] }
+          { label: 'Status', key: ['Status', 'status'] }
         ]);
       } else {
         document.getElementById('p2-pipeline-table').innerHTML =
