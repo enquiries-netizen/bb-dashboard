@@ -2289,13 +2289,6 @@ var labourRows = Object.values(labourByProject)
                 for (var k = 0; k < binary.length; k++) bytes[k] = binary.charCodeAt(k);
                 var pcm16 = new Int16Array(bytes.buffer);
                 await playBuffer(pcm16);
-              } else if (window.speechSynthesis) {
-                await new Promise(function(resolve) {
-                  var u = new SpeechSynthesisUtterance(sentences[i]);
-                  u.lang = 'en-AU';
-                  u.onend = resolve;
-                  speechSynthesis.speak(u);
-                });
               }
             }
           })();
