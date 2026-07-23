@@ -2256,7 +2256,50 @@ var labourRows = Object.values(labourByProject)
       .then(function(d) {
         var answer = d.answer || d.error || 'No answer.';
         out.textContent = answer;
-        if (speak) speakWithFallback(d.answer || answer);
+        if (speak && d.answer) {
+          var sentences = d.answer.match(/[^.!?]+[.!?]+/g) || [d.answer];
+          var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          var fetchPromises = sentences.map(function(sentence) {
+            return fetch('/api/speak', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: sentence.trim() })
+            }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+          });
+
+          function playBuffer(pcm16) {
+            return new Promise(function(resolve) {
+              var audioBuffer = audioCtx.createBuffer(1, pcm16.length, 24000);
+              var channelData = audioBuffer.getChannelData(0);
+              for (var j = 0; j < pcm16.length; j++) channelData[j] = pcm16[j] / 32768;
+              var source = audioCtx.createBufferSource();
+              source.buffer = audioBuffer;
+              source.connect(audioCtx.destination);
+              source.onended = resolve;
+              source.start();
+            });
+          }
+
+          (async function playSequentially() {
+            for (var i = 0; i < fetchPromises.length; i++) {
+              var sd = await fetchPromises[i];
+              if (sd && sd.audio) {
+                var binary = atob(sd.audio);
+                var bytes = new Uint8Array(binary.length);
+                for (var k = 0; k < binary.length; k++) bytes[k] = binary.charCodeAt(k);
+                var pcm16 = new Int16Array(bytes.buffer);
+                await playBuffer(pcm16);
+              } else if (window.speechSynthesis) {
+                await new Promise(function(resolve) {
+                  var u = new SpeechSynthesisUtterance(sentences[i]);
+                  u.lang = 'en-AU';
+                  u.onend = resolve;
+                  speechSynthesis.speak(u);
+                });
+              }
+            }
+          })();
+        }
       })
       .catch(function(e){ out.textContent = 'Error: ' + e.message; });
     }
