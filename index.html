@@ -230,10 +230,70 @@
             <span class="page-badge">P3</span>
             <h1 class="page-title">Quoting &amp; Estimating</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Quoting &amp; Estimating</p>
-            <p class="placeholder-text">Reads: GHL_Quotes · Xero_Projects · Estimating_Accuracy</p>
-            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben, builds in Section 6</p>
+
+          <div class="page-filters">
+            <div class="filter-group">
+              <span class="filter-label">Department</span>
+              <select class="filter-select page-filter-select" id="p3-dept-filter">
+                <option value="ALL">All Departments</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Quotes</div>
+              <div class="kpi-value" id="kpi-p3-quotes">—</div>
+              <div class="kpi-sub" id="kpi-p3-quotes-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Quote Value</div>
+              <div class="kpi-value" id="kpi-p3-value">—</div>
+              <div class="kpi-sub" id="kpi-p3-value-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Accepted</div>
+              <div class="kpi-value" id="kpi-p3-accepted">—</div>
+              <div class="kpi-sub" id="kpi-p3-accepted-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Avg Days to Decision</div>
+              <div class="kpi-value" id="kpi-p3-days">—</div>
+              <div class="kpi-sub" id="kpi-p3-days-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="chart-row two-col">
+            <div class="chart-card card">
+              <div class="chart-title">Quoting Funnel by Status</div>
+              <canvas id="chart-p3-funnel" height="200"></canvas>
+            </div>
+            <div class="chart-card card">
+              <div class="chart-title">Quote Value by Status</div>
+              <canvas id="chart-p3-value" height="200"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Quotes by Estimator</div>
+              <canvas id="chart-p3-estimator" height="110"></canvas>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Quoting Funnel Detail</div>
+            <div id="p3-funnel-table">Loading quote data...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Budget vs Actual</div>
+            <div id="p3-budget-table">Loading project data...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Estimating Accuracy</div>
+            <div id="p3-accuracy-table">Loading accuracy data...</div>
           </div>
         </section>
 
@@ -681,9 +741,8 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p2: loadP2, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
       var placeholders = {
-        p3: 'P3: Quoting & Estimating',
         p5: 'P5: Division Profitability',
         p9: 'P9: Cash Flow',
         p11: 'P11: Quality & Variations'
@@ -1361,6 +1420,502 @@
       } else {
         document.getElementById('p2-pipeline-table').innerHTML =
           '<p class="no-data-msg">No pipeline data for selected filters.</p>';
+      }
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P3 — QUOTING & ESTIMATING
+    // Sources: Quotes · Xero_Projects · Estimating_Accuracy
+    // Filters: Global Brand / Month / Year + page-level Department
+    // ═══════════════════════════════════════════════════════════════
+    var activeP3Dept = 'ALL';
+    var _p3DeptBound = false;
+
+    async function loadP3() {
+      showLoading(true);
+      removeError('p3');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.QUOTES),
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS),
+          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY)
+        ]);
+        renderP3(results[0], results[1], results[2]);
+      } catch (err) {
+        console.error('P3 load error:', err);
+        showError('p3', 'Could not load Quoting & Estimating data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP3(quotes, projects, accuracy) {
+      window._p3Quotes   = quotes   || [];
+      window._p3Projects = projects || [];
+      window._p3Accuracy = accuracy || [];
+
+      function applyGlobal(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows, activeBrand), activeYear), activeMonths);
+      }
+      function filterByDept(rows) {
+        if (!activeP3Dept || activeP3Dept === 'ALL') return rows;
+        var target = String(activeP3Dept).toLowerCase();
+        return rows.filter(function(r) {
+          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim().toLowerCase();
+          return d === target;
+        });
+      }
+      function isBlank(v) {
+        return v === null || v === undefined || String(v).trim() === '';
+      }
+      function rawCol(row) {
+        var names = Array.prototype.slice.call(arguments, 1);
+        for (var i = 0; i < names.length; i++) {
+          if (row[names[i]] !== undefined) return row[names[i]];
+        }
+        return '';
+      }
+      function statusOf(r) {
+        return String(col(r, 'Status', 'status') || '').trim();
+      }
+      function quoteValue(r) {
+        return parseNum(col(r, 'Quote Value ($)', 'Quote Value', 'quote_value', 'Value ($)', 'Value'));
+      }
+      function daysToDecision(r) {
+        var raw = col(r, 'Days to Decision', 'Days To Decision', 'days_to_decision', 'Days');
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
+      }
+      function estimatorOf(r) {
+        return String(col(r, 'Estimator Name', 'Estimator', 'estimator_name', 'estimator') || '').trim() || 'Unassigned';
+      }
+      function clearP3Charts() {
+        ['chart-p3-funnel', 'chart-p3-value', 'chart-p3-estimator'].forEach(function(id) {
+          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        });
+      }
+      function setChartOrPlaceholder(canvasId, hasData, config) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var wrap = canvas.parentElement;
+        var existing = wrap.querySelector('.chart-placeholder');
+        if (existing) existing.remove();
+        if (!hasData) {
+          if (_charts[canvasId]) { _charts[canvasId].destroy(); delete _charts[canvasId]; }
+          canvas.style.display = 'none';
+          var ph = document.createElement('div');
+          ph.className = 'chart-placeholder';
+          ph.innerHTML = '<span>Data not yet available</span>';
+          wrap.appendChild(ph);
+          return;
+        }
+        canvas.style.display = '';
+        makeChart(canvasId, config);
+      }
+
+      // Rebuild Department options from all three tabs (pre-dept filter)
+      var brandedQuotes   = applyGlobal(window._p3Quotes);
+      var brandedProjects = applyGlobal(window._p3Projects);
+      var brandedAccuracy = applyGlobal(window._p3Accuracy);
+
+      var deptSet = {};
+      [brandedQuotes, brandedProjects, brandedAccuracy].forEach(function(rows) {
+        rows.forEach(function(r) {
+          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim();
+          if (d) deptSet[d] = true;
+        });
+      });
+      var deptList = Object.keys(deptSet).sort();
+      var deptSelect = document.getElementById('p3-dept-filter');
+      if (deptSelect) {
+        var prev = activeP3Dept;
+        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        deptList.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          deptSelect.appendChild(opt);
+        });
+        if (prev !== 'ALL' && deptSet[prev]) deptSelect.value = prev;
+        else { activeP3Dept = 'ALL'; deptSelect.value = 'ALL'; }
+        if (!_p3DeptBound) {
+          _p3DeptBound = true;
+          deptSelect.addEventListener('change', function() {
+            activeP3Dept = this.value || 'ALL';
+            renderP3(window._p3Quotes, window._p3Projects, window._p3Accuracy);
+            init3DTilt();
+          });
+        }
+      }
+
+      var quotesFiltered   = filterByDept(brandedQuotes);
+      var projectsFiltered = filterByDept(brandedProjects);
+      var accuracyFiltered = filterByDept(brandedAccuracy);
+
+      window._currentPage = {
+        name: 'P3: Quoting & Estimating',
+        data: {
+          quotes:   quotesFiltered.slice(0, 200),
+          projects: projectsFiltered.slice(0, 200),
+          accuracy: accuracyFiltered.slice(0, 200)
+        }
+      };
+
+      // ── Status funnel buckets ──────────────────────────────────
+      var STATUS_ORDER = ['Draft', 'Sent', 'Accepted', 'In Progress', 'Awaiting Approval'];
+      var statusStats = {};
+      STATUS_ORDER.forEach(function(s) {
+        statusStats[s] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
+      });
+      var otherStatus = {};
+
+      quotesFiltered.forEach(function(r) {
+        var s = statusOf(r);
+        var key = s;
+        var match = STATUS_ORDER.find(function(label) {
+          return label.toLowerCase() === s.toLowerCase();
+        });
+        if (match) key = match;
+        else if (!s) key = 'Draft';
+        else {
+          if (!otherStatus[s]) otherStatus[s] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
+          key = s;
+        }
+        var bucket = statusStats[key] || otherStatus[key];
+        if (!bucket) {
+          otherStatus[key] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
+          bucket = otherStatus[key];
+        }
+        bucket.count++;
+        bucket.value += quoteValue(r);
+        var days = daysToDecision(r);
+        if (days !== null) { bucket.daysSum += days; bucket.daysN++; }
+      });
+
+      var totalQuotes = quotesFiltered.length;
+      var totalValue  = quotesFiltered.reduce(function(s, r) { return s + quoteValue(r); }, 0);
+      var acceptedN   = (statusStats['Accepted'] || { count: 0 }).count;
+      var daysVals = quotesFiltered.map(daysToDecision).filter(function(d) { return d !== null; });
+      var avgDays = daysVals.length
+        ? daysVals.reduce(function(s, n) { return s + n; }, 0) / daysVals.length
+        : null;
+
+      if (totalQuotes === 0) {
+        ['kpi-p3-quotes','kpi-p3-value','kpi-p3-accepted','kpi-p3-days']
+          .forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
+      } else {
+        setKPI('kpi-p3-quotes',   'kpi-p3-quotes-sub',   totalQuotes, 'From Quotes tab');
+        setKPI('kpi-p3-value',    'kpi-p3-value-sub',    formatCurrency(totalValue), 'Sum of quote values');
+        setKPI('kpi-p3-accepted', 'kpi-p3-accepted-sub', acceptedN, 'Status = Accepted');
+        setKPI('kpi-p3-days',     'kpi-p3-days-sub',
+          avgDays !== null ? (Math.round(avgDays * 10) / 10) : '—',
+          avgDays !== null ? 'Across ' + daysVals.length + ' decided quotes' : 'No decision days logged');
+      }
+
+      clearP3Charts();
+
+      var funnelLabels = STATUS_ORDER.slice();
+      var funnelCounts = STATUS_ORDER.map(function(s) { return statusStats[s].count; });
+      var funnelValues = STATUS_ORDER.map(function(s) { return Math.round(statusStats[s].value); });
+      var hasFunnelData = funnelCounts.some(function(n) { return n > 0; });
+      var charcoalScale = ['#1a1a1a', '#2a2a2a', '#3d3d3d', '#555555', '#777777'];
+
+      setChartOrPlaceholder('chart-p3-funnel', hasFunnelData, {
+        type: 'bar',
+        data: {
+          labels: funnelLabels,
+          datasets: [{
+            label: 'Quotes',
+            data: funnelCounts,
+            backgroundColor: charcoalScale,
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' quotes'; } } }
+          },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      var hasValueData = funnelValues.some(function(n) { return n > 0; });
+      setChartOrPlaceholder('chart-p3-value', hasValueData, {
+        type: 'bar',
+        data: {
+          labels: funnelLabels,
+          datasets: [{
+            label: 'Quote Value ($)',
+            data: funnelValues,
+            backgroundColor: charcoalScale,
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: { label: function(ctx) { return formatCurrency(ctx.raw); } }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: function(v) { return '$' + Number(v).toLocaleString('en-AU'); } }
+            }
+          }
+        }
+      });
+
+      // ── By estimator ──────────────────────────────────────────
+      var byEst = {};
+      quotesFiltered.forEach(function(r) {
+        var name = estimatorOf(r);
+        if (!byEst[name]) byEst[name] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
+        byEst[name].count++;
+        byEst[name].value += quoteValue(r);
+        var d = daysToDecision(r);
+        if (d !== null) { byEst[name].daysSum += d; byEst[name].daysN++; }
+      });
+      var estEntries = Object.keys(byEst).map(function(k) {
+        return {
+          name: k,
+          count: byEst[k].count,
+          value: byEst[k].value,
+          avgDays: byEst[k].daysN ? byEst[k].daysSum / byEst[k].daysN : null
+        };
+      }).sort(function(a, b) { return b.count - a.count; });
+
+      var hasEstData = estEntries.some(function(e) { return e.count > 0 && e.name !== 'Unassigned'; }) ||
+                       estEntries.some(function(e) { return e.count > 0; });
+
+      setChartOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, {
+        type: 'bar',
+        data: {
+          labels: estEntries.map(function(e) { return e.name; }),
+          datasets: [
+            {
+              label: 'Quotes',
+              data: estEntries.map(function(e) { return e.count; }),
+              backgroundColor: '#1a1a1a',
+              borderWidth: 0,
+              borderRadius: 4
+            },
+            {
+              label: 'Avg Days to Decision',
+              data: estEntries.map(function(e) {
+                return e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : 0;
+              }),
+              backgroundColor: '#555555',
+              borderWidth: 0,
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      // ── Funnel detail table (status + estimator summary) ───────
+      var funnelRows = STATUS_ORDER.map(function(s) {
+        var b = statusStats[s];
+        return {
+          'Status': s,
+          'Count': b.count,
+          'Quote Value ($)': b.value,
+          'Avg Days to Decision': b.daysN ? Math.round((b.daysSum / b.daysN) * 10) / 10 : ''
+        };
+      }).filter(function(r) { return r.Count > 0 || totalQuotes === 0; });
+
+      // Append other statuses if any
+      Object.keys(otherStatus).forEach(function(s) {
+        var b = otherStatus[s];
+        funnelRows.push({
+          'Status': s,
+          'Count': b.count,
+          'Quote Value ($)': b.value,
+          'Avg Days to Decision': b.daysN ? Math.round((b.daysSum / b.daysN) * 10) / 10 : ''
+        });
+      });
+
+      if (totalQuotes > 0) {
+        var estTableRows = estEntries.map(function(e) {
+          return {
+            'Estimator': e.name,
+            'Quotes': e.count,
+            'Quote Value ($)': e.value,
+            'Avg Days to Decision': e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : ''
+          };
+        });
+        var html = '<p class="section-subtitle" style="font-size:12px;color:#666;margin:0 0 8px">By Status</p>';
+        html += buildTable(funnelRows, [
+          { label: 'Status', key: 'Status' },
+          { label: 'Count', key: 'Count' },
+          {
+            label: 'Quote Value',
+            key: 'Quote Value ($)',
+            format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
+          },
+          {
+            label: 'Avg Days to Decision',
+            key: 'Avg Days to Decision',
+            format: function(v) { return v !== '' && v != null ? v : '—'; }
+          }
+        ]);
+        html += '<p class="section-subtitle" style="font-size:12px;color:#666;margin:16px 0 8px">By Estimator</p>';
+        html += buildTable(estTableRows, [
+          { label: 'Estimator', key: 'Estimator' },
+          { label: 'Quotes', key: 'Quotes' },
+          {
+            label: 'Quote Value',
+            key: 'Quote Value ($)',
+            format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
+          },
+          {
+            label: 'Avg Days to Decision',
+            key: 'Avg Days to Decision',
+            format: function(v) { return v !== '' && v != null ? v : '—'; }
+          }
+        ]);
+        document.getElementById('p3-funnel-table').innerHTML = html;
+      } else {
+        document.getElementById('p3-funnel-table').innerHTML =
+          '<p class="no-data-msg">No quote data for selected filters.</p>';
+      }
+
+      // ── Section 2: Budget vs Actual ────────────────────────────
+      if (projectsFiltered.length > 0) {
+        var budgetHtml = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+          '<th>Project Name</th><th>Brand</th><th>Department</th><th>Status</th>' +
+          '<th>Total Budget</th><th>Total Actual</th><th>Gross Margin %</th>' +
+          '</tr></thead><tbody>';
+        var trackedCount = 0;
+        projectsFiltered.forEach(function(r) {
+          var name = col(r, 'Project Name', 'project_name', 'Project') || '—';
+          var brand = col(r, 'Brand', 'brand') || '—';
+          var dept  = col(r, 'Department', 'department') || '—';
+          var st    = col(r, 'Status', 'status') || '—';
+          var budgetRaw = rawCol(r, 'Total Budget', 'total_budget', 'Budget');
+          var actualRaw = rawCol(r, 'Total Actual', 'total_actual', 'Actual');
+          var marginRaw = rawCol(r, 'Gross Margin %', 'Gross Margin', 'gross_margin', 'Margin %');
+
+          var budgetStr = isBlank(budgetRaw) ? '—' : formatCurrency(parseNum(budgetRaw));
+          var actualBlankOrZero = isBlank(actualRaw) || parseNum(actualRaw) === 0;
+          var actualStr, marginStr;
+          if (actualBlankOrZero) {
+            actualStr = 'Not yet tracked';
+            marginStr = 'Not yet tracked';
+          } else {
+            trackedCount++;
+            actualStr = formatCurrency(parseNum(actualRaw));
+            marginStr = isBlank(marginRaw) ? '—' : formatPct(parseNum(marginRaw));
+          }
+
+          budgetHtml += '<tr>' +
+            '<td>' + name + '</td>' +
+            '<td>' + brand + '</td>' +
+            '<td>' + dept + '</td>' +
+            '<td>' + st + '</td>' +
+            '<td>' + budgetStr + '</td>' +
+            '<td>' + actualStr + '</td>' +
+            '<td>' + marginStr + '</td>' +
+            '</tr>';
+        });
+        budgetHtml += '</tbody></table></div>';
+        if (trackedCount === 0) {
+          budgetHtml = '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
+            '<span>Data not yet available — project actuals have not been logged yet.</span></div>' + budgetHtml;
+        }
+        document.getElementById('p3-budget-table').innerHTML = budgetHtml;
+      } else {
+        document.getElementById('p3-budget-table').innerHTML =
+          '<p class="no-data-msg">No project data for selected filters.</p>';
+      }
+
+      // ── Section 3: Estimating Accuracy (by estimator) ──────────
+      if (accuracyFiltered.length > 0) {
+        // Aggregate by estimator name
+        var accByEst = {};
+        accuracyFiltered.forEach(function(r) {
+          var name = String(col(r, 'Estimator', 'Estimator Name', 'estimator') || '').trim() || 'Unassigned';
+          if (!accByEst[name]) {
+            accByEst[name] = {
+              quotedMarginSum: 0, quotedMarginN: 0,
+              actualMarginSum: 0, actualMarginN: 0,
+              varianceSum: 0, varianceN: 0,
+              scoreSum: 0, scoreN: 0,
+              rows: 0
+            };
+          }
+          var a = accByEst[name];
+          a.rows++;
+          var qm = rawCol(r, 'Quoted Margin %', 'Quoted Margin', 'quoted_margin');
+          if (!isBlank(qm)) { a.quotedMarginSum += parseNum(qm); a.quotedMarginN++; }
+          var am = rawCol(r, 'Actual Margin %', 'Actual Margin', 'actual_margin');
+          if (!isBlank(am)) { a.actualMarginSum += parseNum(am); a.actualMarginN++; }
+          var mv = rawCol(r, 'Margin Variance %', 'Margin Variance', 'margin_variance');
+          if (!isBlank(mv)) { a.varianceSum += parseNum(mv); a.varianceN++; }
+          var sc = rawCol(r, 'Accuracy Score', 'accuracy_score', 'Score');
+          if (!isBlank(sc)) { a.scoreSum += parseNum(sc); a.scoreN++; }
+        });
+
+        var accEntries = Object.keys(accByEst).map(function(k) {
+          var a = accByEst[k];
+          return {
+            name: k,
+            quotedMargin: a.quotedMarginN ? a.quotedMarginSum / a.quotedMarginN : null,
+            actualMargin: a.actualMarginN ? a.actualMarginSum / a.actualMarginN : null,
+            variance: a.varianceN ? a.varianceSum / a.varianceN : null,
+            score: a.scoreN ? a.scoreSum / a.scoreN : null,
+            hasActual: a.actualMarginN > 0
+          };
+        }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+        var anyActual = accEntries.some(function(e) { return e.hasActual; });
+        var accHtml = '';
+        if (!anyActual) {
+          accHtml += '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
+            '<span>Data not yet available — awaiting job completion before accuracy can be scored.</span></div>';
+        }
+        accHtml += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+          '<th>Estimator</th><th>Quoted Margin %</th><th>Actual Margin %</th>' +
+          '<th>Margin Variance</th><th>Accuracy Score</th>' +
+          '</tr></thead><tbody>';
+        accEntries.forEach(function(e) {
+          var quotedStr = e.quotedMargin !== null ? formatPct(e.quotedMargin) : '—';
+          var actualStr, varStr, scoreStr;
+          if (!e.hasActual) {
+            actualStr = 'Awaiting job completion';
+            varStr    = 'Awaiting job completion';
+            scoreStr  = 'Awaiting job completion';
+          } else {
+            actualStr = e.actualMargin !== null ? formatPct(e.actualMargin) : '—';
+            varStr    = e.variance !== null ? formatPct(e.variance) : '—';
+            scoreStr  = e.score !== null ? (Math.round(e.score * 10) / 10) : '—';
+          }
+          accHtml += '<tr>' +
+            '<td>' + e.name + '</td>' +
+            '<td>' + quotedStr + '</td>' +
+            '<td>' + actualStr + '</td>' +
+            '<td>' + varStr + '</td>' +
+            '<td>' + scoreStr + '</td>' +
+            '</tr>';
+        });
+        accHtml += '</tbody></table></div>';
+        document.getElementById('p3-accuracy-table').innerHTML = accHtml;
+      } else {
+        document.getElementById('p3-accuracy-table').innerHTML =
+          '<p class="no-data-msg">No estimating accuracy data for selected filters.</p>';
       }
     }
 

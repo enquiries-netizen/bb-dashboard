@@ -26,6 +26,7 @@ const CONFIG = {
     GHL_LEADS:           'GHL_Leads',
     GHL_PIPELINE:        'GHL_Pipeline',
     GHL_QUOTES:          'GHL_Quotes',
+    QUOTES:              'Quotes',
     XERO_FINANCIALS:     'Xero_Financials',
     XERO_INVOICES:       'Xero_Invoices',
     XERO_PROJECTS:       'Xero_Projects',

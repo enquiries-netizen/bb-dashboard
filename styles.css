@@ -459,6 +459,36 @@ select {
   font-style: italic;
 }
 
+/* Page-level secondary filters (e.g. Department on P3) */
+.page-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  background: rgba(38, 36, 37, 0.04);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.page-filters .filter-label {
+  color: var(--charcoal);
+  opacity: 0.7;
+}
+
+.page-filter-select {
+  color: var(--charcoal);
+  border-color: var(--border-strong);
+  background: var(--white);
+  min-width: 180px;
+}
+
+.page-filter-select option {
+  background: var(--white);
+  color: var(--charcoal);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    PLACEHOLDER PAGES (pages not yet built)
