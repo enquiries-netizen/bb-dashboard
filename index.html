@@ -113,8 +113,8 @@
           <div class="p1-hero">
             <div class="p1-watermark" aria-hidden="true">
               <svg class="p1-watermark-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <div class="page-header">
@@ -122,58 +122,142 @@
               <h1 class="page-title">Executive Snapshot</h1>
             </div>
 
-            <div class="kpi-grid">
-              <div class="kpi-card card">
+            <div class="p1-kpi-grid">
+              <div class="kpi-card card kpi-card--hero" data-kpi="revenue">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                  <path d="M12 7v10M9.5 9.5c.5-1 1.5-1.5 2.5-1.5s2 .6 2 1.75-1 1.5-2.5 1.75-2.5.75-2.5 1.75 1 1.75 2.5 1.75 2-.5 2.5-1.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <div class="kpi-label">Revenue Target (MTD)</div>
-                <div class="kpi-value" id="kpi-revenue-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-revenue-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-revenue-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-revenue-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-revenue-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
-              <div class="kpi-card card">
+
+              <div class="kpi-card card kpi-card--support" data-kpi="margin">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                  <path d="M8 16L16 8M9.5 9.5h.01M14.5 14.5h.01" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
                 <div class="kpi-label">Gross Margin Target</div>
-                <div class="kpi-value" id="kpi-margin-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-margin-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-margin-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-margin-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-margin-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
-              <div class="kpi-card card">
+
+              <div class="kpi-card card kpi-card--support" data-kpi="lead">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="9" cy="8" r="3" stroke="#262425" stroke-width="1.5"/>
+                  <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle cx="17" cy="9" r="2.5" stroke="#262425" stroke-width="1.5"/>
+                  <path d="M21 19c0-2.2-1.5-3.8-3.5-4.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
                 <div class="kpi-label">Lead Target</div>
-                <div class="kpi-value" id="kpi-lead-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-lead-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-lead-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-lead-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-lead-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
-              <div class="kpi-card card">
+
+              <div class="kpi-card card kpi-card--support" data-kpi="jobs">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <div class="kpi-label">Jobs Won Target</div>
-                <div class="kpi-value" id="kpi-jobs-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-jobs-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-jobs-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-jobs-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-jobs-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
-              <div class="kpi-card card">
+
+              <div class="kpi-card card kpi-card--support" data-kpi="quotes">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#262425" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M14 3v5h5M9 13h6M9 17h4" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <div class="kpi-label">Quotes Target</div>
-                <div class="kpi-value" id="kpi-quote-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-quote-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-quote-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-quote-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-quote-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
-              <div class="kpi-card card">
+
+              <div class="kpi-card card kpi-card--support" data-kpi="activejobs">
+                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 20h18M5 20V9l7-5 7 5v11M10 20v-5h4v5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <div class="kpi-label">Active Jobs Target</div>
-                <div class="kpi-value" id="kpi-activejobs-target">—</div>
+                <div class="kpi-value-row">
+                  <div class="kpi-value" id="kpi-activejobs-target">—</div>
+                  <span class="kpi-exceeded-flag" id="kpi-activejobs-exceeded" hidden aria-label="Target exceeded">
+                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </div>
+                <svg class="kpi-sparkline" id="kpi-activejobs-spark" hidden aria-hidden="true"></svg>
                 <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
                 <div class="kpi-progress" id="kpi-activejobs-progress">
-                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-track">
+                    <div class="kpi-progress-fill" style="width:0%"></div>
+                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  </div>
                   <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
@@ -946,7 +1030,14 @@
         }
       };
 
-      function setKpiProgress(progressId, actual, target) {
+      function setKpiExceeded(flagId, exceeded) {
+        var el = document.getElementById(flagId);
+        if (!el) return;
+        if (exceeded) el.removeAttribute('hidden');
+        else el.setAttribute('hidden', '');
+      }
+
+      function setKpiProgress(progressId, actual, target, flagId) {
         var root = document.getElementById(progressId);
         if (!root) return;
         var fill = root.querySelector('.kpi-progress-fill');
@@ -959,20 +1050,111 @@
           if (pctEl) pctEl.textContent = '';
           if (noteEl) noteEl.textContent = 'Actuals not yet tracked';
           root.classList.add('is-untracked');
+          root.classList.remove('is-exceeded');
+          if (flagId) setKpiExceeded(flagId, false);
           return;
         }
         var pct = (actual / target) * 100;
-        var barPct = Math.max(0, Math.min(100, pct));
-        if (fill) fill.style.width = barPct + '%';
+        var exceeded = pct > 100;
+        // Cap fill at 100% so overshoot never looks like a layout bug
+        if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
         if (pctEl) pctEl.textContent = Math.round(pct) + '%';
-        if (noteEl) noteEl.textContent = '';
+        if (noteEl) {
+          noteEl.textContent = exceeded
+            ? ('+' + Math.round(pct - 100) + '% over')
+            : '';
+        }
         root.classList.remove('is-untracked');
+        root.classList.toggle('is-exceeded', exceeded);
+        if (flagId) setKpiExceeded(flagId, exceeded);
       }
 
       function clearKpiProgress() {
-        ['kpi-revenue-progress','kpi-margin-progress','kpi-lead-progress',
-         'kpi-jobs-progress','kpi-quote-progress','kpi-activejobs-progress']
-          .forEach(function(id) { setKpiProgress(id, null, null); });
+        [
+          ['kpi-revenue-progress', 'kpi-revenue-exceeded'],
+          ['kpi-margin-progress', 'kpi-margin-exceeded'],
+          ['kpi-lead-progress', 'kpi-lead-exceeded'],
+          ['kpi-jobs-progress', 'kpi-jobs-exceeded'],
+          ['kpi-quote-progress', 'kpi-quote-exceeded'],
+          ['kpi-activejobs-progress', 'kpi-activejobs-exceeded']
+        ].forEach(function(pair) { setKpiProgress(pair[0], null, null, pair[1]); });
+        ['kpi-revenue-spark','kpi-margin-spark','kpi-lead-spark',
+         'kpi-jobs-spark','kpi-quote-spark','kpi-activejobs-spark']
+          .forEach(function(id) { renderSparkline(id, null); });
+      }
+
+      /** Draw a thin 6-point sparkline; omit when fewer than 2 real values. */
+      function renderSparkline(svgId, values) {
+        var svg = document.getElementById(svgId);
+        if (!svg) return;
+        var nums = (values || []).filter(function(v) {
+          return v !== null && v !== undefined && !isNaN(v);
+        });
+        if (nums.length < 2) {
+          svg.innerHTML = '';
+          svg.setAttribute('hidden', '');
+          return;
+        }
+        var w = 120, h = 22, pad = 2;
+        var min = Math.min.apply(null, nums);
+        var max = Math.max.apply(null, nums);
+        var range = max - min || 1;
+        var pts = nums.map(function(v, i) {
+          var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
+          var y = pad + (1 - (v - min) / range) * (h - pad * 2);
+          return x.toFixed(1) + ',' + y.toFixed(1);
+        }).join(' ');
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.innerHTML =
+          '<polyline fill="none" stroke="#262425" stroke-width="1.25" ' +
+          'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
+        svg.removeAttribute('hidden');
+      }
+
+      function parseMonthYearKey(key) {
+        var s = String(key || '').trim();
+        var m = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (!m) return null;
+        var token = m[1].substring(0, 3).toLowerCase();
+        var idx = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === token) { idx = i; break; }
+        }
+        if (idx < 0) return null;
+        return { year: parseInt(m[2], 10), month: idx };
+      }
+
+      function monthKeyFromYM(year, monthIdx) {
+        var full = new Date(year, monthIdx, 1).toLocaleString('en-AU', { month: 'long' });
+        return full + ' ' + year;
+      }
+
+      function trailingMonthKeys(endKey, n) {
+        var p = parseMonthYearKey(endKey);
+        if (!p) return [];
+        var keys = [];
+        for (var i = n - 1; i >= 0; i--) {
+          var d = new Date(p.year, p.month - i, 1);
+          keys.push(monthKeyFromYM(d.getFullYear(), d.getMonth()));
+        }
+        return keys;
+      }
+
+      function sparkValuesForKeys(keys, lookup) {
+        var vals = [];
+        keys.forEach(function(k) {
+          if (Object.prototype.hasOwnProperty.call(lookup, k) &&
+              lookup[k] !== null && lookup[k] !== undefined && !isNaN(lookup[k])) {
+            vals.push(lookup[k]);
+          }
+        });
+        return vals;
+      }
+
+      function normalizeMonthKey(key) {
+        var p = parseMonthYearKey(key);
+        return p ? monthKeyFromYM(p.year, p.month) : String(key || '').trim();
       }
 
       function monthKey(r) {
@@ -1117,12 +1299,79 @@
           ? 'Active jobs target'
           : (activeJobsActual ? 'Open Xero projects · no target in Targets' : 'No active-jobs target in Targets'));
 
-      setKpiProgress('kpi-revenue-progress', revActual, revTarget || null);
-      setKpiProgress('kpi-margin-progress', marginActual, marginTarget || null);
-      setKpiProgress('kpi-lead-progress', hasLeadActuals ? leadsActual : null, leadsTarget || null);
-      setKpiProgress('kpi-jobs-progress', hasLeadActuals ? jobsActual : null, jobsTarget || null);
-      setKpiProgress('kpi-quote-progress', hasLeadActuals ? quotesActual : null, quotesTarget || null);
-      setKpiProgress('kpi-activejobs-progress', activeJobsActual || null, activeJobsTarget);
+      setKpiProgress('kpi-revenue-progress', revActual, revTarget || null, 'kpi-revenue-exceeded');
+      setKpiProgress('kpi-margin-progress', marginActual, marginTarget || null, 'kpi-margin-exceeded');
+      setKpiProgress('kpi-lead-progress', hasLeadActuals ? leadsActual : null, leadsTarget || null, 'kpi-lead-exceeded');
+      setKpiProgress('kpi-jobs-progress', hasLeadActuals ? jobsActual : null, jobsTarget || null, 'kpi-jobs-exceeded');
+      setKpiProgress('kpi-quote-progress', hasLeadActuals ? quotesActual : null, quotesTarget || null, 'kpi-quote-exceeded');
+      setKpiProgress('kpi-activejobs-progress', activeJobsActual || null, activeJobsTarget, 'kpi-activejobs-exceeded');
+
+      // ── Sparklines: trailing 6 months (brand-scoped; omit if <2 pts) ─
+      var sparkMonths = trailingMonthKeys(kpiMonthKey, 6);
+      var brandXero = filterByBrand(xeroFinancials || [], activeBrand);
+      var brandLeads = filterByBrand(ghlLeads || [], activeBrand);
+      var brandWeekly = filterByBrand(weeklySummary || [], activeBrand);
+
+      var revByMonth = {};
+      var revXeroMonths = {};
+      brandXero.forEach(function(r) {
+        var k = normalizeMonthKey(monthKey(r));
+        if (!k) return;
+        revXeroMonths[k] = true;
+        revByMonth[k] = (revByMonth[k] || 0) +
+          parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+      });
+      brandWeekly.forEach(function(r) {
+        var k = normalizeMonthKey(monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start'))));
+        if (!k || revXeroMonths[k]) return;
+        revByMonth[k] = (revByMonth[k] || 0) + parseNum(col(r, 'Revenue ($)', 'Revenue'));
+      });
+
+      var marginSumByMonth = {};
+      var marginCntByMonth = {};
+      brandXero.forEach(function(r) {
+        var k = normalizeMonthKey(monthKey(r));
+        if (!k) return;
+        var raw = col(r, 'Gross Margin %', 'Gross Margin', 'GP%');
+        if (raw === '' || raw === null || raw === undefined) return;
+        var n = asPct(parseNum(raw));
+        if (n === null || isNaN(n)) return;
+        marginSumByMonth[k] = (marginSumByMonth[k] || 0) + n;
+        marginCntByMonth[k] = (marginCntByMonth[k] || 0) + 1;
+      });
+      var marginByMonth = {};
+      Object.keys(marginSumByMonth).forEach(function(k) {
+        marginByMonth[k] = marginSumByMonth[k] / marginCntByMonth[k];
+      });
+
+      var leadsByMonth = {};
+      var jobsByMonth = {};
+      var quotesByMonth = {};
+      brandLeads.forEach(function(r) {
+        var d = col(r, 'Date Created', 'Created Date', 'created_date', 'Date', 'date',
+                    'Last Activity Date', 'Quote Sent Date', 'Close Date') || '';
+        var k = normalizeMonthKey(monthLabelFromParts(parseRowDateParts(d)));
+        if (!k && (r['Month'] || r['month'])) k = normalizeMonthKey(monthKey(r));
+        if (!k) return;
+        leadsByMonth[k] = (leadsByMonth[k] || 0) + 1;
+        var stage = stageOf(r);
+        var status = statusOf(r);
+        if (isWonStatus(status) || stage.toLowerCase() === 'won') {
+          jobsByMonth[k] = (jobsByMonth[k] || 0) + 1;
+        }
+        if (isQuotedStage(stage) || isWonStatus(status) || stage.toLowerCase() === 'won' ||
+            !!col(r, 'Quote Sent Date', 'quote_sent_date')) {
+          quotesByMonth[k] = (quotesByMonth[k] || 0) + 1;
+        }
+      });
+
+      renderSparkline('kpi-revenue-spark', sparkValuesForKeys(sparkMonths, revByMonth));
+      renderSparkline('kpi-margin-spark', sparkValuesForKeys(sparkMonths, marginByMonth));
+      renderSparkline('kpi-lead-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
+      renderSparkline('kpi-jobs-spark', sparkValuesForKeys(sparkMonths, jobsByMonth));
+      renderSparkline('kpi-quote-spark', sparkValuesForKeys(sparkMonths, quotesByMonth));
+      // Active jobs: snapshot only in Xero_Projects — no monthly history → omit
+      renderSparkline('kpi-activejobs-spark', null);
 
       // ── Chart: Target (outline) vs Actual (fill) ────────────────
       var monthOrder = [];

@@ -418,23 +418,25 @@ select {
   font-weight: 400;
 }
 
-/* ── P1 Executive Snapshot: watermark + KPI progress ─────────── */
+/* ── P1 Executive Snapshot: watermark + hero KPI layout ──────── */
 .p1-hero {
   position: relative;
   margin-bottom: 8px;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .p1-watermark {
   position: absolute;
-  right: -4%;
-  top: -18%;
-  width: min(420px, 55vw);
-  height: min(420px, 55vw);
-  color: var(--silver);
-  opacity: 0.18;
+  left: 42%;
+  top: 8%;
+  width: min(560px, 72vw);
+  height: min(560px, 72vw);
+  color: var(--gray);
+  opacity: 0.2;
   pointer-events: none;
   z-index: 0;
+  transform: translateX(-8%);
 }
 
 .p1-watermark-svg {
@@ -444,9 +446,121 @@ select {
 }
 
 .p1-hero .page-header,
-.p1-hero .kpi-grid {
+.p1-hero .p1-kpi-grid {
   position: relative;
   z-index: 1;
+}
+
+/* Primary revenue hero + 5 supporting KPIs */
+.p1-kpi-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.7fr) repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "hero gm    lead  jobs"
+    "hero quote quote active";
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.p1-kpi-grid > [data-kpi="revenue"] { grid-area: hero; }
+.p1-kpi-grid > [data-kpi="margin"]  { grid-area: gm; }
+.p1-kpi-grid > [data-kpi="lead"]    { grid-area: lead; }
+.p1-kpi-grid > [data-kpi="jobs"]    { grid-area: jobs; }
+.p1-kpi-grid > [data-kpi="quotes"]  { grid-area: quote; }
+.p1-kpi-grid > [data-kpi="activejobs"] { grid-area: active; }
+
+.kpi-card--hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px 28px 22px;
+  min-height: 100%;
+}
+
+.kpi-card--hero .kpi-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.kpi-card--hero .kpi-value {
+  font-size: clamp(28px, 3.4vw, 42px);
+  margin-bottom: 8px;
+  white-space: normal;
+}
+
+.kpi-card--hero .kpi-sub {
+  font-size: 12px;
+}
+
+.kpi-card--hero .kpi-icon {
+  width: 20px;
+  height: 20px;
+  top: 16px;
+  left: 18px;
+}
+
+.kpi-card--support .kpi-value {
+  font-size: clamp(16px, 1.6vw, 22px);
+}
+
+.kpi-icon {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.p1-kpi-grid .kpi-card {
+  padding-top: 34px;
+}
+
+.p1-kpi-grid .kpi-card--hero {
+  padding-top: 44px;
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kpi-value-row .kpi-value {
+  margin-bottom: 0;
+}
+
+.kpi-exceeded-flag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--charcoal);
+}
+
+.kpi-exceeded-flag[hidden] {
+  display: none !important;
+}
+
+.kpi-sparkline {
+  display: block;
+  width: 100%;
+  max-width: 140px;
+  height: 22px;
+  margin: 8px 0 4px;
+  overflow: visible;
+}
+
+.kpi-card--hero .kpi-sparkline {
+  max-width: 200px;
+  height: 28px;
+  margin: 10px 0 6px;
+}
+
+.kpi-sparkline[hidden] {
+  display: none !important;
 }
 
 .kpi-progress {
@@ -454,17 +568,43 @@ select {
 }
 
 .kpi-progress-track {
+  position: relative;
   height: 3px;
   width: 100%;
   background: var(--silver);
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .kpi-progress-fill {
   height: 100%;
   width: 0%;
+  max-width: 100%;
   background: var(--charcoal);
+}
+
+.kpi-progress-over-tick {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: -4px;
+  width: 2px;
+  height: 11px;
+  background: var(--charcoal);
+  pointer-events: none;
+}
+
+.kpi-progress.is-exceeded .kpi-progress-over-tick {
+  display: block;
+}
+
+.kpi-progress.is-exceeded .kpi-progress-pct {
+  color: var(--charcoal);
+}
+
+.kpi-progress.is-exceeded .kpi-progress-note {
+  color: var(--gray);
+  font-weight: 600;
 }
 
 .kpi-progress-meta {
@@ -492,6 +632,10 @@ select {
 
 .kpi-progress.is-untracked .kpi-progress-fill {
   width: 0% !important;
+}
+
+.kpi-progress.is-untracked .kpi-progress-over-tick {
+  display: none !important;
 }
 
 /* Inline % bars in P1 Annual Targets table */
@@ -950,6 +1094,14 @@ select {
 
   .kpi-grid  { grid-template-columns: repeat(3, 1fr); }
   .kpi-value { font-size: 18px; }
+
+  .p1-kpi-grid {
+    grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .kpi-card--hero .kpi-value {
+    font-size: clamp(24px, 3vw, 34px);
+  }
 }
 
 
@@ -1105,6 +1257,27 @@ select {
   .kpi-label { font-size: 9.5px; }
   .kpi-value { font-size: 20px; }
   .kpi-sub   { font-size: 9.5px; }
+
+  .p1-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "hero  hero"
+      "gm    lead"
+      "jobs  quote"
+      "active active";
+    gap: 10px;
+  }
+
+  .p1-kpi-grid .kpi-card { padding-top: 32px; }
+  .kpi-card--hero { padding: 22px 16px 16px; padding-top: 36px; }
+  .kpi-card--hero .kpi-value { font-size: 28px; }
+  .p1-watermark {
+    width: min(420px, 90vw);
+    height: min(420px, 90vw);
+    opacity: 0.16;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 
   /* ── Charts ──────────────────────────────────────── */
   .chart-row         { grid-template-columns: 1fr !important; }
