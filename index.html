@@ -1544,6 +1544,11 @@
       // (never leave stale Chart.js instances when a filter empties a series).
       clearP2Charts();
 
+      // Brand palette (P2 charts/tables only)
+      var P2_CHARCOAL = '#262425';
+      var P2_SOFT_GRAY = '#BCBDBE';
+      var P2_SILVER = '#D2D4D5';
+
       // ── Chart 1: Lead Source breakdown (filtered GHL_Leads) ───
       var bySource = {};
       leadsFiltered.forEach(function(r) {
@@ -1555,11 +1560,12 @@
       }).sort(function(a, b) { return b.count - a.count; });
       var maxSrc = sourceEntries.length ? sourceEntries[0].count : 1;
 
-      function getCountBarColor(count, max) {
-        var pct = max > 0 ? (count / max) * 100 : 0;
-        var lightness = 75 - (pct / 100) * 65;
-        if (lightness < 10) lightness = 10;
-        return 'hsl(0, 0%, ' + Math.round(lightness) + '%)';
+      // Tone hierarchy: highest count = Deep Charcoal, then Soft Gray, then Silver
+      function getSourceBarColor(count, max) {
+        var pct = max > 0 ? count / max : 0;
+        if (pct >= 0.66) return P2_CHARCOAL;
+        if (pct >= 0.33) return P2_SOFT_GRAY;
+        return P2_SILVER;
       }
 
       makeChart('chart-p2-sources', {
@@ -1574,10 +1580,10 @@
             label: 'Leads',
             data: sourceEntries.length ? sourceEntries.map(function(e) { return e.count; }) : [0],
             backgroundColor: sourceEntries.length
-              ? sourceEntries.map(function(e) { return getCountBarColor(e.count, maxSrc); })
-              : ['#cccccc'],
+              ? sourceEntries.map(function(e) { return getSourceBarColor(e.count, maxSrc); })
+              : [P2_SILVER],
             borderWidth: 0,
-            borderRadius: 4
+            borderRadius: 0
           }]
         },
         options: {
@@ -1594,6 +1600,7 @@
       // ── Chart 2: Pipeline funnel (filtered GHL_Pipeline only) ─
       // Contacted / Quoted = Pipeline Stage; Won = Status === "Won"
       // (Won checked first so a won deal is not also counted as Quoted).
+      // Tone hierarchy: Won (outcome) darkest; earlier stages lighter.
       var funnelCounts = { Contacted: 0, Quoted: 0, Won: 0 };
       pipeFiltered.forEach(function(r) {
         if (isWonStatus(statusOf(r))) {
@@ -1605,7 +1612,7 @@
         else if (isContactedStage(s)) funnelCounts.Contacted++;
       });
       var funnelLabels = ['Contacted', 'Quoted', 'Won'];
-      var funnelColors = ['#1a1a1a', '#1a1a1a', '#1d9e75'];
+      var funnelColors = [P2_SOFT_GRAY, P2_SILVER, P2_CHARCOAL];
 
       makeChart('chart-p2-funnel', {
         type: 'bar',
@@ -1616,7 +1623,7 @@
             data: funnelLabels.map(function(k) { return funnelCounts[k]; }),
             backgroundColor: funnelColors,
             borderWidth: 0,
-            borderRadius: 4
+            borderRadius: 0
           }]
         },
         options: {
@@ -1661,18 +1668,18 @@
               data: campEntries.length
                 ? campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; })
                 : [0],
-              backgroundColor: '#1a1a1a',
+              backgroundColor: P2_CHARCOAL,
               borderWidth: 0,
-              borderRadius: 4
+              borderRadius: 0
             },
             {
               label: 'Cost Per Lead ($)',
               data: campEntries.length
                 ? campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; })
                 : [0],
-              backgroundColor: '#555555',
+              backgroundColor: P2_SOFT_GRAY,
               borderWidth: 0,
-              borderRadius: 4
+              borderRadius: 0
             }
           ]
         },
@@ -1696,21 +1703,54 @@
       });
 
       // ── Pipeline detail table (no GHL ID / Probability % / Assigned to) ─
+      function escapeP2Text(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function formatP2ContactName(v) {
+        if (v === '' || v == null) return '—';
+        var raw = String(v).trim();
+        // Strip any colored HTML from sheet; keep plain label
+        var text = raw.replace(/<[^>]*>/g, '').trim() || raw;
+        var hrefMatch = raw.match(/href=["']([^"']+)["']/i);
+        var url = hrefMatch ? hrefMatch[1] : (/^(https?:\/\/|mailto:)/i.test(raw) ? raw : '');
+        if (url) {
+          return '<a class="p2-table-link" href="' + escapeP2Text(url) + '" target="_blank" rel="noopener noreferrer">' +
+            escapeP2Text(text) + '</a>';
+        }
+        return escapeP2Text(text);
+      }
+
       if (pipeFiltered.length > 0) {
         document.getElementById('p2-pipeline-table').innerHTML = buildTable(pipeFiltered, [
-          { label: 'Contact Name', key: ['Contact Name', 'contact_name', 'Full Name', 'Name'] },
+          {
+            label: 'Contact Name',
+            key: ['Contact Name', 'contact_name', 'Full Name', 'Name'],
+            format: formatP2ContactName
+          },
           { label: 'Brand', key: ['Brand', 'brand'] },
           { label: 'Department', key: ['Department', 'department', 'Deparment'] },
           { label: 'Pipeline Stage', key: ['Pipeline Stage', 'pipeline_stage', 'Stage'] },
           {
             label: 'Value ($)',
             key: ['Value ($)', 'Value', 'value', 'Deal Value'],
-            format: function(v) { return v !== '' && v != null ? formatCurrency(parseNum(v)) : '—'; }
+            format: function(v) {
+              return v !== '' && v != null
+                ? '<span class="p2-money">' + formatCurrency(parseNum(v)) + '</span>'
+                : '—';
+            }
           },
           {
             label: 'Weighted Value ($)',
             key: ['Weighted Value ($)', 'Weighted Value', 'weighted_value'],
-            format: function(v) { return v !== '' && v != null ? formatCurrency(parseNum(v)) : '—'; }
+            format: function(v) {
+              return v !== '' && v != null
+                ? '<span class="p2-money">' + formatCurrency(parseNum(v)) + '</span>'
+                : '—';
+            }
           },
           { label: 'Status', key: ['Status', 'status'] }
         ]);

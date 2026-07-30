@@ -840,6 +840,24 @@ select {
   padding: 8px 0;
 }
 
+/* P2 Pipeline Detail — Deep Charcoal only; links use underline, never blue */
+#p2-pipeline-table .data-table td,
+#p2-pipeline-table .data-table td .p2-money,
+#p2-pipeline-table .p2-table-charcoal {
+  color: var(--charcoal);
+}
+
+#p2-pipeline-table .data-table a,
+#p2-pipeline-table .data-table a.p2-table-link,
+#p2-pipeline-table .data-table a:link,
+#p2-pipeline-table .data-table a:visited,
+#p2-pipeline-table .data-table a:hover,
+#p2-pipeline-table .data-table a:active {
+  color: var(--charcoal);
+  text-decoration: underline;
+  background: none;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    MEDIUM SCREENS — GHL iframe embedded view (~900px–1200px)
