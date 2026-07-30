@@ -841,6 +841,34 @@ select {
 }
 
 /* ─── P5 Division Profitability ─────────────────────────────── */
+.p5-variance-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--gray);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.p5-variance-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p5-variance-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.p5-variance-swatch.under { background: var(--silver); }
+.p5-variance-swatch.over  { background: var(--charcoal); }
+
 .p5-notes-list {
   display: flex;
   flex-direction: column;

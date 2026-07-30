@@ -427,7 +427,11 @@
             </div>
             <div class="chart-row">
               <div class="chart-card card">
-                <div class="chart-title">Overhead Actual vs Budget</div>
+                <div class="chart-title">Overhead Variance by Month</div>
+                <div class="p5-variance-key" aria-hidden="true">
+                  <span class="p5-variance-key-item"><i class="p5-variance-swatch under"></i> Under-budget (+)</span>
+                  <span class="p5-variance-key-item"><i class="p5-variance-swatch over"></i> Over-budget (−)</span>
+                </div>
                 <canvas id="chart-p5-overhead" height="110"></canvas>
               </div>
             </div>
@@ -3208,8 +3212,6 @@ var labourRows = Object.values(labourByProject)
       var revTarget  = sumByPeriod(['Revenue Target ($)', 'Revenue Target']);
       var npActual   = sumByPeriod(['Net Profit ($)', 'Net Profit']);
       var npTarget   = sumByPeriod(['Profit Target ($)', 'Profit Target', 'Net Profit Target ($)']);
-      var ohActual   = sumByPeriod(['Overhead Actual ($)', 'Overhead Actual']);
-      var ohBudget   = sumByPeriod(['Overhead Budget ($)', 'Overhead Budget']);
 
       var yTicks = {
         callback: function(v) {
@@ -3241,7 +3243,7 @@ var labourRows = Object.values(labourByProject)
       }
 
       if (periodOrder.length === 0) {
-        ['chart-p5-revenue', 'chart-p5-profit', 'chart-p5-overhead'].forEach(destroyIf);
+        ['chart-p5-revenue', 'chart-p5-profit'].forEach(destroyIf);
       } else {
         makeChart('chart-p5-revenue', {
           type: 'bar',
@@ -3298,31 +3300,120 @@ var labourRows = Object.values(labourByProject)
           },
           options: chartOpts()
         });
+      }
+
+      // ── Overhead Variance by Month (Xero_Overhead Variance $) ──
+      var ohSortedChart = sortFinRows(ohFiltered);
+      var ohPeriodOrder = [];
+      var ohBrands = [];
+      var ohNotesMap = {}; // period|brand → Notes text from sheet
+      ohSortedChart.forEach(function(r) {
+        var lbl = monthLabel(r);
+        var brand = String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown';
+        if (lbl && ohPeriodOrder.indexOf(lbl) === -1) ohPeriodOrder.push(lbl);
+        if (ohBrands.indexOf(brand) === -1) ohBrands.push(brand);
+        var note = String(col(r, 'Notes', 'notes', 'Note', 'Commentary') || '').trim();
+        if (note) ohNotesMap[lbl + '|' + brand] = note;
+      });
+      ohBrands.sort();
+
+      if (!ohPeriodOrder.length) {
+        destroyIf('chart-p5-overhead');
+      } else {
+        var ohDatasets = ohBrands.map(function(brand) {
+          var data = ohPeriodOrder.map(function(lbl) {
+            var rows = ohSortedChart.filter(function(r) {
+              return monthLabel(r) === lbl &&
+                (String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown') === brand;
+            });
+            if (!rows.length) return null;
+            return rows.reduce(function(s, r) {
+              return s + parseNum(col(r, 'Variance ($)', 'Variance', 'Overhead Variance ($)', 'Overhead Variance'));
+            }, 0);
+          });
+          var colors = data.map(function(v) {
+            if (v === null || v === undefined) return 'transparent';
+            return v < 0 ? brandCharcoal : brandSilver;
+          });
+          return {
+            label: brand,
+            data: data,
+            backgroundColor: colors,
+            borderColor: colors,
+            borderWidth: 0,
+            borderRadius: 2
+          };
+        });
+
+        var varianceLabelPlugin = {
+          id: 'p5OhVarianceLabels',
+          afterDatasetsDraw: function(chart) {
+            var ctx = chart.ctx;
+            chart.data.datasets.forEach(function(dataset, di) {
+              var meta = chart.getDatasetMeta(di);
+              if (!meta || meta.hidden) return;
+              meta.data.forEach(function(el, i) {
+                var val = dataset.data[i];
+                if (val === null || val === undefined || isNaN(val)) return;
+                var pos = el.tooltipPosition();
+                ctx.save();
+                ctx.fillStyle = brandCharcoal;
+                ctx.font = '600 10px Montserrat, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = val >= 0 ? 'bottom' : 'top';
+                ctx.fillText(formatCurrency(val), pos.x, val >= 0 ? pos.y - 4 : pos.y + 4);
+                ctx.restore();
+              });
+            });
+          }
+        };
 
         makeChart('chart-p5-overhead', {
           type: 'bar',
           data: {
-            labels: periodOrder,
-            datasets: [
-              {
-                label: 'Overhead Budget',
-                data: ohBudget,
-                backgroundColor: brandSilver,
-                borderColor: brandSilver,
-                borderWidth: 0,
-                borderRadius: 2
-              },
-              {
-                label: 'Overhead Actual',
-                data: ohActual,
-                backgroundColor: brandCharcoal,
-                borderColor: brandCharcoal,
-                borderWidth: 0,
-                borderRadius: 2
-              }
-            ]
+            labels: ohPeriodOrder,
+            datasets: ohDatasets
           },
-          options: chartOpts()
+          plugins: [varianceLabelPlugin],
+          options: {
+            responsive: true,
+            layout: { padding: { top: 20, bottom: 16 } },
+            plugins: {
+              legend: {
+                position: 'top',
+                display: ohBrands.length > 1,
+                labels: { color: brandCharcoal }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    if (ctx.raw === null || ctx.raw === undefined) return null;
+                    var brand = ctx.dataset.label || '';
+                    var period = ctx.label || '';
+                    var lines = [brand + ': ' + formatCurrency(ctx.raw || 0)];
+                    var note = ohNotesMap[period + '|' + brand];
+                    if (note) lines.push(note);
+                    return lines;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: brandCharcoal } },
+              y: {
+                beginAtZero: true,
+                ticks: Object.assign({ color: brandCharcoal }, yTicks),
+                grid: {
+                  color: function(ctx) {
+                    return ctx.tick.value === 0 ? brandCharcoal : 'rgba(210,212,213,0.5)';
+                  },
+                  lineWidth: function(ctx) {
+                    return ctx.tick.value === 0 ? 1.5 : 1;
+                  }
+                }
+              }
+            }
+          }
         });
       }
 
