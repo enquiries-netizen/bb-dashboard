@@ -457,7 +457,7 @@
           </div>
 
           <div class="section-card">
-            <div class="section-title">Milestone Schedule &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#c0392b">⚠ = Overdue</span></div>
+            <div class="section-title">Milestone Schedule &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#c0392b">⚠ = Overdue</span> &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#262425">Staffing = labour trend on slipping jobs</span></div>
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
 
@@ -856,7 +856,28 @@
   <script src="sheets.js"></script>
   <script>
 
-    window._currentPage = { name: '', data: {} };
+    window._allPagesData = window._allPagesData || {};
+    window._currentPage = { key: '', name: '', data: {} };
+
+    var BB_PAGE_DIRECTORY = {
+      P1: 'Executive Snapshot — revenue, margin, lead, quote, and jobs-won targets vs actuals',
+      P2: 'Sales & Pipeline — leads by source, pipeline funnel (Contacted / Quoted / Won)',
+      P3: 'Quoting & Estimating — quote funnel, budget vs actual per quote, estimator accuracy',
+      P4: 'Job Performance — milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
+      P5: 'Division Profitability — revenue, margin, and overhead by brand and department',
+      P6: 'Capacity & Labour — team utilisation %, hiring signal, hours by department',
+      P7: 'Client Satisfaction — reviews and ratings',
+      P8: 'Weekly Overview — weekly KPI summary',
+      P9: 'Cash Flow & Forecast — 13-week rolling forecast, AR ageing',
+      P10: 'Marketing — ad spend, leads, CPL, ROAS, campaign performance',
+      P11: 'Quality & Variations — defects/rework, variations log, site diary issues'
+    };
+
+    // Accumulate visited-page data for BB (updates only this key; never clears others).
+    function setBBPageData(key, name, data) {
+      window._allPagesData[key] = { name: name, data: data };
+      window._currentPage = { key: key, name: name, data: data };
+    }
 
     // ═══════════════════════════════════════════════════════════
     // CHART REGISTRY
@@ -1096,7 +1117,8 @@
       if (fn) {
         fn();
       } else if (placeholders[pageId]) {
-        window._currentPage = { name: placeholders[pageId], data: {} };
+        var phKey = String(pageId || '').toUpperCase();
+        setBBPageData(phKey, placeholders[pageId], {});
       }
     }
 
@@ -1144,17 +1166,14 @@
       var weeklyFiltered = applyFilters(weeklySummary);
       var projectsFiltered = filterByBrand(xeroProjects || [], activeBrand);
 
-      window._currentPage = {
-        name: 'P1: Executive Snapshot',
-        data: {
-          targets: filtered,
-          xeroFinancials: xeroFiltered,
-          leads: leadsFiltered.slice(0, 200),
-          pipeline: pipeFiltered.slice(0, 200),
-          projects: projectsFiltered.slice(0, 200),
-          weekly: weeklyFiltered
-        }
-      };
+      setBBPageData('P1', 'P1: Executive Snapshot', {
+        targets: filtered,
+        xeroFinancials: xeroFiltered,
+        leads: leadsFiltered.slice(0, 200),
+        pipeline: pipeFiltered.slice(0, 200),
+        projects: projectsFiltered.slice(0, 200),
+        weekly: weeklyFiltered
+      });
 
       function setKpiExceeded(flagId, exceeded) {
         var el = document.getElementById(flagId);
@@ -1649,7 +1668,7 @@
 
     function renderP7(reviews) {
       var filtered = filterByBrand(reviews, activeBrand);
-      window._currentPage = { name: 'P7: Client Satisfaction', data: { reviews: filtered } };
+      setBBPageData('P7', 'P7: Client Satisfaction', { reviews: filtered });
 
       if (filtered.length === 0) {
         ['kpi-avg-rating','kpi-total-reviews','kpi-five-star','kpi-response-rate'].forEach(function(id) {
@@ -1797,7 +1816,7 @@
     function renderP8(weekly, targets) {
       var branded  = filterByBrand(weekly, activeBrand);
       var filtered = filterByMonths(branded, activeMonths);
-      window._currentPage = { name: 'P8: Weekly Overview', data: { weekly: filtered, targets: targets } };
+      setBBPageData('P8', 'P8: Weekly Overview', { weekly: filtered, targets: targets });
 
       if (filtered.length === 0) {
         ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id) {
@@ -1909,15 +1928,12 @@
       var mktFiltered   = applyFilters(marketing || []);
       var srcFiltered   = applyFilters(sources || []);
 
-      window._currentPage = {
-        name: 'P2: Sales & Pipeline',
-        data: {
-          leads:     leadsFiltered.slice(0, 200),
-          pipeline:  pipeFiltered.slice(0, 200),
-          marketing: mktFiltered.slice(0, 100),
-          sources:   srcFiltered.slice(0, 100)
-        }
-      };
+      setBBPageData('P2', 'P2: Sales & Pipeline', {
+        leads:     leadsFiltered.slice(0, 200),
+        pipeline:  pipeFiltered.slice(0, 200),
+        marketing: mktFiltered.slice(0, 100),
+        sources:   srcFiltered.slice(0, 100)
+      });
 
       function stageOf(r) {
         return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
@@ -2383,14 +2399,11 @@
       var projectsFiltered = filterByDept(brandedProjects);
       var accuracyFiltered = filterByDept(brandedAccuracy);
 
-      window._currentPage = {
-        name: 'P3: Quoting & Estimating',
-        data: {
-          quotes:   quotesFiltered.slice(0, 200),
-          projects: projectsFiltered.slice(0, 200),
-          accuracy: accuracyFiltered.slice(0, 200)
-        }
-      };
+      setBBPageData('P3', 'P3: Quoting & Estimating', {
+        quotes:   quotesFiltered.slice(0, 200),
+        projects: projectsFiltered.slice(0, 200),
+        accuracy: accuracyFiltered.slice(0, 200)
+      });
 
       // ── Status funnel buckets ──────────────────────────────────
       var STATUS_ORDER = ['Draft', 'Sent', 'Accepted', 'In Progress', 'Awaiting Approval'];
@@ -3004,7 +3017,8 @@
     // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b)
     // KPIs:    Active Jobs, On Track, Overdue Milestones, Total Labour Cost
     // Chart:   Horizontal bar — % complete per job (red = has overdue milestone)
-    // Tables:  Milestone schedule (overdue rows highlighted), Labour cost by job
+    // Tables:  Milestone schedule (Slippage + Staffing signal), Labour cost by job
+    // Signal:  Needs More Hands — slipping jobs with flat/declining weekly hours
     // ═══════════════════════════════════════════════════════════════
     async function loadP4() {
       showLoading(true);
@@ -3028,13 +3042,20 @@
     function renderP4(schedule, labour, xeroProjects) {
       var today = new Date();
       today.setHours(0, 0, 0, 0);
+      var brandCharcoal = '#262425';
 
-      // ── Filter by brand ───────────────────────────────────────
-      var schedFiltered  = filterByBrand(schedule, activeBrand);
-      var labourFiltered = filterByBrand(labour,   activeBrand);
-      window._currentPage = { name: 'P4: Job Performance', data: { schedules: schedFiltered, labour: labourFiltered } };
+      // ── Filter by Brand / Month / Year ────────────────────────
+      function applyP4Filters(rows) {
+        return filterByMonths(
+          filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
+          activeMonths
+        );
+      }
+      var schedFiltered  = applyP4Filters(schedule);
+      var labourFiltered = applyP4Filters(labour);
 
-      // ── Helper: is a schedule row overdue? ────────────────────
+      // ── Helper: is a schedule row overdue / slipping? ─────────
+      // Slippage = phase/task past planned end date, not Complete
       function isOverdue(row) {
         var status = String(col(row, 'Status', 'status') || '').toLowerCase();
         if (status === 'complete' || status === 'completed' ||
@@ -3043,6 +3064,33 @@
         if (!endStr) return false;
         var end = new Date(endStr);
         return !isNaN(end) && end < today;
+      }
+
+      function p4JobPrefix(val) {
+        var s = String(val || '').trim().toUpperCase();
+        var m = s.match(/^(J\d+)/i);
+        return m ? m[1].toUpperCase() : '';
+      }
+
+      function p4LabourJobId(row) {
+        return String(col(row,
+          'Xero Project J#', 'Xero Project ID', 'xero_project_id',
+          'Site / Area', 'Project Name', 'Project', 'project_name', 'project', 'Job #'
+        ) || '').trim();
+      }
+
+      /** Flexible Job # match: exact, J# prefix (J1349 ↔ J1349C), or containment. */
+      function p4JobsMatch(a, b) {
+        var sa = String(a || '').trim().toUpperCase();
+        var sb = String(b || '').trim().toUpperCase();
+        if (!sa || !sb) return false;
+        if (sa === sb) return true;
+        var pa = p4JobPrefix(sa);
+        var pb = p4JobPrefix(sb);
+        if (pa && pb && pa === pb) return true;
+        if (pa && sb.indexOf(pa) !== -1) return true;
+        if (pb && sa.indexOf(pb) !== -1) return true;
+        return false;
       }
 
       // ── Unique projects from schedule ─────────────────────────
@@ -3061,6 +3109,88 @@
       var onTrackCount = projects.filter(function(p) {
         return overdueProjects.indexOf(p) === -1;
       }).length;
+
+      // ── Needs More Hands: slipping jobs × weekly labour trend ─
+      // Last 3–4 week numbers present in filtered labour data
+      var labourWeeksMap = {};
+      labourFiltered.forEach(function(r) {
+        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
+        if (w > 0) labourWeeksMap[w] = true;
+      });
+      var labourWeeksSorted = Object.keys(labourWeeksMap).map(Number).sort(function(a, b) { return a - b; });
+      var recentLabourWeeks = labourWeeksSorted.slice(-4);
+
+      // Per-job weekly hours within the recent window
+      var jobWeekHours = {}; // jobKey -> { week -> hours }
+      labourFiltered.forEach(function(r) {
+        var job = p4LabourJobId(r);
+        if (!job) return;
+        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
+        if (recentLabourWeeks.indexOf(w) === -1) return;
+        var hrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+        if (!jobWeekHours[job]) jobWeekHours[job] = {};
+        jobWeekHours[job][w] = (jobWeekHours[job][w] || 0) + hrs;
+      });
+
+      function labourSeriesForProject(projectName) {
+        var merged = {};
+        Object.keys(jobWeekHours).forEach(function(labJob) {
+          if (!p4JobsMatch(projectName, labJob)) return;
+          var byWeek = jobWeekHours[labJob];
+          Object.keys(byWeek).forEach(function(w) {
+            merged[w] = (merged[w] || 0) + byWeek[w];
+          });
+        });
+        return Object.keys(merged).map(Number).sort(function(a, b) { return a - b; }).map(function(w) {
+          return { week: w, hours: merged[w] };
+        });
+      }
+
+      // label: Needs More Hands | Understaffed, Being Addressed | Not enough data yet | ''
+      var handsByProject = {};
+      overdueProjects.forEach(function(projectName) {
+        var series = labourSeriesForProject(projectName);
+        if (series.length < 2) {
+          handsByProject[projectName] = 'Not enough data yet';
+          return;
+        }
+        var firstHrs = series[0].hours;
+        var lastHrs  = series[series.length - 1].hours;
+        // Increasing hours while slipping → being addressed; flat/declining → needs hands
+        if (lastHrs > firstHrs) {
+          handsByProject[projectName] = 'Understaffed, Being Addressed';
+        } else {
+          handsByProject[projectName] = 'Needs More Hands';
+        }
+      });
+
+      var handsIconSvg =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="' + brandCharcoal + '" stroke-width="1.75" stroke-linecap="round" ' +
+        'stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="9" cy="7" r="2.5"/>' +
+        '<circle cx="16" cy="8" r="2"/>' +
+        '<path d="M3.5 19v-1.5a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4V19"/>' +
+        '<path d="M15 13.5a3 3 0 0 1 3-2.5h.5a3 3 0 0 1 3 3V19"/>' +
+        '</svg>';
+
+      function formatHandsBadge(label) {
+        if (!label) return '—';
+        if (label === 'Needs More Hands') {
+          return '<span class="p4-hands-signal p4-hands-needs">' + handsIconSvg + label + '</span>';
+        }
+        if (label === 'Understaffed, Being Addressed') {
+          return '<span class="p4-hands-signal p4-hands-addressed">' + label + '</span>';
+        }
+        return '<span class="p4-hands-signal p4-hands-nodata">' + label + '</span>';
+      }
+
+      setBBPageData('P4', 'P4: Job Performance', {
+        schedules: schedFiltered,
+        labour: labourFiltered,
+        handsSignals: handsByProject,
+        recentLabourWeeks: recentLabourWeeks
+      });
 
       // ── Total labour cost ─────────────────────────────────────
       var totalLabour = labourFiltered.reduce(function(s, r) {
@@ -3173,7 +3303,7 @@
         });
 
         var html = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Slippage</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
+          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Slippage</th><th>Staffing</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
           '</tr></thead><tbody>';
 
         sortedSched.forEach(function(r) {
@@ -3202,6 +3332,9 @@
             else if (!isNaN(d)) { slippageStr = 'On Time'; slippageStyle = ' style="color:#1a7a43;font-weight:600"'; }
           }
 
+          var handsLabel = handsByProject[project] || '';
+          var handsCell  = formatHandsBadge(handsLabel);
+
           var statusLower = String(status).toLowerCase();
           var statusStyle = '';
           if (statusLower === 'complete' || statusLower === 'completed') {
@@ -3221,6 +3354,7 @@
             '<td>' + startFmt + '</td>' +
             '<td>' + endFmt + '</td>' +
             '<td><span' + slippageStyle + '>' + slippageStr + '</span></td>' +
+            '<td>' + handsCell + '</td>' +
             '<td>' + actualEndFmt + '</td>' +
             '<td><span' + statusStyle + '>' + status + (overdueRow ? ' ⚠' : '') + '</span></td>' +
             '<td>' + pctFmt + '</td>' +
@@ -3239,7 +3373,7 @@
       if (labourFiltered.length > 0) {
         var labourByProject = {};
         labourFiltered.forEach(function(r) {
-          var project = col(r, 'Xero Project ID', 'Site / Area', 'Project Name', 'Project', 'project_name', 'project') || '';
+          var project = p4LabourJobId(r);
           if (!project) return;
           if (!labourByProject[project]) {
             labourByProject[project] = {
@@ -3333,14 +3467,11 @@ var labourRows = Object.values(labourByProject)
       var ohFiltered  = applyFilters(overhead || []);
       var finFiltered = applyFilters(financials || []);
 
-      window._currentPage = {
-        name: 'P9: Cash Flow & Forecast',
-        data: {
-          forecast: cfFiltered,
-          invoices: invFiltered.slice(0, 300),
-          overhead: ohFiltered
-        }
-      };
+      setBBPageData('P9', 'P9: Cash Flow & Forecast', {
+        forecast: cfFiltered,
+        invoices: invFiltered.slice(0, 300),
+        overhead: ohFiltered
+      });
 
       function destroyIf(id) {
         if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
@@ -3792,7 +3923,7 @@ var labourRows = Object.values(labourByProject)
         filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
         activeMonths
       );
-      window._currentPage = { name: 'P10: Marketing', data: { marketing: filtered, spendByDepartment: [], funnelHealth: [] } };
+      setBBPageData('P10', 'P10: Marketing', { marketing: filtered, spendByDepartment: [], funnelHealth: [] });
 
       function clearP10Charts() {
         ['chart-p10-spend', 'chart-p10-trend', 'chart-p10-dept'].forEach(function(id) {
@@ -4089,10 +4220,7 @@ var labourRows = Object.values(labourByProject)
           '<p class="no-data-msg">Data not available</p>';
         document.getElementById('p10-campaign-table').innerHTML =
           '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
-        window._currentPage = {
-          name: 'P10: Marketing',
-          data: { marketing: filtered, spendByDepartment: [], funnelHealth: [] }
-        };
+        setBBPageData('P10', 'P10: Marketing', { marketing: filtered, spendByDepartment: [], funnelHealth: [] });
         return;
       }
 
@@ -4460,15 +4588,12 @@ var labourRows = Object.values(labourByProject)
         funnelEl.innerHTML = funnelHtml;
       }
 
-      window._currentPage = {
-        name: 'P10: Marketing',
-        data: {
-          marketing: filtered,
-          spendByDepartment: deptEntries,
-          funnelHealth: funnelRows,
-          funnelAverages: { ctr: avgCtr, conversionRate: avgConv }
-        }
-      };
+      setBBPageData('P10', 'P10: Marketing', {
+        marketing: filtered,
+        spendByDepartment: deptEntries,
+        funnelHealth: funnelRows,
+        funnelAverages: { ctr: avgCtr, conversionRate: avgConv }
+      });
 
       // Campaign Performance — real ROAS first; No Leads Matched Yet for attribution gaps
       var sorted = filtered.slice().sort(function(a, b) {
@@ -4707,16 +4832,13 @@ var labourRows = Object.values(labourByProject)
         }
       }
 
-      window._currentPage = {
-        name: 'P11: Quality & Variations',
-        data: {
-          defects:    defectsFiltered.slice(0, 200),
-          variations: variationsFiltered.slice(0, 200),
-          diaries:    diariesFiltered.slice(0, 200),
-          diaryIssues: issueRows.slice(0, 200),
-          photoCount: photoCount
-        }
-      };
+      setBBPageData('P11', 'P11: Quality & Variations', {
+        defects:    defectsFiltered.slice(0, 200),
+        variations: variationsFiltered.slice(0, 200),
+        diaries:    diariesFiltered.slice(0, 200),
+        diaryIssues: issueRows.slice(0, 200),
+        photoCount: photoCount
+      });
 
       // ── KPIs ────────────────────────────────────────────────
       var totalReworkHrs = defectsFiltered.reduce(function(s, r) {
@@ -5030,14 +5152,11 @@ var labourRows = Object.values(labourByProject)
       var invFiltered = applyFilters(invoices);
       var ohFiltered  = applyFilters(overhead);
 
-      window._currentPage = {
-        name: 'P5: Division Profitability',
-        data: {
-          financials: finFiltered,
-          invoices: invFiltered.slice(0, 300),
-          overhead: ohFiltered
-        }
-      };
+      setBBPageData('P5', 'P5: Division Profitability', {
+        financials: finFiltered,
+        invoices: invFiltered.slice(0, 300),
+        overhead: ohFiltered
+      });
 
       function asPct(n) {
         if (n === null || n === undefined || isNaN(n)) return null;
@@ -5861,7 +5980,7 @@ var labourRows = Object.values(labourByProject)
       html += '</div>';
 
       // Store data for filter re-renders / page-aware assistant
-      window._currentPage = { name: 'P6: Capacity & Labour', data: { capacity: capRows, labour: labRows } };
+      setBBPageData('P6', 'P6: Capacity & Labour', { capacity: capRows, labour: labRows });
       window._p6Cap = capRows;
       window._p6Lab = labRows;
       window._p6BarLabels  = barLabels;
@@ -6136,6 +6255,23 @@ var labourRows = Object.values(labourByProject)
       var out = document.getElementById('ai-answer');
       out.textContent = 'BB is thinking...';
       var pageData = window._currentPage;
+      var allPagesPayload = window._allPagesData || {};
+      try {
+        if (JSON.stringify(allPagesPayload).length > 80000) {
+          var keys = Object.keys(allPagesPayload);
+          var trimmed = {};
+          var cur = (window._currentPage && window._currentPage.key) || '';
+          if (cur && allPagesPayload[cur]) trimmed[cur] = allPagesPayload[cur];
+          for (var i = keys.length - 1; i >= 0; i--) {
+            if (keys[i] === cur) continue;
+            trimmed[keys[i]] = allPagesPayload[keys[i]];
+            if (JSON.stringify(trimmed).length > 80000) {
+              delete trimmed[keys[i]];
+            }
+          }
+          allPagesPayload = trimmed;
+        }
+      } catch (e) { /* keep full object; server will slice */ }
       fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -6143,7 +6279,9 @@ var labourRows = Object.values(labourByProject)
           question: q,
           pageData: pageData,
           name: name,
-          pageContext: window._currentPage.name
+          pageContext: window._currentPage.name,
+          pageDirectory: BB_PAGE_DIRECTORY,
+          allPagesData: allPagesPayload
         })
       })
       .then(function(r){ return r.json(); })

@@ -96,7 +96,9 @@ function getRowDateStr(row) {
          row['Date Logged'] || row['Date Raised'] || row['Date Approved'] ||
          row['Date Sent'] || row['Date Quoted'] ||
          row['Date Created'] || row['Created Date'] || row['Last Activity Date'] ||
-         row['Expected Close Date'] || row['Close Date'] || '';
+         row['Expected Close Date'] || row['Close Date'] ||
+         row['Planned End Date'] || row['Planned End date'] || row['End Date'] ||
+         row['Shift Date'] || row['shift_date'] || '';
 }
 
 /** Parse DD/MM/YYYY (or Date) into { year, month } where month is Jan..Dec. */
