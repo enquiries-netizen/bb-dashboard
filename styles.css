@@ -1349,12 +1349,29 @@ select {
   line-height: 1.45;
 }
 
+.p9-empty-card,
 .p11-empty-card {
   padding: 28px 20px;
   text-align: center;
   background: rgba(38, 36, 37, 0.03);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-sm);
+}
+
+.p9-empty-card.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  margin-top: 8px;
+}
+
+.p9-empty-card .no-data-msg,
+.p9-empty-card span {
+  margin: 0;
+  font-style: normal;
+  color: var(--charcoal);
+  opacity: 0.65;
 }
 
 .p11-empty-card .no-data-msg {

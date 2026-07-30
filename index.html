@@ -645,16 +645,60 @@
           </div>
         </section>
 
-        <!-- ─── P9: Cash Flow ─────────────────────────────── -->
+        <!-- ─── P9: Cash Flow & Forecast ──────────────────── -->
         <section id="page-p9" class="page">
           <div class="page-header">
             <span class="page-badge">P9</span>
             <h1 class="page-title">Cash Flow &amp; Forecast</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Cash Flow &amp; Forecast</p>
-            <p class="placeholder-text">Reads: CashFlow_Forecast · Xero_Invoices · Xero_Overhead</p>
-            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben, builds in Section 4</p>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Cash In</div>
+              <div class="kpi-value" id="kpi-p9-cash-in">—</div>
+              <div class="kpi-sub" id="kpi-p9-cash-in-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Cash Out</div>
+              <div class="kpi-value" id="kpi-p9-cash-out">—</div>
+              <div class="kpi-sub" id="kpi-p9-cash-out-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Net Cash Flow</div>
+              <div class="kpi-value" id="kpi-p9-net">—</div>
+              <div class="kpi-sub" id="kpi-p9-net-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">13-Week Rolling Forecast</div>
+            <div class="chart-row">
+              <div class="chart-card card" id="p9-forecast-wrap">
+                <div class="chart-title">Closing Balance by Week</div>
+                <canvas id="chart-p9-forecast" height="110"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">AR Ageing</div>
+            <div class="chart-row">
+              <div class="chart-card card" id="p9-ageing-wrap">
+                <div class="chart-title">Outstanding by Ageing Bucket</div>
+                <canvas id="chart-p9-ageing" height="180"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Overhead Commitments</div>
+            <div class="chart-row">
+              <div class="chart-card card" id="p9-overhead-wrap">
+                <div class="chart-title">Monthly Overhead (Actual vs Budget)</div>
+                <canvas id="chart-p9-overhead" height="110"></canvas>
+              </div>
+            </div>
+            <div id="p9-overhead-table"></div>
           </div>
         </section>
 
@@ -1030,10 +1074,8 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10, p11: loadP11 };
-      var placeholders = {
-        p9: 'P9: Cash Flow'
-      };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11 };
+      var placeholders = {};
       var fn = loaders[pageId];
       if (fn) {
         fn();
@@ -3221,6 +3263,482 @@ var labourRows = Object.values(labourByProject)
           '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
       }
     }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P9 — CASH FLOW & FORECAST
+    // Sources: CashFlow_Forecast · Xero_Invoices · Xero_Overhead
+    //          (+ Xero_Financials Cash In/Out/Flow as KPI fallback)
+    // KPIs:   Cash In, Cash Out, Net Cash Flow
+    // Charts: 13-week Closing Balance · AR Ageing · Overhead commitments
+    // ═══════════════════════════════════════════════════════════════
+    async function loadP9() {
+      showLoading(true);
+      removeError('p9');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.CASHFLOW_FORECAST).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; })
+        ]);
+        renderP9(results[0], results[1], results[2], results[3]);
+      } catch (err) {
+        console.error('P9 load error:', err);
+        showError('p9', 'Could not load Cash Flow & Forecast data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP9(forecast, invoices, overhead, financials) {
+      var brandCharcoal = '#262425';
+      var brandSoftGray = '#BCBDBE';
+      var brandSilver   = '#D2D4D5';
+
+      function applyFilters(rows) {
+        return filterByMonths(
+          filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
+          activeMonths
+        );
+      }
+
+      function isForecastDataRow(r) {
+        var week = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
+        if (!week) return false;
+        if (/^last updated/i.test(week)) return false;
+        return !!parseRowDateParts(week);
+      }
+
+      var cfAll = (forecast || []).filter(isForecastDataRow);
+      var cfFiltered = applyFilters(cfAll);
+      var invFiltered = applyFilters(invoices || []);
+      var ohFiltered  = applyFilters(overhead || []);
+      var finFiltered = applyFilters(financials || []);
+
+      window._currentPage = {
+        name: 'P9: Cash Flow & Forecast',
+        data: {
+          forecast: cfFiltered,
+          invoices: invFiltered.slice(0, 300),
+          overhead: ohFiltered
+        }
+      };
+
+      function destroyIf(id) {
+        if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+      }
+
+      function clearChartPlaceholder(wrapId, canvasId) {
+        var wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+        var ph = wrap.querySelector('.chart-placeholder');
+        if (ph) ph.remove();
+        var canvas = document.getElementById(canvasId);
+        if (canvas) canvas.style.display = '';
+      }
+
+      function showChartEmpty(wrapId, canvasId, msg) {
+        destroyIf(canvasId);
+        var wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+        var existing = wrap.querySelector('.chart-placeholder');
+        if (existing) existing.remove();
+        var canvas = document.getElementById(canvasId);
+        if (canvas) canvas.style.display = 'none';
+        var ph = document.createElement('div');
+        ph.className = 'chart-placeholder p9-empty-card';
+        ph.innerHTML = '<span>' + msg + '</span>';
+        wrap.appendChild(ph);
+      }
+
+      function emptyMsg(msg) {
+        return '<div class="p9-empty-card"><p class="no-data-msg">' + msg + '</p></div>';
+      }
+
+      function moneyTicks() {
+        return {
+          callback: function(v) {
+            return '$' + (Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
+              : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+          }
+        };
+      }
+
+      function sortByWeek(rows) {
+        return rows.slice().sort(function(a, b) {
+          var pa = parseRowDateParts(col(a, 'Week Start', 'week_start', 'Week', 'week'));
+          var pb = parseRowDateParts(col(b, 'Week Start', 'week_start', 'Week', 'week'));
+          if (!pa && !pb) return 0;
+          if (!pa) return 1;
+          if (!pb) return -1;
+          var ia = _MONTH_ABBR.indexOf(pa.month);
+          var ib = _MONTH_ABBR.indexOf(pb.month);
+          if (pa.year !== pb.year) return Number(pa.year) - Number(pb.year);
+          if (ia !== ib) return ia - ib;
+          var da = String(col(a, 'Week Start', 'week_start') || '').split('/')[0];
+          var db = String(col(b, 'Week Start', 'week_start') || '').split('/')[0];
+          return (parseInt(da, 10) || 0) - (parseInt(db, 10) || 0);
+        });
+      }
+
+      function weekLabel(r) {
+        var raw = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
+        var parts = raw.split('/');
+        if (parts.length === 3) {
+          var d = parseInt(parts[0], 10);
+          var m = parseInt(parts[1], 10);
+          if (m >= 1 && m <= 12) {
+            return (d < 10 ? '0' : '') + d + ' ' + _MONTH_ABBR[m - 1];
+          }
+        }
+        return raw || '—';
+      }
+
+      var cfSorted = sortByWeek(cfFiltered).slice(0, 13);
+
+      // ── Section 1 — Cash Position KPIs ───────────────────────
+      var cashIn = 0, cashOut = 0, netCash = 0, kpiSource = '';
+      if (cfSorted.length) {
+        cashIn = cfSorted.reduce(function(s, r) {
+          return s + parseNum(col(r, 'Cash In (Expected)', 'Cash In', 'Money In', 'cash_in'));
+        }, 0);
+        cashOut = cfSorted.reduce(function(s, r) {
+          return s + parseNum(col(r, 'Cash Out (Committed)', 'Cash Out', 'Money Out', 'cash_out'));
+        }, 0);
+        netCash = cfSorted.reduce(function(s, r) {
+          var n = col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow', 'net_movement');
+          if (n !== '' && n !== null && n !== undefined) return s + parseNum(n);
+          return s + parseNum(col(r, 'Cash In (Expected)', 'Cash In')) -
+            parseNum(col(r, 'Cash Out (Committed)', 'Cash Out'));
+        }, 0);
+        kpiSource = 'CashFlow_Forecast · ' + cfSorted.length + ' wk';
+      } else if (finFiltered.length) {
+        cashIn = finFiltered.reduce(function(s, r) {
+          return s + parseNum(col(r, 'Cash In ($)', 'Cash In', 'cash_in'));
+        }, 0);
+        cashOut = finFiltered.reduce(function(s, r) {
+          return s + parseNum(col(r, 'Cash Out ($)', 'Cash Out', 'cash_out'));
+        }, 0);
+        netCash = finFiltered.reduce(function(s, r) {
+          var n = col(r, 'Cash Flow ($)', 'Cash Flow', 'Net Cash Flow');
+          if (n !== '' && n !== null && n !== undefined) return s + parseNum(n);
+          return s + parseNum(col(r, 'Cash In ($)', 'Cash In')) -
+            parseNum(col(r, 'Cash Out ($)', 'Cash Out'));
+        }, 0);
+        kpiSource = 'Xero_Financials fallback';
+      }
+
+      var hasKpis = cfSorted.length > 0 || finFiltered.length > 0;
+      setKPI('kpi-p9-cash-in', 'kpi-p9-cash-in-sub',
+        hasKpis ? formatCurrency(cashIn) : '—',
+        hasKpis ? kpiSource : 'Data not available');
+      setKPI('kpi-p9-cash-out', 'kpi-p9-cash-out-sub',
+        hasKpis ? formatCurrency(cashOut) : '—',
+        hasKpis ? kpiSource : 'Data not available');
+      setKPI('kpi-p9-net', 'kpi-p9-net-sub',
+        hasKpis ? formatCurrency(netCash) : '—',
+        hasKpis ? kpiSource : 'Data not available');
+
+      // ── Section 2 — 13-Week Rolling Forecast ─────────────────
+      clearChartPlaceholder('p9-forecast-wrap', 'chart-p9-forecast');
+      if (!cfSorted.length) {
+        showChartEmpty('p9-forecast-wrap', 'chart-p9-forecast', 'Data not available');
+      } else {
+        var labels = cfSorted.map(weekLabel);
+        var closing = cfSorted.map(function(r) {
+          return parseNum(col(r, 'Closing Balance', 'closing_balance', 'Close Balance'));
+        });
+        var hasClosing = closing.some(function(v) { return v !== 0; });
+        var series = hasClosing ? closing : cfSorted.map(function(r) {
+          return parseNum(col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow'));
+        });
+        var seriesLabel = hasClosing ? 'Closing Balance' : 'Net Movement';
+        var titleEl = document.querySelector('#p9-forecast-wrap .chart-title');
+        if (titleEl) titleEl.textContent = seriesLabel + ' by Week';
+
+        makeChart('chart-p9-forecast', {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: seriesLabel,
+              data: series,
+              borderColor: brandCharcoal,
+              backgroundColor: brandSilver,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointBackgroundColor: brandCharcoal,
+              pointBorderColor: brandCharcoal,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return seriesLabel + ': ' + formatCurrency(ctx.raw || 0);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: brandCharcoal, maxRotation: 45, minRotation: 0 }
+              },
+              y: {
+                beginAtZero: false,
+                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
+                grid: { color: 'rgba(210,212,213,0.5)' }
+              }
+            }
+          }
+        });
+      }
+
+      // ── Section 3 — AR Ageing (Xero_Invoices) ────────────────
+      clearChartPlaceholder('p9-ageing-wrap', 'chart-p9-ageing');
+
+      function ageingBucketForInvoice(r) {
+        var bucket = String(col(r, 'Ageing Bucket', 'Ageing', 'aging bucket', 'Aging Bucket') || '').trim();
+        if (bucket) return bucket;
+
+        var daysRaw = col(r, 'Days Overdue', 'days overdue', 'Days');
+        if (daysRaw !== '' && daysRaw !== null && daysRaw !== undefined) {
+          var days = parseNum(daysRaw);
+          if (days <= 0) return 'Current';
+          if (days <= 30) return '0-30';
+          if (days <= 60) return '31-60';
+          if (days <= 90) return '61-90';
+          return '90+';
+        }
+
+        var dueStr = String(col(r, 'Due Date', 'due date') || '').trim();
+        if (!dueStr) return '';
+        var parts = dueStr.split('/');
+        if (parts.length !== 3) return '';
+        var due = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        if (isNaN(due.getTime())) return '';
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var diff = Math.floor((today - due) / 86400000);
+        if (diff <= 0) return 'Current';
+        if (diff <= 30) return '0-30';
+        if (diff <= 60) return '31-60';
+        if (diff <= 90) return '61-90';
+        return '90+';
+      }
+
+      var byAgeing = {};
+      invFiltered.forEach(function(r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return;
+        var age = ageingBucketForInvoice(r);
+        if (!age) return;
+        var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
+        byAgeing[age] = (byAgeing[age] || 0) + amt;
+      });
+
+      // Fallback: latest CashFlow_Forecast AR snapshot when invoice ageing is empty
+      if (!Object.keys(byAgeing).length && cfSorted.length) {
+        var snap = null;
+        for (var si = cfSorted.length - 1; si >= 0; si--) {
+          var row = cfSorted[si];
+          var hasAr = ['AR 0-30', 'AR 31-60', 'AR 61-90', 'AR 90+'].some(function(k) {
+            return String(col(row, k) || '').trim() !== '';
+          });
+          if (hasAr) { snap = row; break; }
+        }
+        if (snap) {
+          [['AR 0-30', '0-30'], ['AR 31-60', '31-60'], ['AR 61-90', '61-90'], ['AR 90+', '90+']].forEach(function(pair) {
+            var v = parseNum(col(snap, pair[0]));
+            if (v) byAgeing[pair[1]] = v;
+          });
+        }
+      }
+
+      function ageingSeverity(label) {
+        var s = String(label || '').toLowerCase().replace(/\s+/g, '');
+        if (s.indexOf('90') !== -1 || s.indexOf('over90') !== -1 || s.indexOf('120') !== -1) return 4;
+        if (s.indexOf('61') !== -1 || s.indexOf('60-90') !== -1) return 3;
+        if (s.indexOf('31') !== -1 || s.indexOf('30-60') !== -1) return 2;
+        if (s.indexOf('current') !== -1 || s.indexOf('0-30') !== -1 || s.indexOf('1-30') !== -1) return 1;
+        return 0;
+      }
+
+      function ageingColor(label) {
+        var sev = ageingSeverity(label);
+        if (sev >= 3) return brandCharcoal;
+        if (sev === 2) return brandSoftGray;
+        return brandSilver;
+      }
+
+      var ageingKeys = Object.keys(byAgeing).filter(function(k) {
+        return byAgeing[k] > 0;
+      }).sort(function(a, b) {
+        // Ranked by amount desc; severity used for colour only
+        return byAgeing[b] - byAgeing[a];
+      });
+
+      if (!ageingKeys.length) {
+        showChartEmpty('p9-ageing-wrap', 'chart-p9-ageing', 'Data not available');
+      } else {
+        makeChart('chart-p9-ageing', {
+          type: 'bar',
+          data: {
+            labels: ageingKeys,
+            datasets: [{
+              label: 'Outstanding',
+              data: ageingKeys.map(function(k) { return byAgeing[k]; }),
+              backgroundColor: ageingKeys.map(ageingColor),
+              borderWidth: 0,
+              borderRadius: 2
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
+                grid: { color: 'rgba(210,212,213,0.5)' }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: brandCharcoal }
+              }
+            }
+          }
+        });
+      }
+
+      // ── Section 4 — Overhead Commitments (condensed) ─────────
+      clearChartPlaceholder('p9-overhead-wrap', 'chart-p9-overhead');
+      function ohMonthLabel(r) {
+        var m = String(col(r, 'Month', 'month') || '').trim();
+        var y = String(col(r, 'Year', 'year') || '').trim();
+        return (m + ' ' + y).trim();
+      }
+      function sortOh(rows) {
+        return rows.slice().sort(function(a, b) {
+          var ya = parseInt(col(a, 'Year', 'year') || '0', 10);
+          var yb = parseInt(col(b, 'Year', 'year') || '0', 10);
+          if (ya !== yb) return ya - yb;
+          var ma = _MONTH_ABBR.indexOf(String(getRowMonth(a) || '').substring(0, 3));
+          var mb = _MONTH_ABBR.indexOf(String(getRowMonth(b) || '').substring(0, 3));
+          return ma - mb;
+        });
+      }
+
+      var ohSorted = sortOh(ohFiltered);
+      var ohPeriods = [];
+      ohSorted.forEach(function(r) {
+        var lbl = ohMonthLabel(r);
+        if (lbl && ohPeriods.indexOf(lbl) === -1) ohPeriods.push(lbl);
+      });
+
+      var ohTableEl = document.getElementById('p9-overhead-table');
+      if (!ohPeriods.length) {
+        showChartEmpty('p9-overhead-wrap', 'chart-p9-overhead', 'Data not available');
+        if (ohTableEl) ohTableEl.innerHTML = emptyMsg('Data not available');
+      } else {
+        var ohActual = ohPeriods.map(function(lbl) {
+          return ohSorted.filter(function(r) { return ohMonthLabel(r) === lbl; })
+            .reduce(function(s, r) {
+              return s + parseNum(col(r, 'Actual ($)', 'Actual', 'Overhead Actual ($)', 'Overhead Actual'));
+            }, 0);
+        });
+        var ohBudget = ohPeriods.map(function(lbl) {
+          return ohSorted.filter(function(r) { return ohMonthLabel(r) === lbl; })
+            .reduce(function(s, r) {
+              return s + parseNum(col(r,
+                'Monthly Budget ($)', 'Budget ($)', 'Budget',
+                'Overhead Budget ($)', 'Overhead Budget'));
+            }, 0);
+        });
+
+        makeChart('chart-p9-overhead', {
+          type: 'bar',
+          data: {
+            labels: ohPeriods,
+            datasets: [
+              {
+                label: 'Budget',
+                data: ohBudget,
+                backgroundColor: 'rgba(0,0,0,0)',
+                borderColor: brandSoftGray,
+                borderWidth: 2,
+                borderRadius: 2,
+                order: 2
+              },
+              {
+                label: 'Actual',
+                data: ohActual,
+                backgroundColor: brandCharcoal,
+                borderColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 2,
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top', labels: { color: brandCharcoal } },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: brandCharcoal } },
+              y: {
+                beginAtZero: true,
+                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
+                grid: { color: 'rgba(210,212,213,0.5)' }
+              }
+            }
+          }
+        });
+
+        if (ohTableEl) {
+          var tableRows = ohPeriods.map(function(lbl, i) {
+            return {
+              Period: lbl,
+              Budget: ohBudget[i],
+              Actual: ohActual[i],
+              Variance: ohBudget[i] - ohActual[i]
+            };
+          });
+          ohTableEl.innerHTML = buildTable(tableRows, [
+            { label: 'Period', key: 'Period' },
+            { label: 'Budget', key: 'Budget', format: function(v) { return formatCurrency(parseNum(v)); } },
+            { label: 'Actual', key: 'Actual', format: function(v) { return formatCurrency(parseNum(v)); } },
+            { label: 'Variance', key: 'Variance', format: function(v) { return formatCurrency(parseNum(v)); } }
+          ]);
+        }
+      }
+    }
+
 
 
     // ═══════════════════════════════════════════════════════════════
