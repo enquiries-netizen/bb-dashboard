@@ -3229,7 +3229,7 @@ var labourRows = Object.values(labourByProject)
     // KPIs:   Total Spend, Total Leads, CPL, ROAS (+ sparklines)
     // Charts: Ad Spend by Campaign (ranked bars), Leads vs Spend trend
     //         Platform breakdown kept in code; badge until 2+ platforms
-    // Table:  Campaign Performance (ROAS-first sort, Pending Campaign ID)
+    // Table:  Campaign Performance (ROAS-first sort, No Leads Matched Yet)
     // ═══════════════════════════════════════════════════════════════
     async function loadP10() {
       showLoading(true);
@@ -3338,7 +3338,7 @@ var labourRows = Object.values(labourByProject)
       }
 
       function pendingLabel() {
-        return '<span class="p10-pending">Pending Campaign ID</span>';
+        return '<span class="p10-pending">No Leads Matched Yet</span>';
       }
 
       function parseMonthYearKey(key) {
@@ -3654,7 +3654,7 @@ var labourRows = Object.values(labourByProject)
         }
       });
 
-      // Campaign Performance — real ROAS first; Pending Campaign ID for attribution gaps
+      // Campaign Performance — real ROAS first; No Leads Matched Yet for attribution gaps
       var sorted = filtered.slice().sort(function(a, b) {
         var aPending = isAttributionPending(a);
         var bPending = isAttributionPending(b);
