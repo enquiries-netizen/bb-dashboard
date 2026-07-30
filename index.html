@@ -669,29 +669,44 @@
             <div class="kpi-card card">
               <div class="kpi-label">Total Spend</div>
               <div class="kpi-value" id="kpi-mkt-spend">—</div>
+              <svg class="kpi-sparkline" id="kpi-mkt-spend-spark" hidden aria-hidden="true"></svg>
               <div class="kpi-sub" id="kpi-mkt-spend-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
               <div class="kpi-label">Total Leads</div>
               <div class="kpi-value" id="kpi-mkt-leads">—</div>
+              <svg class="kpi-sparkline" id="kpi-mkt-leads-spark" hidden aria-hidden="true"></svg>
               <div class="kpi-sub" id="kpi-mkt-leads-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
               <div class="kpi-label">Cost Per Lead</div>
               <div class="kpi-value" id="kpi-mkt-cpl">—</div>
+              <svg class="kpi-sparkline" id="kpi-mkt-cpl-spark" hidden aria-hidden="true"></svg>
               <div class="kpi-sub" id="kpi-mkt-cpl-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
               <div class="kpi-label">ROAS</div>
               <div class="kpi-value" id="kpi-mkt-roas">—</div>
+              <svg class="kpi-sparkline" id="kpi-mkt-roas-spark" hidden aria-hidden="true"></svg>
               <div class="kpi-sub" id="kpi-mkt-roas-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="p10-meta-row" id="p10-meta-row">
+            <span class="p10-platform-badge" id="p10-platform-badge" hidden></span>
+            <div class="p10-roas-highlight" id="p10-roas-highlight" hidden>
+              <span class="p10-roas-highlight-label">Best ROAS</span>
+              <span class="p10-roas-highlight-name" id="p10-roas-highlight-name"></span>
+              <span class="p10-roas-highlight-value" id="p10-roas-highlight-value"></span>
             </div>
           </div>
 
           <div class="chart-row two-col">
             <div class="chart-card card">
-              <div class="chart-title">Spend by Platform</div>
-              <canvas id="chart-p10-spend" height="200"></canvas>
+              <div class="chart-title">Ad Spend by Campaign</div>
+              <div class="p10-spend-chart-wrap" id="p10-spend-chart-wrap">
+                <canvas id="chart-p10-spend" height="200"></canvas>
+              </div>
             </div>
             <div class="chart-card card">
               <div class="chart-title">Weekly Leads vs Spend</div>
@@ -3158,9 +3173,10 @@ var labourRows = Object.values(labourByProject)
     // ═══════════════════════════════════════════════════════════════
     // P10 — MARKETING PERFORMANCE
     // Source: Marketing_Paid tab (Make.com Scenario 13 ✅)
-    // KPIs:   Total Spend, Total Leads, CPL, ROAS
-    // Charts: Spend by platform doughnut, Leads vs Spend trend
-    // Table:  All campaign data
+    // KPIs:   Total Spend, Total Leads, CPL, ROAS (+ sparklines)
+    // Charts: Ad Spend by Campaign (ranked bars), Leads vs Spend trend
+    //         Platform breakdown kept in code; badge until 2+ platforms
+    // Table:  Campaign Performance (ROAS-first sort, Pending Campaign ID)
     // ═══════════════════════════════════════════════════════════════
     async function loadP10() {
       showLoading(true);
@@ -3178,6 +3194,10 @@ var labourRows = Object.values(labourByProject)
     }
 
     function renderP10(marketing) {
+      var brandCharcoal = '#262425';
+      var brandSoftGray = '#BCBDBE';
+      var brandSilver   = '#D2D4D5';
+
       // One shared filtered set for KPIs + charts (Brand / Year / Month)
       var filtered = filterByMonths(
         filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
@@ -3191,57 +3211,333 @@ var labourRows = Object.values(labourByProject)
         });
       }
 
+      function renderSparkline(svgId, values) {
+        var svg = document.getElementById(svgId);
+        if (!svg) return;
+        var nums = (values || []).filter(function(v) {
+          return v !== null && v !== undefined && !isNaN(v);
+        });
+        if (nums.length < 2) {
+          svg.innerHTML = '';
+          svg.setAttribute('hidden', '');
+          return;
+        }
+        var w = 120, h = 22, pad = 2;
+        var min = Math.min.apply(null, nums);
+        var max = Math.max.apply(null, nums);
+        var range = max - min || 1;
+        var pts = nums.map(function(v, i) {
+          var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
+          var y = pad + (1 - (v - min) / range) * (h - pad * 2);
+          return x.toFixed(1) + ',' + y.toFixed(1);
+        }).join(' ');
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.innerHTML =
+          '<polyline fill="none" stroke="' + brandCharcoal + '" stroke-width="1.25" ' +
+          'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
+        svg.removeAttribute('hidden');
+      }
+
+      function clearSparklines() {
+        ['kpi-mkt-spend-spark', 'kpi-mkt-leads-spark', 'kpi-mkt-cpl-spark', 'kpi-mkt-roas-spark']
+          .forEach(function(id) { renderSparkline(id, null); });
+      }
+
+      function setPlatformBadge(byPlatform, totalSpendAmt) {
+        var el = document.getElementById('p10-platform-badge');
+        if (!el) return;
+        var labels = Object.keys(byPlatform || {});
+        if (!labels.length || totalSpendAmt <= 0) {
+          el.setAttribute('hidden', '');
+          el.textContent = '';
+          return;
+        }
+        var parts = labels.map(function(p) {
+          var pct = Math.round((byPlatform[p] / totalSpendAmt) * 100);
+          return pct + '% ' + p;
+        });
+        el.textContent = parts.join(' · ');
+        el.removeAttribute('hidden');
+      }
+
+      function setRoasHighlight(row) {
+        var wrap = document.getElementById('p10-roas-highlight');
+        var nameEl = document.getElementById('p10-roas-highlight-name');
+        var valEl = document.getElementById('p10-roas-highlight-value');
+        if (!wrap || !nameEl || !valEl) return;
+        if (!row) {
+          wrap.setAttribute('hidden', '');
+          nameEl.textContent = '';
+          valEl.textContent = '';
+          return;
+        }
+        var name = col(row, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Campaign';
+        var roas = parseNum(col(row, 'ROAS', 'roas'));
+        nameEl.textContent = name;
+        valEl.textContent = roas.toFixed(2) + 'x';
+        wrap.removeAttribute('hidden');
+      }
+
+      /** Blank ROAS = GHL has not attributed via Campaign ID match yet. */
+      function isAttributionPending(r) {
+        return String(col(r, 'ROAS', 'roas') || '').trim() === '';
+      }
+
+      function pendingLabel() {
+        return '<span class="p10-pending">Pending Campaign ID</span>';
+      }
+
+      function parseMonthYearKey(key) {
+        var s = String(key || '').trim();
+        var m = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (!m) return null;
+        var token = m[1].substring(0, 3).toLowerCase();
+        var idx = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === token) { idx = i; break; }
+        }
+        if (idx < 0) return null;
+        return { year: parseInt(m[2], 10), month: idx };
+      }
+
+      function monthKeyFromYM(year, monthIdx) {
+        var full = new Date(year, monthIdx, 1).toLocaleString('en-AU', { month: 'long' });
+        return full + ' ' + year;
+      }
+
+      function trailingMonthKeys(endKey, n) {
+        var p = parseMonthYearKey(endKey);
+        if (!p) return [];
+        var keys = [];
+        for (var i = n - 1; i >= 0; i--) {
+          var d = new Date(p.year, p.month - i, 1);
+          keys.push(monthKeyFromYM(d.getFullYear(), d.getMonth()));
+        }
+        return keys;
+      }
+
+      function normalizeMonthKey(key) {
+        var p = parseMonthYearKey(key);
+        return p ? monthKeyFromYM(p.year, p.month) : String(key || '').trim();
+      }
+
+      function rowMonthKey(r) {
+        var m = String(col(r, 'Month', 'month') || '').trim();
+        var y = String(col(r, 'Year', 'year') || '').trim();
+        if (m && y) return normalizeMonthKey(m + ' ' + y);
+        return '';
+      }
+
+      function sparkValuesForKeys(keys, lookup) {
+        var vals = [];
+        keys.forEach(function(k) {
+          if (Object.prototype.hasOwnProperty.call(lookup, k) &&
+              lookup[k] !== null && lookup[k] !== undefined && !isNaN(lookup[k])) {
+            vals.push(lookup[k]);
+          }
+        });
+        return vals;
+      }
+
+      function spendOf(r) {
+        return parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+      }
+      function leadsOf(r) {
+        return parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
+      }
+      function roasRawOf(r) {
+        return String(col(r, 'ROAS', 'roas') || '').trim();
+      }
+      function wonJobsOf(r) {
+        return parseNum(col(r, 'Won Jobs', 'won_jobs', 'Jobs Won'));
+      }
+      function revenueOf(r) {
+        return parseNum(col(r, 'Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Revenue', 'revenue'));
+      }
+
       // KPIs from the same filtered rows — show $0 / 0 when empty (not "No data")
-      var totalSpend = filtered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
-      }, 0);
-      var totalLeads = filtered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
-      }, 0);
-      var totalRoas = filtered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'ROAS', 'roas'));
-      }, 0);
-      var avgRoas = filtered.length > 0 ? totalRoas / filtered.length : 0;
-      var avgCPL  = totalLeads > 0 ? totalSpend / totalLeads : 0;
+      var totalSpend = filtered.reduce(function(s, r) { return s + spendOf(r); }, 0);
+      var totalLeads = filtered.reduce(function(s, r) { return s + leadsOf(r); }, 0);
+      var roasRows = filtered.filter(function(r) { return roasRawOf(r) !== ''; });
+      var avgRoas = roasRows.length
+        ? roasRows.reduce(function(s, r) { return s + parseNum(roasRawOf(r)); }, 0) / roasRows.length
+        : 0;
+      var avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
 
       setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub', formatCurrency(totalSpend), 'Total paid ad spend');
       setKPI('kpi-mkt-leads', 'kpi-mkt-leads-sub', String(totalLeads),         'Leads generated');
       setKPI('kpi-mkt-cpl',   'kpi-mkt-cpl-sub',   formatCurrency(avgCPL),     'Cost per lead');
-      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',  avgRoas.toFixed(2) + 'x',
-             filtered.length ? 'Avg return on ad spend' : 'No matching campaigns');
+      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',
+        roasRows.length ? avgRoas.toFixed(2) + 'x' : '—',
+        roasRows.length ? 'Avg return on ad spend (attributed)' : 'No attributed ROAS yet');
 
-      // Always clear/rebuild charts from filtered rows (never leave stale Chart.js data)
+      // Platform breakdown kept for badge + future multi-platform chart
+      var byPlatform = {};
+      filtered.forEach(function(r) {
+        var p = col(r, 'Platform', 'platform') || 'Other';
+        byPlatform[p] = (byPlatform[p] || 0) + spendOf(r);
+      });
+      setPlatformBadge(byPlatform, totalSpend);
+
+      // Best real-ROAS campaign highlight
+      var bestRoasRow = null;
+      roasRows.forEach(function(r) {
+        var v = parseNum(roasRawOf(r));
+        if (!bestRoasRow || v > parseNum(roasRawOf(bestRoasRow))) bestRoasRow = r;
+      });
+      setRoasHighlight(bestRoasRow);
+
+      // Sparklines: trailing months from brand+year scope (omit if <2 pts)
+      var brandYearRows = filterByYear(filterByBrand(marketing || [], activeBrand), activeYear);
+      var endKey = '';
+      if (activeMonths && activeMonths.length === 1 && activeYear && activeYear !== 'ALL') {
+        var mi = -1;
+        for (var mi2 = 0; mi2 < _MONTH_ABBR.length; mi2++) {
+          if (_MONTH_ABBR[mi2].toLowerCase() === String(activeMonths[0]).substring(0, 3).toLowerCase()) {
+            mi = mi2; break;
+          }
+        }
+        if (mi >= 0) endKey = monthKeyFromYM(parseInt(activeYear, 10), mi);
+      }
+      if (!endKey) {
+        brandYearRows.forEach(function(r) {
+          var k = rowMonthKey(r);
+          if (!k) return;
+          if (!endKey || (parseMonthYearKey(k) && parseMonthYearKey(endKey) &&
+              (parseMonthYearKey(k).year > parseMonthYearKey(endKey).year ||
+               (parseMonthYearKey(k).year === parseMonthYearKey(endKey).year &&
+                parseMonthYearKey(k).month > parseMonthYearKey(endKey).month)))) {
+            endKey = k;
+          }
+        });
+      }
+      var sparkMonths = endKey ? trailingMonthKeys(endKey, 8) : [];
+      var spendByMonth = {};
+      var leadsByMonth = {};
+      var roasSumByMonth = {};
+      var roasCntByMonth = {};
+      brandYearRows.forEach(function(r) {
+        var k = rowMonthKey(r);
+        if (!k) return;
+        spendByMonth[k] = (spendByMonth[k] || 0) + spendOf(r);
+        leadsByMonth[k] = (leadsByMonth[k] || 0) + leadsOf(r);
+        if (roasRawOf(r) !== '') {
+          roasSumByMonth[k] = (roasSumByMonth[k] || 0) + parseNum(roasRawOf(r));
+          roasCntByMonth[k] = (roasCntByMonth[k] || 0) + 1;
+        }
+      });
+      var cplByMonth = {};
+      var avgRoasByMonth = {};
+      sparkMonths.forEach(function(k) {
+        if (spendByMonth[k] !== undefined && leadsByMonth[k] > 0) {
+          cplByMonth[k] = spendByMonth[k] / leadsByMonth[k];
+        }
+        if (roasCntByMonth[k]) {
+          avgRoasByMonth[k] = roasSumByMonth[k] / roasCntByMonth[k];
+        }
+      });
+      renderSparkline('kpi-mkt-spend-spark', sparkValuesForKeys(sparkMonths, spendByMonth));
+      renderSparkline('kpi-mkt-leads-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
+      renderSparkline('kpi-mkt-cpl-spark',   sparkValuesForKeys(sparkMonths, cplByMonth));
+      renderSparkline('kpi-mkt-roas-spark',  sparkValuesForKeys(sparkMonths, avgRoasByMonth));
+
       clearP10Charts();
 
       if (filtered.length === 0) {
+        setPlatformBadge({}, 0);
+        setRoasHighlight(null);
+        clearSparklines();
         document.getElementById('p10-campaign-table').innerHTML =
           '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
         return;
       }
 
-      // Spend by platform — doughnut chart
-      var byPlatform = {};
+      // ── Ad Spend by Campaign — ranked horizontal bars (highest first) ─
+      var byCampaign = {};
       filtered.forEach(function(r) {
-        var p = col(r, 'Platform', 'platform') || 'Other';
-        byPlatform[p] = (byPlatform[p] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+        var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
+        byCampaign[name] = (byCampaign[name] || 0) + spendOf(r);
       });
-      var platLabels = Object.keys(byPlatform);
-      var platColors = ['#262425', '#555', '#888', '#aaa', '#ccc'];
+      var campaignEntries = Object.keys(byCampaign).map(function(name) {
+        return { name: name, spend: byCampaign[name] };
+      }).filter(function(e) { return e.spend > 0; })
+        .sort(function(a, b) { return b.spend - a.spend; });
 
+      var spendWrap = document.getElementById('p10-spend-chart-wrap');
+      if (spendWrap) {
+        spendWrap.style.height = Math.max(200, Math.max(campaignEntries.length, 1) * 28 + 48) + 'px';
+      }
+
+      var spendLabelPlugin = {
+        id: 'p10SpendBarLabels',
+        afterDatasetsDraw: function(chart) {
+          var ctx = chart.ctx;
+          var meta = chart.getDatasetMeta(0);
+          if (!meta) return;
+          meta.data.forEach(function(el, i) {
+            var val = chart.data.datasets[0].data[i];
+            if (val === null || val === undefined || isNaN(val)) return;
+            var pos = el.tooltipPosition();
+            ctx.save();
+            ctx.fillStyle = brandCharcoal;
+            ctx.font = '600 11px Montserrat, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(formatCurrency(val), pos.x + 8, pos.y);
+            ctx.restore();
+          });
+        }
+      };
+
+      // Platform doughnut deferred while Object.keys(byPlatform).length < 2 (badge only).
       makeChart('chart-p10-spend', {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-          labels: platLabels,
+          labels: campaignEntries.length
+            ? campaignEntries.map(function(e) {
+                return e.name.length > 36 ? e.name.substring(0, 36) + '…' : e.name;
+              })
+            : ['No spend'],
           datasets: [{
-            data:            platLabels.map(function(k) { return byPlatform[k]; }),
-            backgroundColor: platColors.slice(0, platLabels.length),
-            borderWidth:     3,
-            borderColor:     '#fff'
+            label: 'Ad Spend',
+            data: campaignEntries.length
+              ? campaignEntries.map(function(e) { return e.spend; })
+              : [0],
+            backgroundColor: brandCharcoal,
+            borderWidth: 0,
+            borderRadius: 0,
+            barThickness: 14
           }]
         },
+        plugins: [spendLabelPlugin],
         options: {
+          indexAxis: 'y',
           responsive: true,
-          plugins: { legend: { position: 'bottom', labels: { padding: 12 } } }
+          maintainAspectRatio: false,
+          layout: { padding: { right: 64 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: brandSilver },
+              ticks: {
+                color: brandSoftGray,
+                callback: function(v) { return '$' + v; }
+              }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: brandCharcoal, font: { size: 11 } }
+            }
+          }
         }
       });
 
@@ -3251,8 +3547,8 @@ var labourRows = Object.values(labourByProject)
         var d = col(r, 'Month', 'month', 'Date', 'date') || '';
         if (!d) return;
         if (!byMonth[d]) byMonth[d] = { spend: 0, leads: 0 };
-        byMonth[d].spend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
-        byMonth[d].leads += parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
+        byMonth[d].spend += spendOf(r);
+        byMonth[d].leads += leadsOf(r);
       });
       var monthKeys = Object.keys(byMonth);
 
@@ -3264,35 +3560,108 @@ var labourRows = Object.values(labourByProject)
             {
               label:           'Spend ($)',
               data:            monthKeys.map(function(k) { return byMonth[k].spend; }),
-              backgroundColor: 'rgba(38,36,37,0.80)',
+              backgroundColor: brandCharcoal,
               borderWidth:     0,
-              borderRadius:    4,
+              borderRadius:    0,
               yAxisID:         'y'
             },
             {
               label:           'Leads',
               data:            monthKeys.map(function(k) { return byMonth[k].leads; }),
               type:            'line',
-              borderColor:     '#888',
+              borderColor:     brandSoftGray,
               backgroundColor: 'transparent',
               tension:         0.3,
-              pointRadius:     4,
+              pointRadius:     3,
+              pointBackgroundColor: brandCharcoal,
               yAxisID:         'y1'
             }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: 'top' } },
+          plugins: {
+            legend: { position: 'top', labels: { color: brandCharcoal } }
+          },
           scales: {
-            y:  { beginAtZero: true, position: 'left',  ticks: { callback: function(v) { return '$' + v; } } },
-            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+            y:  {
+              beginAtZero: true,
+              position: 'left',
+              ticks: { color: brandSoftGray, callback: function(v) { return '$' + v; } },
+              grid: { color: brandSilver }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              ticks: { color: brandSoftGray },
+              grid: { drawOnChartArea: false }
+            },
+            x: { ticks: { color: brandCharcoal }, grid: { display: false } }
           }
         }
       });
 
-      // Full campaign table
-      document.getElementById('p10-campaign-table').innerHTML = buildAutoTable(filtered);
+      // Campaign Performance — real ROAS first; Pending Campaign ID for attribution gaps
+      var sorted = filtered.slice().sort(function(a, b) {
+        var aPending = isAttributionPending(a);
+        var bPending = isAttributionPending(b);
+        if (aPending !== bPending) return aPending ? 1 : -1;
+        if (!aPending && !bPending) {
+          var aRoas = parseNum(roasRawOf(a));
+          var bRoas = parseNum(roasRawOf(b));
+          if (aRoas !== bRoas) return bRoas - aRoas;
+        }
+        return spendOf(b) - spendOf(a);
+      });
+
+      document.getElementById('p10-campaign-table').innerHTML = buildTable(sorted, [
+        { label: 'Campaign', key: ['Campaign Name', 'campaign_name', 'Campaign', 'campaign'] },
+        { label: 'Brand',    key: ['Brand', 'brand'] },
+        { label: 'Platform', key: ['Platform', 'platform'] },
+        { label: 'Month',    key: ['Month', 'month'] },
+        { label: 'Year',     key: ['Year', 'year'] },
+        {
+          label: 'Ad Spend',
+          key: ['Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'],
+          format: function(v) { return formatCurrency(parseNum(v)); }
+        },
+        {
+          label: 'Leads',
+          key: ['Leads Generated', 'Leads', 'leads'],
+          format: function(v) { return String(parseNum(v)); }
+        },
+        {
+          label: 'CPL',
+          key: ['Cost Per Lead ($)', 'Cost Per Lead', 'CPL'],
+          format: function(v) { return formatCurrency(parseNum(v)); }
+        },
+        {
+          label: 'ROAS',
+          key: ['ROAS', 'roas'],
+          format: function(v, r) {
+            if (isAttributionPending(r)) return pendingLabel();
+            return parseNum(v).toFixed(2) + 'x';
+          }
+        },
+        {
+          label: 'Won Jobs',
+          key: ['Won Jobs', 'won_jobs', 'Jobs Won'],
+          format: function(v, r) {
+            if (isAttributionPending(r) && parseNum(v) === 0) return pendingLabel();
+            return String(parseNum(v));
+          }
+        },
+        {
+          label: 'Revenue',
+          key: ['Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Revenue', 'revenue'],
+          format: function(v, r) {
+            if (isAttributionPending(r) && parseNum(v) === 0) return pendingLabel();
+            return formatCurrency(parseNum(v));
+          }
+        },
+        { label: 'Campaign ID', key: ['Campaign ID', 'campaign_id'] },
+        { label: 'Department',  key: ['Department', 'department'] }
+      ]);
     }
 
 

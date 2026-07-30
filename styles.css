@@ -883,6 +883,83 @@ select {
 
 
 /* ═══════════════════════════════════════════════════════════════
+   P10 — MARKETING PERFORMANCE
+═══════════════════════════════════════════════════════════════ */
+.p10-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin: -8px 0 20px;
+  min-height: 0;
+}
+
+.p10-platform-badge {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--charcoal);
+  letter-spacing: 0.01em;
+}
+
+.p10-platform-badge[hidden],
+.p10-roas-highlight[hidden] {
+  display: none !important;
+}
+
+.p10-roas-highlight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--silver);
+  background: var(--white);
+  font-family: var(--font-body);
+}
+
+.p10-roas-highlight-label {
+  font-family: var(--font-heading);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--gray);
+}
+
+.p10-roas-highlight-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+.p10-roas-highlight-value {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.p10-spend-chart-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+.p10-pending {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gray);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+#p10-campaign-table .data-table td.p10-pending-cell {
+  color: var(--gray);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
    DATA TABLE — used in P1, P7, P8, P10
 ═══════════════════════════════════════════════════════════════ */
 .table-wrap {
