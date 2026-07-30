@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -266,7 +267,7 @@
           <div class="chart-row two-col">
             <div class="chart-card card">
               <div class="chart-title">Quoting Funnel by Status</div>
-              <canvas id="chart-p3-funnel" height="200"></canvas>
+              <div id="chart-p3-funnel" class="apex-chart"></div>
             </div>
             <div class="chart-card card">
               <div class="chart-title">Quote Value by Status</div>
@@ -274,10 +275,14 @@
             </div>
           </div>
 
-          <div class="chart-row">
+          <div class="chart-row two-col">
             <div class="chart-card card">
               <div class="chart-title">Quotes by Estimator</div>
-              <canvas id="chart-p3-estimator" height="110"></canvas>
+              <div id="chart-p3-estimator" class="apex-chart"></div>
+            </div>
+            <div class="chart-card card">
+              <div class="chart-title">Quotes by Status Share</div>
+              <div id="chart-p3-donut" class="apex-chart"></div>
             </div>
           </div>
 
@@ -293,6 +298,7 @@
 
           <div class="section-card">
             <div class="section-title">Estimating Accuracy</div>
+            <div id="p3-accuracy-gauges" class="p3-accuracy-gauges"></div>
             <div id="p3-accuracy-table">Loading accuracy data...</div>
           </div>
         </section>
@@ -541,16 +547,46 @@
 
     // ═══════════════════════════════════════════════════════════
     // CHART REGISTRY
-    // Tracks Chart.js instances so we can destroy before re-create.
-    // Prevents "Canvas is already in use" errors on page refresh.
+    // Tracks Chart.js / ApexCharts instances so we can destroy
+    // before re-create (avoids canvas reuse and stale Apex DOM).
     // ═══════════════════════════════════════════════════════════
     const _charts = {};
+    const _apexCharts = {};
 
     function makeChart(id, config) {
       if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
       const ctx = document.getElementById(id);
       if (!ctx) return;
       _charts[id] = new Chart(ctx, config);
+    }
+
+    function destroyApex(id) {
+      if (_apexCharts[id]) {
+        _apexCharts[id].destroy();
+        delete _apexCharts[id];
+      }
+    }
+
+    function setApexOrPlaceholder(elId, hasData, options) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      var wrap = el.parentElement;
+      var existing = wrap.querySelector('.chart-placeholder');
+      if (existing) existing.remove();
+      destroyApex(elId);
+      if (!hasData) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        var ph = document.createElement('div');
+        ph.className = 'chart-placeholder';
+        ph.innerHTML = '<span>Data not yet available</span>';
+        wrap.appendChild(ph);
+        return;
+      }
+      el.style.display = '';
+      el.innerHTML = '';
+      _apexCharts[elId] = new ApexCharts(el, options);
+      _apexCharts[elId].render();
     }
 
 
@@ -1492,8 +1528,16 @@
         return String(col(r, 'Estimator Name', 'Estimator', 'estimator_name', 'estimator') || '').trim() || 'Unassigned';
       }
       function clearP3Charts() {
-        ['chart-p3-funnel', 'chart-p3-value', 'chart-p3-estimator'].forEach(function(id) {
-          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        // Chart.js (Quote Value by Status only)
+        if (_charts['chart-p3-value']) {
+          _charts['chart-p3-value'].destroy();
+          delete _charts['chart-p3-value'];
+        }
+        // ApexCharts funnel / estimator / donut
+        ['chart-p3-funnel', 'chart-p3-estimator', 'chart-p3-donut'].forEach(destroyApex);
+        // Accuracy radial gauges (dynamic ids)
+        Object.keys(_apexCharts).forEach(function(id) {
+          if (id.indexOf('chart-p3-acc-') === 0) destroyApex(id);
         });
       }
       function setChartOrPlaceholder(canvasId, hasData, config) {
@@ -1514,6 +1558,18 @@
         canvas.style.display = '';
         makeChart(canvasId, config);
       }
+      var apexBase = {
+        chart: {
+          fontFamily: "Montserrat, Poppins, sans-serif",
+          toolbar: { show: false },
+          background: 'transparent'
+        },
+        theme: { mode: 'light' },
+        dataLabels: { enabled: false },
+        grid: { borderColor: 'rgba(188, 189, 190, 0.35)' },
+        tooltip: { theme: 'dark' }
+      };
+      var charcoalScale = ['#1a1a1a', '#2a2a2a', '#3d3d3d', '#555555', '#777777'];
 
       // Rebuild Department options from all three tabs (pre-dept filter)
       var brandedQuotes   = applyGlobal(window._p3Quotes);
@@ -1620,30 +1676,42 @@
       var funnelCounts = STATUS_ORDER.map(function(s) { return statusStats[s].count; });
       var funnelValues = STATUS_ORDER.map(function(s) { return Math.round(statusStats[s].value); });
       var hasFunnelData = funnelCounts.some(function(n) { return n > 0; });
-      var charcoalScale = ['#1a1a1a', '#2a2a2a', '#3d3d3d', '#555555', '#777777'];
 
-      setChartOrPlaceholder('chart-p3-funnel', hasFunnelData, {
-        type: 'bar',
-        data: {
-          labels: funnelLabels,
-          datasets: [{
-            label: 'Quotes',
-            data: funnelCounts,
-            backgroundColor: charcoalScale,
-            borderWidth: 0,
-            borderRadius: 4
-          }]
+      // ── ApexCharts: Quoting Funnel (horizontal narrowing bars) ─
+      setApexOrPlaceholder('chart-p3-funnel', hasFunnelData, Object.assign({}, apexBase, {
+        chart: Object.assign({}, apexBase.chart, { type: 'bar', height: 280 }),
+        series: [{ name: 'Quotes', data: funnelCounts }],
+        colors: charcoalScale,
+        plotOptions: {
+          bar: {
+            borderRadius: 0,
+            horizontal: true,
+            distributed: true,
+            barHeight: '88%',
+            isFunnel: true
+          }
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' quotes'; } } }
-          },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        xaxis: {
+          categories: funnelLabels,
+          labels: { style: { colors: '#262425', fontSize: '11px' } }
+        },
+        yaxis: {
+          labels: { style: { colors: '#262425', fontSize: '11px', fontWeight: 600 } }
+        },
+        legend: { show: false },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) { return val; },
+          style: { colors: ['#FFFFFF'], fontSize: '11px', fontWeight: 600 },
+          dropShadow: { enabled: false }
+        },
+        tooltip: {
+          theme: 'dark',
+          y: { formatter: function(val) { return val + ' quotes'; } }
         }
-      });
+      }));
 
+      // ── Chart.js: Quote Value by Status (unchanged type) ───────
       var hasValueData = funnelValues.some(function(n) { return n > 0; });
       setChartOrPlaceholder('chart-p3-value', hasValueData, {
         type: 'bar',
@@ -1693,38 +1761,129 @@
         };
       }).sort(function(a, b) { return b.count - a.count; });
 
-      var hasEstData = estEntries.some(function(e) { return e.count > 0 && e.name !== 'Unassigned'; }) ||
-                       estEntries.some(function(e) { return e.count > 0; });
-
-      setChartOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, {
-        type: 'bar',
-        data: {
-          labels: estEntries.map(function(e) { return e.name; }),
-          datasets: [
-            {
-              label: 'Quotes',
-              data: estEntries.map(function(e) { return e.count; }),
-              backgroundColor: '#1a1a1a',
-              borderWidth: 0,
-              borderRadius: 4
-            },
-            {
-              label: 'Avg Days to Decision',
-              data: estEntries.map(function(e) {
-                return e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : 0;
-              }),
-              backgroundColor: '#555555',
-              borderWidth: 0,
-              borderRadius: 4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
+      var hasEstData = estEntries.some(function(e) { return e.count > 0; });
+      var estAvgDays = estEntries.map(function(e) {
+        return e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : 0;
       });
+
+      // ── ApexCharts: Quotes by Estimator (combo column + line) ─
+      setApexOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, Object.assign({}, apexBase, {
+        chart: Object.assign({}, apexBase.chart, { type: 'line', height: 300 }),
+        series: [
+          {
+            name: 'Quotes',
+            type: 'column',
+            data: estEntries.map(function(e) { return e.count; })
+          },
+          {
+            name: 'Avg Days to Decision',
+            type: 'line',
+            data: estAvgDays
+          }
+        ],
+        colors: ['#1a1a1a', '#777777'],
+        stroke: { width: [0, 3], curve: 'smooth' },
+        markers: {
+          size: [0, 5],
+          colors: ['#777777'],
+          strokeColors: '#FFFFFF',
+          strokeWidth: 2
+        },
+        plotOptions: {
+          bar: { borderRadius: 4, columnWidth: '48%' }
+        },
+        xaxis: {
+          categories: estEntries.map(function(e) { return e.name; }),
+          labels: { style: { colors: '#262425', fontSize: '11px' } }
+        },
+        yaxis: [
+          {
+            title: { text: 'Quotes', style: { color: '#1a1a1a', fontSize: '11px' } },
+            labels: {
+              style: { colors: '#1a1a1a', fontSize: '11px' },
+              formatter: function(v) { return Math.round(v); }
+            },
+            min: 0
+          },
+          {
+            opposite: true,
+            title: { text: 'Avg Days to Decision', style: { color: '#777777', fontSize: '11px' } },
+            labels: {
+              style: { colors: '#777777', fontSize: '11px' },
+              formatter: function(v) { return Math.round(v * 10) / 10; }
+            },
+            min: 0
+          }
+        ],
+        legend: {
+          position: 'top',
+          horizontalAlign: 'left',
+          fontSize: '11px',
+          labels: { colors: '#262425' }
+        },
+        tooltip: {
+          shared: true,
+          intersect: false,
+          theme: 'dark'
+        }
+      }));
+
+      // ── ApexCharts: Status share donut (center = total quotes) ─
+      setApexOrPlaceholder('chart-p3-donut', hasFunnelData && totalQuotes > 0, Object.assign({}, apexBase, {
+        chart: Object.assign({}, apexBase.chart, { type: 'donut', height: 300 }),
+        series: funnelCounts,
+        labels: funnelLabels,
+        colors: charcoalScale,
+        legend: {
+          position: 'bottom',
+          fontSize: '11px',
+          labels: { colors: '#262425' }
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '68%',
+              labels: {
+                show: true,
+                name: {
+                  show: true,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#777777',
+                  offsetY: -8
+                },
+                value: {
+                  show: true,
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: '#1a1a1a',
+                  offsetY: 6,
+                  formatter: function() { return String(totalQuotes); }
+                },
+                total: {
+                  show: true,
+                  showAlways: true,
+                  label: 'Total Quotes',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#777777',
+                  formatter: function() { return String(totalQuotes); }
+                }
+              }
+            }
+          }
+        },
+        dataLabels: { enabled: false },
+        tooltip: {
+          theme: 'dark',
+          y: {
+            formatter: function(val) {
+              var pct = totalQuotes ? Math.round((val / totalQuotes) * 1000) / 10 : 0;
+              return val + ' quotes (' + pct + '%)';
+            }
+          }
+        }
+      }));
 
       // ── Funnel detail table (status + estimator summary) ───────
       var funnelRows = STATUS_ORDER.map(function(s) {
@@ -1843,6 +2002,9 @@
       }
 
       // ── Section 3: Estimating Accuracy (by estimator) ──────────
+      var gaugesEl = document.getElementById('p3-accuracy-gauges');
+      if (gaugesEl) gaugesEl.innerHTML = '';
+
       if (accuracyFiltered.length > 0) {
         // Aggregate by estimator name
         var accByEst = {};
@@ -1881,6 +2043,78 @@
           };
         }).sort(function(a, b) { return a.name.localeCompare(b.name); });
 
+        // ── ApexCharts: Accuracy radialBar gauge per estimator ───
+        if (gaugesEl) {
+          accEntries.forEach(function(e, idx) {
+            var awaiting = !e.hasActual;
+            var scorePct = 0;
+            if (!awaiting && e.score !== null) {
+              scorePct = e.score;
+              if (scorePct >= 0 && scorePct <= 1) scorePct = scorePct * 100;
+              scorePct = Math.max(0, Math.min(100, Math.round(scorePct * 10) / 10));
+            }
+            var gaugeId = 'chart-p3-acc-' + idx;
+            var card = document.createElement('div');
+            card.className = 'p3-accuracy-gauge-card';
+            card.innerHTML =
+              '<div id="' + gaugeId + '" class="apex-chart"></div>' +
+              '<div class="p3-gauge-caption">' +
+                (awaiting ? 'Awaiting job completion' : '') +
+              '</div>';
+            gaugesEl.appendChild(card);
+
+            var gaugeEl = document.getElementById(gaugeId);
+            if (gaugeEl && typeof ApexCharts !== 'undefined') {
+              destroyApex(gaugeId);
+              _apexCharts[gaugeId] = new ApexCharts(gaugeEl, {
+                chart: {
+                  type: 'radialBar',
+                  height: 200,
+                  fontFamily: 'Montserrat, Poppins, sans-serif',
+                  toolbar: { show: false },
+                  background: 'transparent'
+                },
+                series: [scorePct],
+                labels: [e.name],
+                colors: [awaiting ? '#555555' : '#1d9e75'],
+                plotOptions: {
+                  radialBar: {
+                    startAngle: -135,
+                    endAngle: 135,
+                    hollow: { size: '58%', background: 'transparent' },
+                    track: {
+                      background: '#3d3d3d',
+                      strokeWidth: '100%'
+                    },
+                    dataLabels: {
+                      name: {
+                        show: true,
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#D2D4D5',
+                        offsetY: -8
+                      },
+                      value: {
+                        show: true,
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        color: '#FFFFFF',
+                        offsetY: 6,
+                        formatter: function(val) {
+                          return awaiting ? '0%' : (Math.round(Number(val) * 10) / 10) + '%';
+                        }
+                      }
+                    }
+                  }
+                },
+                stroke: { lineCap: 'round' },
+                tooltip: { enabled: false }
+              });
+              _apexCharts[gaugeId].render();
+            }
+          });
+        }
+
         var anyActual = accEntries.some(function(e) { return e.hasActual; });
         var accHtml = '';
         if (!anyActual) {
@@ -1914,6 +2148,7 @@
         accHtml += '</tbody></table></div>';
         document.getElementById('p3-accuracy-table').innerHTML = accHtml;
       } else {
+        if (gaugesEl) gaugesEl.innerHTML = '';
         document.getElementById('p3-accuracy-table').innerHTML =
           '<p class="no-data-msg">No estimating accuracy data for selected filters.</p>';
       }

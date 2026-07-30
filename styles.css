@@ -459,6 +459,39 @@ select {
   font-style: italic;
 }
 
+.apex-chart {
+  width: 100%;
+  min-height: 220px;
+}
+
+.p3-accuracy-gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.p3-accuracy-gauge-card {
+  background: var(--charcoal-dark);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px 14px;
+  text-align: center;
+}
+
+.p3-accuracy-gauge-card .apex-chart {
+  min-height: 180px;
+}
+
+.p3-gauge-caption {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--gray);
+  margin-top: 2px;
+  min-height: 14px;
+}
+
 /* Page-level secondary filters (e.g. Department on P3) */
 .page-filters {
   display: flex;
