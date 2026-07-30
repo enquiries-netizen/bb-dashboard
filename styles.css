@@ -986,8 +986,7 @@ select {
   line-height: 1.45;
 }
 
-.p10-pending,
-.p10-funnel-flag {
+.p10-pending {
   font-size: 11px;
   font-weight: 400;
   color: var(--gray);
@@ -995,8 +994,16 @@ select {
   white-space: nowrap;
 }
 
+.p10-funnel-legend {
+  margin-top: -8px;
+}
+
 .p10-funnel-flag {
-  color: var(--silver);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--charcoal);
+  font-style: normal;
+  white-space: nowrap;
 }
 
 #p10-campaign-table .data-table td.p10-pending-cell {
@@ -1004,7 +1011,7 @@ select {
 }
 
 #p10-funnel-table .data-table td.p10-funnel-flag-cell {
-  color: var(--silver);
+  color: var(--charcoal);
 }
 
 
