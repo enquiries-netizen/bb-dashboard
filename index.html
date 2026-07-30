@@ -324,7 +324,9 @@
             </div>
             <div class="chart-card card">
               <div class="chart-title">Pipeline Funnel</div>
-              <canvas id="chart-p2-funnel" height="200"></canvas>
+              <div id="p2-funnel-overall" class="p2-funnel-overall" aria-live="polite">—</div>
+              <div id="p2-funnel-rates" class="p2-funnel-rates" aria-live="polite"></div>
+              <div id="chart-p2-funnel" class="apex-chart"></div>
             </div>
           </div>
 
@@ -1954,9 +1956,15 @@
         return t === 'contacted' || t.indexOf('contacted') !== -1 || t.indexOf('initial inquiry') !== -1;
       }
       function clearP2Charts() {
-        ['chart-p2-sources', 'chart-p2-funnel', 'chart-p2-campaigns'].forEach(function(id) {
+        ['chart-p2-sources', 'chart-p2-campaigns'].forEach(function(id) {
           if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
+        // Destroy any leftover Chart.js funnel (pre-Apex migration)
+        if (_charts['chart-p2-funnel']) {
+          _charts['chart-p2-funnel'].destroy();
+          delete _charts['chart-p2-funnel'];
+        }
+        destroyApex('chart-p2-funnel');
       }
 
       // ── KPI cards ─────────────────────────────────────────────
@@ -2007,6 +2015,7 @@
       var P2_CHARCOAL = '#262425';
       var P2_SOFT_GRAY = '#BCBDBE';
       var P2_SILVER = '#D2D4D5';
+      var P2_WHITE = '#FFFFFF';
 
       // ── Chart 1: Lead Source breakdown (filtered GHL_Leads) ───
       var bySource = {};
@@ -2056,10 +2065,10 @@
         }
       });
 
-      // ── Chart 2: Pipeline funnel (filtered GHL_Pipeline only) ─
+      // ── Chart 2: Pipeline funnel (ApexCharts, filtered GHL_Pipeline) ─
       // Contacted / Quoted = Pipeline Stage; Won = Status === "Won"
       // (Won checked first so a won deal is not also counted as Quoted).
-      // Tone hierarchy: Won (outcome) darkest; earlier stages lighter.
+      // Tone hierarchy: Won full charcoal; Quoted mid; Contacted lightest.
       var funnelCounts = { Contacted: 0, Quoted: 0, Won: 0 };
       pipeFiltered.forEach(function(r) {
         if (isWonStatus(statusOf(r))) {
@@ -2071,27 +2080,109 @@
         else if (isContactedStage(s)) funnelCounts.Contacted++;
       });
       var funnelLabels = ['Contacted', 'Quoted', 'Won'];
-      var funnelColors = [P2_SOFT_GRAY, P2_SILVER, P2_CHARCOAL];
+      var funnelData = funnelLabels.map(function(k) { return funnelCounts[k]; });
+      var hasFunnelData = funnelData.some(function(n) { return n > 0; });
 
-      makeChart('chart-p2-funnel', {
-        type: 'bar',
-        data: {
-          labels: funnelLabels,
-          datasets: [{
-            label: 'Leads',
-            data: funnelLabels.map(function(k) { return funnelCounts[k]; }),
-            backgroundColor: funnelColors,
-            borderWidth: 0,
-            borderRadius: 0
-          }]
+      // Opacity / brand tone: Contacted lightest → Quoted mid → Won full strength
+      var funnelColors = [
+        P2_SILVER,                 // Contacted — Brilliant Silver
+        'rgba(38,36,37,0.6)',      // Quoted — ~60% Deep Charcoal
+        P2_CHARCOAL                // Won — Deep Charcoal 100%
+      ];
+      var funnelLabelColors = [P2_CHARCOAL, P2_WHITE, P2_WHITE];
+
+      var contactedN = funnelCounts.Contacted;
+      var quotedN = funnelCounts.Quoted;
+      var wonN = funnelCounts.Won;
+      var contactedToQuoted = contactedN > 0 ? (quotedN / contactedN) * 100 : null;
+      var quotedToWon = quotedN > 0 ? (wonN / quotedN) * 100 : null;
+      var contactedToWon = contactedN > 0 ? (wonN / contactedN) * 100 : null;
+
+      var overallEl = document.getElementById('p2-funnel-overall');
+      var ratesEl = document.getElementById('p2-funnel-rates');
+      if (overallEl) {
+        if (contactedToWon === null) {
+          overallEl.innerHTML = '—<span class="p2-funnel-overall-label">overall conversion</span>';
+        } else {
+          overallEl.innerHTML =
+            formatPct(contactedToWon) +
+            '<span class="p2-funnel-overall-label">overall conversion</span>';
+        }
+      }
+      if (ratesEl) {
+        var c2q = contactedToQuoted === null ? '—' : formatPct(contactedToQuoted);
+        var q2w = quotedToWon === null ? '—' : formatPct(quotedToWon);
+        ratesEl.innerHTML =
+          '<span><span class="p2-funnel-rate-step">Contacted → Quoted</span><strong>' + c2q + '</strong></span>' +
+          '<span><span class="p2-funnel-rate-step">Quoted → Won</span><strong>' + q2w + '</strong></span>';
+      }
+
+      setApexOrPlaceholder('chart-p2-funnel', hasFunnelData, {
+        chart: {
+          type: 'bar',
+          height: 260,
+          fontFamily: 'Montserrat, sans-serif',
+          toolbar: { show: false },
+          background: 'transparent',
+          dropShadow: { enabled: false }
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' in stage'; } } }
+        theme: { mode: 'light' },
+        series: [{ name: 'Pipeline', data: funnelData }],
+        colors: funnelColors,
+        plotOptions: {
+          bar: {
+            borderRadius: 0,
+            horizontal: true,
+            distributed: true,
+            barHeight: '88%',
+            isFunnel: true
+          }
+        },
+        fill: { type: 'solid', gradient: { enabled: false } },
+        grid: {
+          borderColor: P2_SOFT_GRAY,
+          strokeDashArray: 0,
+          xaxis: { lines: { show: false } },
+          yaxis: { lines: { show: false } }
+        },
+        xaxis: {
+          categories: funnelLabels,
+          labels: {
+            style: {
+              colors: P2_CHARCOAL,
+              fontSize: '11px',
+              fontFamily: 'Montserrat, sans-serif'
+            }
           },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          axisBorder: { color: P2_SOFT_GRAY },
+          axisTicks: { color: P2_SOFT_GRAY }
+        },
+        yaxis: {
+          labels: {
+            style: {
+              colors: P2_CHARCOAL,
+              fontSize: '11px',
+              fontWeight: 600,
+              fontFamily: 'Montserrat, sans-serif'
+            }
+          }
+        },
+        legend: { show: false },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) { return val; },
+          style: {
+            colors: funnelLabelColors,
+            fontSize: '11px',
+            fontWeight: 600,
+            fontFamily: 'Poppins, sans-serif'
+          },
+          dropShadow: { enabled: false }
+        },
+        tooltip: {
+          theme: 'light',
+          style: { fontFamily: 'Poppins, sans-serif', fontSize: '12px' },
+          y: { formatter: function(val) { return val + ' in stage'; } }
         }
       });
 

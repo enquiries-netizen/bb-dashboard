@@ -1147,6 +1147,43 @@ select {
   .p5-inv-grids { grid-template-columns: 1fr; }
 }
 
+/* P2 Pipeline Funnel — headline conversion + stage rates (brand solids only) */
+.p2-funnel-overall {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: -0.02em;
+  margin: -6px 0 10px;
+  line-height: 1.2;
+}
+.p2-funnel-overall .p2-funnel-overall-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-left: 6px;
+}
+.p2-funnel-rates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--charcoal);
+}
+.p2-funnel-rates .p2-funnel-rate-step {
+  color: var(--gray);
+}
+.p2-funnel-rates strong {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-left: 4px;
+}
+
 /* P2 Pipeline Detail — Deep Charcoal only; links use underline, never blue */
 #p2-pipeline-table .data-table td,
 #p2-pipeline-table .data-table td .p2-money,
