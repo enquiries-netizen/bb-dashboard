@@ -3775,12 +3775,16 @@ var labourRows = Object.values(labourByProject)
       function applyGlobal(rows) {
         return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
       }
+      function normalizeDeptName(s) {
+        return String(s || '').trim().toLowerCase()
+          .replace(/\s+/g, ' ')
+          .replace(/maintainance/g, 'maintenance');
+      }
       function filterByDept(rows) {
         if (!activeP11Dept || activeP11Dept === 'ALL') return rows;
-        var target = String(activeP11Dept).toLowerCase();
+        var target = normalizeDeptName(activeP11Dept);
         return rows.filter(function(r) {
-          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim().toLowerCase();
-          return d === target;
+          return normalizeDeptName(col(r, 'Department', 'department', 'Deparment')) === target;
         });
       }
       function yn(val) {
@@ -3805,31 +3809,42 @@ var labourRows = Object.values(labourByProject)
           delete _charts['chart-p11-defects'];
         }
       }
+      /** Issues/Blockers text only (KPI definition). Tolerates slash/space header variants. */
+      function diaryIssuesText(r) {
+        var direct = col(r,
+          'Issues/Blockers', 'Issues / Blockers', 'Issues & Blockers',
+          'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers',
+          'issues/blockers', 'issues_blockers'
+        );
+        if (direct) return String(direct).trim();
+        // Fallback: fuzzy key match (header typos / NBSP / spacing around /)
+        var keys = Object.keys(r || {});
+        for (var i = 0; i < keys.length; i++) {
+          var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+          if (norm === 'issues/blockers' || norm === 'issues / blockers' ||
+              norm === 'issues & blockers' ||
+              (norm.indexOf('issues') !== -1 && norm.indexOf('blocker') !== -1)) {
+            var v = String(r[keys[i]] || '').trim();
+            if (v) return v;
+          }
+        }
+        return '';
+      }
       function hasIssueContent(r) {
-        var issue = String(col(r,
-          'Issues/Blockers', 'Issues & Notes', 'Issues', 'Issue Description',
-          'issue_description', 'Issue', 'Blockers'
-        ) || '').trim();
-        var category = String(col(r, 'Issue Category', 'Category', 'category') || '').trim();
-        var hoursLost = String(col(r, 'Hours Lost', 'hours_lost', 'Hours lost') || '').trim();
-        var workStopped = String(col(r, 'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped') || '').trim();
-        var varReq = String(col(r, 'Variation Required (Y/N)', 'Variation Required', 'variation_required') || '').trim();
-        return !!(issue || category || hoursLost || workStopped || varReq);
+        return diaryIssuesText(r) !== '';
       }
 
       var brandedDefects    = applyGlobal(window._p11Defects);
       var brandedVariations = applyGlobal(window._p11Variations);
       var brandedDiaries    = applyGlobal(window._p11Diaries);
 
-      // Rebuild Department options from all three tabs (pre-dept filter)
-      var deptSet = {};
-      [brandedDefects, brandedVariations, brandedDiaries].forEach(function(rows) {
-        rows.forEach(function(r) {
-          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim();
-          if (d) deptSet[d] = true;
-        });
-      });
-      var deptList = Object.keys(deptSet).sort();
+      // Fixed master list (same 9 used across Capacity / Labour) — not derived from P11 tabs
+      var deptList = (CONFIG.DEPARTMENTS && CONFIG.DEPARTMENTS.length)
+        ? CONFIG.DEPARTMENTS.slice()
+        : [
+            'Administration', 'Apprentices', 'General Building and Maintenance',
+            'Managers', 'Modular Building', 'Roofing', 'Sheds', 'Supervisors', 'Tradesmen'
+          ];
       var deptSelect = document.getElementById('p11-dept-filter');
       if (deptSelect) {
         var prev = activeP11Dept;
@@ -3840,7 +3855,10 @@ var labourRows = Object.values(labourByProject)
           opt.textContent = d;
           deptSelect.appendChild(opt);
         });
-        if (prev !== 'ALL' && deptSet[prev]) deptSelect.value = prev;
+        var prevOk = prev && prev !== 'ALL' && deptList.some(function(d) {
+          return normalizeDeptName(d) === normalizeDeptName(prev);
+        });
+        if (prevOk) deptSelect.value = prev;
         else { activeP11Dept = 'ALL'; deptSelect.value = 'ALL'; }
         if (!_p11DeptBound) {
           _p11DeptBound = true;
@@ -3878,7 +3896,8 @@ var labourRows = Object.values(labourByProject)
         data: {
           defects:    defectsFiltered.slice(0, 200),
           variations: variationsFiltered.slice(0, 200),
-          diaries:    issueRows.slice(0, 200),
+          diaries:    diariesFiltered.slice(0, 200),
+          diaryIssues: issueRows.slice(0, 200),
           photoCount: photoCount
         }
       };
@@ -4064,12 +4083,14 @@ var labourRows = Object.values(labourByProject)
       }
 
       // ── Section 3 — Site Diary Issues ───────────────────────
+      // Empty only when no diary rows after Brand/Month/Year/Department filters.
+      // KPI counts Issues/Blockers content; table lists all filtered diary entries.
       var diaryEl = document.getElementById('p11-diaries-table');
-      if (!issueRows.length) {
+      if (!diariesFiltered.length) {
         if (diaryEl) diaryEl.innerHTML = emptyCard('Data not available.');
       } else {
         // Group by Brand → Job #
-        var sortedIssues = issueRows.slice().sort(function(a, b) {
+        var sortedDiaries = diariesFiltered.slice().sort(function(a, b) {
           var ba = String(col(a, 'Brand', 'brand') || '').toUpperCase();
           var bb = String(col(b, 'Brand', 'brand') || '').toUpperCase();
           if (ba !== bb) return ba.localeCompare(bb);
@@ -4083,13 +4104,13 @@ var labourRows = Object.values(labourByProject)
 
         var html = '<div class="table-wrap"><table class="data-table">' +
           '<thead><tr>' +
-          '<th>Job #</th><th>Job Name</th><th>Brand</th><th>Department</th><th>Date</th>' +
-          '<th>Issue Description</th><th>Category</th><th>Work Stopped</th>' +
-          '<th>Hours Lost</th><th>Variation Required</th><th>General Notes</th>' +
+          '<th>Date</th><th>Job #</th><th>Job Name</th><th>Brand</th><th>Department</th>' +
+          '<th>Issues/Blockers</th><th>Safety Entry</th><th>Work Stopped</th>' +
+          '<th>Photos</th><th>Logged By</th><th>Materials Used</th>' +
           '</tr></thead><tbody>';
 
         var lastGroup = '';
-        sortedIssues.forEach(function(r) {
+        sortedDiaries.forEach(function(r) {
           var brand = col(r, 'Brand', 'brand') || '—';
           var jobNo = col(r, 'Job #', 'Job Number', 'job_number') || '—';
           var groupKey = brand + ' · ' + jobNo;
@@ -4097,26 +4118,23 @@ var labourRows = Object.values(labourByProject)
             html += '<tr class="p11-group-row"><td colspan="11">' + groupKey + '</td></tr>';
             lastGroup = groupKey;
           }
-          var issueDesc = col(r,
-            'Issues/Blockers', 'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers') || '—';
-          var category = col(r, 'Issue Category', 'Category', 'category') || '—';
+          var issueDesc = diaryIssuesText(r) || '—';
+          var safety = yn(col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry'));
           var stopped = yn(col(r, 'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped'));
-          var hoursLostRaw = col(r, 'Hours Lost', 'hours_lost', 'Hours lost');
-          var hoursLost = String(hoursLostRaw || '').trim() !== '' ? String(parseNum(hoursLostRaw)) : '—';
-          var varRequired = yn(col(r, 'Variation Required (Y/N)', 'Variation Required', 'variation_required'));
-          var notes = col(r, 'General Notes', 'Notes', 'notes', 'Materials Used') || '—';
+          var photos = yn(col(r, 'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos'));
+          var materials = col(r, 'Materials Used', 'materials_used', 'General Notes', 'Notes', 'notes') || '—';
           html += '<tr>' +
+            '<td>' + (col(r, 'Date', 'date') || '—') + '</td>' +
             '<td>' + jobNo + '</td>' +
             '<td>' + (col(r, 'Job Name', 'job_name') || '—') + '</td>' +
             '<td>' + brand + '</td>' +
             '<td>' + (col(r, 'Department', 'department') || '—') + '</td>' +
-            '<td>' + (col(r, 'Date', 'date') || '—') + '</td>' +
             '<td>' + issueDesc + '</td>' +
-            '<td>' + category + '</td>' +
+            '<td>' + safety + '</td>' +
             '<td>' + stopped + '</td>' +
-            '<td>' + hoursLost + '</td>' +
-            '<td>' + varRequired + '</td>' +
-            '<td>' + notes + '</td>' +
+            '<td>' + photos + '</td>' +
+            '<td>' + (col(r, 'Logged By', 'Logged by', 'logged_by') || '—') + '</td>' +
+            '<td>' + materials + '</td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';

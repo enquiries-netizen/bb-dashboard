@@ -18,6 +18,20 @@ const CONFIG = {
   // Google Sheets API Key (restricted to Vercel domain)
   API_KEY: 'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk',
 
+  // Fixed master department list (Capacity / Labour / page filters)
+  // Do not derive from sparse page-specific tabs (e.g. Defects_Rework).
+  DEPARTMENTS: [
+    'Administration',
+    'Apprentices',
+    'General Building and Maintenance',
+    'Managers',
+    'Modular Building',
+    'Roofing',
+    'Sheds',
+    'Supervisors',
+    'Tradesmen'
+  ],
+
   // ─── Tab Names ─────────────────────────────────────────────
   // Must match the exact tab names in Google Sheets (case sensitive)
   TABS: {
