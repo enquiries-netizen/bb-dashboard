@@ -2913,23 +2913,28 @@ var labourRows = Object.values(labourByProject)
       html += '</div>';
 
       // Chart 2 — Hours by Department (Buildpass_Labour, latest week — same scope as utilisation)
+      // Hours live in col J as "Hours (daily)"; parseNum strips commas / blanks → 0
       var labLatestWeek = 0;
       labRows.forEach(function(r) {
-        var w = parseInt(col(r, 'Week Number', 'week number', 'Week', 'week')) || 0;
+        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
         if (w > labLatestWeek) labLatestWeek = w;
       });
       var deptHours = {};
       labRows.filter(function(r) {
-        return parseInt(col(r, 'Week Number', 'week number', 'Week', 'week')) === labLatestWeek;
+        return parseNum(col(r, 'Week Number', 'week number', 'Week', 'week')) === labLatestWeek;
       }).forEach(function(r) {
-        var rawDept = String(col(r, 'Department', 'department') || '').trim();
+        var rawDept = String(col(r, 'Department', 'department') || '')
+          .replace(/\s+/g, ' ')
+          .trim();
         var dept = rawDept || 'Unknown';
-        var hours = parseFloat(col(r, 'Hours', 'hours')) || 0;
+        var hours = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
         deptHours[dept] = (deptHours[dept] || 0) + hours;
       });
-      // Rank most hours at top
+      // Rank most hours at top; keep only positive totals so axis scales to real data
       var deptRanked = Object.keys(deptHours).map(function(d) {
         return { dept: d, hours: Math.round(deptHours[d] * 10) / 10 };
+      }).filter(function(e) {
+        return e.hours > 0;
       }).sort(function(a, b) { return b.hours - a.hours; });
       var deptLabels = deptRanked.map(function(e) { return e.dept; });
       var deptData   = deptRanked.map(function(e) { return e.hours; });
