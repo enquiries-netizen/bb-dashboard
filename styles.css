@@ -418,6 +418,115 @@ select {
   font-weight: 400;
 }
 
+/* ── P1 Executive Snapshot: watermark + KPI progress ─────────── */
+.p1-hero {
+  position: relative;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.p1-watermark {
+  position: absolute;
+  right: -4%;
+  top: -18%;
+  width: min(420px, 55vw);
+  height: min(420px, 55vw);
+  color: var(--silver);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.p1-watermark-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.p1-hero .page-header,
+.p1-hero .kpi-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.kpi-progress {
+  margin-top: 12px;
+}
+
+.kpi-progress-track {
+  height: 3px;
+  width: 100%;
+  background: var(--silver);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.kpi-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--charcoal);
+}
+
+.kpi-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  min-height: 14px;
+}
+
+.kpi-progress-pct {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: 0.3px;
+}
+
+.kpi-progress-note {
+  font-size: 9.5px;
+  color: var(--gray);
+  font-weight: 400;
+}
+
+.kpi-progress.is-untracked .kpi-progress-fill {
+  width: 0% !important;
+}
+
+/* Inline % bars in P1 Annual Targets table */
+.pct-bar-cell {
+  position: relative;
+  display: block;
+  min-width: 72px;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+
+.pct-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--silver);
+  z-index: 0;
+}
+
+.pct-bar-text {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+#p1-targets-table .data-table.p1-targets-zebra tbody tr:nth-child(even) td {
+  background: rgba(210, 212, 213, 0.35);
+}
+
+#p1-targets-table .data-table.p1-targets-zebra tbody tr:hover td {
+  background: rgba(188, 189, 190, 0.28);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    CHART CARDS

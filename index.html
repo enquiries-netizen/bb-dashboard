@@ -110,41 +110,73 @@
 
         <!-- ─── P1: Executive Snapshot (Targets tab) ──────── -->
         <section id="page-p1" class="page active">
-          <div class="page-header">
-            <span class="page-badge">P1</span>
-            <h1 class="page-title">Executive Snapshot</h1>
-          </div>
+          <div class="p1-hero">
+            <div class="p1-watermark" aria-hidden="true">
+              <svg class="p1-watermark-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="page-header">
+              <span class="page-badge">P1</span>
+              <h1 class="page-title">Executive Snapshot</h1>
+            </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Revenue Target (MTD)</div>
-              <div class="kpi-value" id="kpi-revenue-target">—</div>
-              <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Gross Margin Target</div>
-              <div class="kpi-value" id="kpi-margin-target">—</div>
-              <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Lead Target</div>
-              <div class="kpi-value" id="kpi-lead-target">—</div>
-              <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Jobs Won Target</div>
-              <div class="kpi-value" id="kpi-jobs-target">—</div>
-              <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Quotes Target</div>
-              <div class="kpi-value" id="kpi-quote-target">—</div>
-              <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Active Jobs Target</div>
-              <div class="kpi-value" id="kpi-activejobs-target">—</div>
-              <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
+            <div class="kpi-grid">
+              <div class="kpi-card card">
+                <div class="kpi-label">Revenue Target (MTD)</div>
+                <div class="kpi-value" id="kpi-revenue-target">—</div>
+                <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-revenue-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
+              <div class="kpi-card card">
+                <div class="kpi-label">Gross Margin Target</div>
+                <div class="kpi-value" id="kpi-margin-target">—</div>
+                <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-margin-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
+              <div class="kpi-card card">
+                <div class="kpi-label">Lead Target</div>
+                <div class="kpi-value" id="kpi-lead-target">—</div>
+                <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-lead-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
+              <div class="kpi-card card">
+                <div class="kpi-label">Jobs Won Target</div>
+                <div class="kpi-value" id="kpi-jobs-target">—</div>
+                <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-jobs-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
+              <div class="kpi-card card">
+                <div class="kpi-label">Quotes Target</div>
+                <div class="kpi-value" id="kpi-quote-target">—</div>
+                <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-quote-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
+              <div class="kpi-card card">
+                <div class="kpi-label">Active Jobs Target</div>
+                <div class="kpi-value" id="kpi-activejobs-target">—</div>
+                <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
+                <div class="kpi-progress" id="kpi-activejobs-progress">
+                  <div class="kpi-progress-track"><div class="kpi-progress-fill" style="width:0%"></div></div>
+                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -794,18 +826,25 @@
 
     // ═══════════════════════════════════════════════════════════════
     // P1 — EXECUTIVE SNAPSHOT
-    // Source: Targets tab (Anne's monthly targets ✅)
-    // KPIs:   Revenue Target, Margin Target, Lead Target,
-    //         Jobs Won Target, Quotes Target, Active Jobs Target
-    // Chart:  Monthly revenue targets bar chart
+    // Sources: Targets · Xero_Financials · GHL_Leads · GHL_Pipeline
+    //          · Xero_Projects (active jobs) · Weekly_Summary fallback
+    // KPIs:   Revenue / Margin / Leads / Jobs Won / Quotes / Active Jobs
+    // Chart:  Monthly Target (outline) vs Actual Revenue (fill)
     // Table:  All targets by month
     // ═══════════════════════════════════════════════════════════════
     async function loadP1() {
       showLoading(true);
       removeError('p1');
       try {
-        var targets = await fetchSheet(CONFIG.TABS.TARGETS);
-        renderP1(targets);
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.TARGETS),
+          fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.GHL_LEADS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.GHL_PIPELINE).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY).catch(function() { return []; })
+        ]);
+        renderP1(results[0], results[1], results[2], results[3], results[4], results[5]);
       } catch (err) {
         console.error('P1 load error:', err);
         showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
@@ -815,22 +854,83 @@
       }
     }
 
-    function renderP1(targets) {
-      var branded  = filterByBrand(targets, activeBrand);
+    function renderP1(targets, xeroFinancials, ghlLeads, ghlPipeline, xeroProjects, weeklySummary) {
+      function applyFilters(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      }
+
+      var branded  = filterByBrand(targets || [], activeBrand);
       var filtered = filterByMonths(filterByYear(branded, activeYear), activeMonths);
-      window._currentPage = { name: 'P1: Executive Snapshot', data: { targets: filtered } };
+      var xeroFiltered   = applyFilters(xeroFinancials);
+      var leadsFiltered  = applyFilters(ghlLeads);
+      var pipeFiltered   = applyFilters(ghlPipeline);
+      var weeklyFiltered = applyFilters(weeklySummary);
+      var projectsFiltered = filterByBrand(xeroProjects || [], activeBrand);
+
+      window._currentPage = {
+        name: 'P1: Executive Snapshot',
+        data: {
+          targets: filtered,
+          xeroFinancials: xeroFiltered,
+          leads: leadsFiltered.slice(0, 200),
+          pipeline: pipeFiltered.slice(0, 200),
+          projects: projectsFiltered.slice(0, 200),
+          weekly: weeklyFiltered
+        }
+      };
+
+      function setKpiProgress(progressId, actual, target) {
+        var root = document.getElementById(progressId);
+        if (!root) return;
+        var fill = root.querySelector('.kpi-progress-fill');
+        var pctEl = root.querySelector('.kpi-progress-pct');
+        var noteEl = root.querySelector('.kpi-progress-note');
+        var hasActual = actual !== null && actual !== undefined && !isNaN(actual);
+        var hasTarget = target !== null && target !== undefined && !isNaN(target) && target > 0;
+        if (!hasActual || !hasTarget) {
+          if (fill) fill.style.width = '0%';
+          if (pctEl) pctEl.textContent = '';
+          if (noteEl) noteEl.textContent = 'Actuals not yet tracked';
+          root.classList.add('is-untracked');
+          return;
+        }
+        var pct = (actual / target) * 100;
+        var barPct = Math.max(0, Math.min(100, pct));
+        if (fill) fill.style.width = barPct + '%';
+        if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+        if (noteEl) noteEl.textContent = '';
+        root.classList.remove('is-untracked');
+      }
+
+      function clearKpiProgress() {
+        ['kpi-revenue-progress','kpi-margin-progress','kpi-lead-progress',
+         'kpi-jobs-progress','kpi-quote-progress','kpi-activejobs-progress']
+          .forEach(function(id) { setKpiProgress(id, null, null); });
+      }
+
+      function monthKey(r) {
+        return String(r['Month'] || '').trim() + ' ' + String(r['Year'] || '').trim();
+      }
+
+      /** Normalise margin values that may be stored as 0.37 or 37%. */
+      function asPct(n) {
+        if (n === null || n === undefined || isNaN(n)) return null;
+        return Math.abs(n) <= 1 ? n * 100 : n;
+      }
 
       if (filtered.length === 0) {
         ['kpi-revenue-target','kpi-margin-target','kpi-lead-target',
          'kpi-jobs-target','kpi-quote-target','kpi-activejobs-target'].forEach(function(id) {
           setKPI(id, id + '-sub', '—', 'No data for selection');
         });
+        clearKpiProgress();
+        if (_charts['chart-p1-revenue']) { _charts['chart-p1-revenue'].destroy(); delete _charts['chart-p1-revenue']; }
         document.getElementById('p1-targets-table').innerHTML =
           '<p class="no-data-msg">No targets data for the selected filters.</p>';
         return;
       }
 
-      // KPI cards: SUM across all divisions for current month
+      // KPI cards: SUM across all divisions for current (or last available) month
       var now       = new Date();
       var monthName = now.toLocaleString('en-AU', { month: 'long' });
       var monthYear = now.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
@@ -839,86 +939,247 @@
         return String(r['Month'] || '').toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
       });
       if (kpiRows.length === 0) {
-        // Fallback: use last month's rows (group by last month label)
         var lastMonth = filtered[filtered.length - 1]['Month'];
         kpiRows = filtered.filter(function(r) { return r['Month'] === lastMonth; });
         monthYear = lastMonth + ' ' + (filtered[filtered.length - 1]['Year'] || '');
       }
+      var kpiMonthKey = monthKey(kpiRows[0]);
 
-      // Sum numeric KPIs across all division rows for this month
       var revTarget      = kpiRows.reduce(function(s,r){ return s + parseNum(r['Revenue Target ($)']); }, 0);
       var leadsTarget    = kpiRows.reduce(function(s,r){ return s + parseNum(r['Leads Target (monthly)']); }, 0);
       var jobsTarget     = kpiRows.reduce(function(s,r){ return s + parseNum(r['Jobs Won Target']); }, 0);
-      var profitTarget   = kpiRows.reduce(function(s,r){ return s + parseNum(r['Profit Target ($)']); }, 0);
-      var overheadTarget = kpiRows.reduce(function(s,r){ return s + parseNum(r['Overhead Budget $ (Monthly Expenses)']); }, 0);
-      // Margin % is the same across divisions — just use first row
-      var marginTarget   = parseNum(kpiRows[0]['Gross Margin Target %']);
+      var quotesTarget   = kpiRows.reduce(function(s,r){ return s + parseNum(r['Quote Volume']); }, 0);
+      var marginTarget   = asPct(parseNum(kpiRows[0]['Gross Margin Target %']));
 
-      setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget      ? formatCurrency(revTarget)     : '—', revTarget      ? monthYear + ' target'     : 'Check Targets tab');
-      setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget   ? formatPct(marginTarget)       : '—', marginTarget   ? 'Gross margin target'      : 'Check Targets tab');
-      setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget    || '—',                                leadsTarget    ? 'Monthly leads target'      : 'Check Targets tab');
-      setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget     || '—',                                jobsTarget     ? 'Jobs won target'           : 'Check Targets tab');
-      setKPI('kpi-quote-target',      'kpi-quote-target-sub',      profitTarget   ? formatCurrency(profitTarget)  : '—', profitTarget   ? 'Profit target'             : 'Check Targets tab');
-      setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub', overheadTarget ? formatCurrency(overheadTarget): '—', overheadTarget ? 'Monthly overhead budget'   : 'Check Targets tab');
-
-      // ── Chart ────────────────────────────────────────────────────
-      // Get unique months in order
-      var monthOrder = [];
-      filtered.forEach(function(r) {
-        var key = (r['Month'] || '') + ' ' + (r['Year'] || '');
-        if (monthOrder.indexOf(key) === -1) monthOrder.push(key);
-      });
-
-      var chartData, chartOptions;
-      var yTicks = { callback: function(v) { return '$' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v); } };
-
-      if (activeBrand === 'BBBS') {
-        // Grouped bars: Roofing vs Sheds per month
-        var roofData  = monthOrder.map(function(m) {
-          var row = filtered.find(function(r) { return r['Month'] + ' ' + r['Year'] === m && r['Division'] === 'Roofing'; });
-          return row ? parseNum(row['Revenue Target ($)']) : 0;
-        });
-        var shedsData = monthOrder.map(function(m) {
-          var row = filtered.find(function(r) { return r['Month'] + ' ' + r['Year'] === m && r['Division'] === 'Sheds'; });
-          return row ? parseNum(row['Revenue Target ($)']) : 0;
-        });
-        chartData = {
-          labels: monthOrder,
-          datasets: [
-            { label: 'Roofing', data: roofData,  backgroundColor: 'rgba(38,36,37,0.85)', borderRadius: 4 },
-            { label: 'Sheds',   data: shedsData, backgroundColor: 'rgba(38,36,37,0.40)', borderRadius: 4 }
-          ]
-        };
-        chartOptions = { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: yTicks } } };
-      } else {
-        // Single summed bar per month (RMH or ALL)
-        var revData = monthOrder.map(function(m) {
-          return filtered.filter(function(r) { return r['Month'] + ' ' + r['Year'] === m; })
-                         .reduce(function(s,r) { return s + parseNum(r['Revenue Target ($)']); }, 0);
-        });
-        chartData = {
-          labels: monthOrder,
-          datasets: [{ label: 'Revenue Target', data: revData, backgroundColor: 'rgba(38,36,37,0.80)', borderRadius: 5, borderWidth: 0 }]
-        };
-        chartOptions = { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: yTicks } } };
+      // ── Actuals (same patterns as P2 / P5 / P4) ─────────────────
+      function monthLabelFromParts(parts) {
+        if (!parts || _MONTH_ABBR.indexOf(parts.month) < 0) return '';
+        var full = new Date(Number(parts.year), _MONTH_ABBR.indexOf(parts.month), 1)
+          .toLocaleString('en-AU', { month: 'long' });
+        return full + ' ' + parts.year;
       }
 
-      makeChart('chart-p1-revenue', { type: 'bar', data: chartData, options: chartOptions });
+      function rowMatchesKpiMonth(r) {
+        var d = col(r, 'Date Created', 'Created Date', 'created_date', 'Date', 'date',
+                    'Last Activity Date', 'Quote Sent Date', 'Close Date') || '';
+        var label = monthLabelFromParts(parseRowDateParts(d));
+        if (label) return label === kpiMonthKey;
+        // Fall back to Month/Year columns when present
+        if (r['Month'] || r['month']) return monthKey(r) === kpiMonthKey;
+        return false;
+      }
 
-      // ── Table — explicit columns only, no metadata ───────────────
+      function revenueFromXeroRows(rows) {
+        return rows.reduce(function(s, r) {
+          return s + parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+        }, 0);
+      }
+
+      var xeroKpiRows = xeroFiltered.filter(function(r) { return monthKey(r) === kpiMonthKey; });
+      var revActual = xeroKpiRows.length ? revenueFromXeroRows(xeroKpiRows) : null;
+      var marginActual = null;
+      if (xeroKpiRows.length > 0) {
+        var marginVals = xeroKpiRows.map(function(r) {
+          var raw = col(r, 'Gross Margin %', 'Gross Margin', 'GP%');
+          if (raw === '' || raw === null || raw === undefined) return null;
+          return asPct(parseNum(raw));
+        }).filter(function(n) { return n !== null && !isNaN(n); });
+        if (marginVals.length) {
+          marginActual = marginVals.reduce(function(s, n) { return s + n; }, 0) / marginVals.length;
+        }
+      }
+
+      // Weekly_Summary fallback when Xero has no row for the KPI month
+      if (revActual === null && weeklyFiltered.length > 0) {
+        var weekMatchRows = weeklyFiltered.filter(function(r) {
+          return monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start'))) === kpiMonthKey;
+        });
+        if (weekMatchRows.length) {
+          revActual = weekMatchRows.reduce(function(s, r) {
+            return s + parseNum(col(r, 'Revenue ($)', 'Revenue'));
+          }, 0);
+        }
+      }
+
+      function isWonStatus(status) {
+        return String(status || '').toLowerCase() === 'won';
+      }
+      function stageOf(r) {
+        return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
+      }
+      function statusOf(r) {
+        return String(col(r, 'Status', 'status') || '').trim();
+      }
+      function isQuotedStage(s) {
+        var t = s.toLowerCase();
+        return t === 'quoted' || t.indexOf('quoted') !== -1;
+      }
+
+      // MTD actuals: restrict GHL rows to the same month as the KPI target
+      var leadsMtd = leadsFiltered.filter(rowMatchesKpiMonth);
+      var hasLeadActuals = leadsFiltered.length > 0;
+      var leadsActual = leadsMtd.length;
+      var quotesActual = leadsMtd.filter(function(r) {
+        var stage = stageOf(r);
+        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
+        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
+      }).length;
+      var jobsActual = leadsMtd.filter(function(r) {
+        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
+      }).length;
+
+      // Active jobs: Xero_Projects not completed/closed (P4-style count)
+      var activeJobsActual = projectsFiltered.filter(function(r) {
+        var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+        return st && st !== 'completed' && st !== 'complete' && st !== 'closed' &&
+               st !== 'cancelled' && st !== 'canceled';
+      }).length;
+      // No Active Jobs Target column on Targets tab yet
+      var activeJobsTarget = null;
+
+      setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget    ? formatCurrency(revTarget) : '—', revTarget    ? monthYear + ' target' : 'Check Targets tab');
+      setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget ? formatPct(marginTarget)   : '—', marginTarget ? 'Gross margin target' : 'Check Targets tab');
+      setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget  || '—', leadsTarget  ? 'Monthly leads target' : 'Check Targets tab');
+      setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget   || '—', jobsTarget   ? 'Jobs won target'      : 'Check Targets tab');
+      setKPI('kpi-quote-target', 'kpi-quote-target-sub',
+        quotesTarget || '—',
+        quotesTarget ? 'Quote volume target' : 'Quote Volume not set in Targets');
+      setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub',
+        activeJobsActual || '—',
+        activeJobsTarget
+          ? 'Active jobs target'
+          : (activeJobsActual ? 'Open Xero projects · no target in Targets' : 'No active-jobs target in Targets'));
+
+      setKpiProgress('kpi-revenue-progress', revActual, revTarget || null);
+      setKpiProgress('kpi-margin-progress', marginActual, marginTarget || null);
+      setKpiProgress('kpi-lead-progress', hasLeadActuals ? leadsActual : null, leadsTarget || null);
+      setKpiProgress('kpi-jobs-progress', hasLeadActuals ? jobsActual : null, jobsTarget || null);
+      setKpiProgress('kpi-quote-progress', hasLeadActuals ? quotesActual : null, quotesTarget || null);
+      setKpiProgress('kpi-activejobs-progress', activeJobsActual || null, activeJobsTarget);
+
+      // ── Chart: Target (outline) vs Actual (fill) ────────────────
+      var monthOrder = [];
+      filtered.forEach(function(r) {
+        var key = monthKey(r);
+        if (key.trim() && monthOrder.indexOf(key) === -1) monthOrder.push(key);
+      });
+
+      var targetData = monthOrder.map(function(m) {
+        return filtered.filter(function(r) { return monthKey(r) === m; })
+                       .reduce(function(s, r) { return s + parseNum(r['Revenue Target ($)']); }, 0);
+      });
+
+      // Actual revenue by month — Xero_Financials first (P5), then Weekly, then Won deals
+      var actualByMonth = {};
+      var xeroMonths = {};
+      xeroFiltered.forEach(function(r) {
+        var k = monthKey(r);
+        if (!k.trim()) return;
+        xeroMonths[k] = true;
+        actualByMonth[k] = (actualByMonth[k] || 0) +
+          parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+      });
+      weeklyFiltered.forEach(function(r) {
+        var k = monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start')));
+        if (!k || xeroMonths[k]) return;
+        actualByMonth[k] = (actualByMonth[k] || 0) + parseNum(col(r, 'Revenue ($)', 'Revenue'));
+      });
+      monthOrder.forEach(function(m) {
+        if (actualByMonth[m] !== undefined) return;
+        var wonSum = pipeFiltered.reduce(function(s, r) {
+          if (!isWonStatus(statusOf(r)) && stageOf(r).toLowerCase() !== 'won') return s;
+          var d = col(r, 'Close Date', 'close_date', 'Created Date', 'created_date', 'Date Created') || '';
+          var k = monthLabelFromParts(parseRowDateParts(d));
+          if (k !== m) return s;
+          return s + parseNum(col(r, 'Value ($)', 'Value', 'value', 'Deal Value'));
+        }, 0);
+        if (wonSum > 0) actualByMonth[m] = wonSum;
+      });
+
+      var actualData = monthOrder.map(function(m) {
+        return actualByMonth[m] !== undefined ? actualByMonth[m] : 0;
+      });
+
+      var yTicks = {
+        callback: function(v) {
+          return '$' + (v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+        }
+      };
+
+      makeChart('chart-p1-revenue', {
+        type: 'bar',
+        data: {
+          labels: monthOrder,
+          datasets: [
+            {
+              label: 'Target',
+              data: targetData,
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderColor: '#BCBDBE',
+              borderWidth: 2,
+              borderRadius: 2,
+              order: 2
+            },
+            {
+              label: 'Actual Revenue',
+              data: actualData,
+              backgroundColor: '#262425',
+              borderColor: '#262425',
+              borderWidth: 0,
+              borderRadius: 2,
+              order: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0); }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: yTicks, grid: { color: 'rgba(210,212,213,0.5)' } }
+          }
+        }
+      });
+
+      // ── Table — zebra + inline % bars for Win Rate / Gross Margin ─
+      var marginNums = filtered.map(function(r) { return asPct(parseNum(r['Gross Margin Target %'])) || 0; });
+      var winNums    = filtered.map(function(r) { return asPct(parseNum(r['Win Rate target'])) || 0; });
+      var maxMargin  = Math.max.apply(null, marginNums.concat([1]));
+      var maxWin     = Math.max.apply(null, winNums.concat([1]));
+
+      function pctBarHtml(display, pctVal, maxVal) {
+        if (display === '' || display === null || display === undefined) return '—';
+        var n = asPct(parseNum(display));
+        if (n === null || isNaN(n)) return display || '—';
+        var w = Math.max(0, Math.min(100, (n / maxVal) * 100));
+        var text = String(display).indexOf('%') !== -1 ? String(display) : formatPct(n);
+        return '<div class="pct-bar-cell">' +
+          '<div class="pct-bar-fill" style="width:' + w + '%"></div>' +
+          '<span class="pct-bar-text">' + text + '</span></div>';
+      }
+
       var tableCols = [
         { label: 'Month',    key: 'Month' },
         { label: 'Division', key: 'Division' },
         { label: 'Revenue Target',    key: 'Revenue Target ($)',                  format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
         { label: 'Profit Target',     key: 'Profit Target ($)',                   format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
-        { label: 'Gross Margin',      key: 'Gross Margin Target %',               format: function(v){ return v || '—'; } },
+        { label: 'Gross Margin',      key: 'Gross Margin Target %',               format: function(v){ return pctBarHtml(v, asPct(parseNum(v)), maxMargin); } },
         { label: 'Leads Target',      key: 'Leads Target (monthly)',              format: function(v){ return v || '—'; } },
         { label: 'Jobs Won Target',   key: 'Jobs Won Target',                     format: function(v){ return v || '—'; } },
-        { label: 'Win Rate',          key: 'Win Rate target',                     format: function(v){ return v || '—'; } },
+        { label: 'Win Rate',          key: 'Win Rate target',                     format: function(v){ return pctBarHtml(v, asPct(parseNum(v)), maxWin); } },
         { label: 'Overhead Budget',   key: 'Overhead Budget $ (Monthly Expenses)',format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
         { label: 'Labour Hrs Budget', key: 'Labour Hour Budget',                  format: function(v){ return v || '—'; } }
       ];
       document.getElementById('p1-targets-table').innerHTML = buildTable(filtered, tableCols);
+      var p1Table = document.querySelector('#p1-targets-table .data-table');
+      if (p1Table) p1Table.classList.add('p1-targets-zebra');
     }
 
 
