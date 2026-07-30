@@ -418,7 +418,7 @@ select {
   font-weight: 400;
 }
 
-/* ── P1 Executive Snapshot: watermark + hero KPI layout ──────── */
+/* ── P1 Executive Snapshot: watermark + equal KPI grid ──────── */
 .p1-hero {
   position: relative;
   margin-bottom: 8px;
@@ -451,57 +451,12 @@ select {
   z-index: 1;
 }
 
-/* Primary revenue hero + 5 supporting KPIs */
+/* Equal 6-card flat grid */
 .p1-kpi-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 1.7fr) repeat(3, minmax(0, 1fr));
-  grid-template-areas:
-    "hero gm    lead  jobs"
-    "hero quote quote active";
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
   gap: 14px;
   margin-bottom: 24px;
-}
-
-.p1-kpi-grid > [data-kpi="revenue"] { grid-area: hero; }
-.p1-kpi-grid > [data-kpi="margin"]  { grid-area: gm; }
-.p1-kpi-grid > [data-kpi="lead"]    { grid-area: lead; }
-.p1-kpi-grid > [data-kpi="jobs"]    { grid-area: jobs; }
-.p1-kpi-grid > [data-kpi="quotes"]  { grid-area: quote; }
-.p1-kpi-grid > [data-kpi="activejobs"] { grid-area: active; }
-
-.kpi-card--hero {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 28px 28px 22px;
-  min-height: 100%;
-}
-
-.kpi-card--hero .kpi-label {
-  font-size: 11px;
-  letter-spacing: 1px;
-  margin-bottom: 14px;
-}
-
-.kpi-card--hero .kpi-value {
-  font-size: clamp(28px, 3.4vw, 42px);
-  margin-bottom: 8px;
-  white-space: normal;
-}
-
-.kpi-card--hero .kpi-sub {
-  font-size: 12px;
-}
-
-.kpi-card--hero .kpi-icon {
-  width: 20px;
-  height: 20px;
-  top: 16px;
-  left: 18px;
-}
-
-.kpi-card--support .kpi-value {
-  font-size: clamp(16px, 1.6vw, 22px);
 }
 
 .kpi-icon {
@@ -516,10 +471,12 @@ select {
 
 .p1-kpi-grid .kpi-card {
   padding-top: 34px;
+  border-top-color: var(--silver);
 }
 
-.p1-kpi-grid .kpi-card--hero {
-  padding-top: 44px;
+/* Revenue Target: same size/type; stronger Deep Charcoal top edge only */
+.p1-kpi-grid .kpi-card--primary {
+  border-top-color: var(--charcoal);
 }
 
 .kpi-value-row {
@@ -551,12 +508,6 @@ select {
   height: 22px;
   margin: 8px 0 4px;
   overflow: visible;
-}
-
-.kpi-card--hero .kpi-sparkline {
-  max-width: 200px;
-  height: 28px;
-  margin: 10px 0 6px;
 }
 
 .kpi-sparkline[hidden] {
@@ -1092,16 +1043,9 @@ select {
 
   .main { padding: 18px 16px; }
 
-  .kpi-grid  { grid-template-columns: repeat(3, 1fr); }
+  .kpi-grid,
+  .p1-kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .kpi-value { font-size: 18px; }
-
-  .p1-kpi-grid {
-    grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(0, 1fr));
-  }
-
-  .kpi-card--hero .kpi-value {
-    font-size: clamp(24px, 3vw, 34px);
-  }
 }
 
 
@@ -1252,25 +1196,14 @@ select {
   .sidebar.mobile-open { left: 0 !important; }
 
   /* ── KPI cards ───────────────────────────────────── */
-  .kpi-grid  { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi-grid,
+  .p1-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .kpi-card  { padding: 14px 12px; }
   .kpi-label { font-size: 9.5px; }
   .kpi-value { font-size: 20px; }
   .kpi-sub   { font-size: 9.5px; }
 
-  .p1-kpi-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "hero  hero"
-      "gm    lead"
-      "jobs  quote"
-      "active active";
-    gap: 10px;
-  }
-
   .p1-kpi-grid .kpi-card { padding-top: 32px; }
-  .kpi-card--hero { padding: 22px 16px 16px; padding-top: 36px; }
-  .kpi-card--hero .kpi-value { font-size: 28px; }
   .p1-watermark {
     width: min(420px, 90vw);
     height: min(420px, 90vw);
