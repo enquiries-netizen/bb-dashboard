@@ -1560,16 +1560,46 @@
       }
       var apexBase = {
         chart: {
-          fontFamily: "Montserrat, Poppins, sans-serif",
+          fontFamily: 'Montserrat, sans-serif',
           toolbar: { show: false },
-          background: 'transparent'
+          background: 'transparent',
+          dropShadow: { enabled: false }
         },
         theme: { mode: 'light' },
-        dataLabels: { enabled: false },
-        grid: { borderColor: 'rgba(188, 189, 190, 0.35)' },
-        tooltip: { theme: 'dark' }
+        dataLabels: {
+          enabled: false,
+          style: { fontFamily: 'Poppins, sans-serif' }
+        },
+        fill: { type: 'solid', gradient: { enabled: false } },
+        grid: {
+          borderColor: '#BCBDBE',
+          strokeDashArray: 0
+        },
+        tooltip: {
+          theme: 'light',
+          style: { fontFamily: 'Poppins, sans-serif', fontSize: '12px' }
+        },
+        legend: {
+          fontFamily: 'Montserrat, sans-serif',
+          labels: { colors: '#262425' }
+        }
       };
-      var charcoalScale = ['#1a1a1a', '#2a2a2a', '#3d3d3d', '#555555', '#777777'];
+      // Brand palette only — Deep Charcoal opacity steps by win-proximity
+      var funnelBrandColors = [
+        'rgba(38,36,37,0.4)',   // Draft
+        'rgba(38,36,37,0.55)',  // Sent
+        '#262425',              // Accepted (100%)
+        'rgba(38,36,37,0.7)',   // In Progress
+        'rgba(38,36,37,0.25)'   // Awaiting Approval
+      ];
+      var donutBrandColors = [
+        '#D2D4D5', // Draft — Brilliant Silver
+        '#BCBDBE', // Sent — Soft Gray
+        '#262425', // Accepted — Deep Charcoal
+        '#D2D4D5', // In Progress — Brilliant Silver
+        '#FFFFFF'  // Awaiting Approval — White (+ charcoal stroke)
+      ];
+      var charcoalScale = funnelBrandColors;
 
       // Rebuild Department options from all three tabs (pre-dept filter)
       var brandedQuotes   = applyGlobal(window._p3Quotes);
@@ -1681,7 +1711,7 @@
       setApexOrPlaceholder('chart-p3-funnel', hasFunnelData, Object.assign({}, apexBase, {
         chart: Object.assign({}, apexBase.chart, { type: 'bar', height: 280 }),
         series: [{ name: 'Quotes', data: funnelCounts }],
-        colors: charcoalScale,
+        colors: funnelBrandColors,
         plotOptions: {
           bar: {
             borderRadius: 0,
@@ -1693,22 +1723,41 @@
         },
         xaxis: {
           categories: funnelLabels,
-          labels: { style: { colors: '#262425', fontSize: '11px' } }
+          labels: {
+            style: {
+              colors: '#262425',
+              fontSize: '11px',
+              fontFamily: 'Montserrat, sans-serif'
+            }
+          },
+          axisBorder: { color: '#BCBDBE' },
+          axisTicks: { color: '#BCBDBE' }
         },
         yaxis: {
-          labels: { style: { colors: '#262425', fontSize: '11px', fontWeight: 600 } }
+          labels: {
+            style: {
+              colors: '#262425',
+              fontSize: '11px',
+              fontWeight: 600,
+              fontFamily: 'Montserrat, sans-serif'
+            }
+          }
         },
         legend: { show: false },
         dataLabels: {
           enabled: true,
           formatter: function(val) { return val; },
-          style: { colors: ['#FFFFFF'], fontSize: '11px', fontWeight: 600 },
+          style: {
+            colors: ['#262425', '#262425', '#FFFFFF', '#FFFFFF', '#262425'],
+            fontSize: '11px',
+            fontWeight: 600,
+            fontFamily: 'Poppins, sans-serif'
+          },
           dropShadow: { enabled: false }
         },
-        tooltip: {
-          theme: 'dark',
+        tooltip: Object.assign({}, apexBase.tooltip, {
           y: { formatter: function(val) { return val + ' quotes'; } }
-        }
+        })
       }));
 
       // ── Chart.js: Quote Value by Status (unchanged type) ───────
@@ -1781,35 +1830,71 @@
             data: estAvgDays
           }
         ],
-        colors: ['#1a1a1a', '#777777'],
-        stroke: { width: [0, 3], curve: 'smooth' },
+        colors: ['#262425', '#BCBDBE'],
+        stroke: {
+          width: [0, 3],
+          curve: 'smooth',
+          dashArray: [0, 6],
+          colors: ['#262425', '#BCBDBE']
+        },
         markers: {
           size: [0, 5],
-          colors: ['#777777'],
+          colors: ['#BCBDBE'],
           strokeColors: '#FFFFFF',
-          strokeWidth: 2
+          strokeWidth: 2,
+          hover: { sizeOffset: 1 }
         },
         plotOptions: {
-          bar: { borderRadius: 4, columnWidth: '48%' }
+          bar: { borderRadius: 0, columnWidth: '48%' }
         },
         xaxis: {
           categories: estEntries.map(function(e) { return e.name; }),
-          labels: { style: { colors: '#262425', fontSize: '11px' } }
+          labels: {
+            style: {
+              colors: '#262425',
+              fontSize: '11px',
+              fontFamily: 'Montserrat, sans-serif'
+            }
+          },
+          axisBorder: { color: '#BCBDBE' },
+          axisTicks: { color: '#BCBDBE' }
         },
         yaxis: [
           {
-            title: { text: 'Quotes', style: { color: '#1a1a1a', fontSize: '11px' } },
+            title: {
+              text: 'Quotes',
+              style: {
+                color: '#262425',
+                fontSize: '11px',
+                fontFamily: 'Montserrat, sans-serif'
+              }
+            },
             labels: {
-              style: { colors: '#1a1a1a', fontSize: '11px' },
+              style: {
+                colors: '#262425',
+                fontSize: '11px',
+                fontFamily: 'Montserrat, sans-serif'
+              },
               formatter: function(v) { return Math.round(v); }
             },
             min: 0
           },
           {
             opposite: true,
-            title: { text: 'Avg Days to Decision', style: { color: '#777777', fontSize: '11px' } },
+            title: {
+              text: 'Avg Days to Decision',
+              style: {
+                color: '#BCBDBE',
+                fontSize: '11px',
+                fontFamily: 'Montserrat, sans-serif'
+              }
+            },
             labels: {
-              style: { colors: '#777777', fontSize: '11px' },
+              style: {
+                colors: '#BCBDBE',
+                fontSize: '11px',
+                fontFamily: 'Montserrat, sans-serif'
+              },
               formatter: function(v) { return Math.round(v * 10) / 10; }
             },
             min: 0
@@ -1819,13 +1904,13 @@
           position: 'top',
           horizontalAlign: 'left',
           fontSize: '11px',
+          fontFamily: 'Montserrat, sans-serif',
           labels: { colors: '#262425' }
         },
-        tooltip: {
+        tooltip: Object.assign({}, apexBase.tooltip, {
           shared: true,
-          intersect: false,
-          theme: 'dark'
-        }
+          intersect: false
+        })
       }));
 
       // ── ApexCharts: Status share donut (center = total quotes) ─
@@ -1833,10 +1918,16 @@
         chart: Object.assign({}, apexBase.chart, { type: 'donut', height: 300 }),
         series: funnelCounts,
         labels: funnelLabels,
-        colors: charcoalScale,
+        colors: donutBrandColors,
+        stroke: {
+          show: true,
+          width: 1,
+          colors: ['#262425']
+        },
         legend: {
           position: 'bottom',
           fontSize: '11px',
+          fontFamily: 'Montserrat, sans-serif',
           labels: { colors: '#262425' }
         },
         plotOptions: {
@@ -1849,14 +1940,16 @@
                   show: true,
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#777777',
+                  fontFamily: 'Montserrat, sans-serif',
+                  color: '#262425',
                   offsetY: -8
                 },
                 value: {
                   show: true,
                   fontSize: '28px',
                   fontWeight: 700,
-                  color: '#1a1a1a',
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#262425',
                   offsetY: 6,
                   formatter: function() { return String(totalQuotes); }
                 },
@@ -1866,7 +1959,8 @@
                   label: 'Total Quotes',
                   fontSize: '12px',
                   fontWeight: 600,
-                  color: '#777777',
+                  fontFamily: 'Montserrat, sans-serif',
+                  color: '#262425',
                   formatter: function() { return String(totalQuotes); }
                 }
               }
@@ -1874,15 +1968,14 @@
           }
         },
         dataLabels: { enabled: false },
-        tooltip: {
-          theme: 'dark',
+        tooltip: Object.assign({}, apexBase.tooltip, {
           y: {
             formatter: function(val) {
               var pct = totalQuotes ? Math.round((val / totalQuotes) * 1000) / 10 : 0;
               return val + ' quotes (' + pct + '%)';
             }
           }
-        }
+        })
       }));
 
       // ── Funnel detail table (status + estimator summary) ───────
@@ -2070,35 +2163,43 @@
                 chart: {
                   type: 'radialBar',
                   height: 200,
-                  fontFamily: 'Montserrat, Poppins, sans-serif',
+                  fontFamily: 'Montserrat, sans-serif',
                   toolbar: { show: false },
-                  background: 'transparent'
+                  background: 'transparent',
+                  dropShadow: { enabled: false }
                 },
                 series: [scorePct],
                 labels: [e.name],
-                colors: [awaiting ? '#555555' : '#1d9e75'],
+                colors: ['#262425'],
+                fill: {
+                  type: 'solid',
+                  gradient: { enabled: false }
+                },
                 plotOptions: {
                   radialBar: {
                     startAngle: -135,
                     endAngle: 135,
                     hollow: { size: '58%', background: 'transparent' },
                     track: {
-                      background: '#3d3d3d',
-                      strokeWidth: '100%'
+                      background: '#D2D4D5',
+                      strokeWidth: '100%',
+                      dropShadow: { enabled: false }
                     },
                     dataLabels: {
                       name: {
                         show: true,
                         fontSize: '12px',
                         fontWeight: 600,
-                        color: '#D2D4D5',
+                        fontFamily: 'Montserrat, sans-serif',
+                        color: '#262425',
                         offsetY: -8
                       },
                       value: {
                         show: true,
                         fontSize: '22px',
                         fontWeight: 700,
-                        color: '#FFFFFF',
+                        fontFamily: 'Poppins, sans-serif',
+                        color: '#262425',
                         offsetY: 6,
                         formatter: function(val) {
                           return awaiting ? '0%' : (Math.round(Number(val) * 10) / 10) + '%';

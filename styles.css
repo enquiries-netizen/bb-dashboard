@@ -472,10 +472,12 @@ select {
 }
 
 .p3-accuracy-gauge-card {
-  background: var(--charcoal-dark);
+  background: var(--white);
+  border: 1px solid var(--silver);
   border-radius: var(--radius-sm);
   padding: 10px 8px 14px;
   text-align: center;
+  box-shadow: none;
 }
 
 .p3-accuracy-gauge-card .apex-chart {
