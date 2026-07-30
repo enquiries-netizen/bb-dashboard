@@ -389,10 +389,74 @@
             <span class="page-badge">P5</span>
             <h1 class="page-title">Division Profitability</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Division Profitability</p>
-            <p class="placeholder-text">Reads: Xero_Financials · Xero_Invoices · Xero_Overheads</p>
-            <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben, builds in Section 4</p>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Total Revenue</div>
+              <div class="kpi-value" id="kpi-p5-revenue">—</div>
+              <div class="kpi-sub" id="kpi-p5-revenue-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Gross Profit</div>
+              <div class="kpi-value" id="kpi-p5-gp">—</div>
+              <div class="kpi-sub" id="kpi-p5-gp-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Net Profit</div>
+              <div class="kpi-value" id="kpi-p5-np">—</div>
+              <div class="kpi-sub" id="kpi-p5-np-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Outstanding Invoices</div>
+              <div class="kpi-value" id="kpi-p5-outstanding">—</div>
+              <div class="kpi-sub" id="kpi-p5-outstanding-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Brand-Level Profitability</div>
+            <div class="chart-row two-col">
+              <div class="chart-card card">
+                <div class="chart-title">Revenue vs Target</div>
+                <canvas id="chart-p5-revenue" height="200"></canvas>
+              </div>
+              <div class="chart-card card">
+                <div class="chart-title">Net Profit vs Target</div>
+                <canvas id="chart-p5-profit" height="200"></canvas>
+              </div>
+            </div>
+            <div class="chart-row">
+              <div class="chart-card card">
+                <div class="chart-title">Overhead Actual vs Budget</div>
+                <canvas id="chart-p5-overhead" height="110"></canvas>
+              </div>
+            </div>
+            <div id="p5-financials-table">Loading financials...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Overhead Commentary</div>
+            <div id="p5-overhead-notes">Loading overhead notes...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Invoices &amp; Cash Position</div>
+            <div class="chart-row two-col">
+              <div class="chart-card card">
+                <div class="chart-title">By Status</div>
+                <canvas id="chart-p5-inv-status" height="200"></canvas>
+              </div>
+              <div class="chart-card card">
+                <div class="chart-title">Ageing Bucket</div>
+                <canvas id="chart-p5-inv-ageing" height="200"></canvas>
+              </div>
+            </div>
+            <div id="p5-invoices-summary">Loading invoices...</div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Department-Level Breakdown</div>
+            <div id="p5-department-section">Loading department data...</div>
           </div>
         </section>
 
@@ -501,7 +565,7 @@
           </div>
           <div class="placeholder-page card">
             <p class="placeholder-title">Cash Flow &amp; Forecast</p>
-            <p class="placeholder-text">Reads: CashFlow_Forecast · Xero_Invoices · Xero_Overheads</p>
+            <p class="placeholder-text">Reads: CashFlow_Forecast · Xero_Invoices · Xero_Overhead</p>
             <p class="placeholder-status">⏳ Awaiting CAT/DIV approval from Ben, builds in Section 4</p>
           </div>
         </section>
@@ -809,9 +873,8 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
       var placeholders = {
-        p5: 'P5: Division Profitability',
         p9: 'P9: Cash Flow',
         p11: 'P11: Quality & Variations'
       };
@@ -2977,6 +3040,516 @@ var labourRows = Object.values(labourByProject)
 
       // Full campaign table
       document.getElementById('p10-campaign-table').innerHTML = buildAutoTable(filtered);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P5 — DIVISION PROFITABILITY
+    // Sources: Xero_Financials · Xero_Invoices · Xero_Overhead
+    // Range:   April 2026 onward (aligned across all three tabs)
+    // Sections: Brand P&L · Overhead Notes · Invoices · Department
+    // ═══════════════════════════════════════════════════════════════
+    async function loadP5() {
+      showLoading(true);
+      removeError('p5');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; })
+        ]);
+        renderP5(results[0], results[1], results[2]);
+      } catch (err) {
+        console.error('P5 load error:', err);
+        showError('p5', 'Could not load Division Profitability data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    /** Keep Financials / Invoices / Overhead aligned from April 2026 (exclude March). */
+    function filterFromApril2026(rows) {
+      if (!rows || !rows.length) return [];
+      return rows.filter(function(r) {
+        var yStr = String(col(r, 'Year', 'year') || '').trim();
+        var mAbbr = String(getRowMonth(r) || '').trim();
+        if (!yStr || !mAbbr) {
+          var parsed = parseRowDateParts(
+            col(r, 'Invoice Date', 'Due Date', 'Date', 'date', 'Paid Date') || getRowDateStr(r)
+          );
+          if (!parsed) return false;
+          yStr = parsed.year;
+          mAbbr = parsed.month;
+        }
+        var y = parseInt(yStr, 10);
+        if (isNaN(y)) return false;
+        if (y > 2026) return true;
+        if (y < 2026) return false;
+        var token = mAbbr.substring(0, 3).toLowerCase();
+        var idx = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === token) { idx = i; break; }
+        }
+        return idx >= 3; // Apr = 3 → April 2026 onward
+      });
+    }
+
+    function renderP5(financials, invoices, overhead) {
+      var brandCharcoal = '#262425';
+      var brandSoftGray = '#BCBDBE';
+      var brandSilver   = '#D2D4D5';
+
+      function applyFilters(rows) {
+        return filterByMonths(
+          filterByYear(
+            filterByBrand(filterFromApril2026(rows || []), activeBrand),
+            activeYear
+          ),
+          activeMonths
+        );
+      }
+
+      var finFiltered = applyFilters(financials);
+      var invFiltered = applyFilters(invoices);
+      var ohFiltered  = applyFilters(overhead);
+
+      window._currentPage = {
+        name: 'P5: Division Profitability',
+        data: {
+          financials: finFiltered,
+          invoices: invFiltered.slice(0, 300),
+          overhead: ohFiltered
+        }
+      };
+
+      function asPct(n) {
+        if (n === null || n === undefined || isNaN(n)) return null;
+        return Math.abs(n) <= 1 ? n * 100 : n;
+      }
+
+      function fmtMoney(v) {
+        if (v === '' || v === null || v === undefined) return '—';
+        return formatCurrency(parseNum(v));
+      }
+
+      function fmtMargin(v) {
+        if (v === '' || v === null || v === undefined) return '—';
+        var n = asPct(parseNum(v));
+        return n === null ? '—' : formatPct(n);
+      }
+
+      function monthLabel(r) {
+        var m = String(col(r, 'Month', 'month') || '').trim();
+        var y = String(col(r, 'Year', 'year') || '').trim();
+        return (m + ' ' + y).trim();
+      }
+
+      function sortFinRows(rows) {
+        return rows.slice().sort(function(a, b) {
+          var ya = parseInt(col(a, 'Year', 'year') || '0', 10);
+          var yb = parseInt(col(b, 'Year', 'year') || '0', 10);
+          if (ya !== yb) return ya - yb;
+          var ma = _MONTH_ABBR.indexOf(String(getRowMonth(a) || '').substring(0, 3));
+          var mb = _MONTH_ABBR.indexOf(String(getRowMonth(b) || '').substring(0, 3));
+          if (ma !== mb) return ma - mb;
+          return String(col(a, 'Brand', 'brand')).localeCompare(String(col(b, 'Brand', 'brand')));
+        });
+      }
+
+      var finSorted = sortFinRows(finFiltered);
+
+      // ── KPIs ────────────────────────────────────────────────
+      var totalRev = finSorted.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+      }, 0);
+      var totalGP = finSorted.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Gross Profit ($)', 'Gross Profit'));
+      }, 0);
+      var totalNP = finSorted.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Net Profit ($)', 'Net Profit'));
+      }, 0);
+      var outstanding = invFiltered.reduce(function(s, r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return s;
+        return s + parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
+      }, 0);
+
+      setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub',
+        finSorted.length ? formatCurrency(totalRev) : '—',
+        finSorted.length ? 'Apr 2026+ · filtered' : 'No financials for selection');
+      setKPI('kpi-p5-gp', 'kpi-p5-gp-sub',
+        finSorted.length ? formatCurrency(totalGP) : '—',
+        finSorted.length ? 'Gross profit' : 'No data');
+      setKPI('kpi-p5-np', 'kpi-p5-np-sub',
+        finSorted.length ? formatCurrency(totalNP) : '—',
+        finSorted.length ? 'Net profit' : 'No data');
+      setKPI('kpi-p5-outstanding', 'kpi-p5-outstanding-sub',
+        invFiltered.length ? formatCurrency(outstanding) : '—',
+        invFiltered.length ? 'Authorised / unpaid' : 'No invoices for selection');
+
+      // ── Section 1 charts ────────────────────────────────────
+      var periodOrder = [];
+      finSorted.forEach(function(r) {
+        var lbl = monthLabel(r);
+        if (lbl && periodOrder.indexOf(lbl) === -1) periodOrder.push(lbl);
+      });
+
+      function sumByPeriod(fieldNames) {
+        return periodOrder.map(function(lbl) {
+          return finSorted.filter(function(r) { return monthLabel(r) === lbl; })
+            .reduce(function(s, r) {
+              return s + parseNum(col.apply(null, [r].concat(fieldNames)));
+            }, 0);
+        });
+      }
+
+      var revActual  = sumByPeriod(['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue']);
+      var revTarget  = sumByPeriod(['Revenue Target ($)', 'Revenue Target']);
+      var npActual   = sumByPeriod(['Net Profit ($)', 'Net Profit']);
+      var npTarget   = sumByPeriod(['Profit Target ($)', 'Profit Target', 'Net Profit Target ($)']);
+      var ohActual   = sumByPeriod(['Overhead Actual ($)', 'Overhead Actual']);
+      var ohBudget   = sumByPeriod(['Overhead Budget ($)', 'Overhead Budget']);
+
+      var yTicks = {
+        callback: function(v) {
+          return '$' + (Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
+            : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+        }
+      };
+      var chartOpts = function() {
+        return {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top', labels: { color: brandCharcoal } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0); }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: brandCharcoal } },
+            y: { beginAtZero: true, ticks: Object.assign({ color: brandCharcoal }, yTicks),
+                 grid: { color: 'rgba(210,212,213,0.5)' } }
+          }
+        };
+      };
+
+      function destroyIf(id) {
+        if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+      }
+
+      if (periodOrder.length === 0) {
+        ['chart-p5-revenue', 'chart-p5-profit', 'chart-p5-overhead'].forEach(destroyIf);
+      } else {
+        makeChart('chart-p5-revenue', {
+          type: 'bar',
+          data: {
+            labels: periodOrder,
+            datasets: [
+              {
+                label: 'Revenue Target',
+                data: revTarget,
+                backgroundColor: 'rgba(0,0,0,0)',
+                borderColor: brandSoftGray,
+                borderWidth: 2,
+                borderRadius: 2,
+                order: 2
+              },
+              {
+                label: 'Total Revenue',
+                data: revActual,
+                backgroundColor: brandCharcoal,
+                borderColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 2,
+                order: 1
+              }
+            ]
+          },
+          options: chartOpts()
+        });
+
+        makeChart('chart-p5-profit', {
+          type: 'bar',
+          data: {
+            labels: periodOrder,
+            datasets: [
+              {
+                label: 'Profit Target',
+                data: npTarget,
+                backgroundColor: 'rgba(0,0,0,0)',
+                borderColor: brandSoftGray,
+                borderWidth: 2,
+                borderRadius: 2,
+                order: 2
+              },
+              {
+                label: 'Net Profit',
+                data: npActual,
+                backgroundColor: brandCharcoal,
+                borderColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 2,
+                order: 1
+              }
+            ]
+          },
+          options: chartOpts()
+        });
+
+        makeChart('chart-p5-overhead', {
+          type: 'bar',
+          data: {
+            labels: periodOrder,
+            datasets: [
+              {
+                label: 'Overhead Budget',
+                data: ohBudget,
+                backgroundColor: brandSilver,
+                borderColor: brandSilver,
+                borderWidth: 0,
+                borderRadius: 2
+              },
+              {
+                label: 'Overhead Actual',
+                data: ohActual,
+                backgroundColor: brandCharcoal,
+                borderColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 2
+              }
+            ]
+          },
+          options: chartOpts()
+        });
+      }
+
+      // ── Section 1 table ─────────────────────────────────────
+      var finTableCols = [
+        { label: 'Month', key: ['Month', 'month'] },
+        { label: 'Year', key: ['Year', 'year'] },
+        { label: 'Brand', key: ['Brand', 'brand'] },
+        { label: 'Total Revenue', key: ['Total Revenue ($)', 'Total Revenue'], format: fmtMoney },
+        { label: 'Revenue Target', key: ['Revenue Target ($)', 'Revenue Target'], format: fmtMoney },
+        { label: 'Revenue Variance', key: ['Revenue Variance ($)', 'Revenue Variance'], format: fmtMoney },
+        { label: 'Cost of Sales', key: ['Cost of Sales ($)', 'Cost of Sales'], format: fmtMoney },
+        { label: 'Gross Profit', key: ['Gross Profit ($)', 'Gross Profit'], format: fmtMoney },
+        { label: 'Gross Margin %', key: ['Gross Margin %', 'GP%', 'Gross Margin'], format: fmtMargin },
+        { label: 'Overhead Actual', key: ['Overhead Actual ($)', 'Overhead Actual'], format: fmtMoney },
+        { label: 'Overhead Budget', key: ['Overhead Budget ($)', 'Overhead Budget'], format: fmtMoney },
+        { label: 'Overhead Variance', key: ['Overhead Variance ($)', 'Overhead Variance'], format: fmtMoney },
+        { label: 'Net Profit', key: ['Net Profit ($)', 'Net Profit'], format: fmtMoney },
+        { label: 'Profit Target', key: ['Profit Target ($)', 'Profit Target'], format: fmtMoney },
+        { label: 'Net Profit Variance', key: ['Net Profit Variance ($)', 'Net Profit Variance'], format: fmtMoney },
+        { label: 'Net Margin %', key: ['Net Margin %', 'NP%', 'Net Margin'], format: fmtMargin }
+      ];
+      document.getElementById('p5-financials-table').innerHTML = finSorted.length
+        ? buildTable(finSorted, finTableCols)
+        : '<p class="no-data-msg">No financials data for the selected filters (April 2026 onward).</p>';
+
+      // ── Section 2 — Overhead Notes (display only) ───────────
+      var notesHtml = '';
+      if (!ohFiltered.length) {
+        notesHtml = '<p class="no-data-msg">No overhead commentary for the selected filters.</p>';
+      } else {
+        var ohSorted = sortFinRows(ohFiltered);
+        notesHtml = '<div class="p5-notes-list">';
+        ohSorted.forEach(function(r) {
+          var note = String(col(r, 'Notes', 'notes', 'Note', 'Commentary') || '').trim();
+          if (!note) return;
+          var title = [monthLabel(r), col(r, 'Brand', 'brand')].filter(Boolean).join(' · ');
+          notesHtml += '<div class="p5-note-card">' +
+            '<div class="p5-note-meta">' + title + '</div>' +
+            '<div class="p5-note-body">' + note.replace(/</g, '&lt;') + '</div>' +
+            '</div>';
+        });
+        notesHtml += '</div>';
+        if (notesHtml.indexOf('p5-note-card') === -1) {
+          notesHtml = '<p class="no-data-msg">Notes column is empty for the selected filters.</p>';
+        }
+      }
+      document.getElementById('p5-overhead-notes').innerHTML = notesHtml;
+
+      // ── Section 3 — Invoices ────────────────────────────────
+      var byStatus = {};
+      var byAgeing = {};
+      var byBrandOut = {};
+      invFiltered.forEach(function(r) {
+        var st = String(col(r, 'Status', 'status') || 'Unknown').trim() || 'Unknown';
+        var age = String(col(r, 'Ageing Bucket', 'Ageing', 'aging bucket', 'Aging Bucket') || '').trim() || '(blank)';
+        var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
+        var brand = String(col(r, 'Brand', 'brand') || 'Unknown').trim() || 'Unknown';
+        byStatus[st] = (byStatus[st] || 0) + amt;
+        byAgeing[age] = (byAgeing[age] || 0) + amt;
+        var stUp = st.toUpperCase();
+        if (stUp !== 'PAID' && stUp !== 'VOIDED' && stUp !== 'DELETED' && stUp !== 'DRAFT') {
+          byBrandOut[brand] = (byBrandOut[brand] || 0) + amt;
+        }
+      });
+
+      var statusLabels = Object.keys(byStatus).sort();
+      var ageingLabels = Object.keys(byAgeing).sort();
+      var brandOutLabels = Object.keys(byBrandOut).sort();
+
+      var invPalette = [brandCharcoal, brandSoftGray, brandSilver, '#3d3b3c', '#8a8b8c'];
+
+      if (!invFiltered.length) {
+        destroyIf('chart-p5-inv-status');
+        destroyIf('chart-p5-inv-ageing');
+        var ageElEmpty = document.getElementById('chart-p5-inv-ageing');
+        if (ageElEmpty) {
+          ageElEmpty.style.display = '';
+          var phE = ageElEmpty.parentElement && ageElEmpty.parentElement.querySelector('.chart-placeholder');
+          if (phE) phE.remove();
+        }
+      } else {
+        makeChart('chart-p5-inv-status', {
+          type: 'bar',
+          data: {
+            labels: statusLabels,
+            datasets: [{
+              label: 'Amount',
+              data: statusLabels.map(function(k) { return byStatus[k]; }),
+              backgroundColor: statusLabels.map(function(_, i) { return invPalette[i % invPalette.length]; }),
+              borderWidth: 0,
+              borderRadius: 2
+            }]
+          },
+          options: chartOpts()
+        });
+
+        var ageingHasData = ageingLabels.some(function(k) { return k !== '(blank)' && byAgeing[k] > 0; });
+        var ageCanvas = document.getElementById('chart-p5-inv-ageing');
+        if (ageCanvas && ageCanvas.parentElement) {
+          var existingPh = ageCanvas.parentElement.querySelector('.chart-placeholder');
+          if (existingPh) existingPh.remove();
+        }
+        if (!ageingHasData) {
+          destroyIf('chart-p5-inv-ageing');
+          if (ageCanvas && ageCanvas.parentElement) {
+            ageCanvas.style.display = 'none';
+            var ph = document.createElement('div');
+            ph.className = 'chart-placeholder';
+            ph.innerHTML = '<span>Ageing buckets not populated yet</span>';
+            ageCanvas.parentElement.appendChild(ph);
+          }
+        } else {
+          if (ageCanvas) ageCanvas.style.display = '';
+          makeChart('chart-p5-inv-ageing', {
+            type: 'bar',
+            data: {
+              labels: ageingLabels.filter(function(k) { return k !== '(blank)'; }),
+              datasets: [{
+                label: 'Amount',
+                data: ageingLabels.filter(function(k) { return k !== '(blank)'; })
+                  .map(function(k) { return byAgeing[k]; }),
+                backgroundColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 2
+              }]
+            },
+            options: chartOpts()
+          });
+        }
+      }
+
+      var invSummaryHtml = '';
+      if (!invFiltered.length) {
+        invSummaryHtml = '<p class="no-data-msg">No invoice data for the selected filters (April 2026 onward).</p>';
+      } else {
+        invSummaryHtml += '<div class="p5-inv-grids">';
+        invSummaryHtml += '<div><div class="chart-title">Summary by Status</div>';
+        invSummaryHtml += buildTable(statusLabels.map(function(k) {
+          return { Status: k, Amount: byStatus[k], Count: invFiltered.filter(function(r) {
+            return String(col(r, 'Status', 'status') || 'Unknown').trim() === k;
+          }).length };
+        }), [
+          { label: 'Status', key: 'Status' },
+          { label: 'Count', key: 'Count' },
+          { label: 'Amount', key: 'Amount', format: function(v) { return formatCurrency(parseNum(v)); } }
+        ]);
+        invSummaryHtml += '</div>';
+
+        invSummaryHtml += '<div><div class="chart-title">Outstanding by Brand</div>';
+        if (!brandOutLabels.length) {
+          invSummaryHtml += '<p class="no-data-msg">No outstanding invoices in selection.</p>';
+        } else {
+          invSummaryHtml += buildTable(brandOutLabels.map(function(k) {
+            return { Brand: k, Outstanding: byBrandOut[k] };
+          }), [
+            { label: 'Brand', key: 'Brand' },
+            { label: 'Outstanding', key: 'Outstanding', format: function(v) { return formatCurrency(parseNum(v)); } }
+          ]);
+        }
+        invSummaryHtml += '</div></div>';
+      }
+      document.getElementById('p5-invoices-summary').innerHTML = invSummaryHtml;
+
+      // ── Section 4 — Department breakdown ────────────────────
+      // Read Department by header name (not index). Empty → "Data not available".
+      var deptRows = finSorted.filter(function(r) {
+        return String(col(r, 'Department', 'department') || '').trim() !== '';
+      });
+      var deptInvRows = invFiltered.filter(function(r) {
+        return String(col(r, 'Department', 'department') || '').trim() !== '';
+      });
+
+      var deptEl = document.getElementById('p5-department-section');
+      if (!deptRows.length && !deptInvRows.length) {
+        deptEl.innerHTML = '<p class="no-data-msg">Data not available</p>' +
+          '<p class="p5-dept-hint">Department is blank in Xero_Financials / Xero_Invoices for the current range. ' +
+          'When Department is populated in the sheet, refresh to load the breakdown.</p>';
+      } else {
+        var deptAgg = {};
+        deptRows.forEach(function(r) {
+          var d = String(col(r, 'Department', 'department')).trim();
+          if (!deptAgg[d]) {
+            deptAgg[d] = { Department: d, Revenue: 0, GrossProfit: 0, NetProfit: 0, Overhead: 0 };
+          }
+          deptAgg[d].Revenue     += parseNum(col(r, 'Total Revenue ($)', 'Total Revenue'));
+          deptAgg[d].GrossProfit += parseNum(col(r, 'Gross Profit ($)', 'Gross Profit'));
+          deptAgg[d].NetProfit   += parseNum(col(r, 'Net Profit ($)', 'Net Profit'));
+          deptAgg[d].Overhead    += parseNum(col(r, 'Overhead Actual ($)', 'Overhead Actual'));
+        });
+        var deptTableRows = Object.keys(deptAgg).sort().map(function(k) { return deptAgg[k]; });
+        var html = '';
+        if (deptTableRows.length) {
+          html += '<div class="chart-row"><div class="chart-card card">' +
+            '<div class="chart-title">Revenue by Department</div>' +
+            '<canvas id="chart-p5-dept" height="160"></canvas></div></div>';
+          html += buildTable(deptTableRows, [
+            { label: 'Department', key: 'Department' },
+            { label: 'Revenue', key: 'Revenue', format: function(v) { return formatCurrency(v); } },
+            { label: 'Gross Profit', key: 'GrossProfit', format: function(v) { return formatCurrency(v); } },
+            { label: 'Overhead', key: 'Overhead', format: function(v) { return formatCurrency(v); } },
+            { label: 'Net Profit', key: 'NetProfit', format: function(v) { return formatCurrency(v); } }
+          ]);
+        } else {
+          html += '<p class="no-data-msg">Data not available</p>';
+        }
+        deptEl.innerHTML = html;
+
+        if (deptTableRows.length) {
+          setTimeout(function() {
+            makeChart('chart-p5-dept', {
+              type: 'bar',
+              data: {
+                labels: deptTableRows.map(function(r) { return r.Department; }),
+                datasets: [{
+                  label: 'Revenue',
+                  data: deptTableRows.map(function(r) { return r.Revenue; }),
+                  backgroundColor: brandCharcoal,
+                  borderWidth: 0,
+                  borderRadius: 2
+                }]
+              },
+              options: chartOpts()
+            });
+          }, 0);
+        }
+      }
     }
 
 

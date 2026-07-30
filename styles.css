@@ -840,6 +840,55 @@ select {
   padding: 8px 0;
 }
 
+/* ─── P5 Division Profitability ─────────────────────────────── */
+.p5-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.p5-note-card {
+  background: var(--white);
+  border: 1px solid var(--silver);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.p5-note-meta {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.p5-note-body {
+  font-size: 12.5px;
+  color: var(--charcoal);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.p5-inv-grids {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.p5-dept-hint {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 4px;
+  max-width: 52rem;
+}
+
+@media (max-width: 768px) {
+  .p5-inv-grids { grid-template-columns: 1fr; }
+}
+
 /* P2 Pipeline Detail — Deep Charcoal only; links use underline, never blue */
 #p2-pipeline-table .data-table td,
 #p2-pipeline-table .data-table td .p2-money,

@@ -30,7 +30,8 @@ const CONFIG = {
     XERO_FINANCIALS:     'Xero_Financials',
     XERO_INVOICES:       'Xero_Invoices',
     XERO_PROJECTS:       'Xero_Projects',
-    XERO_OVERHEADS:      'Xero_Overheads',
+    XERO_OVERHEAD:       'Xero_Overhead',
+    XERO_OVERHEADS:      'Xero_Overhead', // alias — sheet tab is singular
     BUILDPASS_SCHEDULE:  'Buildpass_Schedules',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     BUILDPASS_DIARIES:   'Buildpass_Diaries',
