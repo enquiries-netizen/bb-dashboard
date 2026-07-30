@@ -2698,43 +2698,159 @@ var labourRows = Object.values(labourByProject)
         };
         document.getElementById('p6-content').innerHTML = renderP6(data);
         setTimeout(function() {
+          // Destroy legacy donut if a prior visit registered it
+          if (_charts['p6-donut-chart']) {
+            _charts['p6-donut-chart'].destroy();
+            delete _charts['p6-donut-chart'];
+          }
+
+          var brandCharcoal = '#262425';
+          var brandSoftGray = '#BCBDBE';
+          var brandSilver   = '#D2D4D5';
+
+          // Hiring-signal threshold (85%) + end % labels on utilisation bars
+          var p6UtilPlugins = [{
+            id: 'p6HiringThreshold',
+            afterDatasetsDraw: function(chart) {
+              var xScale = chart.scales.x;
+              var yScale = chart.scales.y;
+              if (!xScale || !yScale) return;
+              var x = xScale.getPixelForValue(85);
+              var ctx = chart.ctx;
+              ctx.save();
+              ctx.beginPath();
+              ctx.setLineDash([6, 4]);
+              ctx.strokeStyle = brandSoftGray;
+              ctx.lineWidth = 1.5;
+              ctx.moveTo(x, yScale.top);
+              ctx.lineTo(x, yScale.bottom);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }, {
+            id: 'p6BarEndLabels',
+            afterDatasetsDraw: function(chart) {
+              var ctx = chart.ctx;
+              chart.data.datasets.forEach(function(dataset, di) {
+                var meta = chart.getDatasetMeta(di);
+                meta.data.forEach(function(bar, index) {
+                  var value = dataset.data[index];
+                  if (value === null || value === undefined) return;
+                  ctx.save();
+                  ctx.fillStyle = brandCharcoal;
+                  ctx.font = '500 11px Montserrat, sans-serif';
+                  ctx.textAlign = 'left';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(value + '%', bar.x + 6, bar.y);
+                  ctx.restore();
+                });
+              });
+            }
+          }];
+
           if (document.getElementById('p6-bar-chart')) {
-            new Chart(document.getElementById('p6-bar-chart'), {
+            makeChart('p6-bar-chart', {
               type: 'bar',
               data: {
                 labels: window._p6BarLabels,
-                datasets: [{ data: window._p6BarData, backgroundColor: window._p6BarColors, borderRadius: 4 }]
+                datasets: [{
+                  data: window._p6BarData,
+                  backgroundColor: brandCharcoal,
+                  borderWidth: 0,
+                  borderRadius: 4
+                }]
               },
               options: {
                 indexAxis: 'y',
-                plugins: { legend: { display: false } },
+                responsive: true,
+                layout: { padding: { right: 36 } },
+                plugins: { legend: { display: false }, tooltip: { enabled: true } },
                 scales: {
-                  x: { max: 150, ticks: { callback: function(v){ return v+'%'; } } }
+                  x: {
+                    max: 150,
+                    grid: { color: brandSilver },
+                    ticks: { color: brandCharcoal, callback: function(v){ return v + '%'; } }
+                  },
+                  y: {
+                    grid: { display: false },
+                    ticks: { color: brandCharcoal }
+                  }
+                }
+              },
+              plugins: p6UtilPlugins
+            });
+          }
+
+          if (document.getElementById('p6-dept-chart')) {
+            makeChart('p6-dept-chart', {
+              type: 'bar',
+              data: {
+                labels: window._p6DeptLabels,
+                datasets: [{
+                  data: window._p6DeptData,
+                  backgroundColor: brandCharcoal,
+                  borderWidth: 0,
+                  borderRadius: 4
+                }]
+              },
+              options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(ctx) { return ctx.raw + ' hrs'; }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    beginAtZero: true,
+                    grid: { color: brandSilver },
+                    ticks: { color: brandCharcoal }
+                  },
+                  y: {
+                    grid: { display: false },
+                    ticks: { color: brandCharcoal }
+                  }
                 }
               }
             });
-            new Chart(document.getElementById('p6-donut-chart'), {
-              type: 'doughnut',
-              data: {
-                labels: window._p6DeptLabels,
-                datasets: [{ data: window._p6DeptData, backgroundColor: window._p6DeptColors }]
-              },
-              options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
-            });
-            new Chart(document.getElementById('p6-trend-chart'), {
+          }
+
+          if (document.getElementById('p6-trend-chart')) {
+            makeChart('p6-trend-chart', {
               type: 'line',
               data: {
-                labels: window._p6TrendWeeks.map(function(w){ return 'Wk '+w; }),
+                labels: window._p6TrendWeeks.map(function(w){ return 'Wk ' + w; }),
                 datasets: [{
                   data: window._p6TrendData,
-                  borderColor: '#6c3d91',
-                  backgroundColor: 'rgba(108,61,145,0.1)',
+                  borderColor: brandCharcoal,
+                  backgroundColor: brandSilver,
                   fill: true,
                   tension: 0.4,
-                  pointRadius: 4
+                  pointRadius: 4,
+                  pointBackgroundColor: brandCharcoal,
+                  pointBorderColor: brandCharcoal,
+                  borderWidth: 2
                 }]
               },
-              options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  y: {
+                    beginAtZero: false,
+                    grid: { color: brandSilver },
+                    ticks: { color: brandCharcoal }
+                  },
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: brandCharcoal }
+                  }
+                }
+              }
             });
           }
         }, 300);
@@ -2777,10 +2893,9 @@ var labourRows = Object.values(labourByProject)
       html += '</div>';
 
       // ── CHARTS SECTION ───────────────────────────────────────
-      html += '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">';
 
-      // Chart 1 — Utilisation bar chart (latest week only)
+      // Chart 1 — Utilisation bar chart (Capacity, latest week only)
       var latestWeek = 0;
       capRows.forEach(function(r) {
         var w = parseInt(col(r,'Week','week')) || 0;
@@ -2791,34 +2906,42 @@ var labourRows = Object.values(labourByProject)
       });
       var barLabels = weekRows.map(function(r) { return col(r,'Employee Name','employee name') || ''; });
       var barData   = weekRows.map(function(r) { return parseInt(col(r,'Utilisation %','utilisation %')) || 0; });
-      var barColors = barData.map(function(u) {
-        return u > 90 ? '#e24b4a' : u > 75 ? '#ef9f27' : u < 50 ? '#378add' : '#639922';
-      });
 
-      html += '<div style="background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#333">Team utilisation: Week ' + latestWeek + '</p>';
+      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px">';
+      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Team utilisation: Week ' + latestWeek + '</p>';
       html += '<canvas id="p6-bar-chart" height="220"></canvas>';
       html += '</div>';
 
-      // Chart 2 — Department donut
+      // Chart 2 — Hours by Department (Buildpass_Labour, latest week — same scope as utilisation)
+      var labLatestWeek = 0;
+      labRows.forEach(function(r) {
+        var w = parseInt(col(r, 'Week Number', 'week number', 'Week', 'week')) || 0;
+        if (w > labLatestWeek) labLatestWeek = w;
+      });
       var deptHours = {};
-      capRows.filter(function(r){ return parseInt(col(r,'Week','week'))===latestWeek; }).forEach(function(r) {
-        var dept  = (col(r,'Department','department') || 'Unknown').split(' and ')[0].trim();
-        var hours = parseFloat(col(r,'Hours Logged','hours logged')) || 0;
+      labRows.filter(function(r) {
+        return parseInt(col(r, 'Week Number', 'week number', 'Week', 'week')) === labLatestWeek;
+      }).forEach(function(r) {
+        var rawDept = String(col(r, 'Department', 'department') || '').trim();
+        var dept = rawDept || 'Unknown';
+        var hours = parseFloat(col(r, 'Hours', 'hours')) || 0;
         deptHours[dept] = (deptHours[dept] || 0) + hours;
       });
-      var deptLabels = Object.keys(deptHours);
-      var deptData   = deptLabels.map(function(d){ return Math.round(deptHours[d]*10)/10; });
-      var deptColors = ['#6c3d91','#1d9e75','#378add','#ef9f27','#e24b4a','#639922'];
+      // Rank most hours at top
+      var deptRanked = Object.keys(deptHours).map(function(d) {
+        return { dept: d, hours: Math.round(deptHours[d] * 10) / 10 };
+      }).sort(function(a, b) { return b.hours - a.hours; });
+      var deptLabels = deptRanked.map(function(e) { return e.dept; });
+      var deptData   = deptRanked.map(function(e) { return e.hours; });
 
-      html += '<div style="background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#333">Hours by department: Week ' + latestWeek + '</p>';
-      html += '<canvas id="p6-donut-chart" height="220"></canvas>';
+      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px">';
+      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Hours by department: Week ' + labLatestWeek + '</p>';
+      html += '<canvas id="p6-dept-chart" height="220"></canvas>';
       html += '</div>';
 
       html += '</div>';
 
-      // Chart 3 — Weekly trend line
+      // Chart 3 — Weekly trend line (Capacity)
       var weekTotals = {};
       capRows.forEach(function(r) {
         var w = col(r,'Week','week');
@@ -2828,8 +2951,8 @@ var labourRows = Object.values(labourByProject)
       var trendWeeks = Object.keys(weekTotals).map(Number).sort(function(a,b){return a-b;}).slice(-10);
       var trendData  = trendWeeks.map(function(w){ return Math.round(weekTotals[w]*10)/10; });
 
-      html += '<div style="background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px;margin-bottom:24px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#333">Total team hours: last 10 weeks</p>';
+      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px;margin-bottom:24px">';
+      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Total team hours: last 10 weeks</p>';
       html += '<canvas id="p6-trend-chart" height="100"></canvas>';
       html += '</div>';
 
@@ -2861,10 +2984,8 @@ var labourRows = Object.values(labourByProject)
       window._p6Lab = labRows;
       window._p6BarLabels  = barLabels;
       window._p6BarData    = barData;
-      window._p6BarColors  = barColors;
       window._p6DeptLabels = deptLabels;
       window._p6DeptData   = deptData;
-      window._p6DeptColors = deptColors;
       window._p6TrendWeeks = trendWeeks;
       window._p6TrendData  = trendData;
 
