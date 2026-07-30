@@ -93,6 +93,7 @@ var _MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','
 /** Prefer create/activity dates over close dates when filtering GHL / Quotes rows. */
 function getRowDateStr(row) {
   return row['Week Start'] || row['week_start'] || row['Date'] || row['date'] ||
+         row['Date Logged'] || row['Date Raised'] || row['Date Approved'] ||
          row['Date Sent'] || row['Date Quoted'] ||
          row['Date Created'] || row['Created Date'] || row['Last Activity Date'] ||
          row['Expected Close Date'] || row['Close Date'] || '';

@@ -726,10 +726,64 @@
             <span class="page-badge">P11</span>
             <h1 class="page-title">Quality &amp; Variations</h1>
           </div>
-          <div class="placeholder-page card">
-            <p class="placeholder-title">Quality &amp; Variations</p>
-            <p class="placeholder-text">Reads: Defects_Rework · Variations_Log · Buildpass_Diaries</p>
-            <p class="placeholder-status">⏳ Awaiting Anne's manual tabs, builds in Section 8</p>
+
+          <div class="page-filters">
+            <div class="filter-group">
+              <span class="filter-label">Department</span>
+              <select class="filter-select page-filter-select" id="p11-dept-filter">
+                <option value="ALL">All Departments</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card card">
+              <div class="kpi-label">Defects Logged</div>
+              <div class="kpi-value" id="kpi-p11-defects">—</div>
+              <div class="kpi-sub" id="kpi-p11-defects-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Rework Cost</div>
+              <div class="kpi-value" id="kpi-p11-rework">—</div>
+              <div class="kpi-sub" id="kpi-p11-rework-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Variations Value</div>
+              <div class="kpi-value" id="kpi-p11-variations">—</div>
+              <div class="kpi-sub" id="kpi-p11-variations-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card">
+              <div class="kpi-label">Site Diary Issues</div>
+              <div class="kpi-value" id="kpi-p11-issues">—</div>
+              <div class="kpi-sub" id="kpi-p11-issues-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="section-card" id="p11-defects-section">
+            <div class="section-title">Defects &amp; Rework</div>
+            <div class="chart-row" id="p11-defects-chart-row" hidden>
+              <div class="chart-card card">
+                <div class="chart-title">Rework Cost by Job</div>
+                <div class="p11-chart-wrap" id="p11-defects-chart-wrap">
+                  <canvas id="chart-p11-defects" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+            <div id="p11-defects-table">Loading defects data...</div>
+          </div>
+
+          <div class="section-card" id="p11-variations-section">
+            <div class="section-title">Variations Log</div>
+            <p class="p11-section-hint" id="p11-variations-hint">
+              Job # prefix matching (e.g. J1349 → J1349C) is ready for Xero projects titled with &ldquo;Variation&rdquo;.
+            </p>
+            <div id="p11-variations-table">Loading variations data...</div>
+          </div>
+
+          <div class="section-card" id="p11-diaries-section">
+            <div class="section-title">Site Diary Issues</div>
+            <p class="p11-section-hint" id="p11-diaries-photo-note" hidden></p>
+            <div id="p11-diaries-table">Loading site diary issues...</div>
           </div>
         </section>
 
@@ -976,10 +1030,9 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10 };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p10: loadP10, p11: loadP11 };
       var placeholders = {
-        p9: 'P9: Cash Flow',
-        p11: 'P11: Quality & Variations'
+        p9: 'P9: Cash Flow'
       };
       var fn = loaders[pageId];
       if (fn) {
@@ -3662,6 +3715,413 @@ var labourRows = Object.values(labourByProject)
         { label: 'Campaign ID', key: ['Campaign ID', 'campaign_id'] },
         { label: 'Department',  key: ['Department', 'department'] }
       ]);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P11 — QUALITY & VARIATIONS
+    // Sources: Defects_Rework · Variations_Log · Buildpass_Site Diaries
+    // Filters: Global Brand / Month / Year + page-level Department
+    // Sections: Defects & Rework · Variations Log · Site Diary Issues
+    // ═══════════════════════════════════════════════════════════════
+    var activeP11Dept = 'ALL';
+    var _p11DeptBound = false;
+
+    /**
+     * Extract leading job number prefix (e.g. J1349 from J1349C / "J1349 Variation").
+     * Used to link Variations_Log rows to Xero projects titled with "Variation".
+     */
+    function p11JobPrefix(val) {
+      var s = String(val || '').trim().toUpperCase();
+      var m = s.match(/^(J\d+)/i);
+      return m ? m[1].toUpperCase() : '';
+    }
+
+    /** True when both values share the same Job # prefix (J1349 ↔ J1349C). */
+    function p11MatchesJobPrefix(a, b) {
+      var pa = p11JobPrefix(a);
+      var pb = p11JobPrefix(b);
+      return !!(pa && pb && pa === pb);
+    }
+
+    async function loadP11() {
+      showLoading(true);
+      removeError('p11');
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.DEFECTS_REWORK).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.VARIATIONS_LOG).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES).catch(function() { return []; })
+        ]);
+        renderP11(results[0], results[1], results[2]);
+      } catch (err) {
+        console.error('P11 load error:', err);
+        showError('p11', 'Could not load Quality & Variations data. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP11(defects, variations, diaries) {
+      var brandCharcoal = '#262425';
+      var brandSoftGray = '#BCBDBE';
+      var brandSilver   = '#D2D4D5';
+
+      window._p11Defects    = defects    || [];
+      window._p11Variations = variations || [];
+      window._p11Diaries    = diaries    || [];
+
+      function applyGlobal(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      }
+      function filterByDept(rows) {
+        if (!activeP11Dept || activeP11Dept === 'ALL') return rows;
+        var target = String(activeP11Dept).toLowerCase();
+        return rows.filter(function(r) {
+          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim().toLowerCase();
+          return d === target;
+        });
+      }
+      function yn(val) {
+        var s = String(val || '').trim().toLowerCase();
+        if (!s) return '—';
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') return 'Y';
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') return 'N';
+        return String(val).trim();
+      }
+      function isYes(val) {
+        var s = String(val || '').trim().toLowerCase();
+        return s === 'y' || s === 'yes' || s === 'true' || s === '1';
+      }
+      function emptyCard(msg) {
+        return '<div class="p11-empty-card">' +
+          '<p class="no-data-msg">' + msg + '</p>' +
+          '</div>';
+      }
+      function clearP11Charts() {
+        if (_charts['chart-p11-defects']) {
+          _charts['chart-p11-defects'].destroy();
+          delete _charts['chart-p11-defects'];
+        }
+      }
+      function hasIssueContent(r) {
+        var issue = String(col(r,
+          'Issues/Blockers', 'Issues & Notes', 'Issues', 'Issue Description',
+          'issue_description', 'Issue', 'Blockers'
+        ) || '').trim();
+        var category = String(col(r, 'Issue Category', 'Category', 'category') || '').trim();
+        var hoursLost = String(col(r, 'Hours Lost', 'hours_lost', 'Hours lost') || '').trim();
+        var workStopped = String(col(r, 'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped') || '').trim();
+        var varReq = String(col(r, 'Variation Required (Y/N)', 'Variation Required', 'variation_required') || '').trim();
+        return !!(issue || category || hoursLost || workStopped || varReq);
+      }
+
+      var brandedDefects    = applyGlobal(window._p11Defects);
+      var brandedVariations = applyGlobal(window._p11Variations);
+      var brandedDiaries    = applyGlobal(window._p11Diaries);
+
+      // Rebuild Department options from all three tabs (pre-dept filter)
+      var deptSet = {};
+      [brandedDefects, brandedVariations, brandedDiaries].forEach(function(rows) {
+        rows.forEach(function(r) {
+          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim();
+          if (d) deptSet[d] = true;
+        });
+      });
+      var deptList = Object.keys(deptSet).sort();
+      var deptSelect = document.getElementById('p11-dept-filter');
+      if (deptSelect) {
+        var prev = activeP11Dept;
+        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        deptList.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          deptSelect.appendChild(opt);
+        });
+        if (prev !== 'ALL' && deptSet[prev]) deptSelect.value = prev;
+        else { activeP11Dept = 'ALL'; deptSelect.value = 'ALL'; }
+        if (!_p11DeptBound) {
+          _p11DeptBound = true;
+          deptSelect.addEventListener('change', function() {
+            activeP11Dept = this.value || 'ALL';
+            renderP11(window._p11Defects, window._p11Variations, window._p11Diaries);
+            init3DTilt();
+          });
+        }
+      }
+
+      var defectsFiltered    = filterByDept(brandedDefects);
+      var variationsFiltered = filterByDept(brandedVariations);
+      var diariesFiltered    = filterByDept(brandedDiaries);
+      var issueRows = diariesFiltered.filter(hasIssueContent);
+
+      // Photo note — count diary entries with photos (do not render photos)
+      var photoCount = diariesFiltered.filter(function(r) {
+        return isYes(col(r, 'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'));
+      }).length;
+      var photoNote = document.getElementById('p11-diaries-photo-note');
+      if (photoNote) {
+        if (diariesFiltered.length > 0) {
+          photoNote.textContent = photoCount + ' of ' + diariesFiltered.length +
+            ' site diary entries in selection have photos attached (photos not shown).';
+          photoNote.removeAttribute('hidden');
+        } else {
+          photoNote.textContent = '';
+          photoNote.setAttribute('hidden', '');
+        }
+      }
+
+      window._currentPage = {
+        name: 'P11: Quality & Variations',
+        data: {
+          defects:    defectsFiltered.slice(0, 200),
+          variations: variationsFiltered.slice(0, 200),
+          diaries:    issueRows.slice(0, 200),
+          photoCount: photoCount
+        }
+      };
+
+      // ── KPIs ────────────────────────────────────────────────
+      var totalReworkHrs = defectsFiltered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Rework Hrs Actual', 'Rework Hrs Est', 'Rework Hours', 'rework_hrs', 'Rework Hrs'));
+      }, 0);
+      var totalReworkCost = defectsFiltered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Rework Cost ($)', 'Rework Cost', 'rework_cost'));
+      }, 0);
+      var totalVarValue = variationsFiltered.reduce(function(s, r) {
+        return s + parseNum(col(r, 'Value ($)', 'Value', 'value', 'Variation Value'));
+      }, 0);
+
+      setKPI('kpi-p11-defects', 'kpi-p11-defects-sub',
+        String(defectsFiltered.length),
+        defectsFiltered.length ? 'Logged defects / rework' : 'No defects in selection');
+      setKPI('kpi-p11-rework', 'kpi-p11-rework-sub',
+        defectsFiltered.length ? formatCurrency(totalReworkCost) : '—',
+        defectsFiltered.length
+          ? (totalReworkHrs ? totalReworkHrs.toFixed(1) + ' rework hours' : 'Rework cost total')
+          : 'No rework data');
+      setKPI('kpi-p11-variations', 'kpi-p11-variations-sub',
+        variationsFiltered.length ? formatCurrency(totalVarValue) : '—',
+        variationsFiltered.length
+          ? variationsFiltered.length + ' variation' + (variationsFiltered.length === 1 ? '' : 's')
+          : 'No variations in selection');
+      setKPI('kpi-p11-issues', 'kpi-p11-issues-sub',
+        String(issueRows.length),
+        issueRows.length ? 'Diary issues / blockers' : 'No diary issues in selection');
+
+      clearP11Charts();
+
+      // ── Section 1 — Defects & Rework ─────────────────────────
+      var chartRow = document.getElementById('p11-defects-chart-row');
+      var defectsEl = document.getElementById('p11-defects-table');
+
+      if (!defectsFiltered.length) {
+        if (chartRow) chartRow.setAttribute('hidden', '');
+        if (defectsEl) defectsEl.innerHTML = emptyCard('Data not available');
+      } else {
+        // Aggregate by job for chart + summary table
+        var byJob = {};
+        defectsFiltered.forEach(function(r) {
+          var job = col(r, 'Job Name', 'job_name', 'Job', 'Xero Project ID', 'xero_project_id') || 'Unknown';
+          var brand = col(r, 'Brand', 'brand') || '—';
+          var dept  = col(r, 'Department', 'department') || '—';
+          var key = job + '||' + brand + '||' + dept;
+          if (!byJob[key]) {
+            byJob[key] = {
+              JobName: job,
+              Brand: brand,
+              Department: dept,
+              ReworkHrs: 0,
+              ReworkCost: 0,
+              Count: 0
+            };
+          }
+          byJob[key].ReworkHrs += parseNum(col(r,
+            'Rework Hrs Actual', 'Rework Hrs Est', 'Rework Hours', 'rework_hrs', 'Rework Hrs'));
+          byJob[key].ReworkCost += parseNum(col(r, 'Rework Cost ($)', 'Rework Cost', 'rework_cost'));
+          byJob[key].Count += 1;
+        });
+        var jobRows = Object.keys(byJob).map(function(k) { return byJob[k]; })
+          .sort(function(a, b) { return b.ReworkCost - a.ReworkCost; });
+
+        if (chartRow) chartRow.removeAttribute('hidden');
+        var chartLabels = jobRows.map(function(r) {
+          var n = r.JobName;
+          return n.length > 28 ? n.substring(0, 28) + '…' : n;
+        });
+        var chartData = jobRows.map(function(r) { return r.ReworkCost; });
+        var wrap = document.getElementById('p11-defects-chart-wrap');
+        if (wrap) wrap.style.height = Math.max(180, Math.max(jobRows.length, 1) * 28 + 48) + 'px';
+
+        makeChart('chart-p11-defects', {
+          type: 'bar',
+          data: {
+            labels: chartLabels,
+            datasets: [{
+              label: 'Rework Cost',
+              data: chartData,
+              backgroundColor: brandCharcoal,
+              borderWidth: 0,
+              borderRadius: 0,
+              barThickness: 14
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 56 } },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                grid: { color: brandSilver },
+                ticks: {
+                  color: brandSoftGray,
+                  callback: function(v) { return '$' + v; }
+                }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: brandCharcoal, font: { size: 11 } }
+              }
+            }
+          }
+        });
+
+        if (defectsEl) {
+          defectsEl.innerHTML = buildTable(jobRows, [
+            { label: 'Job Name',    key: 'JobName' },
+            { label: 'Brand',       key: 'Brand' },
+            { label: 'Department',  key: 'Department' },
+            { label: 'Defects',     key: 'Count', format: function(v) { return String(v); } },
+            {
+              label: 'Rework Hours',
+              key: 'ReworkHrs',
+              format: function(v) { return parseNum(v).toFixed(1); }
+            },
+            {
+              label: 'Rework Cost',
+              key: 'ReworkCost',
+              format: function(v) { return formatCurrency(parseNum(v)); }
+            }
+          ]);
+        }
+      }
+
+      // ── Section 2 — Variations Log ──────────────────────────
+      // Prefix helper ready: p11JobPrefix / p11MatchesJobPrefix link J1349 ↔ J1349C
+      // when Variations_Log or Xero projects titled "Variation" are populated.
+      var varEl = document.getElementById('p11-variations-table');
+      if (!variationsFiltered.length) {
+        if (varEl) varEl.innerHTML = emptyCard('Data not available.');
+      } else {
+        var sortedVars = variationsFiltered.slice().sort(function(a, b) {
+          var da = String(col(a, 'Date Raised', 'date_raised', 'Date') || '');
+          var db = String(col(b, 'Date Raised', 'date_raised', 'Date') || '');
+          return db.localeCompare(da);
+        });
+        // Annotate with job prefix for future Xero Variation-title matching
+        sortedVars.forEach(function(r) {
+          r._jobPrefix = p11JobPrefix(col(r,
+            'Xero Project J#', 'Xero Project ID', 'xero_project_id', 'Job Name', 'Job #'));
+        });
+        if (varEl) {
+          varEl.innerHTML = buildTable(sortedVars, [
+            { label: 'Variation ID',   key: ['Invoice #', 'Variation ID', 'Variation #', 'ID', 'id'] },
+            { label: 'Date Raised',    key: ['Date Raised', 'date_raised', 'Date'] },
+            { label: 'Date Approved',  key: ['Date Approved', 'date_approved'] },
+            { label: 'Xero Project ID', key: ['Xero Project J#', 'Xero Project ID', 'xero_project_id'] },
+            { label: 'Job Name',       key: ['Job Name', 'job_name', 'Job'] },
+            { label: 'Brand',          key: ['Brand', 'brand'] },
+            { label: 'Department',     key: ['Department', 'department'] },
+            { label: 'Client',         key: ['Client', 'client'] },
+            { label: 'Description',    key: ['Description', 'description'] },
+            {
+              label: 'Value ($)',
+              key: ['Value ($)', 'Value', 'value'],
+              format: function(v) { return formatCurrency(parseNum(v)); }
+            },
+            { label: 'Status',         key: ['Status', 'status'] },
+            {
+              label: 'Invoiced (Y/N)',
+              key: ['Invoiced (Y/N)', 'Invoiced', 'invoiced'],
+              format: function(v) { return yn(v); }
+            },
+            { label: 'Reason Category', key: ['Reason Category', 'reason_category', 'Category'] },
+            { label: 'Raised By',      key: ['Raised By', 'raised_by', 'Raised by'] }
+          ]);
+        }
+      }
+
+      // ── Section 3 — Site Diary Issues ───────────────────────
+      var diaryEl = document.getElementById('p11-diaries-table');
+      if (!issueRows.length) {
+        if (diaryEl) diaryEl.innerHTML = emptyCard('Data not available.');
+      } else {
+        // Group by Brand → Job #
+        var sortedIssues = issueRows.slice().sort(function(a, b) {
+          var ba = String(col(a, 'Brand', 'brand') || '').toUpperCase();
+          var bb = String(col(b, 'Brand', 'brand') || '').toUpperCase();
+          if (ba !== bb) return ba.localeCompare(bb);
+          var ja = String(col(a, 'Job #', 'Job Number', 'Job Name', 'job_name') || '');
+          var jb = String(col(b, 'Job #', 'Job Number', 'Job Name', 'job_name') || '');
+          if (ja !== jb) return ja.localeCompare(jb);
+          var da = String(col(a, 'Date', 'date') || '');
+          var db = String(col(b, 'Date', 'date') || '');
+          return db.localeCompare(da);
+        });
+
+        var html = '<div class="table-wrap"><table class="data-table">' +
+          '<thead><tr>' +
+          '<th>Job #</th><th>Job Name</th><th>Brand</th><th>Department</th><th>Date</th>' +
+          '<th>Issue Description</th><th>Category</th><th>Work Stopped</th>' +
+          '<th>Hours Lost</th><th>Variation Required</th><th>General Notes</th>' +
+          '</tr></thead><tbody>';
+
+        var lastGroup = '';
+        sortedIssues.forEach(function(r) {
+          var brand = col(r, 'Brand', 'brand') || '—';
+          var jobNo = col(r, 'Job #', 'Job Number', 'job_number') || '—';
+          var groupKey = brand + ' · ' + jobNo;
+          if (groupKey !== lastGroup) {
+            html += '<tr class="p11-group-row"><td colspan="11">' + groupKey + '</td></tr>';
+            lastGroup = groupKey;
+          }
+          var issueDesc = col(r,
+            'Issues/Blockers', 'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers') || '—';
+          var category = col(r, 'Issue Category', 'Category', 'category') || '—';
+          var stopped = yn(col(r, 'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped'));
+          var hoursLostRaw = col(r, 'Hours Lost', 'hours_lost', 'Hours lost');
+          var hoursLost = String(hoursLostRaw || '').trim() !== '' ? String(parseNum(hoursLostRaw)) : '—';
+          var varRequired = yn(col(r, 'Variation Required (Y/N)', 'Variation Required', 'variation_required'));
+          var notes = col(r, 'General Notes', 'Notes', 'notes', 'Materials Used') || '—';
+          html += '<tr>' +
+            '<td>' + jobNo + '</td>' +
+            '<td>' + (col(r, 'Job Name', 'job_name') || '—') + '</td>' +
+            '<td>' + brand + '</td>' +
+            '<td>' + (col(r, 'Department', 'department') || '—') + '</td>' +
+            '<td>' + (col(r, 'Date', 'date') || '—') + '</td>' +
+            '<td>' + issueDesc + '</td>' +
+            '<td>' + category + '</td>' +
+            '<td>' + stopped + '</td>' +
+            '<td>' + hoursLost + '</td>' +
+            '<td>' + varRequired + '</td>' +
+            '<td>' + notes + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table></div>';
+        if (diaryEl) diaryEl.innerHTML = html;
+      }
     }
 
 
