@@ -996,6 +996,8 @@ select {
 
 .p10-funnel-legend {
   margin-top: -8px;
+  color: #262425;
+  font-weight: 400;
 }
 
 .p10-funnel-flag {
