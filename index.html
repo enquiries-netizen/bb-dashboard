@@ -758,6 +758,22 @@
             </div>
           </div>
 
+          <div class="chart-row">
+            <div class="chart-card card">
+              <div class="chart-title">Spend by Department</div>
+              <div class="p10-dept-chart-wrap" id="p10-dept-chart-wrap">
+                <canvas id="chart-p10-dept" height="200"></canvas>
+              </div>
+              <p class="no-data-msg" id="p10-dept-empty" hidden>Data not available</p>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-title">Funnel Health</div>
+            <p class="p10-section-hint">CTR % vs Conversion Rate % — flags Creative/Targeting or Landing Page/Follow-up when below campaign average.</p>
+            <div id="p10-funnel-table">Loading funnel data...</div>
+          </div>
+
           <div class="section-card">
             <div class="section-title">Campaign Performance</div>
             <div id="p10-campaign-table">Loading campaign data...</div>
@@ -3745,9 +3761,11 @@ var labourRows = Object.values(labourByProject)
     // P10 — MARKETING PERFORMANCE
     // Source: Marketing_Paid tab (Make.com Scenario 13 ✅)
     // KPIs:   Total Spend, Total Leads, CPL, ROAS (+ sparklines)
-    // Charts: Ad Spend by Campaign (ranked bars), Leads vs Spend trend
+    // Charts: Ad Spend by Campaign (ranked bars), Leads vs Spend trend,
+    //         Spend by Department (ranked bars)
     //         Platform breakdown kept in code; badge until 2+ platforms
-    // Table:  Campaign Performance (ROAS-first sort, No Leads Matched Yet)
+    // Tables: Funnel Health (CTR vs Conv Rate + concern flags),
+    //         Campaign Performance (ROAS-first sort, No Leads Matched Yet)
     // ═══════════════════════════════════════════════════════════════
     async function loadP10() {
       showLoading(true);
@@ -3774,12 +3792,25 @@ var labourRows = Object.values(labourByProject)
         filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
         activeMonths
       );
-      window._currentPage = { name: 'P10: Marketing', data: { marketing: filtered } };
+      window._currentPage = { name: 'P10: Marketing', data: { marketing: filtered, spendByDepartment: [], funnelHealth: [] } };
 
       function clearP10Charts() {
-        ['chart-p10-spend', 'chart-p10-trend'].forEach(function(id) {
+        ['chart-p10-spend', 'chart-p10-trend', 'chart-p10-dept'].forEach(function(id) {
           if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
+      }
+
+      function setDeptChartEmpty(isEmpty) {
+        var wrap = document.getElementById('p10-dept-chart-wrap');
+        var empty = document.getElementById('p10-dept-empty');
+        if (wrap) {
+          if (isEmpty) wrap.setAttribute('hidden', '');
+          else wrap.removeAttribute('hidden');
+        }
+        if (empty) {
+          if (isEmpty) empty.removeAttribute('hidden');
+          else empty.setAttribute('hidden', '');
+        }
       }
 
       function renderSparkline(svgId, values) {
@@ -3926,6 +3957,40 @@ var labourRows = Object.values(labourByProject)
       function revenueOf(r) {
         return parseNum(col(r, 'Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Revenue', 'revenue'));
       }
+      function impressionsOf(r) {
+        return parseNum(col(r, 'Impressions', 'impressions'));
+      }
+      function clicksOf(r) {
+        return parseNum(col(r, 'Clicks', 'clicks'));
+      }
+      function cpcOf(r) {
+        var raw = col(r, 'Cost Per Click ($)', 'Cost Per Click', 'CPC', 'cpc');
+        if (String(raw).trim() !== '') return parseNum(raw);
+        var clicks = clicksOf(r);
+        return clicks > 0 ? spendOf(r) / clicks : 0;
+      }
+      function ctrOf(r) {
+        var raw = col(r, 'Click Through Rate %', 'Click Through Rate', 'CTR', 'ctr', 'CTR %');
+        if (String(raw).trim() !== '') return parseNum(raw);
+        var imps = impressionsOf(r);
+        return imps > 0 ? (clicksOf(r) / imps) * 100 : 0;
+      }
+      function convRateOf(r) {
+        var raw = col(r, 'Conversion Rate %', 'Conversion Rate', 'conversion_rate', 'Conv Rate');
+        if (String(raw).trim() !== '') return parseNum(raw);
+        var clicks = clicksOf(r);
+        return clicks > 0 ? (leadsOf(r) / clicks) * 100 : 0;
+      }
+      function deptOf(r) {
+        return String(col(r, 'Department', 'department') || '').trim();
+      }
+      function campaignNameOf(r) {
+        return col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
+      }
+      function formatPct(v) {
+        if (v === null || v === undefined || isNaN(v)) return '—';
+        return (Math.round(v * 100) / 100).toFixed(2) + '%';
+      }
 
       // KPIs from the same filtered rows — show $0 / 0 when empty (not "No data")
       var totalSpend = filtered.reduce(function(s, r) { return s + spendOf(r); }, 0);
@@ -4019,8 +4084,15 @@ var labourRows = Object.values(labourByProject)
         setPlatformBadge({}, 0);
         setRoasHighlight(null);
         clearSparklines();
+        setDeptChartEmpty(true);
+        document.getElementById('p10-funnel-table').innerHTML =
+          '<p class="no-data-msg">Data not available</p>';
         document.getElementById('p10-campaign-table').innerHTML =
           '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
+        window._currentPage = {
+          name: 'P10: Marketing',
+          data: { marketing: filtered, spendByDepartment: [], funnelHealth: [] }
+        };
         return;
       }
 
@@ -4171,6 +4243,232 @@ var labourRows = Object.values(labourByProject)
           }
         }
       });
+
+      // ── Spend by Department — ranked horizontal bars ─────────────
+      var byDept = {};
+      filtered.forEach(function(r) {
+        var dept = deptOf(r);
+        if (!dept) return;
+        byDept[dept] = (byDept[dept] || 0) + spendOf(r);
+      });
+      var deptEntries = Object.keys(byDept).map(function(name) {
+        return { name: name, spend: byDept[name] };
+      }).filter(function(e) { return e.spend > 0; })
+        .sort(function(a, b) { return b.spend - a.spend; });
+
+      if (!deptEntries.length) {
+        setDeptChartEmpty(true);
+      } else {
+        setDeptChartEmpty(false);
+        var deptWrap = document.getElementById('p10-dept-chart-wrap');
+        if (deptWrap) {
+          deptWrap.style.height = Math.max(200, deptEntries.length * 28 + 48) + 'px';
+        }
+
+        var deptLabelPlugin = {
+          id: 'p10DeptBarLabels',
+          afterDatasetsDraw: function(chart) {
+            var ctx = chart.ctx;
+            var meta = chart.getDatasetMeta(0);
+            if (!meta) return;
+            meta.data.forEach(function(el, i) {
+              var val = chart.data.datasets[0].data[i];
+              if (val === null || val === undefined || isNaN(val)) return;
+              var pos = el.tooltipPosition();
+              ctx.save();
+              ctx.fillStyle = brandCharcoal;
+              ctx.font = '600 11px Montserrat, sans-serif';
+              ctx.textAlign = 'left';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(formatCurrency(val), pos.x + 8, pos.y);
+              ctx.restore();
+            });
+          }
+        };
+
+        makeChart('chart-p10-dept', {
+          type: 'bar',
+          data: {
+            labels: deptEntries.map(function(e) {
+              return e.name.length > 36 ? e.name.substring(0, 36) + '…' : e.name;
+            }),
+            datasets: [{
+              label: 'Ad Spend',
+              data: deptEntries.map(function(e) { return e.spend; }),
+              backgroundColor: brandCharcoal,
+              borderWidth: 0,
+              borderRadius: 0,
+              barThickness: 14
+            }]
+          },
+          plugins: [deptLabelPlugin],
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 64 } },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                grid: { color: brandSilver },
+                ticks: {
+                  color: brandSoftGray,
+                  callback: function(v) { return '$' + v; }
+                }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: brandCharcoal, font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      // ── Funnel Health — CTR % vs Conversion Rate % per campaign ──
+      var funnelByCampaign = {};
+      filtered.forEach(function(r) {
+        var name = campaignNameOf(r);
+        if (!funnelByCampaign[name]) {
+          funnelByCampaign[name] = {
+            name: name,
+            impressions: 0,
+            clicks: 0,
+            spend: 0,
+            leads: 0,
+            ctrSum: 0,
+            ctrN: 0,
+            convSum: 0,
+            convN: 0,
+            cpcSum: 0,
+            cpcN: 0,
+            depts: {}
+          };
+        }
+        var agg = funnelByCampaign[name];
+        agg.impressions += impressionsOf(r);
+        agg.clicks += clicksOf(r);
+        agg.spend += spendOf(r);
+        agg.leads += leadsOf(r);
+        var ctr = ctrOf(r);
+        if (ctr > 0 || String(col(r, 'Click Through Rate %', 'Click Through Rate', 'CTR', 'ctr', 'CTR %')).trim() !== '') {
+          agg.ctrSum += ctr;
+          agg.ctrN += 1;
+        }
+        var conv = convRateOf(r);
+        if (conv > 0 || String(col(r, 'Conversion Rate %', 'Conversion Rate', 'conversion_rate', 'Conv Rate')).trim() !== '') {
+          agg.convSum += conv;
+          agg.convN += 1;
+        }
+        var cpc = cpcOf(r);
+        if (cpc > 0 || String(col(r, 'Cost Per Click ($)', 'Cost Per Click', 'CPC', 'cpc')).trim() !== '') {
+          agg.cpcSum += cpc;
+          agg.cpcN += 1;
+        }
+        var d = deptOf(r);
+        if (d) agg.depts[d] = true;
+      });
+
+      var funnelRows = Object.keys(funnelByCampaign).map(function(name) {
+        var a = funnelByCampaign[name];
+        var ctr = a.impressions > 0
+          ? (a.clicks / a.impressions) * 100
+          : (a.ctrN ? a.ctrSum / a.ctrN : null);
+        var conv = a.convN
+          ? a.convSum / a.convN
+          : (a.clicks > 0 ? (a.leads / a.clicks) * 100 : null);
+        var cpc = a.clicks > 0
+          ? a.spend / a.clicks
+          : (a.cpcN ? a.cpcSum / a.cpcN : null);
+        return {
+          name: a.name,
+          ctr: ctr,
+          conv: conv,
+          cpc: cpc,
+          impressions: a.impressions,
+          clicks: a.clicks,
+          department: Object.keys(a.depts).join(', ') || '—'
+        };
+      });
+
+      var ctrVals = funnelRows.map(function(r) { return r.ctr; }).filter(function(v) {
+        return v !== null && v !== undefined && !isNaN(v);
+      });
+      var convVals = funnelRows.map(function(r) { return r.conv; }).filter(function(v) {
+        return v !== null && v !== undefined && !isNaN(v);
+      });
+      var avgCtr = ctrVals.length
+        ? ctrVals.reduce(function(s, v) { return s + v; }, 0) / ctrVals.length
+        : null;
+      var avgConv = convVals.length
+        ? convVals.reduce(function(s, v) { return s + v; }, 0) / convVals.length
+        : null;
+
+      funnelRows.forEach(function(r) {
+        r.concern = '';
+        var hasCtr = r.ctr !== null && r.ctr !== undefined && !isNaN(r.ctr);
+        var hasConv = r.conv !== null && r.conv !== undefined && !isNaN(r.conv);
+        if (hasCtr && avgCtr !== null && r.ctr < avgCtr) {
+          r.concern = 'Creative/Targeting';
+        } else if (hasCtr && avgCtr !== null && r.ctr >= avgCtr &&
+                   hasConv && avgConv !== null && r.conv < avgConv) {
+          r.concern = 'Landing Page/Follow-up';
+        }
+      });
+
+      funnelRows.sort(function(a, b) {
+        var aCtr = a.ctr == null ? -1 : a.ctr;
+        var bCtr = b.ctr == null ? -1 : b.ctr;
+        return bCtr - aCtr;
+      });
+
+      var funnelEl = document.getElementById('p10-funnel-table');
+      if (!funnelRows.length || (ctrVals.length === 0 && convVals.length === 0 &&
+          funnelRows.every(function(r) { return !r.impressions && !r.clicks; }))) {
+        funnelEl.innerHTML = '<p class="no-data-msg">Data not available</p>';
+      } else {
+        var funnelHtml =
+          '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+          '<th>Campaign</th><th>Department</th><th>CTR %</th><th>Conv. Rate %</th>' +
+          '<th>Concern</th><th>CPC</th><th>Impressions</th><th>Clicks</th>' +
+          '</tr></thead><tbody>';
+        funnelRows.forEach(function(r) {
+          var concernCell = r.concern
+            ? '<td class="p10-funnel-flag-cell"><span class="p10-funnel-flag">' + r.concern + '</span></td>'
+            : '<td>—</td>';
+          funnelHtml +=
+            '<tr>' +
+            '<td>' + r.name + '</td>' +
+            '<td>' + r.department + '</td>' +
+            '<td>' + (r.ctr != null ? formatPct(r.ctr) : '—') + '</td>' +
+            '<td>' + (r.conv != null ? formatPct(r.conv) : '—') + '</td>' +
+            concernCell +
+            '<td>' + (r.cpc != null && !isNaN(r.cpc) ? formatCurrency(r.cpc) : '—') + '</td>' +
+            '<td>' + (r.impressions ? String(Math.round(r.impressions)) : '—') + '</td>' +
+            '<td>' + (r.clicks ? String(Math.round(r.clicks)) : '—') + '</td>' +
+            '</tr>';
+        });
+        funnelHtml += '</tbody></table></div>';
+        funnelEl.innerHTML = funnelHtml;
+      }
+
+      window._currentPage = {
+        name: 'P10: Marketing',
+        data: {
+          marketing: filtered,
+          spendByDepartment: deptEntries,
+          funnelHealth: funnelRows,
+          funnelAverages: { ctr: avgCtr, conversionRate: avgConv }
+        }
+      };
 
       // Campaign Performance — real ROAS first; No Leads Matched Yet for attribution gaps
       var sorted = filtered.slice().sort(function(a, b) {
