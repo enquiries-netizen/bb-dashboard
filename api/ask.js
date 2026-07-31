@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     P2: 'Sales & Pipeline — leads by source, pipeline funnel (Contacted / Quoted / Won)',
     P3: 'Quoting & Estimating — quote funnel, budget vs actual per quote, estimator accuracy',
     P4: 'Job Performance — milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
-    P5: 'Division Profitability — revenue, margin, and overhead by brand and department',
+    P5: 'Profitability — revenue, margin, and overhead by brand and department',
     P6: 'Capacity & Labour — team utilisation %, hiring signal, hours by department',
     P7: 'Client Satisfaction — reviews and ratings',
     P8: 'Weekly Overview — weekly KPI summary',

@@ -87,7 +87,7 @@
           <li class="nav-item" data-page="p2">P2: Sales &amp; Pipeline</li>
           <li class="nav-item" data-page="p3">P3: Quoting &amp; Estimating</li>
           <li class="nav-item" data-page="p4">P4: Job Performance</li>
-          <li class="nav-item" data-page="p5">P5: Division Profitability</li>
+          <li class="nav-item" data-page="p5">P5: Profitability</li>
           <li class="nav-item" data-page="p6">P6: Capacity &amp; Labour</li>
           <li class="nav-item" data-page="p7">P7: Client Satisfaction</li>
           <li class="nav-item" data-page="p8">P8: Weekly Overview</li>
@@ -473,7 +473,7 @@
         <section id="page-p5" class="page">
           <div class="page-header">
             <span class="page-badge">P5</span>
-            <h1 class="page-title">Division Profitability</h1>
+            <h1 class="page-title">Profitability</h1>
           </div>
 
           <div class="kpi-grid">
@@ -867,7 +867,7 @@
       P2: 'Sales & Pipeline — leads by source, pipeline funnel (Contacted / Quoted / Won)',
       P3: 'Quoting & Estimating — quote funnel, budget vs actual per quote, estimator accuracy',
       P4: 'Job Performance — milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
-      P5: 'Division Profitability — revenue, margin, and overhead by brand and department',
+      P5: 'Profitability — revenue, margin, and overhead by brand and department',
       P6: 'Capacity & Labour — team utilisation %, hiring signal, hours by department',
       P7: 'Client Satisfaction — reviews and ratings',
       P8: 'Weekly Overview — weekly KPI summary',
@@ -5191,7 +5191,7 @@ var labourRows = Object.values(labourByProject)
         renderP5(results[0], results[1], results[2]);
       } catch (err) {
         console.error('P5 load error:', err);
-        showError('p5', 'Could not load Division Profitability data. Check sheet permissions.');
+        showError('p5', 'Could not load Profitability data. Check sheet permissions.');
       } finally {
         showLoading(false);
         init3DTilt();
@@ -5244,7 +5244,7 @@ var labourRows = Object.values(labourByProject)
       var invFiltered = applyFilters(invoices);
       var ohFiltered  = applyFilters(overhead);
 
-      setBBPageData('P5', 'P5: Division Profitability', {
+      setBBPageData('P5', 'P5: Profitability', {
         financials: finFiltered,
         invoices: invFiltered.slice(0, 300),
         overhead: ohFiltered
