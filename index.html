@@ -876,10 +876,201 @@
       P11: 'Quality & Variations — defects/rework, variations log, site diary issues'
     };
 
+    // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
+    window._bbChatHistory = window._bbChatHistory || [];
+    var BB_CHAT_MAX_TURNS = 16; // 8 user + 8 assistant
+
+    /**
+     * Build 1–2 factual proactive insights from stored page data.
+     * Only from real flags / extremes / period pairs present in data. Never invent.
+     */
+    function computeBBInsights(pageKey, data) {
+      var out = [];
+      if (!data || typeof data !== 'object') return out;
+
+      function push(msg) {
+        if (msg && out.length < 2 && out.indexOf(msg) === -1) out.push(msg);
+      }
+
+      try {
+        if (pageKey === 'P4') {
+          var detail = data.handsDetail || {};
+          var needs = [];
+          var addressing = [];
+          Object.keys(detail).forEach(function(p) {
+            var s = detail[p] && detail[p].signal;
+            if (s === 'Needs More Hands') needs.push(p);
+            if (s === 'Understaffed, Being Addressed') addressing.push(p);
+          });
+          if (needs.length) {
+            var sample = needs.slice(0, 2).join(', ');
+            push(needs.length + ' job' + (needs.length === 1 ? '' : 's') +
+              ' flagged Needs More Hands' +
+              (needs.length <= 2 ? ' (' + sample + ')' : ' including ' + needs[0]) +
+              ': overdue milestones with flat or declining weekly labour hours.');
+          } else if (addressing.length) {
+            push(addressing.length + ' slipping job' + (addressing.length === 1 ? '' : 's') +
+              ' marked Understaffed, Being Addressed (weekly labour hours are rising).');
+          }
+          if (data.overdueMilestoneCount > 0) {
+            push(data.overdueMilestoneCount + ' overdue milestone' +
+              (data.overdueMilestoneCount === 1 ? '' : 's') + ' on the current schedule view.');
+          }
+        }
+
+        if (pageKey === 'P6' && data.capacitySummary) {
+          var cs = data.capacitySummary;
+          var atN = (cs.atCapacity || []).length;
+          var hiN = (cs.high || []).length;
+          var loN = (cs.low || []).length;
+          if (atN > 0) {
+            var names = cs.atCapacity.map(function(e) { return e.name; }).filter(Boolean).slice(0, 3);
+            push(atN + ' team member' + (atN === 1 ? '' : 's') + ' At Capacity in week ' +
+              (cs.latestWeek || '?') +
+              (names.length ? ': ' + names.join(', ') + (atN > names.length ? '…' : '') : '') + '.');
+          } else if (hiN > 0) {
+            push(hiN + ' team member' + (hiN === 1 ? '' : 's') + ' on High utilisation in week ' +
+              (cs.latestWeek || '?') + '.');
+          } else if (loN > 0) {
+            push(loN + ' team member' + (loN === 1 ? '' : 's') + ' on Low Utilisation in week ' +
+              (cs.latestWeek || '?') + '.');
+          }
+          if (cs.weekComparison && cs.weekComparison.pctChange != null) {
+            var wc = cs.weekComparison;
+            var dir = wc.pctChange > 0 ? 'up' : (wc.pctChange < 0 ? 'down' : 'flat');
+            if (dir !== 'flat') {
+              push('Team hours are ' + dir + ' ' + Math.abs(Math.round(wc.pctChange)) +
+                '% week ' + wc.currentWeek + ' vs week ' + wc.previousWeek +
+                ' (' + Math.round(wc.currentHours) + ' vs ' + Math.round(wc.previousHours) + ' hrs).');
+            }
+          }
+        }
+
+        if (pageKey === 'P10') {
+          var concerns = (data.funnelHealth || []).filter(function(r) { return r && r.concern; });
+          var creative = concerns.filter(function(r) { return r.concern === 'Creative/Targeting'; });
+          var landing = concerns.filter(function(r) { return r.concern === 'Landing Page/Follow-up'; });
+          if (creative.length) {
+            push(creative.length + ' campaign' + (creative.length === 1 ? '' : 's') +
+              ' flagged Creative/Targeting (CTR below the current selection average)' +
+              (creative[0].name ? ': e.g. ' + creative[0].name : '') + '.');
+          } else if (landing.length) {
+            push(landing.length + ' campaign' + (landing.length === 1 ? '' : 's') +
+              ' flagged Landing Page/Follow-up (OK CTR, conversion below average)' +
+              (landing[0].name ? ': e.g. ' + landing[0].name : '') + '.');
+          }
+          if (data.bestRoas && data.bestRoas.campaign && data.bestRoas.roas != null) {
+            push(data.bestRoas.campaign + ' has the best attributed ROAS in this view at ' +
+              Number(data.bestRoas.roas).toFixed(2) + 'x.');
+          }
+          if (data.spendMonthComparison && data.spendMonthComparison.pctChange != null) {
+            var sm = data.spendMonthComparison;
+            var sdir = sm.pctChange > 0 ? 'up' : (sm.pctChange < 0 ? 'down' : 'flat');
+            if (sdir !== 'flat') {
+              push('Ad spend is ' + sdir + ' ' + Math.abs(Math.round(sm.pctChange)) +
+                '% ' + sm.currentMonth + ' vs ' + sm.previousMonth + '.');
+            }
+          }
+        }
+
+        if (pageKey === 'P1' || pageKey === 'P5') {
+          var mrev = data.monthlyRevenue || data.revenueByMonth;
+          if (mrev && typeof mrev === 'object') {
+            var keys = Object.keys(mrev).filter(function(k) { return mrev[k] !== undefined && mrev[k] !== null; });
+            keys.sort();
+            if (keys.length >= 2) {
+              var pk = keys[keys.length - 2];
+              var ck = keys[keys.length - 1];
+              var pv = Number(mrev[pk]);
+              var cv = Number(mrev[ck]);
+              if (pv > 0 && !isNaN(pv) && !isNaN(cv)) {
+                var rpct = ((cv - pv) / pv) * 100;
+                var rdir = rpct > 0 ? 'up' : (rpct < 0 ? 'down' : 'flat');
+                if (rdir !== 'flat') {
+                  push('Revenue is ' + rdir + ' ' + Math.abs(Math.round(rpct)) +
+                    '% ' + ck + ' vs ' + pk + ' in the loaded financials.');
+                }
+              }
+            }
+          }
+        }
+
+        if (pageKey === 'P3' && Array.isArray(data.quotes) && data.quotes.length) {
+          var accepted = data.quotes.filter(function(r) {
+            return String(r.Status || r.status || '').toLowerCase() === 'accepted';
+          }).length;
+          if (accepted > 0) {
+            push(accepted + ' accepted quote' + (accepted === 1 ? '' : 's') +
+              ' in the current Quotes selection (' + data.quotes.length + ' total).');
+          }
+        }
+      } catch (err) {
+        console.warn('[BB] insight compute failed', err);
+      }
+      return out.slice(0, 2);
+    }
+
     // Accumulate visited-page data for BB (updates only this key; never clears others).
     function setBBPageData(key, name, data) {
-      window._allPagesData[key] = { name: name, data: data };
-      window._currentPage = { key: key, name: name, data: data };
+      var payload = data || {};
+      var insights = computeBBInsights(key, payload);
+      payload.bbInsights = insights;
+      window._allPagesData[key] = { name: name, data: payload, insights: insights };
+      window._currentPage = { key: key, name: name, data: payload, insights: insights };
+      maybeShowBbProactiveInsights();
+    }
+
+    function getBbAnswerEl() {
+      return document.getElementById('ai-answer');
+    }
+
+    function isBbPanelOpen() {
+      var p = document.getElementById('ai-panel');
+      return p && p.style.display !== 'none';
+    }
+
+    /** Surface 1–2 page insights when BB is open and the user is identified. */
+    function maybeShowBbProactiveInsights(force) {
+      if (typeof force === 'undefined') force = false;
+      if (!isBbPanelOpen()) return;
+      if (!localStorage.getItem('bb_name')) return;
+      var out = getBbAnswerEl();
+      if (!out) return;
+      if (out.getAttribute('data-bb-busy') === '1') return;
+
+      var pageKey = (window._currentPage && window._currentPage.key) || '';
+      var mode = out.getAttribute('data-bb-mode') || '';
+      var lastPage = out.getAttribute('data-bb-page') || '';
+
+      // Keep answered Q&A on the same page; refresh when page/filters load or panel reopens.
+      if (!force && mode === 'answer' && lastPage === pageKey) return;
+
+      var insights = (window._currentPage && window._currentPage.insights) || [];
+      var pageName = (window._currentPage && window._currentPage.name) || 'this page';
+      if (!insights.length) {
+        out.textContent = 'I am on ' + pageName +
+          '. Ask me about the numbers, flags, or trends you can see on this page.';
+        out.setAttribute('data-bb-mode', 'insight');
+        out.setAttribute('data-bb-page', pageKey);
+        return;
+      }
+      var lines = insights.map(function(t, i) { return (i + 1) + '. ' + t; }).join('\n');
+      out.textContent = 'On ' + pageName + ' I already notice:\n' + lines +
+        '\n\nAsk me to go deeper anytime.';
+      out.setAttribute('data-bb-mode', 'insight');
+      out.setAttribute('data-bb-page', pageKey);
+    }
+
+    function pushBbHistory(role, text) {
+      if (!text) return;
+      window._bbChatHistory.push({ role: role, text: String(text) });
+      if (window._bbChatHistory.length > BB_CHAT_MAX_TURNS) {
+        window._bbChatHistory = window._bbChatHistory.slice(-BB_CHAT_MAX_TURNS);
+      }
+    }
+
+    function clearBbHistory() {
+      window._bbChatHistory = [];
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -928,19 +1119,64 @@
 
 
     // ═══════════════════════════════════════════════════════════
-    // COLUMN HELPER
-    // Tries multiple possible column names in order.
-    // Handles inconsistent naming across Make.com scenarios.
+    // COLUMN HELPERS
+    // Always match by header *name* (row 1), never by column letter
+    // or fixed index — sheet column inserts/deletes must not break
+    // the dashboard. Tries aliases in order; also matches case-
+    // insensitively and after normalizing spaces / $ % ().
     // ═══════════════════════════════════════════════════════════
-    function col(row) {
-      const names = Array.prototype.slice.call(arguments, 1);
+    function normalizeHeaderKey(name) {
+      return String(name || '')
+        .toLowerCase()
+        .replace(/[$%()]/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+    }
+
+    /** Resolve a real object key on a row for any alias (exact → case → normalized). */
+    function resolveRowKey(row, names) {
+      if (!row || !names || !names.length) return null;
+      var keys = Object.keys(row);
+      if (!keys.length) return null;
+      var lowerMap = {};
+      var normMap = {};
+      for (var k = 0; k < keys.length; k++) {
+        var key = keys[k];
+        lowerMap[String(key).toLowerCase()] = key;
+        normMap[normalizeHeaderKey(key)] = key;
+      }
       for (var i = 0; i < names.length; i++) {
         var n = names[i];
-        if (row[n] !== undefined && row[n] !== null && String(row[n]).trim() !== '') {
-          return row[n];
-        }
+        if (n === undefined || n === null || n === '') continue;
+        if (Object.prototype.hasOwnProperty.call(row, n)) return n;
+        var lower = lowerMap[String(n).toLowerCase()];
+        if (lower !== undefined) return lower;
+        var norm = normMap[normalizeHeaderKey(n)];
+        if (norm !== undefined) return norm;
+      }
+      return null;
+    }
+
+    /** First non-blank value among header-name aliases. */
+    function col(row) {
+      var names = Array.prototype.slice.call(arguments, 1);
+      if (!row) return '';
+      for (var i = 0; i < names.length; i++) {
+        var key = resolveRowKey(row, [names[i]]);
+        if (key === null) continue;
+        var val = row[key];
+        if (val !== undefined && val !== null && String(val).trim() !== '') return val;
       }
       return '';
+    }
+
+    /** Raw cell value even when blank — still by header name, never index. */
+    function rawColByNames(row, names) {
+      var key = resolveRowKey(row, names);
+      if (key === null) return '';
+      var val = row[key];
+      return val === undefined || val === null ? '' : val;
     }
 
 
@@ -1175,7 +1411,19 @@
         leads: leadsFiltered.slice(0, 200),
         pipeline: pipeFiltered.slice(0, 200),
         projects: projectsFiltered.slice(0, 200),
-        weekly: weeklyFiltered
+        weekly: weeklyFiltered,
+        monthlyRevenue: (function() {
+          var map = {};
+          (xeroFiltered || []).forEach(function(r) {
+            var m = String(col(r, 'Month', 'month') || '').trim();
+            var y = String(col(r, 'Year', 'year') || '').trim();
+            var k = (m + (y ? ' ' + y : '')).trim();
+            if (!k) return;
+            map[k] = (map[k] || 0) + parseNum(col(r,
+              'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+          });
+          return map;
+        })()
       });
 
       function setKpiExceeded(flagId, exceeded) {
@@ -2357,18 +2605,39 @@
       function isBlank(v) {
         return v === null || v === undefined || String(v).trim() === '';
       }
+      // Quotes tab fields — match row-1 headers only (layout after Project Type removal):
+      // A Quote ID · B Date Sent · C Contact Name · D Brand · E Department ·
+      // F Quote Value ($) · G Labour Est ($) · H Materials Est ($) ·
+      // I Subcontractors Est ($) · J Allowances Est ($) · K Est Margin % ·
+      // L Status · M Date Accepted · N Days to Decision · O Xero Project ID ·
+      // P Estimator Name  (never use column letters/indexes at runtime)
       function rawCol(row) {
-        var names = Array.prototype.slice.call(arguments, 1);
-        for (var i = 0; i < names.length; i++) {
-          if (row[names[i]] !== undefined) return row[names[i]];
-        }
-        return '';
+        return rawColByNames(row, Array.prototype.slice.call(arguments, 1));
       }
       function statusOf(r) {
         return String(col(r, 'Status', 'status') || '').trim();
       }
       function quoteValue(r) {
-        return parseNum(col(r, 'Quote Value ($)', 'Quote Value', 'quote_value', 'Value ($)', 'Value'));
+        return parseNum(col(r,
+          'Quote Value ($)', 'Quote Value', 'quote_value', 'Value ($)', 'Value'));
+      }
+      function labourEst(r) {
+        return parseNum(col(r, 'Labour Est ($)', 'Labour Est', 'Labour Estimate ($)', 'Labour'));
+      }
+      function materialsEst(r) {
+        return parseNum(col(r, 'Materials Est ($)', 'Materials Est', 'Materials Estimate ($)', 'Materials'));
+      }
+      function subcontractorsEst(r) {
+        return parseNum(col(r,
+          'Subcontractors Est ($)', 'Subcontractors Est', 'Subcontractor Est ($)', 'Subs Est ($)'));
+      }
+      function allowancesEst(r) {
+        return parseNum(col(r, 'Allowances Est ($)', 'Allowances Est', 'Allowance Est ($)'));
+      }
+      function estMarginPct(r) {
+        var raw = rawCol(r, 'Est Margin %', 'Est Margin', 'Estimated Margin %', 'Margin %');
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
       }
       function daysToDecision(r) {
         var raw = col(r, 'Days to Decision', 'Days To Decision', 'days_to_decision', 'Days');
@@ -2491,8 +2760,33 @@
       var projectsFiltered = filterByDept(brandedProjects);
       var accuracyFiltered = filterByDept(brandedAccuracy);
 
+      // Map Quotes by header name (not index) so shifted columns stay correct.
+      var quotesHeaderMapped = quotesFiltered.map(function(r) {
+        return {
+          'Quote ID':              col(r, 'Quote ID', 'QuoteID'),
+          'Date Sent':             col(r, 'Date Sent', 'Date'),
+          'Contact Name':          col(r, 'Contact Name', 'Contact'),
+          'Brand':                 col(r, 'Brand', 'brand'),
+          'Department':            col(r, 'Department', 'department'),
+          'Quote Value ($)':       quoteValue(r),
+          'Labour Est ($)':        labourEst(r),
+          'Materials Est ($)':     materialsEst(r),
+          'Subcontractors Est ($)': subcontractorsEst(r),
+          'Allowances Est ($)':    allowancesEst(r),
+          'Est Margin %':          estMarginPct(r),
+          'Status':                statusOf(r),
+          'Date Accepted':         col(r, 'Date Accepted'),
+          'Days to Decision':      daysToDecision(r),
+          'Xero Project ID':       col(r, 'Xero Project ID', 'Xero Project J#'),
+          'Estimator Name':        estimatorOf(r)
+        };
+      });
+      if (quotesHeaderMapped.length && typeof console !== 'undefined') {
+        console.log('[P3] Quotes header-map sample:', quotesHeaderMapped[0]);
+      }
+
       setBBPageData('P3', 'P3: Quoting & Estimating', {
-        quotes:   quotesFiltered.slice(0, 200),
+        quotes:   quotesHeaderMapped.slice(0, 200),
         projects: projectsFiltered.slice(0, 200),
         accuracy: accuracyFiltered.slice(0, 200)
       });
@@ -3240,20 +3534,59 @@
 
       // label: Needs More Hands | Understaffed, Being Addressed | Not enough data yet | ''
       var handsByProject = {};
+      var handsDetail = {};
       overdueProjects.forEach(function(projectName) {
         var series = labourSeriesForProject(projectName);
         if (series.length < 2) {
           handsByProject[projectName] = 'Not enough data yet';
-          return;
-        }
-        var firstHrs = series[0].hours;
-        var lastHrs  = series[series.length - 1].hours;
-        // Increasing hours while slipping → being addressed; flat/declining → needs hands
-        if (lastHrs > firstHrs) {
-          handsByProject[projectName] = 'Understaffed, Being Addressed';
         } else {
-          handsByProject[projectName] = 'Needs More Hands';
+          var firstHrs = series[0].hours;
+          var lastHrs  = series[series.length - 1].hours;
+          // Increasing hours while slipping → being addressed; flat/declining → needs hands
+          if (lastHrs > firstHrs) {
+            handsByProject[projectName] = 'Understaffed, Being Addressed';
+          } else {
+            handsByProject[projectName] = 'Needs More Hands';
+          }
         }
+
+        var maxSlip = 0;
+        var ovCount = 0;
+        schedFiltered.forEach(function(r) {
+          if (String(col(r, 'Project Name', 'project_name', 'project') || '') !== projectName) return;
+          if (!isOverdue(r)) return;
+          ovCount++;
+          var s = parseInt(col(r, 'Slippage', 'slippage'), 10);
+          if (!isNaN(s) && s > maxSlip) maxSlip = s;
+        });
+        var trend = 'not enough data';
+        var fH = series.length ? series[0].hours : null;
+        var lH = series.length ? series[series.length - 1].hours : null;
+        if (series.length >= 2) {
+          if (lH > fH) trend = 'increasing';
+          else if (lH < fH) trend = 'decreasing';
+          else trend = 'flat';
+        }
+        var signal = handsByProject[projectName];
+        var reason;
+        if (signal === 'Needs More Hands') {
+          reason = 'Overdue milestones with flat or declining weekly labour hours over recent weeks.';
+        } else if (signal === 'Understaffed, Being Addressed') {
+          reason = 'Overdue milestones, but weekly labour hours are increasing (extra hands already being applied).';
+        } else {
+          reason = 'Overdue milestones, but fewer than two recent labour-week data points to judge the staffing trend.';
+        }
+        handsDetail[projectName] = {
+          signal: signal,
+          reason: reason,
+          weeklyLabourHours: series,
+          labourHoursTrend: trend,
+          firstWeekHours: fH,
+          lastWeekHours: lH,
+          overdueMilestoneCount: ovCount,
+          maxPositiveSlippageDays: maxSlip,
+          recentLabourWeeks: recentLabourWeeks
+        };
       });
 
       var handsIconSvg =
@@ -3278,9 +3611,12 @@
       }
 
       setBBPageData('P4', 'P4: Job Performance', {
-        schedules: schedFiltered,
-        labour: labourFiltered,
+        schedules: schedFiltered.slice(0, 300),
+        labour: labourFiltered.slice(0, 300),
         handsSignals: handsByProject,
+        handsDetail: handsDetail,
+        overdueProjects: overdueProjects,
+        overdueMilestoneCount: overdueItems.length,
         recentLabourWeeks: recentLabourWeeks
       });
 
@@ -4681,10 +5017,36 @@ var labourRows = Object.values(labourByProject)
       }
 
       setBBPageData('P10', 'P10: Marketing', {
-        marketing: filtered,
+        marketing: filtered.slice(0, 250),
         spendByDepartment: deptEntries,
         funnelHealth: funnelRows,
-        funnelAverages: { ctr: avgCtr, conversionRate: avgConv }
+        funnelAverages: { ctr: avgCtr, conversionRate: avgConv },
+        bestRoas: bestRoasRow ? {
+          campaign: campaignNameOf(bestRoasRow),
+          roas: parseNum(roasRawOf(bestRoasRow)),
+          brand: col(bestRoasRow, 'Brand', 'brand') || '',
+          month: col(bestRoasRow, 'Month', 'month') || '',
+          year: col(bestRoasRow, 'Year', 'year') || ''
+        } : null,
+        spendByMonth: spendByMonth,
+        spendMonthComparison: (function() {
+          var keys = sparkMonths.filter(function(k) {
+            return spendByMonth[k] !== undefined && spendByMonth[k] !== null;
+          });
+          if (keys.length < 2) return null;
+          var prevM = keys[keys.length - 2];
+          var currM = keys[keys.length - 1];
+          var prevV = spendByMonth[prevM];
+          var currV = spendByMonth[currM];
+          if (!(prevV > 0)) return null;
+          return {
+            previousMonth: prevM,
+            currentMonth: currM,
+            previousSpend: prevV,
+            currentSpend: currV,
+            pctChange: ((currV - prevV) / prevV) * 100
+          };
+        })()
       });
 
       // Campaign Performance — real ROAS first; No Leads Matched Yet for attribution gaps
@@ -5247,7 +5609,19 @@ var labourRows = Object.values(labourByProject)
       setBBPageData('P5', 'P5: Profitability', {
         financials: finFiltered,
         invoices: invFiltered.slice(0, 300),
-        overhead: ohFiltered
+        overhead: ohFiltered,
+        monthlyRevenue: (function() {
+          var map = {};
+          (finFiltered || []).forEach(function(r) {
+            var m = String(col(r, 'Month', 'month') || '').trim();
+            var y = String(col(r, 'Year', 'year') || '').trim();
+            var k = (m + (y ? ' ' + y : '')).trim();
+            if (!k) return;
+            map[k] = (map[k] || 0) + parseNum(col(r,
+              'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+          });
+          return map;
+        })()
       });
 
       function asPct(n) {
@@ -6072,7 +6446,60 @@ var labourRows = Object.values(labourByProject)
       html += '</div>';
 
       // Store data for filter re-renders / page-aware assistant
-      setBBPageData('P6', 'P6: Capacity & Labour', { capacity: capRows, labour: labRows });
+      var latestCapWeek = 0;
+      capRows.forEach(function(r) {
+        var w = parseInt(col(r, 'Week', 'week'), 10) || 0;
+        if (w > latestCapWeek) latestCapWeek = w;
+      });
+      var latestCapRows = capRows.filter(function(r) {
+        return (parseInt(col(r, 'Week', 'week'), 10) || 0) === latestCapWeek;
+      });
+      var atCap = [], highUtil = [], lowUtil = [];
+      latestCapRows.forEach(function(r) {
+        var flag = String(col(r, 'Hire Signal Flag', 'hire signal flag', 'Hire Signal') || '').trim();
+        var emp = String(col(r, 'Employee Name', 'employee name') || '').trim() || 'Unknown';
+        var util = parseInt(col(r, 'Utilisation %', 'utilisation %') || '0', 10) || 0;
+        var entry = { name: emp, util: util, flag: flag, department: col(r, 'Department', 'department') || '' };
+        var fl = flag.toLowerCase();
+        if (fl.indexOf('at capacity') !== -1 || fl === 'at capacity') atCap.push(entry);
+        else if (fl.indexOf('high') !== -1) highUtil.push(entry);
+        else if (fl.indexOf('low') !== -1) lowUtil.push(entry);
+      });
+      var weekHrs = {};
+      capRows.forEach(function(r) {
+        var w = parseInt(col(r, 'Week', 'week'), 10);
+        if (!w) return;
+        weekHrs[w] = (weekHrs[w] || 0) + (parseFloat(col(r, 'Hours Logged', 'hours logged')) || 0);
+      });
+      var weekKeys = Object.keys(weekHrs).map(Number).sort(function(a, b) { return a - b; });
+      var weekComparison = null;
+      if (weekKeys.length >= 2) {
+        var prevW = weekKeys[weekKeys.length - 2];
+        var currW = weekKeys[weekKeys.length - 1];
+        var prevH = weekHrs[prevW];
+        var currH = weekHrs[currW];
+        if (prevH > 0) {
+          weekComparison = {
+            previousWeek: prevW,
+            currentWeek: currW,
+            previousHours: prevH,
+            currentHours: currH,
+            pctChange: ((currH - prevH) / prevH) * 100
+          };
+        }
+      }
+      setBBPageData('P6', 'P6: Capacity & Labour', {
+        capacity: capRows.slice(0, 400),
+        labour: labRows.slice(0, 400),
+        capacitySummary: {
+          latestWeek: latestCapWeek,
+          atCapacity: atCap,
+          high: highUtil,
+          low: lowUtil,
+          hoursByWeek: weekHrs,
+          weekComparison: weekComparison
+        }
+      });
       window._p6Cap = capRows;
       window._p6Lab = labRows;
       window._p6BarLabels  = barLabels;
@@ -6250,7 +6677,14 @@ var labourRows = Object.values(labourByProject)
       document.getElementById('ai-ask-step').style.display = 'block';
       document.getElementById('ai-greeting').textContent = 'Hey ' + name + ', how can I help you today?';
       document.getElementById('ai-switch-user').textContent = 'Not ' + name + '? Switch user';
-      document.getElementById('ai-answer').textContent = '';
+      var out = document.getElementById('ai-answer');
+      if (out) {
+        out.textContent = '';
+        out.removeAttribute('data-bb-mode');
+        out.removeAttribute('data-bb-page');
+        out.setAttribute('data-bb-busy', '0');
+      }
+      maybeShowBbProactiveInsights(true);
     }
 
     function refreshBbPanel() {
@@ -6275,6 +6709,7 @@ var labourRows = Object.values(labourByProject)
     function switchBbUser(e) {
       if (e) e.preventDefault();
       localStorage.removeItem('bb_name');
+      clearBbHistory();
       showBbNameStep();
     }
 
@@ -6282,7 +6717,10 @@ var labourRows = Object.values(labourByProject)
       var p = document.getElementById('ai-panel');
       var opening = p.style.display === 'none';
       p.style.display = opening ? 'block' : 'none';
-      if (opening) refreshBbPanel();
+      if (opening) {
+        refreshBbPanel();
+        maybeShowBbProactiveInsights(true);
+      }
     }
 
     document.getElementById('ai-name-input').addEventListener('keydown', function(e) {
@@ -6346,6 +6784,8 @@ var labourRows = Object.values(labourByProject)
       var name = localStorage.getItem('bb_name') || '';
       var out = document.getElementById('ai-answer');
       out.textContent = 'BB is thinking...';
+      out.setAttribute('data-bb-busy', '1');
+      out.setAttribute('data-bb-mode', 'answer');
       var pageData = window._currentPage;
       var allPagesPayload = window._allPagesData || {};
       try {
@@ -6364,6 +6804,10 @@ var labourRows = Object.values(labourByProject)
           allPagesPayload = trimmed;
         }
       } catch (e) { /* keep full object; server will slice */ }
+
+      var history = (window._bbChatHistory || []).slice(-BB_CHAT_MAX_TURNS);
+      var insights = (window._currentPage && window._currentPage.insights) || [];
+
       fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -6373,13 +6817,21 @@ var labourRows = Object.values(labourByProject)
           name: name,
           pageContext: window._currentPage.name,
           pageDirectory: BB_PAGE_DIRECTORY,
-          allPagesData: allPagesPayload
+          allPagesData: allPagesPayload,
+          conversationHistory: history,
+          pageInsights: insights
         })
       })
       .then(function(r){ return r.json(); })
       .then(function(d) {
         var answer = d.answer || d.error || 'No answer.';
         out.textContent = answer;
+        out.setAttribute('data-bb-busy', '0');
+        out.setAttribute('data-bb-mode', 'answer');
+        out.setAttribute('data-bb-page', (window._currentPage && window._currentPage.key) || '');
+        pushBbHistory('user', q);
+        pushBbHistory('assistant', answer);
+        try { document.getElementById('ai-q').value = ''; } catch (e2) { /* ignore */ }
         if (speak && d.answer) {
           var sentences = d.answer.match(/[^.!?]+[.!?]+/g) || [d.answer];
           var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -6418,7 +6870,11 @@ var labourRows = Object.values(labourByProject)
           })();
         }
       })
-      .catch(function(e){ out.textContent = 'Error: ' + e.message; });
+      .catch(function(e){
+        out.textContent = 'Error: ' + e.message;
+        out.setAttribute('data-bb-busy', '0');
+        out.setAttribute('data-bb-mode', 'answer');
+      });
     }
   </script>
 </body>

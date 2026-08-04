@@ -29,10 +29,15 @@ async function fetchSheet(tabName) {
     return [];
   }
 
+  // Map each cell by its row-1 header string — never by column letter/index.
+  // Adding or deleting columns in the sheet is safe as long as headers stay named.
   const headers = rows[0].map(h => String(h).trim());
   const data = rows.slice(1).map(row => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+    headers.forEach((h, i) => {
+      if (!h) return; // skip blank header cells
+      obj[h] = row[i] !== undefined ? row[i] : '';
+    });
     return obj;
   }).filter(row => {
     // Skip completely empty rows (metadata/notes at bottom of sheet)
@@ -40,7 +45,7 @@ async function fetchSheet(tabName) {
   });
 
   _cache[tabName] = data;
-  console.log('[Sheets] ' + data.length + ' rows loaded from "' + tabName + '"');
+  console.log('[Sheets] ' + data.length + ' rows loaded from "' + tabName + '" (headers: ' + headers.filter(Boolean).join(', ') + ')');
   return data;
 }
 
