@@ -92,7 +92,17 @@ export default async function handler(req, res) {
     'Hire signals (P6): At Capacity / High / Low Utilisation from capacitySummary and Hire Signal Flag. ' +
     'Funnel Health (P10): Creative/Targeting means CTR below selection average; Landing Page/Follow-up means CTR is OK but conversion is below average (see funnelHealth and funnelAverages). ' +
     'When asked why a flag fired (e.g. "why does J1354 need more hands"), cite the supporting fields: slippage days, overdue count, weeklyLabourHours series, labourHoursTrend, utilisation %, CTR, conversion rate, averages. ' +
-    '7) Prefer short, practical language. Wrong numbers on this dashboard drive real business decisions.' +
+    '7) Prefer short, practical language. Wrong numbers on this dashboard drive real business decisions. ' +
+    'When something is not in the data, say "data not available" (or the exact label the dashboard uses) rather than guessing.' +
+    '\n\nKNOWN DATA GAPS (static facts you already know; do not try to infer automation coverage from page numbers alone): ' +
+    'RMH automation and data coverage is currently incomplete. ' +
+    '1) RMH Meta Ads / marketing data is not fully covered yet: the RMH marketing scenario that would mirror the BBBS Make.com scenario 5186532 has not been built. ' +
+    '2) RMH Xero financial data is still awaiting DIV approval, so revenue and related figures may be missing or empty in the sheet. ' +
+    'When the brand filter is RMH (or the user asks about RMH) and they ask about revenue, marketing spend, ad performance, or other financial figures, ' +
+    'and the loaded data shows $0, blank, missing values, "Not yet tracked", or something that looks like full miss such as "100% under target", ' +
+    'proactively note that this may reflect incomplete RMH data coverage, not necessarily a true zero or true total miss against target. ' +
+    'Do not state either that the business result is definitely zero or that the automation is definitely the sole cause. ' +
+    'Suggest confirming with Ben or Emily. Apply this caution only for RMH in these gap areas; do not weaken clear BBBS numbers.' +
     '\n\nPAGE DIRECTORY (use these exact page names when recommending where to look):\n' +
     JSON.stringify(PAGE_DIRECTORY, null, 2) +
     '\n\nThe user is currently viewing: ' + ctx + '. ' +
