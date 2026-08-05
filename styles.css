@@ -539,6 +539,131 @@ select {
   display: none !important;
 }
 
+/* Lightweight "this week" pulse under KPI sparklines (P2 / P6 / P10) */
+.kpi-week-pulse {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--charcoal);
+  margin: 2px 0 4px;
+  letter-spacing: 0.01em;
+}
+
+.kpi-week-pulse[hidden] {
+  display: none !important;
+}
+
+/* P6 hours pulse strip */
+.p6-week-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--silver);
+  background: var(--white);
+}
+
+.p6-week-pulse-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.p6-week-pulse-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray);
+}
+
+.p6-week-pulse-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  line-height: 1.1;
+}
+
+.p6-week-pulse-sub {
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+
+.p6-week-pulse .kpi-sparkline {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* P8 week-over-week hub sections */
+.p8-wow-section {
+  margin-top: 20px;
+}
+
+.p8-wow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.p8-wow-card {
+  padding: 16px;
+  border: 1px solid var(--silver);
+  background: var(--white);
+}
+
+.p8-wow-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray);
+  margin-bottom: 10px;
+}
+
+.p8-wow-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.p8-wow-caption {
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+
+.p8-wow-num {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.p8-wow-num-muted {
+  font-size: 0.95rem;
+  color: var(--charcoal);
+}
+
+.p8-wow-pct {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.p8-wow-pct .p8-wow-vs {
+  font-weight: 400;
+  color: var(--gray);
+  font-size: 0.75rem;
+}
+
+.p8-section-hint {
+  font-size: 0.8rem;
+  color: var(--gray);
+  margin: -4px 0 12px;
+  line-height: 1.4;
+}
+
 .kpi-progress {
   margin-top: 12px;
 }

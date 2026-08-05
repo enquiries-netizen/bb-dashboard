@@ -288,6 +288,8 @@
             <div class="kpi-card card">
               <div class="kpi-label">Total Leads</div>
               <div class="kpi-value" id="kpi-p2-leads">—</div>
+              <svg class="kpi-sparkline" id="kpi-p2-leads-spark" hidden aria-hidden="true"></svg>
+              <div class="kpi-week-pulse" id="kpi-p2-leads-pulse"></div>
               <div class="kpi-sub" id="kpi-p2-leads-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
@@ -298,6 +300,8 @@
             <div class="kpi-card card">
               <div class="kpi-label">Jobs Won</div>
               <div class="kpi-value" id="kpi-p2-won">—</div>
+              <svg class="kpi-sparkline" id="kpi-p2-won-spark" hidden aria-hidden="true"></svg>
+              <div class="kpi-week-pulse" id="kpi-p2-won-pulse"></div>
               <div class="kpi-sub" id="kpi-p2-won-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
@@ -634,6 +638,25 @@
             </div>
           </div>
 
+          <!-- Week-over-week comparison hub (Sales / Capacity / Marketing) -->
+          <div class="section-card p8-wow-section">
+            <div class="section-title">Sales (Week over Week)</div>
+            <p class="p8-section-hint">This week vs last week from GHL leads and pipeline. Full comparison hub for Sales.</p>
+            <div class="p8-wow-grid" id="p8-wow-sales">Loading sales week comparison...</div>
+          </div>
+
+          <div class="section-card p8-wow-section">
+            <div class="section-title">Capacity (Week over Week)</div>
+            <p class="p8-section-hint">Total hours logged from Buildpass Labour by week number.</p>
+            <div class="p8-wow-grid" id="p8-wow-capacity">Loading capacity week comparison...</div>
+          </div>
+
+          <div class="section-card p8-wow-section">
+            <div class="section-title">Marketing (Week over Week)</div>
+            <p class="p8-section-hint">Spend and leads from Weekly Summary (Marketing), by Brand and Department.</p>
+            <div class="p8-wow-grid" id="p8-wow-marketing">Loading marketing week comparison...</div>
+          </div>
+
           <div class="chart-row">
             <div class="chart-card card">
               <div class="chart-title">Weekly Leads &amp; Revenue Trend (Last 12 Weeks)</div>
@@ -716,12 +739,14 @@
               <div class="kpi-label">Total Spend</div>
               <div class="kpi-value" id="kpi-mkt-spend">—</div>
               <svg class="kpi-sparkline" id="kpi-mkt-spend-spark" hidden aria-hidden="true"></svg>
+              <div class="kpi-week-pulse" id="kpi-mkt-spend-pulse"></div>
               <div class="kpi-sub" id="kpi-mkt-spend-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
               <div class="kpi-label">Total Leads</div>
               <div class="kpi-value" id="kpi-mkt-leads">—</div>
               <svg class="kpi-sparkline" id="kpi-mkt-leads-spark" hidden aria-hidden="true"></svg>
+              <div class="kpi-week-pulse" id="kpi-mkt-leads-pulse"></div>
               <div class="kpi-sub" id="kpi-mkt-leads-sub">Loading...</div>
             </div>
             <div class="kpi-card card">
@@ -863,17 +888,17 @@
     window._currentPage = { key: '', name: '', data: {} };
 
     var BB_PAGE_DIRECTORY = {
-      P1: 'Executive Snapshot — revenue, margin, lead, quote, and jobs-won targets vs actuals',
-      P2: 'Sales & Pipeline — leads by source, pipeline funnel (Contacted / Quoted / Won)',
-      P3: 'Quoting & Estimating — quote funnel, budget vs actual per quote, estimator accuracy',
-      P4: 'Job Performance — milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
-      P5: 'Profitability — revenue, margin, and overhead by brand and department',
-      P6: 'Capacity & Labour — team utilisation %, hiring signal, hours by department',
-      P7: 'Client Satisfaction — reviews and ratings',
-      P8: 'Weekly Overview — weekly KPI summary',
-      P9: 'Cash Flow & Forecast — 13-week rolling forecast, AR ageing',
-      P10: 'Marketing — ad spend, leads, CPL, ROAS, campaign performance',
-      P11: 'Quality & Variations — defects/rework, variations log, site diary issues'
+      P1: 'Executive Snapshot: revenue, margin, lead, quote, and jobs-won targets vs actuals',
+      P2: 'Sales & Pipeline: leads by source, pipeline funnel (Contacted / Quoted / Won). Has a lightweight "this week" pulse (leads / won) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Sales, send the user to P8.',
+      P3: 'Quoting & Estimating: quote funnel, budget vs actual per quote, estimator accuracy',
+      P4: 'Job Performance: milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
+      P5: 'Profitability: revenue, margin, and overhead by brand and department (monthly only, no weekly sections)',
+      P6: 'Capacity & Labour: team utilisation %, hiring signal, hours by department. Has a lightweight "this week" hours pulse with a short trend, not full week-over-week comparison. For week-over-week Capacity hours, send the user to P8.',
+      P7: 'Client Satisfaction: reviews and ratings',
+      P8: 'Weekly Overview: the week-over-week comparison hub. Full this-week vs last-week for Sales (leads, won), Capacity (hours logged), and Marketing (spend, leads), all on one page. Use P8 when asked for week-over-week on P2/P6/P10.',
+      P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
+      P10: 'Marketing: ad spend, leads, CPL, ROAS, campaign performance. Has a lightweight "this week" pulse (spend / leads) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Marketing, send the user to P8.',
+      P11: 'Quality & Variations: defects/rework, variations log, site diary issues'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -1340,6 +1365,160 @@
       var subEl = document.getElementById(subId);
       if (el)    el.textContent    = (val !== null && val !== '' && val !== undefined) ? val : '—';
       if (subEl) subEl.textContent = sub || '';
+    }
+
+    // ── Shared "this week" pulse helpers (P2 / P6 / P10 light signals; P8 = full WoW) ──
+    var WEEK_PULSE_CHARCOAL = '#262425';
+
+    /** Parse DD/MM/YYYY or ISO-ish date strings into a Date (local), or null. */
+    function parseFlexibleDate(dateStr) {
+      if (!dateStr && dateStr !== 0) return null;
+      var s = String(dateStr).trim();
+      if (!s) return null;
+      var parts = s.split(/[\/\-\.]/);
+      if (parts.length === 3) {
+        var a = parseInt(parts[0], 10);
+        var b = parseInt(parts[1], 10);
+        var c = parseInt(parts[2], 10);
+        if (a > 1900 && b >= 1 && b <= 12) {
+          // Y-M-D
+          return new Date(a, b - 1, parseInt(parts[2], 10) || 1);
+        }
+        if (c > 1900 && b >= 1 && b <= 12 && a >= 1 && a <= 31) {
+          // D/M/Y (AU)
+          return new Date(c, b - 1, a);
+        }
+        if (c > 1900 && a >= 1 && a <= 12 && b >= 1 && b <= 31) {
+          // M/D/Y
+          return new Date(c, a - 1, b);
+        }
+      }
+      var d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    /** ISO week key "YYYY-Www" from a Date. */
+    function isoWeekKey(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      var dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      var weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      var y = date.getUTCFullYear();
+      return y + '-W' + (weekNo < 10 ? '0' : '') + weekNo;
+    }
+
+    function weekKeyFromDateStr(dateStr) {
+      return isoWeekKey(parseFlexibleDate(dateStr));
+    }
+
+    function sortWeekKeys(keys) {
+      return (keys || []).slice().sort(function(a, b) {
+        return String(a).localeCompare(String(b));
+      });
+    }
+
+    /** Draw thin Deep Charcoal sparkline into an <svg> by id. */
+    function drawKpiSparkline(svgId, values, color) {
+      var svg = document.getElementById(svgId);
+      if (!svg) return;
+      var stroke = color || WEEK_PULSE_CHARCOAL;
+      var nums = (values || []).filter(function(v) {
+        return v !== null && v !== undefined && !isNaN(v);
+      });
+      if (nums.length < 2) {
+        svg.innerHTML = '';
+        svg.setAttribute('hidden', '');
+        return;
+      }
+      var w = 120, h = 22, pad = 2;
+      var min = Math.min.apply(null, nums);
+      var max = Math.max.apply(null, nums);
+      var range = max - min || 1;
+      var pts = nums.map(function(v, i) {
+        var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
+        var y = pad + (1 - (v - min) / range) * (h - pad * 2);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      }).join(' ');
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.innerHTML =
+        '<polyline fill="none" stroke="' + stroke + '" stroke-width="1.25" ' +
+        'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
+      svg.removeAttribute('hidden');
+    }
+
+    function setWeekPulse(elId, text) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      if (!text) {
+        el.textContent = '';
+        el.setAttribute('hidden', '');
+        return;
+      }
+      el.textContent = text;
+      el.removeAttribute('hidden');
+    }
+
+    /**
+     * Build ordered series from a map of weekKey -> number.
+     * Returns { keys, values, latestKey, latestVal } for last `n` weeks with data.
+     */
+    function weekSeriesFromMap(map, n) {
+      var keys = sortWeekKeys(Object.keys(map || {}));
+      if (!keys.length) return { keys: [], values: [], latestKey: null, latestVal: 0 };
+      var take = keys.slice(-(n || 8));
+      return {
+        keys: take,
+        values: take.map(function(k) { return map[k] || 0; }),
+        latestKey: take[take.length - 1],
+        latestVal: map[take[take.length - 1]] || 0
+      };
+    }
+
+    /** % change this week vs previous; null if no baseline. */
+    function pctChangeWeek(curr, prev) {
+      if (prev === null || prev === undefined || isNaN(prev)) return null;
+      if (prev === 0) return curr === 0 ? 0 : null;
+      return ((curr - prev) / Math.abs(prev)) * 100;
+    }
+
+    function formatWowPct(pct) {
+      if (pct === null || pct === undefined || isNaN(pct)) return '—';
+      var sign = pct > 0 ? '+' : '';
+      return sign + (Math.round(pct * 10) / 10).toFixed(1) + '%';
+    }
+
+    /**
+     * Render a WoW comparison grid of metrics into a container.
+     * items: [{ label, thisWeek, lastWeek, format: 'number'|'currency' }]
+     */
+    function renderWowGrid(containerId, items, emptyMsg) {
+      var el = document.getElementById(containerId);
+      if (!el) return;
+      if (!items || !items.length) {
+        el.innerHTML = '<p class="no-data-msg">' + (emptyMsg || 'Data not available') + '</p>';
+        return;
+      }
+      var html = '';
+      items.forEach(function(it) {
+        var curr = it.thisWeek;
+        var prev = it.lastWeek;
+        var pct = pctChangeWeek(curr, prev);
+        var currDisp = it.format === 'currency' ? formatCurrency(curr || 0) : String(curr != null ? curr : '—');
+        var prevDisp = it.format === 'currency' ? formatCurrency(prev || 0) : String(prev != null ? prev : '—');
+        var pctCls = 'p8-wow-pct';
+        if (pct !== null && pct > 0) pctCls += ' is-up';
+        if (pct !== null && pct < 0) pctCls += ' is-down';
+        html += '<div class="p8-wow-card card">';
+        html += '<div class="p8-wow-label">' + (it.label || '') + '</div>';
+        html += '<div class="p8-wow-row"><span class="p8-wow-caption">This week</span><strong class="p8-wow-num">' + currDisp + '</strong></div>';
+        html += '<div class="p8-wow-row"><span class="p8-wow-caption">Last week</span><span class="p8-wow-num-muted">' + prevDisp + '</span></div>';
+        html += '<div class="' + pctCls + '">' + formatWowPct(pct) + ' <span class="p8-wow-vs">vs last week</span></div>';
+        html += '</div>';
+      });
+      el.innerHTML = html;
     }
 
 
@@ -2050,11 +2229,23 @@
       showLoading(true);
       removeError('p8');
       try {
-        var results  = await Promise.all([
+        // Weekly_Summary for existing KPIs/chart; live sources for WoW hub;
+        // Weekly Summary(Marketing) optional (may be empty / missing).
+        var marketingWeekly = [];
+        try {
+          marketingWeekly = await fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING);
+        } catch (mktErr) {
+          console.warn('P8: Weekly Summary(Marketing) unavailable:', mktErr.message || mktErr);
+          marketingWeekly = [];
+        }
+        var results = await Promise.all([
           fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
-          fetchSheet(CONFIG.TABS.TARGETS)
+          fetchSheet(CONFIG.TABS.TARGETS),
+          fetchSheet(CONFIG.TABS.GHL_LEADS),
+          fetchSheet(CONFIG.TABS.GHL_PIPELINE),
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
         ]);
-        renderP8(results[0], results[1]);
+        renderP8(results[0], results[1], results[2], results[3], results[4], marketingWeekly);
       } catch (err) {
         console.error('P8 load error:', err);
         showError('p8', 'Could not load Weekly Overview data.');
@@ -2064,10 +2255,174 @@
       }
     }
 
-    function renderP8(weekly, targets) {
+    function renderP8(weekly, targets, ghlLeads, ghlPipeline, labour, mktWeekly) {
+      function applyFilters(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      }
+
       var branded  = filterByBrand(weekly, activeBrand);
       var filtered = filterByMonths(branded, activeMonths);
-      setBBPageData('P8', 'P8: Weekly Overview', { weekly: filtered, targets: targets });
+
+      var leadsF = applyFilters(ghlLeads || []);
+      var pipeF  = applyFilters(ghlPipeline || []);
+      var labF   = applyFilters(labour || []);
+      var mktF   = applyFilters(mktWeekly || []);
+
+      // ── Sales WoW from GHL ─────────────────────────────────
+      function leadEventDate(r) {
+        return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') ||
+               getRowDateStr(r);
+      }
+      function wonEventDate(r) {
+        return col(r, 'Close Date', 'Expected Close Date', 'Date Created', 'Last Activity Date', 'Date') ||
+               getRowDateStr(r);
+      }
+      function isRowWon(r) {
+        var st = String(col(r, 'Status', 'status') || '').trim().toLowerCase();
+        var stage = String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim().toLowerCase();
+        return st === 'won' || stage === 'won';
+      }
+
+      var leadsByWeek = {};
+      leadsF.forEach(function(r) {
+        var k = weekKeyFromDateStr(leadEventDate(r));
+        if (!k) return;
+        leadsByWeek[k] = (leadsByWeek[k] || 0) + 1;
+      });
+      var wonByWeek = {};
+      // Prefer pipeline for wins; fall back to leads Status=Won
+      var winSource = pipeF.length ? pipeF : leadsF;
+      winSource.forEach(function(r) {
+        if (!isRowWon(r)) return;
+        var k = weekKeyFromDateStr(wonEventDate(r));
+        if (!k) return;
+        wonByWeek[k] = (wonByWeek[k] || 0) + 1;
+      });
+      var leadKeys = sortWeekKeys(Object.keys(leadsByWeek));
+      var wonKeys = sortWeekKeys(Object.keys(wonByWeek));
+      var salesKeys = sortWeekKeys(leadKeys.concat(wonKeys).filter(function(k, i, a) {
+        return a.indexOf(k) === i;
+      }));
+      var salesThis = salesKeys.length ? salesKeys[salesKeys.length - 1] : null;
+      var salesLast = salesKeys.length > 1 ? salesKeys[salesKeys.length - 2] : null;
+      var salesLeadsThis = salesThis ? (leadsByWeek[salesThis] || 0) : 0;
+      var salesLeadsLast = salesLast ? (leadsByWeek[salesLast] || 0) : 0;
+      var salesWonThis = salesThis ? (wonByWeek[salesThis] || 0) : 0;
+      var salesWonLast = salesLast ? (wonByWeek[salesLast] || 0) : 0;
+
+      if (salesThis) {
+        renderWowGrid('p8-wow-sales', [
+          { label: 'Leads', thisWeek: salesLeadsThis, lastWeek: salesLeadsLast, format: 'number' },
+          { label: 'Jobs Won', thisWeek: salesWonThis, lastWeek: salesWonLast, format: 'number' }
+        ]);
+      } else {
+        renderWowGrid('p8-wow-sales', null, 'Data not available for Sales week comparison.');
+      }
+
+      // ── Capacity WoW from Buildpass_Labour Week Number ──────
+      var hoursByWeekNum = {};
+      labF.forEach(function(r) {
+        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
+        if (!w) return;
+        var h = parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
+        hoursByWeekNum[w] = (hoursByWeekNum[w] || 0) + h;
+      });
+      var labWeeks = Object.keys(hoursByWeekNum).map(Number).sort(function(a, b) { return a - b; });
+      var capThisW = labWeeks.length ? labWeeks[labWeeks.length - 1] : null;
+      var capLastW = labWeeks.length > 1 ? labWeeks[labWeeks.length - 2] : null;
+      var capHrsThis = capThisW != null ? Math.round((hoursByWeekNum[capThisW] || 0) * 10) / 10 : 0;
+      var capHrsLast = capLastW != null ? Math.round((hoursByWeekNum[capLastW] || 0) * 10) / 10 : 0;
+      if (capThisW != null) {
+        renderWowGrid('p8-wow-capacity', [
+          {
+            label: 'Hours logged (Wk ' + capThisW + ')',
+            thisWeek: capHrsThis,
+            lastWeek: capHrsLast,
+            format: 'number'
+          }
+        ]);
+      } else {
+        renderWowGrid('p8-wow-capacity', null, 'Data not available for Capacity week comparison.');
+      }
+
+      // ── Marketing WoW from Weekly Summary(Marketing) ───────
+      function mktWeekKey(r) {
+        var ws = col(r, 'Week Start', 'week_start', 'Week', 'week', 'Week Ending', 'Period');
+        if (ws) {
+          var asDate = weekKeyFromDateStr(ws);
+          if (asDate) return asDate;
+          return String(ws).trim();
+        }
+        var wn = parseNum(col(r, 'Week Number', 'week number'));
+        if (wn) return 'W' + wn;
+        return '';
+      }
+      function mktSpendOf(r) {
+        return parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend ($)', 'Spend', 'Total Spend'));
+      }
+      function mktLeadsOf(r) {
+        return parseNum(col(r, 'Leads Generated', 'Leads', 'Total Leads', 'leads'));
+      }
+      var mktSpendByWeek = {};
+      var mktLeadsByWeek = {};
+      mktF.forEach(function(r) {
+        var k = mktWeekKey(r);
+        if (!k) return;
+        mktSpendByWeek[k] = (mktSpendByWeek[k] || 0) + mktSpendOf(r);
+        mktLeadsByWeek[k] = (mktLeadsByWeek[k] || 0) + mktLeadsOf(r);
+      });
+      var mktKeys = sortWeekKeys(Object.keys(mktSpendByWeek).concat(Object.keys(mktLeadsByWeek)).filter(function(k, i, a) {
+        return a.indexOf(k) === i;
+      }));
+      var mktThis = mktKeys.length ? mktKeys[mktKeys.length - 1] : null;
+      var mktLast = mktKeys.length > 1 ? mktKeys[mktKeys.length - 2] : null;
+      if (mktThis) {
+        renderWowGrid('p8-wow-marketing', [
+          {
+            label: 'Ad Spend',
+            thisWeek: mktSpendByWeek[mktThis] || 0,
+            lastWeek: mktLast ? (mktSpendByWeek[mktLast] || 0) : 0,
+            format: 'currency'
+          },
+          {
+            label: 'Leads',
+            thisWeek: mktLeadsByWeek[mktThis] || 0,
+            lastWeek: mktLast ? (mktLeadsByWeek[mktLast] || 0) : 0,
+            format: 'number'
+          }
+        ]);
+      } else {
+        renderWowGrid('p8-wow-marketing', null, 'Data not available for Marketing week comparison.');
+      }
+
+      setBBPageData('P8', 'P8: Weekly Overview', {
+        weekly: filtered,
+        targets: targets,
+        weekOverWeek: {
+          sales: {
+            thisWeekKey: salesThis,
+            lastWeekKey: salesLast,
+            leadsThis: salesLeadsThis,
+            leadsLast: salesLeadsLast,
+            wonThis: salesWonThis,
+            wonLast: salesWonLast
+          },
+          capacity: {
+            thisWeek: capThisW,
+            lastWeek: capLastW,
+            hoursThis: capHrsThis,
+            hoursLast: capHrsLast
+          },
+          marketing: {
+            thisWeekKey: mktThis,
+            lastWeekKey: mktLast,
+            spendThis: mktThis ? (mktSpendByWeek[mktThis] || 0) : 0,
+            spendLast: mktLast ? (mktSpendByWeek[mktLast] || 0) : 0,
+            leadsThis: mktThis ? (mktLeadsByWeek[mktThis] || 0) : 0,
+            leadsLast: mktLast ? (mktLeadsByWeek[mktLast] || 0) : 0
+          }
+        }
+      });
 
       if (filtered.length === 0) {
         ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id) {
@@ -2075,6 +2430,7 @@
         });
         document.getElementById('p8-weekly-table').innerHTML =
           '<p class="no-data-msg">No weekly summary data for selected filters.</p>';
+        // Still keep WoW sections (they use other tabs)
         return;
       }
 
@@ -2183,7 +2539,8 @@
         leads:     leadsFiltered.slice(0, 200),
         pipeline:  pipeFiltered.slice(0, 200),
         marketing: mktFiltered.slice(0, 100),
-        sources:   srcFiltered.slice(0, 100)
+        sources:   srcFiltered.slice(0, 100),
+        weekPulse: 'Lightweight this-week leads/won on KPI cards only. For week-over-week Sales go to P8.'
       });
 
       function stageOf(r) {
@@ -2254,6 +2611,43 @@
         setKPI('kpi-p2-spend',   'kpi-p2-spend-sub',   totalSpend ? formatCurrency(totalSpend) : '—', 'Paid ad spend');
         setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
       }
+
+      // ── Lightweight "this week" pulse on Leads + Jobs Won ───
+      (function applyP2WeekPulse() {
+        function leadDate(r) {
+          return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') || getRowDateStr(r);
+        }
+        function wonDate(r) {
+          return col(r, 'Close Date', 'Expected Close Date', 'Date Created', 'Last Activity Date') || getRowDateStr(r);
+        }
+        var leadsByW = {};
+        leadsFiltered.forEach(function(r) {
+          var k = weekKeyFromDateStr(leadDate(r));
+          if (!k) return;
+          leadsByW[k] = (leadsByW[k] || 0) + 1;
+        });
+        var wonByW = {};
+        leadsFiltered.forEach(function(r) {
+          if (!(isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won')) return;
+          var k = weekKeyFromDateStr(wonDate(r));
+          if (!k) return;
+          wonByW[k] = (wonByW[k] || 0) + 1;
+        });
+        var leadSeries = weekSeriesFromMap(leadsByW, 8);
+        var wonSeries = weekSeriesFromMap(wonByW, 8);
+        drawKpiSparkline('kpi-p2-leads-spark', leadSeries.values);
+        drawKpiSparkline('kpi-p2-won-spark', wonSeries.values);
+        if (leadSeries.latestKey) {
+          setWeekPulse('kpi-p2-leads-pulse', 'This week: ' + leadSeries.latestVal + ' leads');
+        } else {
+          setWeekPulse('kpi-p2-leads-pulse', '');
+        }
+        if (wonSeries.latestKey) {
+          setWeekPulse('kpi-p2-won-pulse', 'This week: ' + wonSeries.latestVal + ' won');
+        } else {
+          setWeekPulse('kpi-p2-won-pulse', '');
+        }
+      })();
 
       // Always rebuild all three charts from the currently filtered rows
       // (never leave stale Chart.js instances when a filter empties a series).
@@ -4330,8 +4724,14 @@ var labourRows = Object.values(labourByProject)
       showLoading(true);
       removeError('p10');
       try {
+        var marketingWeekly = [];
+        try {
+          marketingWeekly = await fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING);
+        } catch (e) {
+          marketingWeekly = [];
+        }
         var marketing = await fetchSheet(CONFIG.TABS.MARKETING_PAID);
-        renderP10(marketing);
+        renderP10(marketing, marketingWeekly);
       } catch (err) {
         console.error('P10 load error:', err);
         showError('p10', 'Could not load Marketing data.');
@@ -4341,7 +4741,7 @@ var labourRows = Object.values(labourByProject)
       }
     }
 
-    function renderP10(marketing) {
+    function renderP10(marketing, marketingWeekly) {
       var brandCharcoal = '#262425';
       var brandSoftGray = '#BCBDBE';
       var brandSilver   = '#D2D4D5';
@@ -4349,6 +4749,10 @@ var labourRows = Object.values(labourByProject)
       // One shared filtered set for KPIs + charts (Brand / Year / Month)
       var filtered = filterByMonths(
         filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
+        activeMonths
+      );
+      var mktWeekFiltered = filterByMonths(
+        filterByYear(filterByBrand(marketingWeekly || [], activeBrand), activeYear),
         activeMonths
       );
       setBBPageData('P10', 'P10: Marketing', { marketing: filtered, spendByDepartment: [], funnelHealth: [] });
@@ -4567,6 +4971,48 @@ var labourRows = Object.values(labourByProject)
         roasRows.length ? avgRoas.toFixed(2) + 'x' : '—',
         roasRows.length ? 'Avg return on ad spend (attributed)' : 'No attributed ROAS yet');
 
+      // Lightweight this-week pulse (Weekly Summary(Marketing); fall back to Marketing_Paid dates).
+      // Pulse sparklines prefer weekly series; monthly series fill in only when weekly is missing.
+      function mktWeekKeyP10(r) {
+        var ws = col(r, 'Week Start', 'week_start', 'Week', 'week', 'Week Ending', 'Period');
+        if (ws) {
+          var asDate = weekKeyFromDateStr(ws);
+          if (asDate) return asDate;
+          return String(ws).trim();
+        }
+        var wn = parseNum(col(r, 'Week Number', 'week number'));
+        if (wn) return 'W' + wn;
+        return '';
+      }
+      var mktSpendWeekMap = {};
+      var mktLeadsWeekMap = {};
+      mktWeekFiltered.forEach(function(r) {
+        var k = mktWeekKeyP10(r);
+        if (!k) return;
+        mktSpendWeekMap[k] = (mktSpendWeekMap[k] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend ($)', 'Spend', 'Total Spend'));
+        mktLeadsWeekMap[k] = (mktLeadsWeekMap[k] || 0) + parseNum(col(r, 'Leads Generated', 'Leads', 'Total Leads', 'leads'));
+      });
+      if (!Object.keys(mktSpendWeekMap).length) {
+        filtered.forEach(function(r) {
+          var k = weekKeyFromDateStr(col(r, 'Week Start', 'week_start', 'Date', 'date') || getRowDateStr(r));
+          if (!k) return;
+          mktSpendWeekMap[k] = (mktSpendWeekMap[k] || 0) + spendOf(r);
+          mktLeadsWeekMap[k] = (mktLeadsWeekMap[k] || 0) + leadsOf(r);
+        });
+      }
+      var mktSpendWeekSeries = weekSeriesFromMap(mktSpendWeekMap, 8);
+      var mktLeadsWeekSeries = weekSeriesFromMap(mktLeadsWeekMap, 8);
+      if (mktSpendWeekSeries.latestKey) {
+        setWeekPulse('kpi-mkt-spend-pulse', 'This week: ' + formatCurrency(mktSpendWeekSeries.latestVal));
+      } else {
+        setWeekPulse('kpi-mkt-spend-pulse', '');
+      }
+      if (mktLeadsWeekSeries.latestKey) {
+        setWeekPulse('kpi-mkt-leads-pulse', 'This week: ' + mktLeadsWeekSeries.latestVal + ' leads');
+      } else {
+        setWeekPulse('kpi-mkt-leads-pulse', '');
+      }
+
       // Platform breakdown kept for badge + future multi-platform chart
       var byPlatform = {};
       filtered.forEach(function(r) {
@@ -4632,23 +5078,48 @@ var labourRows = Object.values(labourByProject)
           avgRoasByMonth[k] = roasSumByMonth[k] / roasCntByMonth[k];
         }
       });
-      renderSparkline('kpi-mkt-spend-spark', sparkValuesForKeys(sparkMonths, spendByMonth));
-      renderSparkline('kpi-mkt-leads-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
+      // Prefer week-series sparklines on spend/leads when pulse data exists
+      if (mktSpendWeekSeries.values.length >= 2) {
+        drawKpiSparkline('kpi-mkt-spend-spark', mktSpendWeekSeries.values, brandCharcoal);
+      } else {
+        renderSparkline('kpi-mkt-spend-spark', sparkValuesForKeys(sparkMonths, spendByMonth));
+      }
+      if (mktLeadsWeekSeries.values.length >= 2) {
+        drawKpiSparkline('kpi-mkt-leads-spark', mktLeadsWeekSeries.values, brandCharcoal);
+      } else {
+        renderSparkline('kpi-mkt-leads-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
+      }
       renderSparkline('kpi-mkt-cpl-spark',   sparkValuesForKeys(sparkMonths, cplByMonth));
       renderSparkline('kpi-mkt-roas-spark',  sparkValuesForKeys(sparkMonths, avgRoasByMonth));
 
       clearP10Charts();
 
-      if (filtered.length === 0) {
+        if (filtered.length === 0) {
         setPlatformBadge({}, 0);
         setRoasHighlight(null);
         clearSparklines();
+        // Re-apply week sparklines if we have weekly pulse data after clearSparklines
+        if (mktSpendWeekSeries.values.length >= 2) {
+          drawKpiSparkline('kpi-mkt-spend-spark', mktSpendWeekSeries.values, brandCharcoal);
+        }
+        if (mktLeadsWeekSeries.values.length >= 2) {
+          drawKpiSparkline('kpi-mkt-leads-spark', mktLeadsWeekSeries.values, brandCharcoal);
+        }
         setDeptChartEmpty(true);
         document.getElementById('p10-funnel-table').innerHTML =
           '<p class="no-data-msg">Data not available</p>';
         document.getElementById('p10-campaign-table').innerHTML =
           '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
-        setBBPageData('P10', 'P10: Marketing', { marketing: filtered, spendByDepartment: [], funnelHealth: [] });
+        setBBPageData('P10', 'P10: Marketing', {
+          marketing: filtered,
+          spendByDepartment: [],
+          funnelHealth: [],
+          weekPulse: {
+            spend: mktSpendWeekSeries.latestKey != null ? mktSpendWeekSeries.latestVal : null,
+            leads: mktLeadsWeekSeries.latestKey != null ? mktLeadsWeekSeries.latestVal : null,
+            note: 'Lightweight this-week numbers only. For week-over-week Marketing go to P8.'
+          }
+        });
         return;
       }
 
@@ -5028,6 +5499,11 @@ var labourRows = Object.values(labourByProject)
           month: col(bestRoasRow, 'Month', 'month') || '',
           year: col(bestRoasRow, 'Year', 'year') || ''
         } : null,
+        weekPulse: {
+          spend: mktSpendWeekSeries.latestKey != null ? mktSpendWeekSeries.latestVal : null,
+          leads: mktLeadsWeekSeries.latestKey != null ? mktLeadsWeekSeries.latestVal : null,
+          note: 'Lightweight this-week numbers only. For week-over-week Marketing go to P8.'
+        },
         spendByMonth: spendByMonth,
         spendMonthComparison: (function() {
           var keys = sparkMonths.filter(function(k) {
@@ -6315,6 +6791,9 @@ var labourRows = Object.values(labourByProject)
               }
             });
           }
+
+          // This-week hours sparkline pulse
+          drawKpiSparkline('p6-hours-spark', window._p6HoursSparkVals || []);
         }, 300);
       } catch (err) {
         console.error('P6 load error:', err);
@@ -6329,7 +6808,17 @@ var labourRows = Object.values(labourByProject)
       // ── Read Capacity tab ──────────────────────────────────
       var capRows = (data['Capacity'] || {}).rows || [];
       // ── Read Buildpass_Labour tab for month filter ─────────
-      var labRows = (data['Buildpass_Labour'] || {}).rows || [];
+      var labRowsRaw = (data['Buildpass_Labour'] || {}).rows || [];
+      // Global Brand/Month/Year filters (header) stay reactive for labour pulses + summary
+      var labRows = filterByMonths(
+        filterByYear(filterByBrand(labRowsRaw, activeBrand), activeYear),
+        activeMonths
+      );
+      var capRowsFiltered = filterByMonths(
+        filterByYear(filterByBrand(capRows, activeBrand), activeYear),
+        activeMonths
+      );
+      if (capRowsFiltered.length) capRows = capRowsFiltered;
 
       // Build month list from Buildpass_Labour col O
       var months = [];
@@ -6353,6 +6842,38 @@ var labourRows = Object.values(labourByProject)
       brands.forEach(function(b) { html += '<option value="' + b + '">' + b + '</option>'; });
       html += '</select></label>';
       html += '</div>';
+
+      // ── This-week hours pulse (light signal; full WoW on P8) ──
+      var labWeekHrsMap = {};
+      labRows.forEach(function(r) {
+        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
+        if (!w) return;
+        var h = parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
+        labWeekHrsMap[w] = (labWeekHrsMap[w] || 0) + h;
+      });
+      var labWeekSeriesKeys = Object.keys(labWeekHrsMap).map(Number).sort(function(a, b) { return a - b; });
+      var labPulseLatest = labWeekSeriesKeys.length ? labWeekSeriesKeys[labWeekSeriesKeys.length - 1] : null;
+      var labPulseVals = labWeekSeriesKeys.slice(-8).map(function(w) {
+        return Math.round((labWeekHrsMap[w] || 0) * 10) / 10;
+      });
+      var labPulseThis = labPulseLatest != null
+        ? Math.round((labWeekHrsMap[labPulseLatest] || 0) * 10) / 10
+        : null;
+
+      html += '<div class="p6-week-pulse card">';
+      html += '<div class="p6-week-pulse-text">';
+      html += '<span class="p6-week-pulse-label">Hours logged this week</span>';
+      if (labPulseThis != null) {
+        html += '<span class="p6-week-pulse-value">' + labPulseThis + '</span>';
+        html += '<span class="p6-week-pulse-sub">Week ' + labPulseLatest + ' · pulse only, open P8 for week-over-week</span>';
+      } else {
+        html += '<span class="p6-week-pulse-value">—</span>';
+        html += '<span class="p6-week-pulse-sub">No labour week data in selection</span>';
+      }
+      html += '</div>';
+      html += '<svg class="kpi-sparkline" id="p6-hours-spark" hidden aria-hidden="true"></svg>';
+      html += '</div>';
+      window._p6HoursSparkVals = labPulseVals;
 
       // ── CHARTS SECTION ───────────────────────────────────────
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">';
@@ -6498,7 +7019,10 @@ var labourRows = Object.values(labourByProject)
           low: lowUtil,
           hoursByWeek: weekHrs,
           weekComparison: weekComparison
-        }
+        },
+        weekPulse: labPulseThis != null
+          ? { week: labPulseLatest, hours: labPulseThis, note: 'Lightweight this-week hours only. For week-over-week Capacity go to P8.' }
+          : null
       });
       window._p6Cap = capRows;
       window._p6Lab = labRows;

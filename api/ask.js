@@ -21,17 +21,17 @@ export default async function handler(req, res) {
   const ctx = (pageContext && String(pageContext).trim()) || 'unknown page';
 
   const PAGE_DIRECTORY = pageDirectory || {
-    P1: 'Executive Snapshot — revenue, margin, lead, quote, and jobs-won targets vs actuals',
-    P2: 'Sales & Pipeline — leads by source, pipeline funnel (Contacted / Quoted / Won)',
-    P3: 'Quoting & Estimating — quote funnel, budget vs actual per quote, estimator accuracy',
-    P4: 'Job Performance — milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
-    P5: 'Profitability — revenue, margin, and overhead by brand and department',
-    P6: 'Capacity & Labour — team utilisation %, hiring signal, hours by department',
-    P7: 'Client Satisfaction — reviews and ratings',
-    P8: 'Weekly Overview — weekly KPI summary',
-    P9: 'Cash Flow & Forecast — 13-week rolling forecast, AR ageing',
-    P10: 'Marketing — ad spend, leads, CPL, ROAS, campaign performance',
-    P11: 'Quality & Variations — defects/rework, variations log, site diary issues'
+    P1: 'Executive Snapshot: revenue, margin, lead, quote, and jobs-won targets vs actuals',
+    P2: 'Sales & Pipeline: leads by source, pipeline funnel (Contacted / Quoted / Won). Has a lightweight this-week pulse (leads / won) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Sales, send the user to P8.',
+    P3: 'Quoting & Estimating: quote funnel, budget vs actual per quote, estimator accuracy',
+    P4: 'Job Performance: milestone/schedule slippage per job, labour hours per job, Needs More Hands flag',
+    P5: 'Profitability: revenue, margin, and overhead by brand and department (monthly only, no weekly sections)',
+    P6: 'Capacity & Labour: team utilisation %, hiring signal, hours by department. Has a lightweight this-week hours pulse with a short trend, not full week-over-week comparison. For week-over-week Capacity hours, send the user to P8.',
+    P7: 'Client Satisfaction: reviews and ratings',
+    P8: 'Weekly Overview: the week-over-week comparison hub. Full this-week vs last-week for Sales (leads, won), Capacity (hours logged), and Marketing (spend, leads), all on one page. Use P8 when asked for week-over-week on P2/P6/P10.',
+    P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
+    P10: 'Marketing: ad spend, leads, CPL, ROAS, campaign performance. Has a lightweight this-week pulse (spend / leads) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Marketing, send the user to P8.',
+    P11: 'Quality & Variations: defects/rework, variations log, site diary issues'
   };
 
   const visitedKeys = allPagesData && typeof allPagesData === 'object'
@@ -84,7 +84,8 @@ export default async function handler(req, res) {
     '2) Do not invent, estimate, round up inventively, or guess numbers, names, margins, ROAS, hours, or trends. ' +
     '3) If the question needs a page that is not loaded, say so plainly and name the page to visit (for example: "I do not have P9 cash flow data loaded yet, visit that page and ask me again"). ' +
     '4) If the underlying field is blank, missing, incomplete, or the dashboard already shows labels like "Data not available", "No Leads Matched Yet", "Not yet tracked", "Awaiting job completion", or similar, say that plainly. Do not fill gaps with assumptions. ' +
-    '5) Trends and period comparisons only when the data contains values for both periods (for example weekComparison, spendMonthComparison, monthlyRevenue with two months). Never invent a trend from a single data point. ' +
+    '5) Trends and period comparisons only when the data contains values for both periods (for example weekOverWeek on P8, weekComparison, spendMonthComparison, monthlyRevenue with two months). Never invent a trend from a single data point. ' +
+    'A single weekPulse number on P2, P6, or P10 is not enough for week-over-week: direct the user to P8 (Weekly Overview) for full this-week vs last-week across Sales, Capacity, and Marketing. ' +
     '6) Dashboard flags have meaning: use the underlying metrics when explaining them. ' +
     'Needs More Hands (P4): job has overdue milestones AND recent weekly labour hours are flat or declining (see handsDetail). ' +
     'Understaffed, Being Addressed (P4): overdue but weekly labour hours are increasing. ' +

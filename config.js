@@ -36,6 +36,9 @@ const CONFIG = {
   // Must match the exact tab names in Google Sheets (case sensitive)
   TABS: {
     WEEKLY_SUMMARY:      'Weekly_Summary',
+    // Pre-aggregated marketing week rows (Brand + Department per week)
+    // Sheet name has a space + parentheses: Weekly Summary(Marketing)
+    WEEKLY_SUMMARY_MARKETING: 'Weekly Summary(Marketing)',
     TARGETS:             'Targets',
     GHL_LEADS:           'GHL_Leads',
     GHL_PIPELINE:        'GHL_Pipeline',
