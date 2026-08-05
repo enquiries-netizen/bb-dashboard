@@ -614,6 +614,10 @@ select {
   vertical-align: -1px;
 }
 
+.kpi-dir-icon--down {
+  opacity: 1;
+}
+
 /* Revenue: top-border marker only (most emphasized) */
 .p1-kpi-primary .kpi-card--primary {
   border-top-color: var(--charcoal);
@@ -1589,23 +1593,302 @@ select {
   .p5-inv-grids { grid-template-columns: 1fr; }
 }
 
-/* P2 Pipeline Funnel — headline conversion + stage rates (brand solids only) */
+/* P2 Sales & Pipeline — structural layout matching P1 polish language */
+.p2-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.p2-head {
+  margin-bottom: 12px;
+}
+
+.p2-page-header {
+  margin-bottom: 4px;
+}
+
+.p2-filter-cue {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gray);
+  letter-spacing: 0.02em;
+}
+
+/* Tier 1: 3×2 KPI band (Volume row + Efficiency row) */
+.p2-kpi-band {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.p2-kpi-group-label {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.95px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin: 0 0 6px;
+}
+
+.p2-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.p2-kpi {
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(188, 189, 190, 0.4);
+  border-top: 3px solid var(--silver);
+  box-shadow: none;
+}
+
+.p2-kpi .kpi-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--gray);
+}
+
+.p2-kpi .kpi-value {
+  font-weight: 700;
+  font-size: clamp(18px, 1.8vw, 24px);
+  margin-bottom: 4px;
+  color: var(--charcoal);
+}
+
+.p2-kpi .kpi-sub {
+  margin-top: 4px;
+  font-size: 10.5px;
+}
+
+.p2-kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 22px;
+  margin: 4px 0 2px;
+  flex-wrap: wrap;
+}
+
+.p2-kpi .kpi-sparkline {
+  flex: 0 1 100px;
+  max-width: 120px;
+  height: 18px;
+  margin: 0;
+}
+
+.p2-kpi-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.15px;
+  color: var(--charcoal);
+  white-space: nowrap;
+}
+
+.p2-kpi-delta.is-up {
+  color: var(--charcoal);
+  font-weight: 700;
+}
+
+.p2-kpi-delta.is-down {
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.p2-kpi-delta[hidden] {
+  display: none !important;
+}
+
+.p2-kpi .kpi-week-pulse {
+  font-size: 10px;
+  color: var(--gray);
+  margin: 0 0 2px;
+}
+
+/* Tier 2 + 3 mid: funnel + sources side by side */
+.p2-mid-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.p2-funnel-card,
+.p2-sources-card,
+.p2-campaign-card {
+  padding: 14px 18px 12px;
+  border: 1px solid rgba(188, 189, 190, 0.4);
+  border-top: 2px solid var(--gray);
+  box-shadow: none;
+}
+
+.p2-funnel-card .chart-title,
+.p2-sources-card .chart-title,
+.p2-campaign-card .chart-title {
+  color: var(--gray);
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.p2-chart-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.p2-sources-wrap {
+  height: 260px;
+}
+
+.p2-campaign-wrap {
+  height: 240px;
+}
+
+.p2-chart-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Horizontal stepped funnel (Lead → Quoted → Won) */
 .p2-funnel-overall {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--charcoal);
   letter-spacing: -0.02em;
-  margin: -6px 0 10px;
+  margin: 0 0 12px;
   line-height: 1.2;
 }
+
 .p2-funnel-overall .p2-funnel-overall-label {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
-  color: var(--charcoal);
-  margin-left: 6px;
+  color: var(--gray);
+  margin-left: 8px;
 }
+
+.p2-step-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.p2-step-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.p2-step-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.p2-step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.p2-step-name {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  min-width: 4.5rem;
+}
+
+.p2-step-count {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.p2-step-conv {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(38, 36, 37, 0.72);
+}
+
+.p2-cohort-star {
+  color: var(--charcoal);
+  font-weight: 700;
+}
+
+.p2-cohort-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray);
+  margin-left: 2px;
+}
+
+.p2-step-track {
+  width: 100%;
+  height: 22px;
+  background: rgba(210, 212, 213, 0.35);
+  border: 1px solid rgba(188, 189, 190, 0.35);
+  box-shadow: none;
+}
+
+.p2-step-bar {
+  height: 100%;
+  min-width: 0;
+  transition: width 0.25s ease;
+}
+
+.p2-step-bar--lead {
+  background: var(--charcoal); /* solid black */
+}
+
+.p2-step-bar--quoted {
+  background: var(--gray); /* Soft Gray / dark grey */
+}
+
+.p2-step-bar--won {
+  background: var(--silver); /* Brilliant Silver / light grey */
+  border: 1px solid rgba(38, 36, 37, 0.12);
+  box-sizing: border-box;
+}
+
+.p2-funnel-footnote {
+  margin: 12px 0 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--gray);
+  font-weight: 400;
+}
+
+.p2-funnel-footnote[hidden] {
+  display: none !important;
+}
+
+.p2-campaign-row {
+  margin-bottom: 18px;
+}
+
+.p2-detail-card {
+  border: 1px solid rgba(188, 189, 190, 0.45);
+  box-shadow: none;
+  padding: 16px 18px 14px;
+}
+
+/* Legacy funnel rates block (kept harmless if unused) */
 .p2-funnel-rates {
   display: flex;
   flex-wrap: wrap;
@@ -1642,6 +1925,23 @@ select {
   color: var(--charcoal);
   text-decoration: underline;
   background: none;
+}
+
+@media (max-width: 900px) {
+  .p2-mid-row {
+    grid-template-columns: 1fr;
+  }
+  .p2-kpi-row {
+    grid-template-columns: 1fr;
+  }
+  .p2-sources-wrap { height: 220px; }
+  .p2-campaign-wrap { height: 220px; }
+}
+
+@media (max-width: 1200px) and (min-width: 901px) {
+  .p2-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 

@@ -293,71 +293,115 @@
 
         <!-- ─── P2: Sales & Pipeline ───────────────────────── -->
         <section id="page-p2" class="page">
-          <div class="page-header">
-            <span class="page-badge">P2</span>
-            <h1 class="page-title">Sales &amp; Pipeline</h1>
-          </div>
+          <div class="p2-layout">
+            <div class="p2-head">
+              <div class="page-header p2-page-header">
+                <span class="page-badge">P2</span>
+                <h1 class="page-title p2-page-title">Sales &amp; Pipeline</h1>
+              </div>
+              <p class="p2-filter-cue" id="p2-filter-cue">Brand · Month · Year filters apply above</p>
+            </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Leads</div>
-              <div class="kpi-value" id="kpi-p2-leads">—</div>
-              <svg class="kpi-sparkline" id="kpi-p2-leads-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-week-pulse" id="kpi-p2-leads-pulse"></div>
-              <div class="kpi-sub" id="kpi-p2-leads-sub">Loading...</div>
+            <!-- Tier 1: KPI band 3×2 — Volume then Efficiency -->
+            <div class="p2-kpi-band">
+              <div class="p2-kpi-group" aria-label="Volume">
+                <p class="p2-kpi-group-label">Volume</p>
+                <div class="p2-kpi-row">
+                  <div class="kpi-card card p2-kpi" data-kpi="leads">
+                    <div class="kpi-label">Leads</div>
+                    <div class="kpi-value" id="kpi-p2-leads">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-leads-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-leads-delta" hidden></div>
+                    </div>
+                    <div class="kpi-week-pulse" id="kpi-p2-leads-pulse" hidden></div>
+                    <div class="kpi-sub" id="kpi-p2-leads-sub">Loading...</div>
+                  </div>
+                  <div class="kpi-card card p2-kpi" data-kpi="quotes">
+                    <div class="kpi-label">Quotes</div>
+                    <div class="kpi-value" id="kpi-p2-quotes">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-quotes-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-quotes-delta" hidden></div>
+                    </div>
+                    <div class="kpi-sub" id="kpi-p2-quotes-sub">Loading...</div>
+                  </div>
+                  <div class="kpi-card card p2-kpi" data-kpi="wins">
+                    <div class="kpi-label">Wins</div>
+                    <div class="kpi-value" id="kpi-p2-won">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-won-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-won-delta" hidden></div>
+                    </div>
+                    <div class="kpi-week-pulse" id="kpi-p2-won-pulse" hidden></div>
+                    <div class="kpi-sub" id="kpi-p2-won-sub">Loading...</div>
+                  </div>
+                </div>
+              </div>
+              <div class="p2-kpi-group" aria-label="Efficiency">
+                <p class="p2-kpi-group-label">Efficiency</p>
+                <div class="p2-kpi-row">
+                  <div class="kpi-card card p2-kpi" data-kpi="winrate">
+                    <div class="kpi-label">Win Rate</div>
+                    <div class="kpi-value" id="kpi-p2-winrate">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-winrate-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-winrate-delta" hidden></div>
+                    </div>
+                    <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
+                  </div>
+                  <div class="kpi-card card p2-kpi" data-kpi="spend">
+                    <div class="kpi-label">Total Spend</div>
+                    <div class="kpi-value" id="kpi-p2-spend">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-spend-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-spend-delta" hidden></div>
+                    </div>
+                    <div class="kpi-sub" id="kpi-p2-spend-sub">Loading...</div>
+                  </div>
+                  <div class="kpi-card card p2-kpi" data-kpi="cpl">
+                    <div class="kpi-label">Cost Per Lead</div>
+                    <div class="kpi-value" id="kpi-p2-cpl">—</div>
+                    <div class="p2-kpi-trend">
+                      <svg class="kpi-sparkline" id="kpi-p2-cpl-spark" hidden aria-hidden="true"></svg>
+                      <div class="p2-kpi-delta" id="kpi-p2-cpl-delta" hidden></div>
+                    </div>
+                    <div class="kpi-sub" id="kpi-p2-cpl-sub">Loading...</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Quotes Sent</div>
-              <div class="kpi-value" id="kpi-p2-quotes">—</div>
-              <div class="kpi-sub" id="kpi-p2-quotes-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Jobs Won</div>
-              <div class="kpi-value" id="kpi-p2-won">—</div>
-              <svg class="kpi-sparkline" id="kpi-p2-won-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-week-pulse" id="kpi-p2-won-pulse"></div>
-              <div class="kpi-sub" id="kpi-p2-won-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Win Rate %</div>
-              <div class="kpi-value" id="kpi-p2-winrate">—</div>
-              <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Ad Spend</div>
-              <div class="kpi-value" id="kpi-p2-spend">—</div>
-              <div class="kpi-sub" id="kpi-p2-spend-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Average Cost Per Lead</div>
-              <div class="kpi-value" id="kpi-p2-cpl">—</div>
-              <div class="kpi-sub" id="kpi-p2-cpl-sub">Loading...</div>
-            </div>
-          </div>
 
-          <div class="chart-row two-col">
-            <div class="chart-card card">
-              <div class="chart-title">Lead Source Breakdown</div>
-              <canvas id="chart-p2-sources" height="200"></canvas>
+            <!-- Tier 2 + 3: Funnel (anchor) | Lead sources -->
+            <div class="p2-mid-row">
+              <div class="chart-card card p2-funnel-card">
+                <div class="chart-title">Pipeline Funnel</div>
+                <div id="p2-funnel-overall" class="p2-funnel-overall" aria-live="polite">—</div>
+                <div id="p2-step-funnel" class="p2-step-funnel" aria-live="polite"></div>
+                <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden>*out-of-cohort wins: wins in this period were not all quoted in the same period</p>
+              </div>
+              <div class="chart-card card p2-sources-card">
+                <div class="chart-title">Lead Source Performance</div>
+                <div class="p2-chart-wrap p2-sources-wrap">
+                  <canvas id="chart-p2-sources"></canvas>
+                </div>
+              </div>
             </div>
-            <div class="chart-card card">
-              <div class="chart-title">Pipeline Funnel</div>
-              <div id="p2-funnel-overall" class="p2-funnel-overall" aria-live="polite">—</div>
-              <div id="p2-funnel-rates" class="p2-funnel-rates" aria-live="polite"></div>
-              <div id="chart-p2-funnel" class="apex-chart"></div>
-            </div>
-          </div>
 
-          <div class="chart-row">
-            <div class="chart-card card">
-              <div class="chart-title">Ad Spend vs Cost Per Lead by Campaign</div>
-              <canvas id="chart-p2-campaigns" height="110"></canvas>
+            <!-- Tier 4: Campaign performance full width -->
+            <div class="chart-row p2-campaign-row">
+              <div class="chart-card card p2-campaign-card">
+                <div class="chart-title">Campaign Performance (Ad Spend vs Cost Per Lead)</div>
+                <div class="p2-chart-wrap p2-campaign-wrap">
+                  <canvas id="chart-p2-campaigns"></canvas>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">Pipeline Detail</div>
-            <div id="p2-pipeline-table">Loading pipeline data...</div>
+            <div class="section-card p2-detail-card">
+              <div class="section-title">Pipeline Detail</div>
+              <div id="p2-pipeline-table">Loading pipeline data...</div>
+            </div>
           </div>
         </section>
 
@@ -1433,7 +1477,17 @@
       });
     }
 
-    /** Draw thin Deep Charcoal sparkline into an <svg> by id. */
+    /** Directional arrow icon (Deep Charcoal up / Soft Gray down). */
+    function kpiDirIcon(dir) {
+      if (dir === 'up') {
+        return '<svg class="kpi-dir-icon kpi-dir-icon--up" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
+          '<path d="M6 2.2L10.2 8.5H1.8L6 2.2z" fill="#262425"/></svg>';
+      }
+      return '<svg class="kpi-dir-icon kpi-dir-icon--down" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
+        '<path d="M6 9.8L1.8 3.5h8.4L6 9.8z" fill="#BCBDBE"/></svg>';
+    }
+
+    /** Draw sparkline into an <svg> by id (thick stroke + flat Brilliant Silver fill, no gradient). */
     function drawKpiSparkline(svgId, values, color) {
       var svg = document.getElementById(svgId);
       if (!svg) return;
@@ -1446,21 +1500,64 @@
         svg.setAttribute('hidden', '');
         return;
       }
-      var w = 120, h = 22, pad = 2;
+      var w = 120, h = 20, pad = 2;
       var min = Math.min.apply(null, nums);
       var max = Math.max.apply(null, nums);
       var range = max - min || 1;
-      var pts = nums.map(function(v, i) {
-        var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
-        var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-        return x.toFixed(1) + ',' + y.toFixed(1);
+      var coords = nums.map(function(v, i) {
+        return {
+          x: pad + (i / (nums.length - 1)) * (w - pad * 2),
+          y: pad + (1 - (v - min) / range) * (h - pad * 2)
+        };
+      });
+      var pts = coords.map(function(p) {
+        return p.x.toFixed(1) + ',' + p.y.toFixed(1);
       }).join(' ');
+      var baseY = (h - pad).toFixed(1);
+      var areaD =
+        'M' + coords[0].x.toFixed(1) + ',' + baseY +
+        ' L' + coords.map(function(p) {
+          return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+        }).join(' L') +
+        ' L' + coords[coords.length - 1].x.toFixed(1) + ',' + baseY +
+        ' Z';
       svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
       svg.setAttribute('preserveAspectRatio', 'none');
       svg.innerHTML =
-        '<polyline fill="none" stroke="' + stroke + '" stroke-width="1.25" ' +
+        '<path d="' + areaD + '" fill="#D2D4D5" fill-opacity="0.45" stroke="none"/>' +
+        '<polyline fill="none" stroke="' + stroke + '" stroke-width="2" ' +
         'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
       svg.removeAttribute('hidden');
+    }
+
+    /**
+     * Set delta HTML next to a sparkline: arrow + percent vs last week (or custom suffix).
+     * pct null → hide. Positive = charcoal up; negative = soft-gray down.
+     */
+    function setKpiDelta(elId, pct, vsLabel) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      if (pct === null || pct === undefined || isNaN(pct)) {
+        el.innerHTML = '';
+        el.setAttribute('hidden', '');
+        el.classList.remove('is-up', 'is-down');
+        return;
+      }
+      var rounded = Math.round(pct);
+      var label = vsLabel || 'vs last week';
+      if (rounded > 0) {
+        el.classList.add('is-up');
+        el.classList.remove('is-down');
+        el.innerHTML = kpiDirIcon('up') + ' <span>+' + rounded + '% ' + label + '</span>';
+      } else if (rounded < 0) {
+        el.classList.add('is-down');
+        el.classList.remove('is-up');
+        el.innerHTML = kpiDirIcon('down') + ' <span>' + rounded + '% ' + label + '</span>';
+      } else {
+        el.classList.remove('is-up', 'is-down');
+        el.innerHTML = '<span>0% ' + label + '</span>';
+      }
+      el.removeAttribute('hidden');
     }
 
     function setWeekPulse(elId, text) {
@@ -1638,7 +1735,7 @@
       }
 
       function p1DirIcon(dir) {
-        // Black directional glyph only (no color coding)
+        // P1 progress notes: charcoal glyphs only (no green/red traffic-light)
         if (dir === 'up') {
           return '<svg class="kpi-dir-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
             '<path d="M6 2.2L10.2 8.5H1.8L6 2.2z" fill="#262425"/></svg>';
@@ -2594,6 +2691,16 @@
       var mktFiltered   = applyFilters(marketing || []);
       var srcFiltered   = applyFilters(sources || []);
 
+      var cue = document.getElementById('p2-filter-cue');
+      if (cue) {
+        var monthLabel = (!activeMonths || !activeMonths.length)
+          ? 'All months'
+          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months');
+        var yearLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
+        var brandLabel = activeBrand || 'ALL';
+        cue.textContent = brandLabel + '  ·  ' + monthLabel + '  ·  ' + yearLabel;
+      }
+
       setBBPageData('P2', 'P2: Sales & Pipeline', {
         leads:     leadsFiltered.slice(0, 200),
         pipeline:  pipeFiltered.slice(0, 200),
@@ -2615,15 +2722,18 @@
       function isWonStatus(status) {
         return status.toLowerCase() === 'won';
       }
-      function isContactedStage(s) {
-        var t = s.toLowerCase();
-        return t === 'contacted' || t.indexOf('contacted') !== -1 || t.indexOf('initial inquiry') !== -1;
+      function isQuotedLead(r) {
+        var stage = stageOf(r);
+        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
+        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
+      }
+      function isWonLead(r) {
+        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
       }
       function clearP2Charts() {
         ['chart-p2-sources', 'chart-p2-campaigns'].forEach(function(id) {
           if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
-        // Destroy any leftover Chart.js funnel (pre-Apex migration)
         if (_charts['chart-p2-funnel']) {
           _charts['chart-p2-funnel'].destroy();
           delete _charts['chart-p2-funnel'];
@@ -2633,14 +2743,8 @@
 
       // ── KPI cards ─────────────────────────────────────────────
       var totalLeads = leadsFiltered.length;
-      var quotesSent = leadsFiltered.filter(function(r) {
-        var stage = stageOf(r);
-        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
-        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
-      }).length;
-      var jobsWon = leadsFiltered.filter(function(r) {
-        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
-      }).length;
+      var quotesSent = leadsFiltered.filter(isQuotedLead).length;
+      var jobsWon = leadsFiltered.filter(isWonLead).length;
       var winRate = totalLeads > 0 ? (jobsWon / totalLeads) * 100 : 0;
 
       var totalSpend = mktFiltered.reduce(function(s, r) {
@@ -2662,6 +2766,14 @@
       if (noData) {
         ['kpi-p2-leads','kpi-p2-quotes','kpi-p2-won','kpi-p2-winrate','kpi-p2-spend','kpi-p2-cpl']
           .forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
+        ['kpi-p2-leads-spark','kpi-p2-quotes-spark','kpi-p2-won-spark',
+         'kpi-p2-winrate-spark','kpi-p2-spend-spark','kpi-p2-cpl-spark']
+          .forEach(function(id) { drawKpiSparkline(id, null); });
+        ['kpi-p2-leads-delta','kpi-p2-quotes-delta','kpi-p2-won-delta',
+         'kpi-p2-winrate-delta','kpi-p2-spend-delta','kpi-p2-cpl-delta']
+          .forEach(function(id) { setKpiDelta(id, null); });
+        setWeekPulse('kpi-p2-leads-pulse', '');
+        setWeekPulse('kpi-p2-won-pulse', '');
       } else {
         setKPI('kpi-p2-leads',   'kpi-p2-leads-sub',   totalLeads || '—', 'From GHL leads');
         setKPI('kpi-p2-quotes',  'kpi-p2-quotes-sub',  quotesSent || '—', 'Quoted / quote sent');
@@ -2671,31 +2783,87 @@
         setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
       }
 
-      // ── Lightweight "this week" pulse on Leads + Jobs Won ───
-      (function applyP2WeekPulse() {
+      // ── Sparklines + week-over-week deltas (alongside, not instead of sparks) ──
+      (function applyP2Trends() {
         function leadDate(r) {
           return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') || getRowDateStr(r);
         }
         function wonDate(r) {
           return col(r, 'Close Date', 'Expected Close Date', 'Date Created', 'Last Activity Date') || getRowDateStr(r);
         }
-        var leadsByW = {};
+        function quoteDate(r) {
+          return col(r, 'Quote Sent Date', 'quote_sent_date', 'Date Created', 'Created Date') || getRowDateStr(r);
+        }
+        function mktDate(r) {
+          return col(r, 'Date', 'Week Ending', 'Period', 'Month') || getRowDateStr(r);
+        }
+
+        var leadsByW = {}, quotesByW = {}, wonByW = {};
         leadsFiltered.forEach(function(r) {
-          var k = weekKeyFromDateStr(leadDate(r));
-          if (!k) return;
-          leadsByW[k] = (leadsByW[k] || 0) + 1;
+          var kl = weekKeyFromDateStr(leadDate(r));
+          if (kl) leadsByW[kl] = (leadsByW[kl] || 0) + 1;
+          if (isQuotedLead(r)) {
+            var kq = weekKeyFromDateStr(quoteDate(r));
+            if (kq) quotesByW[kq] = (quotesByW[kq] || 0) + 1;
+          }
+          if (isWonLead(r)) {
+            var kw = weekKeyFromDateStr(wonDate(r));
+            if (kw) wonByW[kw] = (wonByW[kw] || 0) + 1;
+          }
         });
-        var wonByW = {};
-        leadsFiltered.forEach(function(r) {
-          if (!(isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won')) return;
-          var k = weekKeyFromDateStr(wonDate(r));
+
+        var spendByW = {}, cplSumByW = {}, cplNByW = {};
+        mktFiltered.forEach(function(r) {
+          var k = weekKeyFromDateStr(mktDate(r));
           if (!k) return;
-          wonByW[k] = (wonByW[k] || 0) + 1;
+          spendByW[k] = (spendByW[k] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
+          var cpl = parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
+          if (cpl > 0) {
+            cplSumByW[k] = (cplSumByW[k] || 0) + cpl;
+            cplNByW[k] = (cplNByW[k] || 0) + 1;
+          }
         });
+        var cplByW = {};
+        Object.keys(cplSumByW).forEach(function(k) {
+          cplByW[k] = cplNByW[k] ? cplSumByW[k] / cplNByW[k] : 0;
+        });
+
         var leadSeries = weekSeriesFromMap(leadsByW, 8);
+        var quoteSeries = weekSeriesFromMap(quotesByW, 8);
         var wonSeries = weekSeriesFromMap(wonByW, 8);
+        var spendSeries = weekSeriesFromMap(spendByW, 8);
+        var cplSeries = weekSeriesFromMap(cplByW, 8);
+
+        // Win rate by week from aligned lead/won maps
+        var wrByW = {};
+        Object.keys(leadsByW).forEach(function(k) {
+          var L = leadsByW[k] || 0;
+          var W = wonByW[k] || 0;
+          if (L > 0) wrByW[k] = (W / L) * 100;
+        });
+        var wrSeries = weekSeriesFromMap(wrByW, 8);
+
         drawKpiSparkline('kpi-p2-leads-spark', leadSeries.values);
+        drawKpiSparkline('kpi-p2-quotes-spark', quoteSeries.values);
         drawKpiSparkline('kpi-p2-won-spark', wonSeries.values);
+        drawKpiSparkline('kpi-p2-winrate-spark', wrSeries.values);
+        drawKpiSparkline('kpi-p2-spend-spark', spendSeries.values);
+        drawKpiSparkline('kpi-p2-cpl-spark', cplSeries.values);
+
+        function lastTwoPct(series) {
+          if (!series.values || series.values.length < 2) return null;
+          var curr = series.values[series.values.length - 1];
+          var prev = series.values[series.values.length - 2];
+          return pctChangeWeek(curr, prev);
+        }
+
+        setKpiDelta('kpi-p2-leads-delta', lastTwoPct(leadSeries), 'vs last week');
+        setKpiDelta('kpi-p2-quotes-delta', lastTwoPct(quoteSeries), 'vs last week');
+        setKpiDelta('kpi-p2-won-delta', lastTwoPct(wonSeries), 'vs last week');
+        setKpiDelta('kpi-p2-winrate-delta', lastTwoPct(wrSeries), 'vs last week');
+        setKpiDelta('kpi-p2-spend-delta', lastTwoPct(spendSeries), 'vs last week');
+        setKpiDelta('kpi-p2-cpl-delta', lastTwoPct(cplSeries), 'vs last week');
+
         if (leadSeries.latestKey) {
           setWeekPulse('kpi-p2-leads-pulse', 'This week: ' + leadSeries.latestVal + ' leads');
         } else {
@@ -2708,17 +2876,41 @@
         }
       })();
 
-      // Always rebuild all three charts from the currently filtered rows
-      // (never leave stale Chart.js instances when a filter empties a series).
       clearP2Charts();
 
-      // Brand palette (P2 charts/tables only)
       var P2_CHARCOAL = '#262425';
       var P2_SOFT_GRAY = '#BCBDBE';
       var P2_SILVER = '#D2D4D5';
       var P2_WHITE = '#FFFFFF';
+      var P2_GRID = { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 };
 
-      // ── Chart 1: Lead Source breakdown (filtered GHL_Leads) ───
+      // Chart plugin: force count label beside every horizontal bar
+      var p2BarEndLabels = {
+        id: 'p2BarEndLabels',
+        afterDatasetsDraw: function(chart) {
+          var ctx = chart.ctx;
+          var meta = chart.getDatasetMeta(0);
+          if (!meta || !meta.data) return;
+          ctx.save();
+          ctx.fillStyle = P2_CHARCOAL;
+          ctx.font = '600 11px Montserrat, sans-serif';
+          ctx.textBaseline = 'middle';
+          meta.data.forEach(function(bar, i) {
+            var val = chart.data.datasets[0].data[i];
+            if (val === null || val === undefined) return;
+            var text = String(val);
+            var x = bar.x + 6;
+            var y = bar.y;
+            // Keep label readable when bar is tiny: still show at end of bar position
+            if (x < chart.chartArea.left + 8) x = chart.chartArea.left + 8;
+            ctx.textAlign = 'left';
+            ctx.fillText(text, x, y);
+          });
+          ctx.restore();
+        }
+      };
+
+      // ── Lead Source Performance (linear scale + end labels on every bar) ──
       var bySource = {};
       leadsFiltered.forEach(function(r) {
         var src = col(r, 'Lead Source', 'lead_source', 'Source', 'source') || 'Unknown';
@@ -2729,7 +2921,6 @@
       }).sort(function(a, b) { return b.count - a.count; });
       var maxSrc = sourceEntries.length ? sourceEntries[0].count : 1;
 
-      // Tone hierarchy: highest count = Deep Charcoal, then Soft Gray, then Silver
       function getSourceBarColor(count, max) {
         var pct = max > 0 ? count / max : 0;
         if (pct >= 0.66) return P2_CHARCOAL;
@@ -2737,12 +2928,17 @@
         return P2_SILVER;
       }
 
+      var sourcesWrap = document.querySelector('#page-p2 .p2-sources-wrap');
+      if (sourcesWrap) {
+        sourcesWrap.style.height = Math.max(200, Math.min(420, sourceEntries.length * 28 + 48)) + 'px';
+      }
+
       makeChart('chart-p2-sources', {
         type: 'bar',
         data: {
           labels: sourceEntries.length
             ? sourceEntries.map(function(e) {
-                return e.source.length > 28 ? e.source.substring(0, 28) + '…' : e.source;
+                return e.source.length > 32 ? e.source.substring(0, 32) + '…' : e.source;
               })
             : ['No leads'],
           datasets: [{
@@ -2752,142 +2948,111 @@
               ? sourceEntries.map(function(e) { return getSourceBarColor(e.count, maxSrc); })
               : [P2_SILVER],
             borderWidth: 0,
-            borderRadius: 0
+            borderRadius: 0,
+            barThickness: 14
           }]
         },
         options: {
           indexAxis: 'y',
           responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { right: 36 } },
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' leads'; } } }
+            tooltip: {
+              callbacks: {
+                title: function(items) {
+                  var i = items[0] && items[0].dataIndex;
+                  return sourceEntries[i] ? sourceEntries[i].source : '';
+                },
+                label: function(ctx) { return ctx.raw + ' leads'; }
+              }
+            }
           },
-          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { precision: 0, color: P2_CHARCOAL, font: { size: 10 } },
+              grid: P2_GRID,
+              border: { color: P2_SOFT_GRAY }
+            },
+            y: {
+              ticks: { color: P2_CHARCOAL, font: { size: 10, family: 'Montserrat' } },
+              grid: { display: false },
+              border: { color: P2_SOFT_GRAY }
+            }
+          }
+        },
+        plugins: [p2BarEndLabels]
       });
 
-      // ── Chart 2: Pipeline funnel (ApexCharts, filtered GHL_Pipeline) ─
-      // Contacted / Quoted = Pipeline Stage; Won = Status === "Won"
-      // (Won checked first so a won deal is not also counted as Quoted).
-      // Tone hierarchy: Won full charcoal; Quoted mid; Contacted lightest.
-      var funnelCounts = { Contacted: 0, Quoted: 0, Won: 0 };
-      pipeFiltered.forEach(function(r) {
-        if (isWonStatus(statusOf(r))) {
-          funnelCounts.Won++;
-          return;
-        }
-        var s = stageOf(r);
-        if (isQuotedStage(s)) funnelCounts.Quoted++;
-        else if (isContactedStage(s)) funnelCounts.Contacted++;
-      });
-      var funnelLabels = ['Contacted', 'Quoted', 'Won'];
-      var funnelData = funnelLabels.map(function(k) { return funnelCounts[k]; });
-      var hasFunnelData = funnelData.some(function(n) { return n > 0; });
-
-      // Opacity / brand tone: Contacted lightest → Quoted mid → Won full strength
-      var funnelColors = [
-        P2_SILVER,                 // Contacted — Brilliant Silver
-        'rgba(38,36,37,0.6)',      // Quoted — ~60% Deep Charcoal
-        P2_CHARCOAL                // Won — Deep Charcoal 100%
-      ];
-      var funnelLabelColors = [P2_CHARCOAL, P2_WHITE, P2_WHITE];
-
-      var contactedN = funnelCounts.Contacted;
-      var quotedN = funnelCounts.Quoted;
-      var wonN = funnelCounts.Won;
-      var contactedToQuoted = contactedN > 0 ? (quotedN / contactedN) * 100 : null;
+      // ── Pipeline Funnel: horizontal Lead → Quoted → Won stepped bars ──
+      // Uses Lead / Quote / Win volume from GHL leads (matches KPI band).
+      var leadN = totalLeads;
+      var quotedN = quotesSent;
+      var wonN = jobsWon;
+      var leadToQuoted = leadN > 0 ? (quotedN / leadN) * 100 : null;
       var quotedToWon = quotedN > 0 ? (wonN / quotedN) * 100 : null;
-      var contactedToWon = contactedN > 0 ? (wonN / contactedN) * 100 : null;
+      var leadToWon = leadN > 0 ? (wonN / leadN) * 100 : null;
+      var outOfCohort = quotedToWon !== null && quotedToWon > 100;
+
+      // Proportional widths vs Lead count (Lead always 100% of track)
+      var base = Math.max(leadN, 1);
+      var wLead = 100;
+      var wQuoted = leadN > 0 ? Math.min(100, Math.max(quotedN > 0 ? 6 : 0, (quotedN / base) * 100)) : 0;
+      var wWon = leadN > 0 ? Math.min(100, Math.max(wonN > 0 ? 6 : 0, (wonN / base) * 100)) : 0;
+      // Allow Won width > Quoted when out-of-cohort (true proportion of lead, not capped under quote)
+      if (outOfCohort && leadN > 0) {
+        wWon = Math.min(100, Math.max(6, (wonN / base) * 100));
+      }
 
       var overallEl = document.getElementById('p2-funnel-overall');
-      var ratesEl = document.getElementById('p2-funnel-rates');
       if (overallEl) {
-        if (contactedToWon === null) {
-          overallEl.innerHTML = '—<span class="p2-funnel-overall-label">overall conversion</span>';
+        if (leadToWon === null || leadN === 0) {
+          overallEl.innerHTML = '—<span class="p2-funnel-overall-label">Lead → Won</span>';
         } else {
           overallEl.innerHTML =
-            formatPct(contactedToWon) +
-            '<span class="p2-funnel-overall-label">overall conversion</span>';
+            formatPct(leadToWon) +
+            '<span class="p2-funnel-overall-label">Lead → Won</span>';
         }
       }
-      if (ratesEl) {
-        var c2q = contactedToQuoted === null ? '—' : formatPct(contactedToQuoted);
-        var q2w = quotedToWon === null ? '—' : formatPct(quotedToWon);
-        ratesEl.innerHTML =
-          '<span><span class="p2-funnel-rate-step">Contacted → Quoted</span><strong>' + c2q + '</strong></span>' +
-          '<span><span class="p2-funnel-rate-step">Quoted → Won</span><strong>' + q2w + '</strong></span>';
+
+      var funnelEl = document.getElementById('p2-step-funnel');
+      if (funnelEl) {
+        if (leadN === 0 && quotedN === 0 && wonN === 0) {
+          funnelEl.innerHTML = '<p class="no-data-msg">No funnel data for selected filters.</p>';
+        } else {
+          var qConv = leadToQuoted === null ? '—' : Math.round(leadToQuoted) + '%';
+          var wConv = quotedToWon === null ? '—' : Math.round(quotedToWon) + '%';
+          var wNote = outOfCohort
+            ? ' <span class="p2-cohort-star" title="Wins not all from quotes in this period">*</span><span class="p2-cohort-tag">out-of-cohort wins</span>'
+            : '';
+          funnelEl.innerHTML =
+            '<div class="p2-step-stages" role="list">' +
+              '<div class="p2-step-stage" role="listitem">' +
+                '<div class="p2-step-meta"><span class="p2-step-name">Lead</span><span class="p2-step-count">' + leadN + '</span></div>' +
+                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--lead" style="width:' + wLead + '%"></div></div>' +
+              '</div>' +
+              '<div class="p2-step-stage" role="listitem">' +
+                '<div class="p2-step-meta"><span class="p2-step-name">Quoted</span><span class="p2-step-count">' + quotedN +
+                  '</span><span class="p2-step-conv">' + qConv + ' from Lead</span></div>' +
+                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--quoted" style="width:' + wQuoted + '%"></div></div>' +
+              '</div>' +
+              '<div class="p2-step-stage" role="listitem">' +
+                '<div class="p2-step-meta"><span class="p2-step-name">Won</span><span class="p2-step-count">' + wonN +
+                  '</span><span class="p2-step-conv">' + wConv + ' from Quote' + wNote + '</span></div>' +
+                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--won" style="width:' + wWon + '%"></div></div>' +
+              '</div>' +
+            '</div>';
+        }
+      }
+      var footEl = document.getElementById('p2-funnel-footnote');
+      if (footEl) {
+        if (outOfCohort) footEl.removeAttribute('hidden');
+        else footEl.setAttribute('hidden', '');
       }
 
-      setApexOrPlaceholder('chart-p2-funnel', hasFunnelData, {
-        chart: {
-          type: 'bar',
-          height: 260,
-          fontFamily: 'Montserrat, sans-serif',
-          toolbar: { show: false },
-          background: 'transparent',
-          dropShadow: { enabled: false }
-        },
-        theme: { mode: 'light' },
-        series: [{ name: 'Pipeline', data: funnelData }],
-        colors: funnelColors,
-        plotOptions: {
-          bar: {
-            borderRadius: 0,
-            horizontal: true,
-            distributed: true,
-            barHeight: '88%',
-            isFunnel: true
-          }
-        },
-        fill: { type: 'solid', gradient: { enabled: false } },
-        grid: {
-          borderColor: P2_SOFT_GRAY,
-          strokeDashArray: 0,
-          xaxis: { lines: { show: false } },
-          yaxis: { lines: { show: false } }
-        },
-        xaxis: {
-          categories: funnelLabels,
-          labels: {
-            style: {
-              colors: P2_CHARCOAL,
-              fontSize: '11px',
-              fontFamily: 'Montserrat, sans-serif'
-            }
-          },
-          axisBorder: { color: P2_SOFT_GRAY },
-          axisTicks: { color: P2_SOFT_GRAY }
-        },
-        yaxis: {
-          labels: {
-            style: {
-              colors: P2_CHARCOAL,
-              fontSize: '11px',
-              fontWeight: 600,
-              fontFamily: 'Montserrat, sans-serif'
-            }
-          }
-        },
-        legend: { show: false },
-        dataLabels: {
-          enabled: true,
-          formatter: function(val) { return val; },
-          style: {
-            colors: funnelLabelColors,
-            fontSize: '11px',
-            fontWeight: 600,
-            fontFamily: 'Poppins, sans-serif'
-          },
-          dropShadow: { enabled: false }
-        },
-        tooltip: {
-          theme: 'light',
-          style: { fontFamily: 'Poppins, sans-serif', fontSize: '12px' },
-          y: { formatter: function(val) { return val + ' in stage'; } }
-        }
-      });
-
-      // ── Chart 3: Ad spend vs CPL by campaign (filtered) ───────
+      // ── Campaign Performance: dual Y, black bars + grey CPL line ──
       var byCampaign = {};
       mktFiltered.forEach(function(r) {
         var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
@@ -2905,55 +3070,131 @@
         };
       }).sort(function(a, b) { return b.spend - a.spend; }).slice(0, 12);
 
+      var campLabels = campEntries.length
+        ? campEntries.map(function(e) {
+            return e.name.length > 22 ? e.name.substring(0, 20) + '…' : e.name;
+          })
+        : ['No campaigns'];
+
       makeChart('chart-p2-campaigns', {
         type: 'bar',
         data: {
-          labels: campEntries.length
-            ? campEntries.map(function(e) {
-                return e.name.length > 30 ? e.name.substring(0, 30) + '…' : e.name;
-              })
-            : ['No campaigns'],
+          labels: campLabels,
           datasets: [
             {
-              label: 'Ad Spend ($)',
+              type: 'bar',
+              label: 'Ad Spend',
               data: campEntries.length
                 ? campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; })
                 : [0],
               backgroundColor: P2_CHARCOAL,
               borderWidth: 0,
-              borderRadius: 0
+              borderRadius: 0,
+              yAxisID: 'y',
+              order: 2
             },
             {
-              label: 'Cost Per Lead ($)',
+              type: 'line',
+              label: 'Cost Per Lead',
               data: campEntries.length
                 ? campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; })
                 : [0],
-              backgroundColor: P2_SOFT_GRAY,
-              borderWidth: 0,
-              borderRadius: 0
+              borderColor: P2_SOFT_GRAY,
+              backgroundColor: P2_WHITE,
+              borderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 6,
+              pointBackgroundColor: P2_WHITE,
+              pointBorderColor: P2_SOFT_GRAY,
+              pointBorderWidth: 2,
+              fill: false,
+              tension: 0,
+              yAxisID: 'y1',
+              order: 1
             }
           ]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { position: 'top' },
+            legend: {
+              position: 'top',
+              labels: {
+                color: P2_CHARCOAL,
+                font: { size: 11, family: 'Montserrat' },
+                boxWidth: 12,
+                usePointStyle: false
+              }
+            },
             tooltip: {
               callbacks: {
-                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw); }
+                title: function(items) {
+                  var i = items[0] && items[0].dataIndex;
+                  return campEntries[i] ? campEntries[i].name : '';
+                },
+                label: function(ctx) {
+                  return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0);
+                }
               }
             }
           },
           scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: P2_CHARCOAL,
+                maxRotation: 45,
+                minRotation: 0,
+                autoSkip: false,
+                font: { size: 10, family: 'Montserrat' }
+              },
+              border: { color: P2_SOFT_GRAY }
+            },
             y: {
+              type: 'linear',
+              position: 'left',
               beginAtZero: true,
-              ticks: { callback: function(v) { return '$' + v; } }
+              title: {
+                display: true,
+                text: 'Ad Spend ($)',
+                color: P2_CHARCOAL,
+                font: { size: 10, family: 'Montserrat', weight: '600' }
+              },
+              ticks: {
+                color: P2_CHARCOAL,
+                callback: function(v) {
+                  return '$' + (v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : v);
+                },
+                font: { size: 10 }
+              },
+              grid: P2_GRID,
+              border: { color: P2_SOFT_GRAY }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Cost Per Lead ($)',
+                color: P2_SOFT_GRAY,
+                font: { size: 10, family: 'Montserrat', weight: '600' }
+              },
+              ticks: {
+                color: P2_SOFT_GRAY,
+                callback: function(v) { return '$' + v; },
+                font: { size: 10 }
+              },
+              grid: { drawOnChartArea: false },
+              border: { color: P2_SOFT_GRAY }
             }
           }
         }
       });
 
-      // ── Pipeline detail table (no GHL ID / Probability % / Assigned to) ─
+      // ── Pipeline detail table ─
       function escapeP2Text(s) {
         return String(s)
           .replace(/&/g, '&amp;')
@@ -2964,7 +3205,6 @@
       function formatP2ContactName(v) {
         if (v === '' || v == null) return '—';
         var raw = String(v).trim();
-        // Strip any colored HTML from sheet; keep plain label
         var text = raw.replace(/<[^>]*>/g, '').trim() || raw;
         var hrefMatch = raw.match(/href=["']([^"']+)["']/i);
         var url = hrefMatch ? hrefMatch[1] : (/^(https?:\/\/|mailto:)/i.test(raw) ? raw : '');
