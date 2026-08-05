@@ -1637,6 +1637,16 @@
         else el.setAttribute('hidden', '');
       }
 
+      function p1DirIcon(dir) {
+        // Black directional glyph only (no color coding)
+        if (dir === 'up') {
+          return '<svg class="kpi-dir-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
+            '<path d="M6 2.2L10.2 8.5H1.8L6 2.2z" fill="#262425"/></svg>';
+        }
+        return '<svg class="kpi-dir-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
+          '<path d="M6 9.8L1.8 3.5h8.4L6 9.8z" fill="#262425"/></svg>';
+      }
+
       function setKpiProgress(progressId, actual, target, flagId) {
         var root = document.getElementById(progressId);
         if (!root) return;
@@ -1660,9 +1670,13 @@
         if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
         if (pctEl) pctEl.textContent = Math.round(pct) + '%';
         if (noteEl) {
-          noteEl.textContent = exceeded
-            ? ('+' + Math.round(pct - 100) + '% over')
-            : '';
+          if (exceeded) {
+            noteEl.innerHTML = p1DirIcon('up') + ' +' + Math.round(pct - 100) + '% over';
+          } else if (pct < 100) {
+            noteEl.innerHTML = p1DirIcon('down') + ' ' + Math.round(100 - pct) + '% under';
+          } else {
+            noteEl.textContent = '';
+          }
         }
         root.classList.remove('is-untracked');
         root.classList.toggle('is-exceeded', exceeded);
@@ -1683,7 +1697,7 @@
           .forEach(function(id) { renderSparkline(id, null); });
       }
 
-      /** Draw a thin 6-point sparkline; omit when fewer than 2 real values. */
+      /** Draw a sparkline with flat area fill (no gradient); thicker stroke. */
       function renderSparkline(svgId, values) {
         var svg = document.getElementById(svgId);
         if (!svg) return;
@@ -1695,20 +1709,34 @@
           svg.setAttribute('hidden', '');
           return;
         }
-        var w = 120, h = 22, pad = 2;
+        var w = 140, h = 26, pad = 2;
         var min = Math.min.apply(null, nums);
         var max = Math.max.apply(null, nums);
         var range = max - min || 1;
-        var pts = nums.map(function(v, i) {
-          var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
-          var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-          return x.toFixed(1) + ',' + y.toFixed(1);
+        var coords = nums.map(function(v, i) {
+          return {
+            x: pad + (i / (nums.length - 1)) * (w - pad * 2),
+            y: pad + (1 - (v - min) / range) * (h - pad * 2)
+          };
+        });
+        var linePts = coords.map(function(p) {
+          return p.x.toFixed(1) + ',' + p.y.toFixed(1);
         }).join(' ');
+        var baseY = (h - pad).toFixed(1);
+        var areaD =
+          'M' + coords[0].x.toFixed(1) + ',' + baseY +
+          ' L' + coords.map(function(p) {
+            return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+          }).join(' L') +
+          ' L' + coords[coords.length - 1].x.toFixed(1) + ',' + baseY +
+          ' Z';
         svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
         svg.setAttribute('preserveAspectRatio', 'none');
+        // Flat Brilliant Silver area (solid low opacity), charcoal stroke
         svg.innerHTML =
-          '<polyline fill="none" stroke="#262425" stroke-width="1.25" ' +
-          'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
+          '<path d="' + areaD + '" fill="#D2D4D5" fill-opacity="0.45" stroke="none"/>' +
+          '<polyline fill="none" stroke="#262425" stroke-width="2.1" ' +
+          'stroke-linecap="round" stroke-linejoin="round" points="' + linePts + '"/>';
         svg.removeAttribute('hidden');
       }
 
@@ -2060,7 +2088,12 @@
           },
           scales: {
             x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: yTicks, grid: { color: 'rgba(210,212,213,0.5)' } }
+            y: {
+              beginAtZero: true,
+              ticks: yTicks,
+              // Quiet grid lines so bars stay primary
+              grid: { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 }
+            }
           }
         }
       });
