@@ -109,171 +109,194 @@
         </div>
 
         <!-- ─── P1: Executive Snapshot (Targets tab) ──────── -->
+        <!-- Hierarchy: Tier 1 (top Z) → Tier 2 (mid Z) → Tier 3 (bottom Z) -->
         <section id="page-p1" class="page active">
-          <div class="p1-hero">
-            <div class="p1-watermark" aria-hidden="true">
-              <svg class="p1-watermark-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="page-header">
-              <span class="page-badge">P1</span>
-              <h1 class="page-title">Executive Snapshot</h1>
-            </div>
+          <div class="p1-layout">
 
-            <div class="p1-kpi-grid">
-              <div class="kpi-card card kpi-card--primary" data-kpi="revenue">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M12 7v10M9.5 9.5c.5-1 1.5-1.5 2.5-1.5s2 .6 2 1.75-1 1.5-2.5 1.75-2.5.75-2.5 1.75 1 1.75 2.5 1.75 2-.5 2.5-1.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- ═══ TIER 1 — primary metrics, full charcoal contrast ═══ -->
+            <div class="p1-tier p1-tier-1">
+              <div class="p1-watermark" aria-hidden="true">
+                <svg class="p1-watermark-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <div class="kpi-label">Revenue Target (MTD)</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-revenue-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-revenue-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-revenue-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-revenue-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
               </div>
 
-              <div class="kpi-card card" data-kpi="margin">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M8 16L16 8M9.5 9.5h.01M14.5 14.5h.01" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <div class="kpi-label">Gross Margin Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-margin-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-margin-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-margin-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-margin-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+              <div class="p1-z-top">
+                <!-- Top-left: page identity + Revenue (anchor of the Z) -->
+                <div class="p1-z-tl">
+                  <div class="page-header p1-page-header">
+                    <span class="page-badge">P1</span>
+                    <h1 class="page-title p1-page-title">Executive Snapshot</h1>
                   </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
+                  <p class="p1-filter-cue" id="p1-filter-cue">Brand · Month · Year filters apply above</p>
 
-              <div class="kpi-card card" data-kpi="lead">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="9" cy="8" r="3" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                  <circle cx="17" cy="9" r="2.5" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M21 19c0-2.2-1.5-3.8-3.5-4.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <div class="kpi-label">Lead Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-lead-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-lead-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-lead-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-lead-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  <div class="kpi-card card kpi-card--primary p1-kpi-hero" data-kpi="revenue">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                      <path d="M12 7v10M9.5 9.5c.5-1 1.5-1.5 2.5-1.5s2 .6 2 1.75-1 1.5-2.5 1.75-2.5.75-2.5 1.75 1 1.75 2.5 1.75 2-.5 2.5-1.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="kpi-label">Revenue Target (MTD)</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-revenue-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-revenue-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-revenue-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-revenue-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
                   </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
-              </div>
 
-              <div class="kpi-card card" data-kpi="jobs">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div class="kpi-label">Jobs Won Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-jobs-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-jobs-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-jobs-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-jobs-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                <!-- Top-right: Margin + Jobs Won (paired primary) -->
+                <div class="p1-z-tr">
+                  <div class="kpi-card card p1-kpi-hero p1-kpi-hero--pair" data-kpi="margin">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                      <path d="M8 16L16 8M9.5 9.5h.01M14.5 14.5h.01" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <div class="kpi-label">Gross Margin Target</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-margin-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-margin-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-margin-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-margin-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
                   </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
 
-              <div class="kpi-card card" data-kpi="quotes">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#262425" stroke-width="1.5" stroke-linejoin="round"/>
-                  <path d="M14 3v5h5M9 13h6M9 17h4" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div class="kpi-label">Quotes Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-quote-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-quote-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-quote-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-quote-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                  <div class="kpi-card card p1-kpi-hero p1-kpi-hero--pair" data-kpi="jobs">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
+                      <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="kpi-label">Jobs Won Target</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-jobs-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-jobs-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-jobs-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-jobs-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
                   </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
-
-              <div class="kpi-card card" data-kpi="activejobs">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 20h18M5 20V9l7-5 7 5v11M10 20v-5h4v5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div class="kpi-label">Active Jobs Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-activejobs-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-activejobs-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-activejobs-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-activejobs-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="chart-row">
-            <div class="chart-card card">
-              <div class="chart-title">Monthly Revenue Targets</div>
-              <canvas id="chart-p1-revenue" height="90"></canvas>
+            <!-- ═══ TIER 2 — secondary KPIs + trend chart (softer tone) ═══ -->
+            <div class="p1-tier p1-tier-2">
+              <div class="p1-z-mid">
+                <div class="p1-secondary-grid">
+                  <div class="kpi-card card p1-kpi-secondary" data-kpi="lead">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="9" cy="8" r="3" stroke="#262425" stroke-width="1.5"/>
+                      <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                      <circle cx="17" cy="9" r="2.5" stroke="#262425" stroke-width="1.5"/>
+                      <path d="M21 19c0-2.2-1.5-3.8-3.5-4.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <div class="kpi-label">Lead Target</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-lead-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-lead-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-lead-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-lead-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
+                  </div>
+
+                  <div class="kpi-card card p1-kpi-secondary" data-kpi="quotes">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#262425" stroke-width="1.5" stroke-linejoin="round"/>
+                      <path d="M14 3v5h5M9 13h6M9 17h4" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="kpi-label">Quotes Target</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-quote-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-quote-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-quote-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-quote-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
+                  </div>
+
+                  <div class="kpi-card card p1-kpi-secondary" data-kpi="activejobs">
+                    <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M3 20h18M5 20V9l7-5 7 5v11M10 20v-5h4v5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="kpi-label">Active Jobs Target</div>
+                    <div class="kpi-value-row">
+                      <div class="kpi-value" id="kpi-activejobs-target">—</div>
+                      <span class="kpi-exceeded-flag" id="kpi-activejobs-exceeded" hidden aria-label="Target exceeded">
+                        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                    <svg class="kpi-sparkline" id="kpi-activejobs-spark" hidden aria-hidden="true"></svg>
+                    <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
+                    <div class="kpi-progress" id="kpi-activejobs-progress">
+                      <div class="kpi-progress-track">
+                        <div class="kpi-progress-fill" style="width:0%"></div>
+                        <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+                      </div>
+                      <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="chart-card card p1-chart-card">
+                  <div class="chart-title">Monthly Revenue Targets</div>
+                  <canvas id="chart-p1-revenue" height="90"></canvas>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">Annual Targets by Month</div>
-            <div id="p1-targets-table">Loading targets...</div>
+            <!-- ═══ TIER 3 — detail table, muted / receding ═══ -->
+            <div class="p1-tier p1-tier-3">
+              <div class="section-card p1-detail-card">
+                <div class="section-title">Annual Targets by Month</div>
+                <div id="p1-targets-table">Loading targets...</div>
+                <p class="p1-footnote">Source: Targets · Xero Financials · GHL Leads / Pipeline. Values reflect Brand / Month / Year filters.</p>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -1583,6 +1606,17 @@
       var pipeFiltered   = applyFilters(ghlPipeline);
       var weeklyFiltered = applyFilters(weeklySummary);
       var projectsFiltered = filterByBrand(xeroProjects || [], activeBrand);
+
+      // Tier-1 filter cue: Brand / Month / Year read right under the title
+      var cueEl = document.getElementById('p1-filter-cue');
+      if (cueEl) {
+        var monthLabel = (!activeMonths || !activeMonths.length)
+          ? 'All months'
+          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months');
+        var yearLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
+        var brandLabel = activeBrand || 'ALL';
+        cueEl.textContent = brandLabel + '  ·  ' + monthLabel + '  ·  ' + yearLabel;
+      }
 
       setBBPageData('P1', 'P1: Executive Snapshot', {
         targets: filtered,
