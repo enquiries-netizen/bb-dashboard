@@ -377,7 +377,9 @@
               <div class="chart-card card p2-funnel-card">
                 <div class="chart-title">Pipeline Funnel</div>
                 <div id="p2-funnel-overall" class="p2-funnel-overall" aria-live="polite">—</div>
-                <div id="p2-step-funnel" class="p2-step-funnel" aria-live="polite"></div>
+                <div class="p2-chart-wrap p2-funnel-wrap">
+                  <canvas id="chart-p2-funnel" aria-label="Pipeline funnel Lead Quoted Won"></canvas>
+                </div>
                 <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden>*out-of-cohort wins: wins in this period were not all quoted in the same period</p>
               </div>
               <div class="chart-card card p2-sources-card">
@@ -2731,13 +2733,9 @@
         return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
       }
       function clearP2Charts() {
-        ['chart-p2-sources', 'chart-p2-campaigns'].forEach(function(id) {
+        ['chart-p2-sources', 'chart-p2-campaigns', 'chart-p2-funnel'].forEach(function(id) {
           if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
-        if (_charts['chart-p2-funnel']) {
-          _charts['chart-p2-funnel'].destroy();
-          delete _charts['chart-p2-funnel'];
-        }
         destroyApex('chart-p2-funnel');
       }
 
@@ -2986,8 +2984,9 @@
         plugins: [p2BarEndLabels]
       });
 
-      // ── Pipeline Funnel: horizontal Lead → Quoted → Won stepped bars ──
-      // Uses Lead / Quote / Win volume from GHL leads (matches KPI band).
+      // ── Pipeline Funnel: Chart.js horizontal stepped bars (Lead → Quoted → Won) ──
+      // Values = actual volumes so bar lengths are proportional (not equal-width labels).
+      // Conversion % on y-labels; * footnote when Won/Quote > 100%.
       var leadN = totalLeads;
       var quotedN = quotesSent;
       var wonN = jobsWon;
@@ -2995,16 +2994,6 @@
       var quotedToWon = quotedN > 0 ? (wonN / quotedN) * 100 : null;
       var leadToWon = leadN > 0 ? (wonN / leadN) * 100 : null;
       var outOfCohort = quotedToWon !== null && quotedToWon > 100;
-
-      // Proportional widths vs Lead count (Lead always 100% of track)
-      var base = Math.max(leadN, 1);
-      var wLead = 100;
-      var wQuoted = leadN > 0 ? Math.min(100, Math.max(quotedN > 0 ? 6 : 0, (quotedN / base) * 100)) : 0;
-      var wWon = leadN > 0 ? Math.min(100, Math.max(wonN > 0 ? 6 : 0, (wonN / base) * 100)) : 0;
-      // Allow Won width > Quoted when out-of-cohort (true proportion of lead, not capped under quote)
-      if (outOfCohort && leadN > 0) {
-        wWon = Math.min(100, Math.max(6, (wonN / base) * 100));
-      }
 
       var overallEl = document.getElementById('p2-funnel-overall');
       if (overallEl) {
@@ -3017,35 +3006,125 @@
         }
       }
 
-      var funnelEl = document.getElementById('p2-step-funnel');
-      if (funnelEl) {
-        if (leadN === 0 && quotedN === 0 && wonN === 0) {
-          funnelEl.innerHTML = '<p class="no-data-msg">No funnel data for selected filters.</p>';
-        } else {
-          var qConv = leadToQuoted === null ? '—' : Math.round(leadToQuoted) + '%';
-          var wConv = quotedToWon === null ? '—' : Math.round(quotedToWon) + '%';
-          var wNote = outOfCohort
-            ? ' <span class="p2-cohort-star" title="Wins not all from quotes in this period">*</span><span class="p2-cohort-tag">out-of-cohort wins</span>'
-            : '';
-          funnelEl.innerHTML =
-            '<div class="p2-step-stages" role="list">' +
-              '<div class="p2-step-stage" role="listitem">' +
-                '<div class="p2-step-meta"><span class="p2-step-name">Lead</span><span class="p2-step-count">' + leadN + '</span></div>' +
-                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--lead" style="width:' + wLead + '%"></div></div>' +
-              '</div>' +
-              '<div class="p2-step-stage" role="listitem">' +
-                '<div class="p2-step-meta"><span class="p2-step-name">Quoted</span><span class="p2-step-count">' + quotedN +
-                  '</span><span class="p2-step-conv">' + qConv + ' from Lead</span></div>' +
-                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--quoted" style="width:' + wQuoted + '%"></div></div>' +
-              '</div>' +
-              '<div class="p2-step-stage" role="listitem">' +
-                '<div class="p2-step-meta"><span class="p2-step-name">Won</span><span class="p2-step-count">' + wonN +
-                  '</span><span class="p2-step-conv">' + wConv + ' from Quote' + wNote + '</span></div>' +
-                '<div class="p2-step-track"><div class="p2-step-bar p2-step-bar--won" style="width:' + wWon + '%"></div></div>' +
-              '</div>' +
-            '</div>';
+      var qConvLabel = leadToQuoted === null ? '' : Math.round(leadToQuoted) + '% from Lead';
+      var wConvLabel = quotedToWon === null
+        ? ''
+        : (Math.round(quotedToWon) + '% from Quote' + (outOfCohort ? '*' : ''));
+
+      // Custom y-labels: stage name + count; conversion stays readable beside category
+      var funnelYLabels = [
+        'Lead  ' + leadN,
+        'Quoted  ' + quotedN + (qConvLabel ? '  ·  ' + qConvLabel : ''),
+        'Won  ' + wonN + (wConvLabel ? '  ·  ' + wConvLabel : '')
+      ];
+
+      var funnelValues = [leadN, quotedN, wonN];
+      var funnelMax = Math.max.apply(null, funnelValues.concat([1]));
+      var hasFunnelData = leadN > 0 || quotedN > 0 || wonN > 0;
+
+      // End-of-bar count labels (charcoal; works on silver bars too)
+      var p2FunnelEndLabels = {
+        id: 'p2FunnelEndLabels',
+        afterDatasetsDraw: function(chart) {
+          var ctx = chart.ctx;
+          var meta = chart.getDatasetMeta(0);
+          if (!meta || !meta.data) return;
+          ctx.save();
+          ctx.fillStyle = P2_CHARCOAL;
+          ctx.font = '600 12px Montserrat, sans-serif';
+          ctx.textBaseline = 'middle';
+          meta.data.forEach(function(bar, i) {
+            var val = chart.data.datasets[0].data[i];
+            if (val === null || val === undefined) return;
+            var text = String(val);
+            var x = bar.x + 8;
+            if (x + ctx.measureText(text).width > chart.chartArea.right - 2) {
+              ctx.fillStyle = P2_WHITE;
+              ctx.textAlign = 'right';
+              ctx.fillText(text, bar.x - 6, bar.y);
+              ctx.fillStyle = P2_CHARCOAL;
+            } else {
+              ctx.textAlign = 'left';
+              ctx.fillText(text, x, bar.y);
+            }
+          });
+          ctx.restore();
         }
-      }
+      };
+
+      makeChart('chart-p2-funnel', {
+        type: 'bar',
+        data: {
+          labels: hasFunnelData ? funnelYLabels : ['No data'],
+          datasets: [{
+            label: 'Pipeline',
+            data: hasFunnelData ? funnelValues : [0],
+            backgroundColor: hasFunnelData
+              ? [P2_CHARCOAL, P2_SOFT_GRAY, P2_SILVER]
+              : [P2_SILVER],
+            borderWidth: 0,
+            borderRadius: 0,
+            barThickness: 28,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { right: 40, left: 4, top: 4, bottom: 4 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function(items) {
+                  var i = items[0] && items[0].dataIndex;
+                  return ['Lead', 'Quoted', 'Won'][i] || '';
+                },
+                label: function(ctx) {
+                  var i = ctx.dataIndex;
+                  var parts = [ctx.raw + ' deals'];
+                  if (i === 1 && leadToQuoted !== null) {
+                    parts.push(Math.round(leadToQuoted) + '% from Lead');
+                  }
+                  if (i === 2 && quotedToWon !== null) {
+                    parts.push(
+                      Math.round(quotedToWon) + '% from Quote' +
+                      (outOfCohort ? ' (out-of-cohort)' : '')
+                    );
+                  }
+                  return parts;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              // Shared linear scale so bar length ∝ actual counts
+              suggestedMax: funnelMax,
+              ticks: {
+                precision: 0,
+                color: P2_CHARCOAL,
+                font: { size: 10, family: 'Montserrat' }
+              },
+              grid: P2_GRID,
+              border: { color: P2_SOFT_GRAY }
+            },
+            y: {
+              ticks: {
+                color: P2_CHARCOAL,
+                font: { size: 11, family: 'Montserrat', weight: '600' },
+                autoSkip: false
+              },
+              grid: { display: false },
+              border: { color: P2_SOFT_GRAY }
+            }
+          }
+        },
+        plugins: hasFunnelData ? [p2FunnelEndLabels] : []
+      });
+
       var footEl = document.getElementById('p2-funnel-footnote');
       if (footEl) {
         if (outOfCohort) footEl.removeAttribute('hidden');

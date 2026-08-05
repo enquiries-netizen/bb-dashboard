@@ -1759,14 +1759,18 @@ select {
   height: 100% !important;
 }
 
-/* Horizontal stepped funnel (Lead → Quoted → Won) */
+.p2-funnel-wrap {
+  height: 220px;
+  min-height: 200px;
+}
+
 .p2-funnel-overall {
   font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 700;
   color: var(--charcoal);
   letter-spacing: -0.02em;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   line-height: 1.2;
 }
 
@@ -1778,96 +1782,8 @@ select {
   margin-left: 8px;
 }
 
-.p2-step-funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.p2-step-stages {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.p2-step-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.p2-step-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 10px;
-}
-
-.p2-step-name {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--charcoal);
-  min-width: 4.5rem;
-}
-
-.p2-step-count {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--charcoal);
-}
-
-.p2-step-conv {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(38, 36, 37, 0.72);
-}
-
-.p2-cohort-star {
-  color: var(--charcoal);
-  font-weight: 700;
-}
-
-.p2-cohort-tag {
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--gray);
-  margin-left: 2px;
-}
-
-.p2-step-track {
-  width: 100%;
-  height: 22px;
-  background: rgba(210, 212, 213, 0.35);
-  border: 1px solid rgba(188, 189, 190, 0.35);
-  box-shadow: none;
-}
-
-.p2-step-bar {
-  height: 100%;
-  min-width: 0;
-  transition: width 0.25s ease;
-}
-
-.p2-step-bar--lead {
-  background: var(--charcoal); /* solid black */
-}
-
-.p2-step-bar--quoted {
-  background: var(--gray); /* Soft Gray / dark grey */
-}
-
-.p2-step-bar--won {
-  background: var(--silver); /* Brilliant Silver / light grey */
-  border: 1px solid rgba(38, 36, 37, 0.12);
-  box-sizing: border-box;
-}
-
 .p2-funnel-footnote {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-size: 10px;
   line-height: 1.4;
   color: var(--gray);
