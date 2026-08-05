@@ -443,11 +443,11 @@ select {
   font-weight: 400;
 }
 
-/* ── P1 Executive Snapshot — equal cards, hierarchy via type/tone ─
-   T1 Revenue: bolder number + charcoal top border
-   T2 Margin / Jobs Won: standard type, equal card size
-   T3 Lead / Quotes / Active: same card size, muted type
-   Chart: full-width below KPIs (not side-stacked)
+/* ── P1 Executive Snapshot — two KPI groups ───────────────────
+   Group 1 (primary): Revenue, Margin, Jobs Won, Leads
+     — full-size, full contrast; Revenue keeps charcoal top border
+   Group 2 (untracked): Quotes, Active Jobs
+     — smaller, muted, "Not yet tracked" status strip above chart
 ═══════════════════════════════════════════════════════════════ */
 .p1-layout {
   display: flex;
@@ -503,111 +503,156 @@ select {
   opacity: 0.65;
 }
 
-/* Equal flat 6-card grid — same width/height behavior for all tiles */
-.p1-kpi-grid {
+/* Group 1 — primary headline KPIs */
+.p1-kpi-primary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   align-items: stretch;
 }
 
 .p1-kpi {
-  padding: 18px 20px 16px;
-  padding-top: 34px;
   min-height: 0;
   height: auto;
   display: flex;
   flex-direction: column;
+}
+
+.p1-kpi-primary-card {
+  padding: 18px 20px 16px;
+  padding-top: 34px;
   border-top: 3px solid var(--silver);
 }
 
-.p1-kpi .kpi-label {
+.p1-kpi-primary-card .kpi-label {
   font-size: 9.5px;
   margin-bottom: 10px;
+  color: var(--gray);
 }
 
-.p1-kpi .kpi-value {
-  font-size: clamp(14px, 1.5vw, 20px);
+.p1-kpi-primary-card .kpi-value {
+  font-size: clamp(16px, 1.6vw, 22px);
+  font-weight: 600;
   line-height: 1.1;
+  color: var(--charcoal);
 }
 
-.p1-kpi .kpi-sub {
+.p1-kpi-primary-card .kpi-sub {
   font-size: 11px;
+  color: var(--gray);
 }
 
-.p1-kpi .kpi-progress {
+.p1-kpi-primary-card .kpi-progress {
   margin-top: auto;
   padding-top: 10px;
 }
 
-/* Tier 1 — Revenue: same card box, bolder number + charcoal top edge */
-.p1-kpi-t1,
-.p1-kpi-grid .kpi-card--primary {
+/* Revenue only: top-border marker as primary metric */
+.p1-kpi-primary .kpi-card--primary {
   border-top-color: var(--charcoal);
 }
 
-.p1-kpi-t1 .kpi-label {
+.p1-kpi-primary .kpi-card--primary .kpi-label {
   color: var(--charcoal);
-  opacity: 0.75;
+  opacity: 0.8;
   font-weight: 700;
 }
 
-.p1-kpi-t1 .kpi-value {
+.p1-kpi-primary .kpi-card--primary .kpi-value {
   font-size: clamp(18px, 1.85vw, 24px);
   font-weight: 700;
-  color: var(--charcoal);
   letter-spacing: -0.3px;
 }
 
-.p1-kpi-t1 .kpi-sub {
-  color: rgba(38, 36, 37, 0.7);
-}
-
-.p1-kpi-t1 .kpi-progress-fill {
+.p1-kpi-primary .kpi-card--primary .kpi-progress-fill {
   background: var(--charcoal);
 }
 
-/* Tier 2 — Margin / Jobs Won: standard weight, full charcoal text */
-.p1-kpi-t2 .kpi-label {
+/* Group 2 — not-yet-tracked strip (smaller, quieter) */
+.p1-kpi-untracked {
+  margin-bottom: 22px;
+  padding: 10px 12px 12px;
+  background: rgba(210, 212, 213, 0.35);
+  border: 1px solid rgba(188, 189, 190, 0.45);
+  border-radius: var(--radius-sm);
+}
+
+.p1-untracked-label {
+  font-family: var(--font-heading);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin: 0 0 10px;
+}
+
+.p1-kpi-untracked-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 480px;
+}
+
+.p1-kpi-untracked-card {
+  padding: 12px 14px 10px;
+  padding-top: 28px;
+  border-top: 2px solid var(--silver);
+  background: var(--white);
+}
+
+.p1-kpi-untracked-card .kpi-icon {
+  width: 13px;
+  height: 13px;
+  top: 10px;
+  left: 12px;
+  opacity: 0.4;
+}
+
+.p1-kpi-untracked-card .kpi-label {
+  font-size: 8.5px;
+  margin-bottom: 6px;
+  letter-spacing: 0.6px;
   color: var(--gray);
 }
 
-.p1-kpi-t2 .kpi-value {
-  font-weight: 600;
-  color: var(--charcoal);
-}
-
-/* Tier 3 — Lead / Quotes / Active: same size, muted recede */
-.p1-kpi-t3 .kpi-label {
-  color: var(--gray);
-  opacity: 0.85;
-}
-
-.p1-kpi-t3 .kpi-value {
+.p1-kpi-untracked-card .kpi-value {
+  font-size: clamp(13px, 1.2vw, 16px);
   font-weight: 500;
-  color: rgba(38, 36, 37, 0.55);
+  color: rgba(38, 36, 37, 0.5);
+  line-height: 1.1;
 }
 
-.p1-kpi-t3 .kpi-sub,
-.p1-kpi-t3 .kpi-progress-pct,
-.p1-kpi-t3 .kpi-progress-note {
-  color: rgba(38, 36, 37, 0.45);
+.p1-kpi-untracked-card .kpi-sub,
+.p1-kpi-untracked-card .kpi-progress-pct,
+.p1-kpi-untracked-card .kpi-progress-note {
+  font-size: 10px;
+  color: rgba(38, 36, 37, 0.42);
 }
 
-.p1-kpi-t3 .kpi-icon {
-  opacity: 0.45;
+.p1-kpi-untracked-card .kpi-progress {
+  margin-top: 8px;
+  padding-top: 0;
 }
 
-.p1-kpi-t3 .kpi-progress-fill {
-  background: rgba(38, 36, 37, 0.35);
+.p1-kpi-untracked-card .kpi-progress-track {
+  height: 2px;
+  background: rgba(210, 212, 213, 0.9);
 }
 
-.p1-kpi-t3 .kpi-progress-track {
-  background: rgba(210, 212, 213, 0.8);
+.p1-kpi-untracked-card .kpi-progress-fill {
+  background: rgba(38, 36, 37, 0.28);
 }
 
-/* Full-width chart under KPI grid — fills container */
+.p1-kpi-untracked-card .kpi-sparkline {
+  max-width: 100px;
+  height: 16px;
+  margin: 4px 0 2px;
+  opacity: 0.55;
+}
+
+/* Full-width chart under both groups */
 .p1-chart-row {
   margin-bottom: 24px;
 }
@@ -737,6 +782,14 @@ select {
 
 .kpi-sparkline[hidden] {
   display: none !important;
+}
+
+/* Legacy alias — keep grid utilities if referenced elsewhere */
+.p1-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
 /* Lightweight "this week" pulse under KPI sparklines (P2 / P6 / P10) */
@@ -1534,7 +1587,8 @@ select {
 
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .kpi-value { font-size: 18px; }
-  .p1-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .p1-kpi-primary { grid-template-columns: repeat(2, 1fr); }
+  .p1-kpi-untracked-grid { max-width: none; }
   .p1-chart-wrap { height: 220px; }
 }
 
@@ -1692,10 +1746,14 @@ select {
   .kpi-value { font-size: 20px; }
   .kpi-sub   { font-size: 9.5px; }
 
-  /* P1 equal KPI grid */
-  .p1-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .p1-kpi { padding: 14px 12px; padding-top: 32px; }
-  .p1-kpi-t1 .kpi-value { font-size: 20px !important; }
+  /* P1 primary + untracked groups */
+  .p1-kpi-primary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .p1-kpi-primary-card { padding: 14px 12px; padding-top: 32px; }
+  .p1-kpi-primary .kpi-card--primary .kpi-value { font-size: 20px !important; }
+  .p1-kpi-untracked { padding: 8px 10px 10px; margin-bottom: 16px; }
+  .p1-kpi-untracked-grid { grid-template-columns: 1fr 1fr; max-width: none; gap: 8px; }
+  .p1-kpi-untracked-card { padding: 10px 12px 8px; padding-top: 26px; }
+  .p1-kpi-untracked-card .kpi-value { font-size: 14px !important; }
   .p1-page-title { font-size: 16px; }
   .p1-chart-wrap { height: 200px; }
   .p1-watermark {
