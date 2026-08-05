@@ -443,10 +443,11 @@ select {
   font-weight: 400;
 }
 
-/* ── P1 Executive Snapshot: 3-tier inverted pyramid (Z-flow) ───
-   Tier 1 — primary numbers, max white space, Deep Charcoal
-   Tier 2 — secondary KPIs + chart, Soft Gray / mid contrast
-   Tier 3 — tables/notes, Brilliant Silver, muted, tight
+/* ── P1 Executive Snapshot — equal cards, hierarchy via type/tone ─
+   T1 Revenue: bolder number + charcoal top border
+   T2 Margin / Jobs Won: standard type, equal card size
+   T3 Lead / Quotes / Active: same card size, muted type
+   Chart: full-width below KPIs (not side-stacked)
 ═══════════════════════════════════════════════════════════════ */
 .p1-layout {
   display: flex;
@@ -454,127 +455,22 @@ select {
   gap: 0;
 }
 
-.p1-tier {
+.p1-head {
   position: relative;
-  width: 100%;
-}
-
-/* ── Tier 1 ─────────────────────────────────────────────────── */
-.p1-tier-1 {
   isolation: isolate;
-  margin-bottom: 36px;
-  padding-bottom: 8px;
-}
-
-.p1-tier-1 .p1-watermark {
-  z-index: 0;
-}
-
-.p1-z-top {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 20px 28px;
-  align-items: start;
-}
-
-.p1-z-tl {
-  min-width: 0;
-}
-
-.p1-z-tr {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 4px;
-}
-
-.p1-page-header {
-  margin-bottom: 6px;
-}
-
-.p1-page-title {
-  font-size: clamp(22px, 2.4vw, 28px);
-  letter-spacing: -0.3px;
-  color: var(--charcoal);
-}
-
-.p1-filter-cue {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  color: var(--charcoal);
-  margin: 0 0 18px;
-  opacity: 0.72;
-}
-
-/* Hero KPI: largest type, roomiest padding, full charcoal top edge */
-.p1-kpi-hero {
-  padding: 28px 26px 22px;
-  padding-top: 42px;
-  border-top: 4px solid var(--charcoal);
-  min-height: 168px;
-}
-
-.p1-kpi-hero .kpi-label {
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: var(--charcoal);
-  margin-bottom: 12px;
-  opacity: 0.72;
-}
-
-.p1-kpi-hero .kpi-value {
-  font-size: clamp(28px, 3.2vw, 40px);
-  font-weight: 700;
-  color: var(--charcoal);
-  line-height: 1.05;
-  letter-spacing: -0.6px;
-}
-
-.p1-kpi-hero .kpi-sub {
-  font-size: 12px;
-  color: var(--charcoal);
-  opacity: 0.6;
-  margin-top: 4px;
-}
-
-.p1-kpi-hero .kpi-progress {
-  margin-top: 16px;
-}
-
-.p1-kpi-hero .kpi-progress-track {
-  height: 4px;
-}
-
-.p1-kpi-hero .kpi-progress-pct {
-  font-size: 12px;
-}
-
-.p1-kpi-hero--pair {
-  min-height: 0;
-  padding: 22px 20px 18px;
-  padding-top: 38px;
-}
-
-.p1-kpi-hero--pair .kpi-value {
-  font-size: clamp(22px, 2.4vw, 30px);
+  margin-bottom: 16px;
 }
 
 .p1-watermark {
   position: absolute;
-  left: 38%;
-  top: -4%;
-  width: min(520px, 68vw);
-  height: min(520px, 68vw);
+  right: 0;
+  top: -20px;
+  width: min(280px, 42vw);
+  height: min(280px, 42vw);
   color: var(--gray);
-  opacity: 0.14;
+  opacity: 0.12;
   pointer-events: none;
-  transform: translateX(-6%);
+  z-index: 0;
 }
 
 .p1-watermark-svg {
@@ -583,92 +479,163 @@ select {
   display: block;
 }
 
-/* ── Tier 2 ─────────────────────────────────────────────────── */
-.p1-tier-2 {
-  margin-bottom: 28px;
+.p1-page-header {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 4px;
 }
 
-.p1-z-mid {
+.p1-page-title {
+  font-size: 18px;
+  color: var(--charcoal);
+}
+
+.p1-filter-cue {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  margin: 0 0 4px;
+  opacity: 0.65;
+}
+
+/* Equal flat 6-card grid — same width/height behavior for all tiles */
+.p1-kpi-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  gap: 16px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
   align-items: stretch;
 }
 
-.p1-secondary-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+.p1-kpi {
+  padding: 18px 20px 16px;
+  padding-top: 34px;
+  min-height: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid var(--silver);
 }
 
-.p1-kpi-secondary {
-  padding: 14px 16px 12px;
-  padding-top: 30px;
-  border-top: 2px solid var(--silver);
-  background: var(--white);
-}
-
-.p1-kpi-secondary .kpi-label {
-  font-size: 9px;
-  color: var(--gray);
-  margin-bottom: 6px;
-  letter-spacing: 0.7px;
-}
-
-.p1-kpi-secondary .kpi-value {
-  font-size: clamp(16px, 1.5vw, 20px);
-  color: rgba(38, 36, 37, 0.78);
-  font-weight: 600;
-}
-
-.p1-kpi-secondary .kpi-sub {
-  font-size: 10.5px;
-  color: var(--gray);
-}
-
-.p1-kpi-secondary .kpi-progress {
-  margin-top: 8px;
-}
-
-.p1-kpi-secondary .kpi-progress-track {
-  height: 2px;
-  background: var(--silver);
-}
-
-.p1-kpi-secondary .kpi-progress-fill {
-  background: rgba(38, 36, 37, 0.55);
-}
-
-.p1-kpi-secondary .kpi-progress-pct,
-.p1-kpi-secondary .kpi-progress-note {
+.p1-kpi .kpi-label {
   font-size: 9.5px;
+  margin-bottom: 10px;
+}
+
+.p1-kpi .kpi-value {
+  font-size: clamp(14px, 1.5vw, 20px);
+  line-height: 1.1;
+}
+
+.p1-kpi .kpi-sub {
+  font-size: 11px;
+}
+
+.p1-kpi .kpi-progress {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+/* Tier 1 — Revenue: same card box, bolder number + charcoal top edge */
+.p1-kpi-t1,
+.p1-kpi-grid .kpi-card--primary {
+  border-top-color: var(--charcoal);
+}
+
+.p1-kpi-t1 .kpi-label {
+  color: var(--charcoal);
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.p1-kpi-t1 .kpi-value {
+  font-size: clamp(18px, 1.85vw, 24px);
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: -0.3px;
+}
+
+.p1-kpi-t1 .kpi-sub {
+  color: rgba(38, 36, 37, 0.7);
+}
+
+.p1-kpi-t1 .kpi-progress-fill {
+  background: var(--charcoal);
+}
+
+/* Tier 2 — Margin / Jobs Won: standard weight, full charcoal text */
+.p1-kpi-t2 .kpi-label {
   color: var(--gray);
 }
 
-.p1-kpi-secondary .kpi-icon {
-  opacity: 0.55;
+.p1-kpi-t2 .kpi-value {
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+/* Tier 3 — Lead / Quotes / Active: same size, muted recede */
+.p1-kpi-t3 .kpi-label {
+  color: var(--gray);
+  opacity: 0.85;
+}
+
+.p1-kpi-t3 .kpi-value {
+  font-weight: 500;
+  color: rgba(38, 36, 37, 0.55);
+}
+
+.p1-kpi-t3 .kpi-sub,
+.p1-kpi-t3 .kpi-progress-pct,
+.p1-kpi-t3 .kpi-progress-note {
+  color: rgba(38, 36, 37, 0.45);
+}
+
+.p1-kpi-t3 .kpi-icon {
+  opacity: 0.45;
+}
+
+.p1-kpi-t3 .kpi-progress-fill {
+  background: rgba(38, 36, 37, 0.35);
+}
+
+.p1-kpi-t3 .kpi-progress-track {
+  background: rgba(210, 212, 213, 0.8);
+}
+
+/* Full-width chart under KPI grid — fills container */
+.p1-chart-row {
+  margin-bottom: 24px;
 }
 
 .p1-chart-card {
-  padding: 18px 20px;
-  border: 1px solid var(--border);
+  padding: 20px 22px;
+  width: 100%;
   border-top: 2px solid var(--gray);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
 .p1-chart-card .chart-title {
   color: var(--gray);
-  font-size: 11px;
   margin-bottom: 12px;
 }
 
-/* ── Tier 3 ─────────────────────────────────────────────────── */
-.p1-tier-3 {
-  margin-bottom: 8px;
+.p1-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 260px;
 }
 
+.p1-chart-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Detail table — recedes */
 .p1-detail-card {
   background: var(--silver);
   border: 1px solid rgba(188, 189, 190, 0.55);
@@ -727,12 +694,6 @@ select {
   background: rgba(255, 255, 255, 0.55);
 }
 
-/* Primary (revenue) top bar remains deepest charcoal */
-.p1-kpi-grid .kpi-card--primary,
-.kpi-card--primary.p1-kpi-hero {
-  border-top-color: var(--charcoal);
-}
-
 .kpi-icon {
   position: absolute;
   top: 12px;
@@ -776,26 +737,6 @@ select {
 
 .kpi-sparkline[hidden] {
   display: none !important;
-}
-
-/* Legacy equal grid (kept for safety if class reused) */
-.p1-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.p1-kpi-grid .kpi-card {
-  padding-top: 34px;
-  border-top-color: var(--silver);
-}
-
-.p1-hero {
-  position: relative;
-  margin-bottom: 8px;
-  overflow: hidden;
-  isolation: isolate;
 }
 
 /* Lightweight "this week" pulse under KPI sparklines (P2 / P6 / P10) */
@@ -1021,14 +962,6 @@ select {
   z-index: 1;
   font-weight: 600;
   color: var(--charcoal);
-}
-
-#p1-targets-table .data-table.p1-targets-zebra tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-#p1-targets-table .data-table.p1-targets-zebra tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.55);
 }
 
 
@@ -1601,17 +1534,8 @@ select {
 
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .kpi-value { font-size: 18px; }
-
-  .p1-z-top {
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .p1-z-mid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .p1-kpi-hero .kpi-value {
-    font-size: clamp(24px, 2.6vw, 32px);
-  }
+  .p1-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .p1-chart-wrap { height: 220px; }
 }
 
 
@@ -1768,43 +1692,16 @@ select {
   .kpi-value { font-size: 20px; }
   .kpi-sub   { font-size: 9.5px; }
 
-  /* P1 hierarchy collapses to single column Z-stack */
-  .p1-tier-1 { margin-bottom: 24px; }
-  .p1-z-top,
-  .p1-z-mid {
-    grid-template-columns: 1fr !important;
-    gap: 12px;
-  }
-  .p1-z-tr { gap: 10px; padding-top: 0; }
-  .p1-page-title { font-size: 20px; }
-  .p1-filter-cue { margin-bottom: 12px; }
-  .p1-kpi-hero {
-    padding: 20px 16px 16px;
-    padding-top: 36px;
-    min-height: 0;
-  }
-  .p1-kpi-hero .kpi-value {
-    font-size: 28px !important;
-  }
-  .p1-kpi-hero--pair .kpi-value {
-    font-size: 22px !important;
-  }
-  .p1-secondary-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .p1-kpi-secondary {
-    padding-top: 30px;
-  }
-  .p1-kpi-secondary .kpi-value {
-    font-size: 18px !important;
-  }
+  /* P1 equal KPI grid */
+  .p1-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .p1-kpi { padding: 14px 12px; padding-top: 32px; }
+  .p1-kpi-t1 .kpi-value { font-size: 20px !important; }
+  .p1-page-title { font-size: 16px; }
+  .p1-chart-wrap { height: 200px; }
   .p1-watermark {
-    width: min(380px, 88vw);
-    height: min(380px, 88vw);
+    width: min(200px, 50vw);
+    height: min(200px, 50vw);
     opacity: 0.1;
-    left: 50%;
-    transform: translateX(-50%);
   }
   .p1-detail-card { padding: 12px; }
   .p1-footnote { font-size: 9.5px; }
