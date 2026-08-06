@@ -4483,7 +4483,7 @@
               hasValue: true,
               value: 0,
               correctedFrom: 100,
-              reason: 'Not Started cannot be 100% Done; % field corrected from unreliable max'
+              reason: 'Progress data unavailable, showing as not started'
             };
           }
         }
@@ -4515,7 +4515,7 @@
               hasValue: pctInfo.hasValue,
               value: 0,
               correctedFrom: 100,
-              reason: 'Overdue unfinished milestone cannot stay at 100%'
+              reason: 'Progress data unavailable, showing as not started'
             };
           }
         }
@@ -4973,9 +4973,9 @@
           if (handsLabel) {
             detailInner += '<span class="p4-detail-line"><strong>Staffing</strong> ' + handsLabel + '</span>';
           }
-          if (r.pctInfo && r.pctInfo.correctedFrom === 100) {
+          if (r.pctInfo && r.pctInfo.correctedFrom === 100 && r.pctInfo.reason) {
             detailInner += '<span class="p4-detail-line p4-detail-note">' +
-              (r.pctInfo.reason || '% Done adjusted from unreliable 100%') + '</span>';
+              r.pctInfo.reason + '</span>';
           }
           if (r.dateFlag) {
             detailInner += '<span class="p4-detail-line p4-detail-note">Source dates: ' +
