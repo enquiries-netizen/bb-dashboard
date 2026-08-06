@@ -448,8 +448,8 @@
 
           <div class="chart-row two-col">
             <div class="chart-card card">
-              <div class="chart-title">Quoting Funnel by Status</div>
-              <div id="chart-p3-funnel" class="apex-chart"></div>
+              <div class="chart-title">Quoting Status Pipeline</div>
+              <div id="p3-status-pipeline" class="p3-status-pipeline" aria-live="polite"></div>
             </div>
             <div class="chart-card card">
               <div class="chart-title">Quote Value by Status</div>
@@ -464,13 +464,16 @@
             </div>
             <div class="chart-card card">
               <div class="chart-title">Quotes by Status Share</div>
-              <div id="chart-p3-donut" class="apex-chart"></div>
+              <div class="p3-chart-wrap p3-status-share-wrap">
+                <canvas id="chart-p3-status-share"></canvas>
+              </div>
+              <div id="chart-p3-status-share-legend" class="p3-status-share-legend"></div>
             </div>
           </div>
 
           <div class="section-card">
             <div class="section-title">Quoting Funnel Detail</div>
-            <div id="p3-funnel-table">Loading quote data...</div>
+            <div id="p3-funnel-table" class="p3-funnel-table">Loading quote data...</div>
           </div>
 
           <div class="section-card">
@@ -1322,13 +1325,19 @@
       if (!rows || rows.length === 0) {
         return '<p class="no-data-msg">No data available yet.</p>';
       }
-      var ths = cols.map(function(c) { return '<th>' + c.label + '</th>'; }).join('');
+      var ths = cols.map(function(c) {
+        var align = c.align === 'right' ? 'text-right' : (c.align === 'left' ? 'text-left' : '');
+        var cls = align ? ' class="' + align + '"' : '';
+        return '<th' + cls + '>' + c.label + '</th>';
+      }).join('');
       var trs = rows.map(function(r) {
         var tds = cols.map(function(c) {
           var keys = Array.isArray(c.key) ? c.key : [c.key];
           var val  = col.apply(null, [r].concat(keys));
           if (c.format) val = c.format(val, r);
-          return '<td>' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</td>';
+          var align = c.align === 'right' ? 'text-right' : (c.align === 'left' ? 'text-left' : '');
+          var cls = align ? ' class="' + align + '"' : '';
+          return '<td' + cls + '>' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</td>';
         }).join('');
         return '<tr>' + tds + '</tr>';
       }).join('');
@@ -3387,6 +3396,8 @@
     // ═══════════════════════════════════════════════════════════════
     var activeP3Dept = 'ALL';
     var _p3DeptBound = false;
+    // Isolated toggle: draw Targets-tab days-to-decision line on estimator chart
+    var P3_SHOW_DAYS_TARGET_LINE = true;
 
     async function loadP3() {
       showLoading(true);
@@ -3395,9 +3406,10 @@
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.QUOTES),
           fetchSheet(CONFIG.TABS.XERO_PROJECTS),
-          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY)
+          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY),
+          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
         ]);
-        renderP3(results[0], results[1], results[2]);
+        renderP3(results[0], results[1], results[2], results[3]);
       } catch (err) {
         console.error('P3 load error:', err);
         showError('p3', 'Could not load Quoting & Estimating data. Check sheet permissions.');
@@ -3407,10 +3419,68 @@
       }
     }
 
-    function renderP3(quotes, projects, accuracy) {
+    /**
+     * Read days-to-decision target from Targets tab (not hard-coded).
+     * Tries common header names; falls back to first numeric cell whose header
+     * mentions both day(s) and decision / turnaround.
+     */
+    function readDaysToDecisionTarget(targetsRows) {
+      if (!targetsRows || !targetsRows.length) return null;
+      var branded = filterByMonths(
+        filterByYear(filterByBrand(targetsRows, activeBrand), activeYear),
+        activeMonths
+      );
+      var rows = branded.length ? branded : (filterByBrand(targetsRows, activeBrand) || targetsRows);
+      if (!rows.length) return null;
+
+      var exactKeys = [
+        'Days to Decision Target',
+        'Avg Days to Decision Target',
+        'Days To Decision Target',
+        'Decision Days Target',
+        'Quote Decision Days Target',
+        'Days to Decision',
+        'Avg Days to Decision',
+        'Turnaround Target (Days)',
+        'Decision Turnaround (Days)',
+        'Target Days to Decision'
+      ];
+
+      function pickFromRow(r) {
+        var i, k, v, nk;
+        for (i = 0; i < exactKeys.length; i++) {
+          v = parseNum(col(r, exactKeys[i]));
+          if (v > 0) return v;
+        }
+        var keys = Object.keys(r || {});
+        for (i = 0; i < keys.length; i++) {
+          k = keys[i];
+          nk = String(k || '').toLowerCase().replace(/\s+/g, ' ');
+          if (
+            (nk.indexOf('day') !== -1) &&
+            (nk.indexOf('decision') !== -1 || nk.indexOf('turnaround') !== -1 || nk.indexOf('quote') !== -1)
+          ) {
+            v = parseNum(r[k]);
+            if (v > 0 && v < 365) return v;
+          }
+        }
+        return null;
+      }
+
+      var found = null;
+      rows.forEach(function(r) {
+        if (found !== null) return;
+        var n = pickFromRow(r);
+        if (n !== null) found = n;
+      });
+      return found;
+    }
+
+    function renderP3(quotes, projects, accuracy, targets) {
       window._p3Quotes   = quotes   || [];
       window._p3Projects = projects || [];
       window._p3Accuracy = accuracy || [];
+      window._p3Targets  = targets  || [];
 
       function applyGlobal(rows) {
         return filterByMonths(filterByYear(filterByBrand(rows, activeBrand), activeYear), activeMonths);
@@ -3467,14 +3537,11 @@
         return String(col(r, 'Estimator Name', 'Estimator', 'estimator_name', 'estimator') || '').trim() || 'Unassigned';
       }
       function clearP3Charts() {
-        // Chart.js (Quote Value by Status only)
-        if (_charts['chart-p3-value']) {
-          _charts['chart-p3-value'].destroy();
-          delete _charts['chart-p3-value'];
-        }
-        // ApexCharts funnel / estimator / donut
+        ['chart-p3-value', 'chart-p3-status-share'].forEach(function(id) {
+          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        });
+        // Legacy apex ids + estimator
         ['chart-p3-funnel', 'chart-p3-estimator', 'chart-p3-donut'].forEach(destroyApex);
-        // Accuracy radial gauges (dynamic ids)
         Object.keys(_apexCharts).forEach(function(id) {
           if (id.indexOf('chart-p3-acc-') === 0) destroyApex(id);
         });
@@ -3511,7 +3578,7 @@
         },
         fill: { type: 'solid', gradient: { enabled: false } },
         grid: {
-          borderColor: '#BCBDBE',
+          borderColor: 'rgba(188,189,190,0.28)',
           strokeDashArray: 0
         },
         tooltip: {
@@ -3523,22 +3590,23 @@
           labels: { colors: '#262425' }
         }
       };
-      // Brand palette only — Deep Charcoal opacity steps by win-proximity
-      var funnelBrandColors = [
-        'rgba(38,36,37,0.4)',   // Draft
-        'rgba(38,36,37,0.55)',  // Sent
-        '#262425',              // Accepted (100%)
-        'rgba(38,36,37,0.7)',   // In Progress
-        'rgba(38,36,37,0.25)'   // Awaiting Approval
+      // Brand palette only — Deep Charcoal opacity steps for status segments
+      var statusShareColors = [
+        'rgba(38,36,37,0.22)',  // Draft
+        'rgba(38,36,37,0.40)',  // Sent
+        '#262425',              // Accepted
+        'rgba(38,36,37,0.62)',  // In Progress
+        'rgba(38,36,37,0.12)'   // Awaiting Approval
       ];
-      var donutBrandColors = [
-        '#D2D4D5', // Draft — Brilliant Silver
-        '#BCBDBE', // Sent — Soft Gray
-        '#262425', // Accepted — Deep Charcoal
-        '#D2D4D5', // In Progress — Brilliant Silver
-        '#FFFFFF'  // Awaiting Approval — White (+ charcoal stroke)
+      var charcoalScale = statusShareColors;
+      // Pipeline step box fills (connected stages, not volume-proportional)
+      var pipelineStepColors = [
+        { bg: 'rgba(38,36,37,0.22)', fg: '#262425' },
+        { bg: 'rgba(38,36,37,0.40)', fg: '#262425' },
+        { bg: '#262425', fg: '#FFFFFF' },
+        { bg: 'rgba(38,36,37,0.62)', fg: '#FFFFFF' },
+        { bg: '#D2D4D5', fg: '#262425' }
       ];
-      var charcoalScale = funnelBrandColors;
 
       // Rebuild Department options from current sheet rows each render (not cached).
       // Canonicalise known typos so "Maintainance" and "Maintenance" collapse to one option.
@@ -3575,7 +3643,7 @@
           _p3DeptBound = true;
           deptSelect.addEventListener('change', function() {
             activeP3Dept = this.value || 'ALL';
-            renderP3(window._p3Quotes, window._p3Projects, window._p3Accuracy);
+            renderP3(window._p3Quotes, window._p3Projects, window._p3Accuracy, window._p3Targets);
             init3DTilt();
           });
         }
@@ -3584,6 +3652,7 @@
       var quotesFiltered   = filterByDept(brandedQuotes);
       var projectsFiltered = filterByDept(brandedProjects);
       var accuracyFiltered = filterByDept(brandedAccuracy);
+      var daysTargetVal = readDaysToDecisionTarget(window._p3Targets);
 
       // Map Quotes by header name (not index) so shifted columns stay correct.
       var quotesHeaderMapped = quotesFiltered.map(function(r) {
@@ -3613,10 +3682,11 @@
       setBBPageData('P3', 'P3: Quoting & Estimating', {
         quotes:   quotesHeaderMapped.slice(0, 200),
         projects: projectsFiltered.slice(0, 200),
-        accuracy: accuracyFiltered.slice(0, 200)
+        accuracy: accuracyFiltered.slice(0, 200),
+        daysToDecisionTarget: daysTargetVal
       });
 
-      // ── Status funnel buckets ──────────────────────────────────
+      // ── Status pipeline buckets ──────────────────────────────────
       var STATUS_ORDER = ['Draft', 'Sent', 'Accepted', 'In Progress', 'Awaiting Approval'];
       var statusStats = {};
       STATUS_ORDER.forEach(function(s) {
@@ -3673,61 +3743,40 @@
       var funnelCounts = STATUS_ORDER.map(function(s) { return statusStats[s].count; });
       var funnelValues = STATUS_ORDER.map(function(s) { return Math.round(statusStats[s].value); });
       var hasFunnelData = funnelCounts.some(function(n) { return n > 0; });
+      var P3_CHARCOAL = '#262425';
+      var P3_SOFT_GRAY = '#BCBDBE';
+      var P3_SILVER = '#D2D4D5';
+      var P3_GRID = { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 };
 
-      // ── ApexCharts: Quoting Funnel (horizontal narrowing bars) ─
-      setApexOrPlaceholder('chart-p3-funnel', hasFunnelData, Object.assign({}, apexBase, {
-        chart: Object.assign({}, apexBase.chart, { type: 'bar', height: 280 }),
-        series: [{ name: 'Quotes', data: funnelCounts }],
-        colors: funnelBrandColors,
-        plotOptions: {
-          bar: {
-            borderRadius: 0,
-            horizontal: true,
-            distributed: true,
-            barHeight: '88%',
-            isFunnel: true
-          }
-        },
-        xaxis: {
-          categories: funnelLabels,
-          labels: {
-            style: {
-              colors: '#262425',
-              fontSize: '11px',
-              fontFamily: 'Montserrat, sans-serif'
+      // ── Status pipeline: equal connected boxes (not a funnel geometry) ─
+      var pipeEl = document.getElementById('p3-status-pipeline');
+      if (pipeEl) {
+        if (!hasFunnelData) {
+          pipeEl.innerHTML = '<p class="no-data-msg">No quote status data for selected filters.</p>';
+        } else {
+          var pipeHtml = '<div class="p3-pipeline-track" role="list">';
+          STATUS_ORDER.forEach(function(label, idx) {
+            var n = statusStats[label].count;
+            var tones = pipelineStepColors[idx] || pipelineStepColors[0];
+            var style = 'background:' + tones.bg + ';color:' + tones.fg + ';';
+            pipeHtml +=
+              '<div class="p3-pipeline-step' + (idx === 0 ? ' is-first' : '') +
+              (idx === STATUS_ORDER.length - 1 ? ' is-last' : '') +
+              '" role="listitem" style="' + style + '">' +
+              '<span class="p3-pipeline-label">' + label + '</span>' +
+              '<span class="p3-pipeline-count">' + n + '</span>' +
+              '</div>';
+            if (idx < STATUS_ORDER.length - 1) {
+              pipeHtml += '<div class="p3-pipeline-connector" aria-hidden="true"></div>';
             }
-          },
-          axisBorder: { color: '#BCBDBE' },
-          axisTicks: { color: '#BCBDBE' }
-        },
-        yaxis: {
-          labels: {
-            style: {
-              colors: '#262425',
-              fontSize: '11px',
-              fontWeight: 600,
-              fontFamily: 'Montserrat, sans-serif'
-            }
-          }
-        },
-        legend: { show: false },
-        dataLabels: {
-          enabled: true,
-          formatter: function(val) { return val; },
-          style: {
-            colors: ['#262425', '#262425', '#FFFFFF', '#FFFFFF', '#262425'],
-            fontSize: '11px',
-            fontWeight: 600,
-            fontFamily: 'Poppins, sans-serif'
-          },
-          dropShadow: { enabled: false }
-        },
-        tooltip: Object.assign({}, apexBase.tooltip, {
-          y: { formatter: function(val) { return val + ' quotes'; } }
-        })
-      }));
+          });
+          pipeHtml += '</div>';
+          pipeHtml += '<p class="p3-pipeline-note">Statuses are parallel queues, not a strict drop-off funnel.</p>';
+          pipeEl.innerHTML = pipeHtml;
+        }
+      }
 
-      // ── Chart.js: Quote Value by Status (unchanged type) ───────
+      // ── Chart.js: Quote Value by Status ───────
       var hasValueData = funnelValues.some(function(n) { return n > 0; });
       setChartOrPlaceholder('chart-p3-value', hasValueData, {
         type: 'bar',
@@ -3738,7 +3787,7 @@
             data: funnelValues,
             backgroundColor: charcoalScale,
             borderWidth: 0,
-            borderRadius: 4
+            borderRadius: 0
           }]
         },
         options: {
@@ -3750,9 +3799,19 @@
             }
           },
           scales: {
+            x: {
+              ticks: { color: P3_CHARCOAL, font: { size: 10 } },
+              grid: { display: false },
+              border: { color: P3_SOFT_GRAY }
+            },
             y: {
               beginAtZero: true,
-              ticks: { callback: function(v) { return '$' + Number(v).toLocaleString('en-AU'); } }
+              ticks: {
+                color: P3_CHARCOAL,
+                callback: function(v) { return '$' + Number(v).toLocaleString('en-AU'); }
+              },
+              grid: P3_GRID,
+              border: { color: P3_SOFT_GRAY }
             }
           }
         }
@@ -3782,8 +3841,14 @@
         return e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : 0;
       });
 
-      // ── ApexCharts: Quotes by Estimator (combo column + line) ─
-      setApexOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, Object.assign({}, apexBase, {
+      // ── ApexCharts: Quotes by Estimator (dark grey columns + solid black days line) ─
+      // Target days line is isolated via annotations + P3_SHOW_DAYS_TARGET_LINE toggle.
+      var showDaysTarget = P3_SHOW_DAYS_TARGET_LINE && daysTargetVal !== null && daysTargetVal > 0;
+      var estDaysMax = 0;
+      estAvgDays.forEach(function(d) { if (d > estDaysMax) estDaysMax = d; });
+      if (showDaysTarget && daysTargetVal > estDaysMax) estDaysMax = daysTargetVal;
+
+      var estChartOpts = Object.assign({}, apexBase, {
         chart: Object.assign({}, apexBase.chart, { type: 'line', height: 300 }),
         series: [
           {
@@ -3797,16 +3862,16 @@
             data: estAvgDays
           }
         ],
-        colors: ['#262425', '#BCBDBE'],
+        colors: [P3_SOFT_GRAY, P3_CHARCOAL],
         stroke: {
-          width: [0, 3],
-          curve: 'smooth',
-          dashArray: [0, 6],
-          colors: ['#262425', '#BCBDBE']
+          width: [0, 3.5],
+          curve: 'straight',
+          dashArray: [0, 0],
+          colors: [P3_SOFT_GRAY, P3_CHARCOAL]
         },
         markers: {
           size: [0, 5],
-          colors: ['#BCBDBE'],
+          colors: [P3_CHARCOAL],
           strokeColors: '#FFFFFF',
           strokeWidth: 2,
           hover: { sizeOffset: 1 }
@@ -3818,27 +3883,28 @@
           categories: estEntries.map(function(e) { return e.name; }),
           labels: {
             style: {
-              colors: '#262425',
+              colors: P3_CHARCOAL,
               fontSize: '11px',
               fontFamily: 'Montserrat, sans-serif'
             }
           },
-          axisBorder: { color: '#BCBDBE' },
-          axisTicks: { color: '#BCBDBE' }
+          axisBorder: { color: P3_SOFT_GRAY },
+          axisTicks: { color: P3_SOFT_GRAY }
         },
         yaxis: [
           {
+            seriesName: 'Quotes',
             title: {
               text: 'Quotes',
               style: {
-                color: '#262425',
+                color: P3_CHARCOAL,
                 fontSize: '11px',
                 fontFamily: 'Montserrat, sans-serif'
               }
             },
             labels: {
               style: {
-                colors: '#262425',
+                colors: P3_CHARCOAL,
                 fontSize: '11px',
                 fontFamily: 'Montserrat, sans-serif'
               },
@@ -3847,24 +3913,26 @@
             min: 0
           },
           {
+            seriesName: 'Avg Days to Decision',
             opposite: true,
             title: {
               text: 'Avg Days to Decision',
               style: {
-                color: '#BCBDBE',
+                color: P3_CHARCOAL,
                 fontSize: '11px',
                 fontFamily: 'Montserrat, sans-serif'
               }
             },
             labels: {
               style: {
-                colors: '#BCBDBE',
+                colors: P3_CHARCOAL,
                 fontSize: '11px',
                 fontFamily: 'Montserrat, sans-serif'
               },
               formatter: function(v) { return Math.round(v * 10) / 10; }
             },
-            min: 0
+            min: 0,
+            max: estDaysMax > 0 ? Math.ceil(estDaysMax * 1.15) : undefined
           }
         ],
         legend: {
@@ -3872,78 +3940,130 @@
           horizontalAlign: 'left',
           fontSize: '11px',
           fontFamily: 'Montserrat, sans-serif',
-          labels: { colors: '#262425' }
+          labels: { colors: P3_CHARCOAL }
         },
         tooltip: Object.assign({}, apexBase.tooltip, {
           shared: true,
           intersect: false
         })
-      }));
+      });
+      if (showDaysTarget) {
+        // Isolated addition — set P3_SHOW_DAYS_TARGET_LINE = false to remove
+        estChartOpts.annotations = {
+          yaxis: [{
+            y: daysTargetVal,
+            yAxisIndex: 1,
+            borderColor: P3_CHARCOAL,
+            strokeDashArray: 0,
+            borderWidth: 1.5,
+            opacity: 0.85,
+            label: {
+              borderColor: P3_SOFT_GRAY,
+              borderWidth: 1,
+              text: 'Target ' + daysTargetVal + 'd',
+              position: 'right',
+              offsetX: 0,
+              style: {
+                color: P3_CHARCOAL,
+                background: '#FFFFFF',
+                fontSize: '10px',
+                fontFamily: 'Montserrat, sans-serif',
+                fontWeight: 600,
+                padding: { left: 6, right: 6, top: 2, bottom: 2 }
+              }
+            }
+          }]
+        };
+      }
 
-      // ── ApexCharts: Status share donut (center = total quotes) ─
-      setApexOrPlaceholder('chart-p3-donut', hasFunnelData && totalQuotes > 0, Object.assign({}, apexBase, {
-        chart: Object.assign({}, apexBase.chart, { type: 'donut', height: 300 }),
-        series: funnelCounts,
-        labels: funnelLabels,
-        colors: donutBrandColors,
-        stroke: {
-          show: true,
-          width: 1,
-          colors: ['#262425']
-        },
-        legend: {
-          position: 'bottom',
-          fontSize: '11px',
-          fontFamily: 'Montserrat, sans-serif',
-          labels: { colors: '#262425' }
-        },
-        plotOptions: {
-          pie: {
-            donut: {
-              size: '68%',
-              labels: {
-                show: true,
-                name: {
-                  show: true,
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  fontFamily: 'Montserrat, sans-serif',
-                  color: '#262425',
-                  offsetY: -8
-                },
-                value: {
-                  show: true,
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#262425',
-                  offsetY: 6,
-                  formatter: function() { return String(totalQuotes); }
-                },
-                total: {
-                  show: true,
-                  showAlways: true,
-                  label: 'Total Quotes',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  fontFamily: 'Montserrat, sans-serif',
-                  color: '#262425',
-                  formatter: function() { return String(totalQuotes); }
+      setApexOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, estChartOpts);
+
+      // ── Chart.js: 100% stacked horizontal Status Share ─
+      var statusShareLegend = document.getElementById('chart-p3-status-share-legend');
+      if (statusShareLegend) statusShareLegend.innerHTML = '';
+      if (hasFunnelData && totalQuotes > 0) {
+        var shareDatasets = [];
+        STATUS_ORDER.forEach(function(label, idx) {
+          var n = funnelCounts[idx];
+          if (!n) return;
+          shareDatasets.push({
+            label: label,
+            data: [n],
+            backgroundColor: statusShareColors[idx],
+            borderWidth: 0,
+            borderRadius: 0,
+            barThickness: 36
+          });
+        });
+
+        setChartOrPlaceholder('chart-p3-status-share', shareDatasets.length > 0, {
+          type: 'bar',
+          data: {
+            labels: ['Share'],
+            datasets: shareDatasets
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: function(items) {
+                    return items[0] ? items[0].dataset.label : '';
+                  },
+                  label: function(ctx) {
+                    var n = ctx.raw || 0;
+                    var pct = totalQuotes ? Math.round((n / totalQuotes) * 1000) / 10 : 0;
+                    return n + ' quotes (' + pct + '%)';
+                  }
                 }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                min: 0,
+                max: totalQuotes,
+                ticks: {
+                  color: P3_CHARCOAL,
+                  font: { size: 10 },
+                  callback: function(v) {
+                    if (!totalQuotes) return v;
+                    return Math.round((v / totalQuotes) * 100) + '%';
+                  }
+                },
+                grid: P3_GRID,
+                border: { color: P3_SOFT_GRAY }
+              },
+              y: {
+                stacked: true,
+                ticks: { display: false },
+                grid: { display: false },
+                border: { display: false }
               }
             }
           }
-        },
-        dataLabels: { enabled: false },
-        tooltip: Object.assign({}, apexBase.tooltip, {
-          y: {
-            formatter: function(val) {
-              var pct = totalQuotes ? Math.round((val / totalQuotes) * 1000) / 10 : 0;
-              return val + ' quotes (' + pct + '%)';
-            }
-          }
-        })
-      }));
+        });
+
+        if (statusShareLegend) {
+          var legHtml = '';
+          STATUS_ORDER.forEach(function(label, idx) {
+            var n = funnelCounts[idx];
+            if (!n) return;
+            var pct = Math.round((n / totalQuotes) * 1000) / 10;
+            legHtml +=
+              '<span class="p3-share-leg-item">' +
+              '<span class="p3-share-swatch" style="background:' + statusShareColors[idx] + '"></span>' +
+              '<span class="p3-share-leg-text">' + label +
+              ' <strong>' + n + '</strong> (' + pct + '%)</span></span>';
+          });
+          statusShareLegend.innerHTML = legHtml;
+        }
+      } else {
+        setChartOrPlaceholder('chart-p3-status-share', false, {});
+      }
 
       // ── Funnel detail table (status + estimator summary) ───────
       var funnelRows = STATUS_ORDER.map(function(s) {
@@ -3978,31 +4098,35 @@
         });
         var html = '<p class="section-subtitle" style="font-size:12px;color:#666;margin:0 0 8px">By Status</p>';
         html += buildTable(funnelRows, [
-          { label: 'Status', key: 'Status' },
-          { label: 'Count', key: 'Count' },
+          { label: 'Status', key: 'Status', align: 'left' },
+          { label: 'Count', key: 'Count', align: 'right' },
           {
             label: 'Quote Value',
             key: 'Quote Value ($)',
+            align: 'right',
             format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
           },
           {
             label: 'Avg Days to Decision',
             key: 'Avg Days to Decision',
+            align: 'right',
             format: function(v) { return v !== '' && v != null ? v : '—'; }
           }
         ]);
         html += '<p class="section-subtitle" style="font-size:12px;color:#666;margin:16px 0 8px">By Estimator</p>';
         html += buildTable(estTableRows, [
-          { label: 'Estimator', key: 'Estimator' },
-          { label: 'Quotes', key: 'Quotes' },
+          { label: 'Estimator', key: 'Estimator', align: 'left' },
+          { label: 'Quotes', key: 'Quotes', align: 'right' },
           {
             label: 'Quote Value',
             key: 'Quote Value ($)',
+            align: 'right',
             format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
           },
           {
             label: 'Avg Days to Decision',
             key: 'Avg Days to Decision',
+            align: 'right',
             format: function(v) { return v !== '' && v != null ? v : '—'; }
           }
         ]);
