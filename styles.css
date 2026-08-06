@@ -511,6 +511,79 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+/* Critical Milestones: never clip rightmost cols (Actual Done / % Done / Details).
+   Scroll on the wrap (not the table); table keeps natural width so columns don't squeeze. */
+#p4-schedule-table {
+  max-width: 100%;
+  min-width: 0;
+}
+
+#p4-schedule-table .table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  width: 100%;
+}
+
+#p4-schedule-table .data-table.p4-milestone-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+#p4-schedule-table .p4-milestone-table th,
+#p4-schedule-table .p4-milestone-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+/* Flexible text columns: cap width so date/%/Details stay in view on laptops when possible */
+#p4-schedule-table .p4-milestone-table th:nth-child(1),
+#p4-schedule-table .p4-milestone-table td:nth-child(1) {
+  max-width: 9.5rem;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#p4-schedule-table .p4-milestone-table th:nth-child(2),
+#p4-schedule-table .p4-milestone-table td:nth-child(2) {
+  max-width: 10rem;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#p4-schedule-table .p4-milestone-table th:nth-child(6),
+#p4-schedule-table .p4-milestone-table td:nth-child(6) {
+  max-width: 9rem;
+  white-space: normal;
+}
+
+/* Fixed-purpose columns stay fully visible */
+#p4-schedule-table .p4-milestone-table th:nth-child(3),
+#p4-schedule-table .p4-milestone-table td:nth-child(3),
+#p4-schedule-table .p4-milestone-table th:nth-child(4),
+#p4-schedule-table .p4-milestone-table td:nth-child(4),
+#p4-schedule-table .p4-milestone-table th:nth-child(5),
+#p4-schedule-table .p4-milestone-table td:nth-child(5),
+#p4-schedule-table .p4-milestone-table th:nth-child(7),
+#p4-schedule-table .p4-milestone-table td:nth-child(7),
+#p4-schedule-table .p4-milestone-table th:nth-child(8),
+#p4-schedule-table .p4-milestone-table td:nth-child(8),
+#p4-schedule-table .p4-milestone-table th:nth-child(9),
+#p4-schedule-table .p4-milestone-table td:nth-child(9) {
+  white-space: nowrap;
+}
+
+/* Details column must never compress / clip the toggle button */
+#p4-schedule-table .p4-milestone-table th:nth-child(10),
+#p4-schedule-table .p4-milestone-table td:nth-child(10) {
+  white-space: nowrap;
+  min-width: 5.5rem;
+  padding-right: 12px;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    CARD BASE — includes 3D tilt via JS
