@@ -384,6 +384,133 @@ select {
   color: var(--silver);
 }
 
+/* P4 monochrome badges (no red) */
+.p4-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.p4-badge svg { flex-shrink: 0; }
+.p4-badge--critical {
+  background: var(--charcoal);
+  color: var(--white);
+  border: 1px solid var(--charcoal);
+}
+.p4-badge--critical svg { stroke: var(--white); }
+.p4-badge--neutral {
+  background: transparent;
+  color: var(--charcoal);
+  border: 1px solid var(--gray);
+  font-weight: 600;
+}
+.p4-badge--muted {
+  background: transparent;
+  color: var(--gray);
+  border: 1px solid var(--silver);
+  font-weight: 600;
+}
+
+.p4-section-hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gray);
+  margin-left: 8px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: var(--font-body);
+}
+
+.p4-chart-note {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.35;
+}
+
+.p4-chart-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+.p4-chart-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.p4-row-risk td {
+  background: rgba(210, 212, 213, 0.35);
+}
+
+.p4-detail-toggle {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  background: var(--white);
+  border: 1px solid var(--gray);
+  padding: 3px 8px;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.p4-detail-toggle:hover {
+  background: rgba(210, 212, 213, 0.4);
+}
+
+.p4-detail-panel {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(188, 189, 190, 0.5);
+  background: rgba(210, 212, 213, 0.25);
+  font-size: 11px;
+  color: var(--charcoal);
+  box-shadow: none;
+}
+
+.p4-detail-panel[hidden] {
+  display: none !important;
+}
+
+.p4-detail-line {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.p4-detail-line strong {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--gray);
+  margin-right: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.p4-detail-note {
+  color: var(--gray);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+#p4-schedule-table .data-table th.text-right,
+#p4-schedule-table .data-table td.text-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    CARD BASE — includes 3D tilt via JS

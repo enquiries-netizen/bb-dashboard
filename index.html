@@ -519,14 +519,19 @@
           </div>
 
           <div class="chart-row">
-            <div class="chart-card card">
-              <div class="chart-title">Job Completion Overview</div>
-              <canvas id="chart-p4-completion" height="110"></canvas>
+            <div class="chart-card card p4-chart-card">
+              <div class="chart-title">Job Progress</div>
+              <p class="p4-chart-note">Sorted highest % complete first. Jobs at 0% grouped under Not Commenced (no Gantt — actual dates still incomplete in Buildpass).</p>
+              <div class="p4-chart-wrap">
+                <canvas id="chart-p4-completion"></canvas>
+              </div>
             </div>
           </div>
 
           <div class="section-card">
-            <div class="section-title">Milestone Schedule &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#c0392b">⚠ = Overdue</span> &nbsp;<span style="font-size:0.75rem;font-weight:400;color:#262425">Staffing = labour trend on slipping jobs</span></div>
+            <div class="section-title">Critical Milestones
+              <span class="p4-section-hint">Overdue and high-risk first · Brand/Department in Details</span>
+            </div>
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
 
@@ -4352,8 +4357,8 @@
     // P4 — JOB PERFORMANCE
     // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b)
     // KPIs:    Active Jobs, On Track, Overdue Milestones, Total Labour Cost
-    // Chart:   Horizontal bar — % complete per job (red = has overdue milestone)
-    // Tables:  Milestone schedule (Slippage + Staffing signal), Labour cost by job
+    // Chart:   Horizontal bar — % complete per job (sorted, 0% = Not Commenced)
+    // Tables:  Critical milestones (risk-first), Labour cost by job
     // Signal:  Needs More Hands — slipping jobs with flat/declining weekly hours
     // ═══════════════════════════════════════════════════════════════
     async function loadP4() {
@@ -4361,11 +4366,11 @@
       removeError('p4');
       try {
         var results = await Promise.all([
-        fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
-        fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
-        fetchSheet(CONFIG.TABS.XERO_PROJECTS)
-      ]);
-      renderP4(results[0], results[1], results[2]);
+          fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS)
+        ]);
+        renderP4(results[0], results[1], results[2]);
       } catch (err) {
         console.error('P4 load error:', err);
         showError('p4', 'Could not load Job Performance data. Check sheet permissions.');
@@ -4375,10 +4380,55 @@
       }
     }
 
+    /**
+     * % Complete from the sheet — NEVER invent 100% for blanks.
+     * parseNum('') returns 0; that is fine for averages but blank vs 0
+     * must stay distinct for display / validation.
+     * Returns { raw, hasValue, value } where value is 0–100 or null.
+     */
+    function p4ReadPctComplete(row) {
+      var raw = rawColByNames(row, [
+        '% Complete', '% Done', 'percent_complete', 'Percent Complete', 'Progress'
+      ]);
+      var s = String(raw == null ? '' : raw).trim();
+      if (!s || s === '—' || s === '-' || s.toLowerCase() === 'n/a' ||
+          s.toLowerCase() === 'na' || s.toLowerCase() === 'null') {
+        return { raw: raw, hasValue: false, value: null };
+      }
+      var n = parseFloat(String(s).replace(/%/g, '').replace(/,/g, '').trim());
+      if (isNaN(n)) return { raw: raw, hasValue: false, value: null };
+      // Buildpass / Sheets sometimes store progress as 0–1 fraction (e.g. 1 = complete).
+      // Only treat as fraction when 0 < n <= 1 AND the cell has no % sign AND it is a
+      // pure numeric form (avoids misreading genuine 1% as 100%).
+      var hadPctSign = String(s).indexOf('%') !== -1;
+      if (!hadPctSign && n > 0 && n <= 1) {
+        // "1" or "1.0" / "0.5" from progress fields → percent scale
+        n = Math.round(n * 1000) / 10; // 1 → 100, 0.5 → 50
+        if (n > 100) n = 100;
+      }
+      if (n < 0) n = 0;
+      if (n > 100) n = 100;
+      return { raw: raw, hasValue: true, value: n };
+    }
+
+    /** Parse AU-first dates for schedule fields (fixes US new Date("05/10/2026") MDY bugs). */
+    function p4ParseScheduleDate(raw) {
+      return parseFlexibleDate(raw);
+    }
+
+    function p4FmtDate(d, rawFallback) {
+      if (d && !isNaN(d.getTime())) return d.toLocaleDateString('en-AU');
+      var s = String(rawFallback || '').trim();
+      return s || '';
+    }
+
     function renderP4(schedule, labour, xeroProjects) {
       var today = new Date();
       today.setHours(0, 0, 0, 0);
       var brandCharcoal = '#262425';
+      var brandSoftGray = '#BCBDBE';
+      var brandSilver = '#D2D4D5';
+      var brandWhite = '#FFFFFF';
 
       // ── Filter by Brand / Month / Year ────────────────────────
       function applyP4Filters(rows) {
@@ -4387,19 +4437,116 @@
           activeMonths
         );
       }
-      var schedFiltered  = applyP4Filters(schedule);
+      var schedRaw = applyP4Filters(schedule);
       var labourFiltered = applyP4Filters(labour);
 
-      // ── Helper: is a schedule row overdue / slipping? ─────────
-      // Slippage = phase/task past planned end date, not Complete
-      function isOverdue(row) {
-        var status = String(col(row, 'Status', 'status') || '').toLowerCase();
+      // Normalise each schedule row once (pct, status rules, date sanity)
+      var schedFiltered = schedRaw.map(function(r) {
+        var startRaw = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date', 'Planned Start');
+        var endRaw = col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date', 'Planned End');
+        var startD = p4ParseScheduleDate(startRaw);
+        var endD = p4ParseScheduleDate(endRaw);
+        var dateFlag = null;
+        if (startD && endD && startD.getTime() > endD.getTime()) {
+          // Reversed window: try MDY reinterpret if original strings look swapped
+          var swapTryStart = null;
+          var swapTryEnd = null;
+          var ss = String(startRaw || '').trim().split(/[\/\-\.]/);
+          var es = String(endRaw || '').trim().split(/[\/\-\.]/);
+          if (ss.length === 3 && es.length === 3) {
+            // If both look like D/M/Y, force AU already failed (start > end): flag only, do not invent
+            dateFlag = 'Start after End';
+          } else {
+            dateFlag = 'Start after End';
+          }
+        }
+
+        var pctInfo = p4ReadPctComplete(r);
+        var statusRaw = String(col(r, 'Status', 'status') || '').trim();
+        var status = statusRaw;
+        var statusLower = statusRaw.toLowerCase();
+        var pct = pctInfo.hasValue ? pctInfo.value : null;
+
+        // Root-cause fix for Not Started + 100%: blank/missing never becomes 100.
+        // When status is explicitly Not Started and sheet % is missing → treat as 0.
+        // When status is Not Started but sheet says 100, the STATUS is preferred
+        // (do not relabel Completed from a likely bad 100%); clear the impossible % to 0.
+        if (statusLower === 'not started' || statusLower === 'not-started') {
+          if (pct === null) {
+            pct = 0;
+            pctInfo = { raw: pctInfo.raw, hasValue: false, value: 0, inferred: true };
+          } else if (pct >= 100) {
+            // Impossible combo: bad % field, trust "Not Started" (not the reverse)
+            pct = 0;
+            pctInfo = {
+              raw: pctInfo.raw,
+              hasValue: true,
+              value: 0,
+              correctedFrom: 100,
+              reason: 'Not Started cannot be 100% Done; % field corrected from unreliable max'
+            };
+          }
+        }
+
+        // Only after % is trustworthy: if still explicit 100 → Completed
+        if (pct !== null && pct >= 100 &&
+            statusLower !== 'cancelled' && statusLower !== 'canceled') {
+          if (!(statusLower === 'not started' || statusLower === 'not-started')) {
+            status = 'Completed';
+            statusLower = 'completed';
+            pct = 100;
+          }
+        }
+
+        // Not Started (or similar unfinished) past planned end → Overdue; % must stay < 100
+        var isPastEnd = endD && !isNaN(endD.getTime()) && endD < today;
+        var unfinished = statusLower !== 'complete' && statusLower !== 'completed' &&
+          statusLower !== 'cancelled' && statusLower !== 'canceled';
+        if (isPastEnd && unfinished) {
+          if (statusLower === 'not started' || statusLower === 'not-started' ||
+              statusLower === 'overdue' || !statusRaw) {
+            status = 'Overdue';
+            statusLower = 'overdue';
+          }
+          if (pct !== null && pct >= 100) {
+            pct = 0;
+            pctInfo = {
+              raw: pctInfo.raw,
+              hasValue: pctInfo.hasValue,
+              value: 0,
+              correctedFrom: 100,
+              reason: 'Overdue unfinished milestone cannot stay at 100%'
+            };
+          }
+        }
+
+        return {
+          _src: r,
+          project: col(r, 'Project Name', 'project_name', 'project') || '',
+          milestone: col(r, 'Phase Name', 'Phase/Milestone Name', 'Milestone/Task Name', 'Task Name', 'title', 'name') || '',
+          startRaw: startRaw,
+          endRaw: endRaw,
+          startD: startD,
+          endD: endD,
+          dateFlag: dateFlag,
+          status: status,
+          statusRaw: statusRaw,
+          pct: pct,
+          pctInfo: pctInfo,
+          brand: col(r, 'Brand', 'brand') || '',
+          department: col(r, 'Department', 'department') || '',
+          actualEndRaw: col(r, 'Actual End date', 'Actual End Date', 'Actual End'),
+          slippageRaw: col(r, 'Slippage', 'slippage')
+        };
+      });
+
+      function isOverdueNorm(row) {
+        var status = String(row.status || '').toLowerCase();
         if (status === 'complete' || status === 'completed' ||
             status === 'cancelled' || status === 'canceled') return false;
-        var endStr = col(row, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date');
-        if (!endStr) return false;
-        var end = new Date(endStr);
-        return !isNaN(end) && end < today;
+        if (status === 'overdue') return true;
+        if (!row.endD || isNaN(row.endD.getTime())) return false;
+        return row.endD < today;
       }
 
       function p4JobPrefix(val) {
@@ -4415,7 +4562,6 @@
         ) || '').trim();
       }
 
-      /** Flexible Job # match: exact, J# prefix (J1349 ↔ J1349C), or containment. */
       function p4JobsMatch(a, b) {
         var sa = String(a || '').trim().toUpperCase();
         var sb = String(b || '').trim().toUpperCase();
@@ -4429,25 +4575,21 @@
         return false;
       }
 
-      // ── Unique projects from schedule ─────────────────────────
       var projects = [];
       schedFiltered.forEach(function(r) {
-        var name = col(r, 'Project Name', 'project_name', 'project');
-        if (name && projects.indexOf(name) === -1) projects.push(name);
+        if (r.project && projects.indexOf(r.project) === -1) projects.push(r.project);
       });
 
-      var overdueItems = schedFiltered.filter(isOverdue);
+      var overdueItems = schedFiltered.filter(isOverdueNorm);
       var overdueProjects = [];
       overdueItems.forEach(function(r) {
-        var name = col(r, 'Project Name', 'project_name', 'project');
-        if (name && overdueProjects.indexOf(name) === -1) overdueProjects.push(name);
+        if (r.project && overdueProjects.indexOf(r.project) === -1) overdueProjects.push(r.project);
       });
       var onTrackCount = projects.filter(function(p) {
         return overdueProjects.indexOf(p) === -1;
       }).length;
 
-      // ── Needs More Hands: slipping jobs × weekly labour trend ─
-      // Last 3–4 week numbers present in filtered labour data
+      // ── Needs More Hands ─
       var labourWeeksMap = {};
       labourFiltered.forEach(function(r) {
         var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
@@ -4456,8 +4598,7 @@
       var labourWeeksSorted = Object.keys(labourWeeksMap).map(Number).sort(function(a, b) { return a - b; });
       var recentLabourWeeks = labourWeeksSorted.slice(-4);
 
-      // Per-job weekly hours within the recent window
-      var jobWeekHours = {}; // jobKey -> { week -> hours }
+      var jobWeekHours = {};
       labourFiltered.forEach(function(r) {
         var job = p4LabourJobId(r);
         if (!job) return;
@@ -4482,7 +4623,6 @@
         });
       }
 
-      // label: Needs More Hands | Understaffed, Being Addressed | Not enough data yet | ''
       var handsByProject = {};
       var handsDetail = {};
       overdueProjects.forEach(function(projectName) {
@@ -4492,7 +4632,6 @@
         } else {
           var firstHrs = series[0].hours;
           var lastHrs  = series[series.length - 1].hours;
-          // Increasing hours while slipping → being addressed; flat/declining → needs hands
           if (lastHrs > firstHrs) {
             handsByProject[projectName] = 'Understaffed, Being Addressed';
           } else {
@@ -4503,10 +4642,10 @@
         var maxSlip = 0;
         var ovCount = 0;
         schedFiltered.forEach(function(r) {
-          if (String(col(r, 'Project Name', 'project_name', 'project') || '') !== projectName) return;
-          if (!isOverdue(r)) return;
+          if (r.project !== projectName) return;
+          if (!isOverdueNorm(r)) return;
           ovCount++;
-          var s = parseInt(col(r, 'Slippage', 'slippage'), 10);
+          var s = parseInt(r.slippageRaw, 10);
           if (!isNaN(s) && s > maxSlip) maxSlip = s;
         });
         var trend = 'not enough data';
@@ -4550,27 +4689,59 @@
         '</svg>';
 
       function formatHandsBadge(label) {
-        if (!label) return '—';
+        if (!label) return '';
         if (label === 'Needs More Hands') {
-          return '<span class="p4-hands-signal p4-hands-needs">' + handsIconSvg + label + '</span>';
+          return '<span class="p4-badge p4-badge--critical">' + handsIconSvg + ' Needs More Hands</span>';
         }
         if (label === 'Understaffed, Being Addressed') {
-          return '<span class="p4-hands-signal p4-hands-addressed">' + label + '</span>';
+          return '<span class="p4-badge p4-badge--neutral">Understaffed, Being Addressed</span>';
         }
-        return '<span class="p4-hands-signal p4-hands-nodata">' + label + '</span>';
+        return '<span class="p4-badge p4-badge--muted">' + label + '</span>';
+      }
+
+      function formatStatusBadge(status, overdue) {
+        var s = String(status || '').trim();
+        var lower = s.toLowerCase();
+        if (overdue || lower === 'overdue') {
+          return '<span class="p4-badge p4-badge--critical">OVERDUE</span>';
+        }
+        if (lower === 'complete' || lower === 'completed') {
+          return '<span class="p4-badge p4-badge--neutral">Completed</span>';
+        }
+        if (lower === 'in progress') {
+          return '<span class="p4-badge p4-badge--neutral">In Progress</span>';
+        }
+        if (lower === 'not started' || lower === 'not-started') {
+          return '<span class="p4-badge p4-badge--muted">Not Started</span>';
+        }
+        if (!s) return '';
+        return '<span class="p4-badge p4-badge--muted">' + s + '</span>';
       }
 
       setBBPageData('P4', 'P4: Job Performance', {
-        schedules: schedFiltered.slice(0, 300),
+        schedules: schedFiltered.slice(0, 300).map(function(r) {
+          return {
+            project: r.project,
+            milestone: r.milestone,
+            status: r.status,
+            statusRaw: r.statusRaw,
+            pct: r.pct,
+            pctInfo: r.pctInfo,
+            plannedStart: p4FmtDate(r.startD, r.startRaw),
+            plannedEnd: p4FmtDate(r.endD, r.endRaw),
+            dateFlag: r.dateFlag,
+            overdue: isOverdueNorm(r)
+          };
+        }),
         labour: labourFiltered.slice(0, 300),
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         overdueProjects: overdueProjects,
         overdueMilestoneCount: overdueItems.length,
-        recentLabourWeeks: recentLabourWeeks
+        recentLabourWeeks: recentLabourWeeks,
+        pctRule: 'Blank % Complete is never treated as 100%. Not Started + 100% corrects the % field down (does not force Completed).'
       });
 
-      // ── Total labour cost ─────────────────────────────────────
       var totalLabour = labourFiltered.reduce(function(s, r) {
         var hrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
         var rate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
@@ -4578,7 +4749,6 @@
         return s + cost;
       }, 0);
 
-      // ── KPI Cards ─────────────────────────────────────────────
       if (schedFiltered.length === 0 && labourFiltered.length === 0) {
         ['kpi-p4-active','kpi-p4-ontrack','kpi-p4-overdue','kpi-p4-labour'].forEach(function(id) {
           setKPI(id, id + '-sub', '—', 'Syncs every Friday 6pm via Buildpass Schedule task');
@@ -4587,6 +4757,10 @@
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
         document.getElementById('p4-labour-table').innerHTML =
           '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
+        if (_charts['chart-p4-completion']) {
+          _charts['chart-p4-completion'].destroy();
+          delete _charts['chart-p4-completion'];
+        }
         return;
       }
 
@@ -4609,32 +4783,52 @@
              totalLabour ? formatCurrency(totalLabour) : '—',
              'Total labour cost (all jobs)');
 
-      // ── Completion Chart ──────────────────────────────────────
-      // Continuous grayscale: low % = light, high % = dark
+      // ── Job Progress chart: desc % then Not Commenced group ─
       function getJobBarColor(pct) {
-        var lightness = 75 - (pct / 100) * 65;
-        if (lightness < 10) lightness = 10;
-        return 'hsl(0, 0%, ' + Math.round(lightness) + '%)';
+        // Charcoal tints only (no red)
+        if (pct <= 0) return brandSilver;
+        var t = pct / 100;
+        // blend silver → charcoal as complete increases
+        return 'rgba(38,36,37,' + (0.22 + t * 0.78).toFixed(2) + ')';
       }
 
-      // Average % complete per project, sorted ascending (least done first)
       var projectCompletion = projects.map(function(p) {
-        var items = schedFiltered.filter(function(r) {
-          return col(r, 'Project Name', 'project_name', 'project') === p;
-        });
-        var validItems = items.filter(function(r) {
-          return String(col(r, '% Complete', '% Done', 'percent_complete', 'Percent Complete') || '').toLowerCase() !== 'n/a';
-        });
-        var totalPct = validItems.reduce(function(s, r) {
-          return s + parseNum(col(r, '% Complete', '% Done', 'percent_complete', 'Percent Complete'));
-        }, 0);
-        var avg = validItems.length ? Math.round(totalPct / validItems.length) : 0;
-        return { project: p, avg: avg, overdue: overdueProjects.indexOf(p) !== -1 };
-      }).sort(function(a, b) { return a.avg - b.avg; });
+        var items = schedFiltered.filter(function(r) { return r.project === p; });
+        var vals = items.map(function(r) {
+          return r.pct !== null && r.pct !== undefined ? r.pct : null;
+        }).filter(function(v) { return v !== null; });
+        var avg = vals.length
+          ? Math.round(vals.reduce(function(s, n) { return s + n; }, 0) / vals.length)
+          : 0;
+        return {
+          project: p,
+          avg: avg,
+          overdue: overdueProjects.indexOf(p) !== -1,
+          unstarted: avg <= 0
+        };
+      });
 
-      if (projectCompletion.length > 0) {
-        var chartLabels = projectCompletion.map(function(p) {
-          return p.project.length > 35 ? p.project.substring(0, 35) + '…' : p.project;
+      var activeJobs = projectCompletion.filter(function(p) { return !p.unstarted; })
+        .sort(function(a, b) { return b.avg - a.avg; }); // highest complete first
+      var unstartedJobs = projectCompletion.filter(function(p) { return p.unstarted; })
+        .sort(function(a, b) { return String(a.project).localeCompare(String(b.project)); });
+      var orderedJobs = activeJobs.concat(unstartedJobs);
+
+      if (_charts['chart-p4-completion']) {
+        _charts['chart-p4-completion'].destroy();
+        delete _charts['chart-p4-completion'];
+      }
+
+      var wrap = document.querySelector('#page-p4 .p4-chart-wrap');
+      if (wrap && orderedJobs.length) {
+        wrap.style.height = Math.max(200, orderedJobs.length * 28 + 40) + 'px';
+      }
+
+      if (orderedJobs.length > 0) {
+        var chartLabels = orderedJobs.map(function(p) {
+          var name = p.project.length > 32 ? p.project.substring(0, 32) + '…' : p.project;
+          if (p.unstarted) return name + ' · Not Commenced';
+          return name;
         });
         makeChart('chart-p4-completion', {
           type: 'bar',
@@ -4642,106 +4836,181 @@
             labels: chartLabels,
             datasets: [{
               label: '% Complete',
-              data:  projectCompletion.map(function(p) { return p.avg; }),
-              backgroundColor: projectCompletion.map(function(p) {
-                return getJobBarColor(p.avg);
+              data: orderedJobs.map(function(p) {
+                // Keep 0-bar visible as thin silver "Not Commenced" marker via min visual handled in tooltip
+                return p.avg;
               }),
-              borderWidth: 0,
-              borderRadius: 4
+              backgroundColor: orderedJobs.map(function(p) {
+                return p.unstarted ? brandSilver : getJobBarColor(p.avg);
+              }),
+              borderColor: orderedJobs.map(function(p) {
+                return p.unstarted ? brandSoftGray : brandCharcoal;
+              }),
+              borderWidth: orderedJobs.map(function(p) { return p.unstarted ? 1 : 0; }),
+              borderRadius: 0,
+              barThickness: 14
             }]
           },
           options: {
             indexAxis: 'y',
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '% complete'; } } }
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    var job = orderedJobs[ctx.dataIndex];
+                    if (job && job.unstarted) return 'Not Commenced (0%)';
+                    return ctx.raw + '% complete';
+                  }
+                }
+              }
             },
             scales: {
               x: {
                 beginAtZero: true,
                 max: 100,
-                ticks: { callback: function(v) { return v + '%'; } }
+                ticks: {
+                  color: brandCharcoal,
+                  callback: function(v) { return v + '%'; },
+                  font: { size: 10 }
+                },
+                grid: { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 },
+                border: { color: brandSoftGray }
+              },
+              y: {
+                ticks: { color: brandCharcoal, font: { size: 10, family: 'Montserrat' } },
+                grid: { display: false },
+                border: { color: brandSoftGray }
               }
             }
           }
         });
       }
 
-      // ── Milestone Schedule Table ───────────────────────────────
+      // ── Critical Milestones table ─────────────────────────────
       if (schedFiltered.length > 0) {
         var sortedSched = schedFiltered.slice().sort(function(a, b) {
-          var pa = col(a, 'Project Name', 'project_name', 'project') || '';
-          var pb = col(b, 'Project Name', 'project_name', 'project') || '';
-          if (pa !== pb) return pa < pb ? -1 : 1;
-          // Within a project, sort by planned end date ascending
-          var ea = new Date(col(a, 'Planned End Date', 'Planned End date', 'End Date', 'endDate') || 0);
-          var eb = new Date(col(b, 'Planned End Date', 'Planned End date', 'End Date', 'endDate') || 0);
-          return ea - eb;
+          // Risk-first: overdue, then date flag, then sooner end, then project
+          var oa = isOverdueNorm(a) ? 0 : 1;
+          var ob = isOverdueNorm(b) ? 0 : 1;
+          if (oa !== ob) return oa - ob;
+          var fa = a.dateFlag ? 0 : 1;
+          var fb = b.dateFlag ? 0 : 1;
+          if (fa !== fb) return fa - fb;
+          var ea = a.endD ? a.endD.getTime() : Infinity;
+          var eb = b.endD ? b.endD.getTime() : Infinity;
+          if (ea !== eb) return ea - eb;
+          var pc = String(a.project || '').localeCompare(String(b.project || ''));
+          if (pc) return pc;
+          return String(a.milestone || '').localeCompare(String(b.milestone || ''));
         });
 
-        var html = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Project</th><th>Milestone</th><th>Planned Start</th><th>Planned End</th><th>Slippage</th><th>Staffing</th><th>Actual Done</th><th>Status</th><th>% Done</th><th>Brand</th><th>Department</th>' +
+        var html = '<div class="table-wrap"><table class="data-table p4-milestone-table"><thead><tr>' +
+          '<th class="text-left">Project</th>' +
+          '<th class="text-left">Milestone</th>' +
+          '<th class="text-left">Planned Start</th>' +
+          '<th class="text-left">Planned End</th>' +
+          '<th class="text-left">Slippage</th>' +
+          '<th class="text-left">Staffing</th>' +
+          '<th class="text-left">Actual Done</th>' +
+          '<th class="text-left">Status</th>' +
+          '<th class="text-right">% Done</th>' +
+          '<th class="text-left">Details</th>' +
           '</tr></thead><tbody>';
 
-        sortedSched.forEach(function(r) {
-          var overdueRow = isOverdue(r);
-          var project    = col(r, 'Project Name', 'project_name', 'project') || '—';
-          var milestone  = col(r, 'Phase Name', 'Phase/Milestone Name', 'Milestone/Task Name', 'Task Name', 'title', 'name') || '—';
-          var startRaw   = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date');
-          var endRaw     = col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date');
-          var status     = col(r, 'Status', 'status') || '—';
-          var pctRaw     = col(r, '% Complete', '% Done', 'percent_complete', 'Percent Complete');
-          var brand      = col(r, 'Brand', 'brand') || '—';
-          var department = col(r, 'Department', 'department') || '—';
-          var actualEndRaw = col(r, 'Actual End date', 'Actual End Date');
+        sortedSched.forEach(function(r, idx) {
+          var overdueRow = isOverdueNorm(r);
+          var startFmt = p4FmtDate(r.startD, r.startRaw) || '';
+          var endFmt = p4FmtDate(r.endD, r.endRaw) || '';
+          var actualD = p4ParseScheduleDate(r.actualEndRaw);
+          var actualEndFmt = actualD ? p4FmtDate(actualD, r.actualEndRaw) : '';
 
-          var startFmt = startRaw ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(startRaw) : '—';
-          var endFmt   = endRaw   ? (function(v){ var d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('en-AU'); })(endRaw)   : '—';
-          var actualEndFmt = actualEndRaw ? new Date(actualEndRaw).toLocaleDateString('en-AU') : '—';
-
-          var slippageDays = col(r, 'Slippage', 'slippage');
-          var slippageStr = '—';
-          var slippageStyle = '';
-          if (slippageDays !== '' && slippageDays !== null && slippageDays !== undefined) {
-            var d = parseInt(slippageDays, 10);
-            if (d > 0) { slippageStr = '+' + d + ' days'; slippageStyle = ' style="color:#c0392b;font-weight:600"'; }
-            else if (d < 0) { slippageStr = Math.abs(d) + ' days early'; slippageStyle = ' style="color:#1a7a43;font-weight:600"'; }
-            else if (!isNaN(d)) { slippageStr = 'On Time'; slippageStyle = ' style="color:#1a7a43;font-weight:600"'; }
+          var slippageStr = '';
+          if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
+            var d = parseInt(r.slippageRaw, 10);
+            if (!isNaN(d)) {
+              if (d > 0) slippageStr = '+' + d + ' days';
+              else if (d < 0) slippageStr = Math.abs(d) + ' days early';
+              else slippageStr = 'On Schedule';
+            }
+          } else if (overdueRow && r.endD) {
+            var daysLate = Math.round((today - r.endD) / 86400000);
+            if (daysLate > 0) slippageStr = '+' + daysLate + ' days';
+          } else if (!overdueRow && r.status && String(r.status).toLowerCase().indexOf('complete') === -1) {
+            slippageStr = 'On Schedule';
           }
 
-          var handsLabel = handsByProject[project] || '';
-          var handsCell  = formatHandsBadge(handsLabel);
+          var handsLabel = handsByProject[r.project] || '';
+          var handsCell = formatHandsBadge(handsLabel);
 
-          var statusLower = String(status).toLowerCase();
-          var statusStyle = '';
-          if (statusLower === 'complete' || statusLower === 'completed') {
-            statusStyle = ' style="color:#1a7a43;font-weight:600"';
-          } else if (overdueRow) {
-            statusStyle = ' style="color:#c0392b;font-weight:600"';
-          } else if (statusLower === 'in progress') {
-            statusStyle = ' style="color:#2471a3;font-weight:600"';
+          var dateNote = r.dateFlag
+            ? '<span class="p4-badge p4-badge--critical" title="Planned Start is after Planned End">' +
+              r.dateFlag + '</span> '
+            : '';
+
+          var pctFmt = '';
+          if (r.pct !== null && r.pct !== undefined) {
+            pctFmt = Math.round(r.pct) + '%';
           }
 
-          var pctStr = String(pctRaw || '').toLowerCase();
-          var pctFmt = pctStr === 'n/a' ? 'N/A' : (parseNum(pctRaw) >= 0 && pctRaw !== '' ? parseNum(pctRaw) + '%' : '—');
+          var detailId = 'p4-detail-' + idx;
+          var brand = r.brand || '—';
+          var department = r.department || '—';
+          var detailInner =
+            '<span class="p4-detail-line"><strong>Brand</strong> ' + brand + '</span>' +
+            '<span class="p4-detail-line"><strong>Department</strong> ' + department + '</span>';
+          if (r.pctInfo && r.pctInfo.correctedFrom === 100) {
+            detailInner += '<span class="p4-detail-line p4-detail-note">' +
+              (r.pctInfo.reason || '% Done adjusted from unreliable 100%') + '</span>';
+          }
+          if (r.dateFlag) {
+            detailInner += '<span class="p4-detail-line p4-detail-note">Source dates: ' +
+              (r.startRaw || '—') + ' → ' + (r.endRaw || '—') + ' (check sheet / day-month order)</span>';
+          }
 
-          html += '<tr' + (overdueRow ? ' style="background:rgba(192,57,43,0.06)"' : '') + '>' +
-            '<td>' + project + '</td>' +
-            '<td>' + milestone + '</td>' +
-            '<td>' + startFmt + '</td>' +
-            '<td>' + endFmt + '</td>' +
-            '<td><span' + slippageStyle + '>' + slippageStr + '</span></td>' +
-            '<td>' + handsCell + '</td>' +
-            '<td>' + actualEndFmt + '</td>' +
-            '<td><span' + statusStyle + '>' + status + (overdueRow ? ' ⚠' : '') + '</span></td>' +
-            '<td>' + pctFmt + '</td>' +
-            '<td>' + brand + '</td>' +
-            '<td>' + department + '</td>' +
+          html += '<tr class="' + (overdueRow ? 'p4-row-risk' : '') + '">' +
+            '<td class="text-left">' + (r.project || '') + '</td>' +
+            '<td class="text-left">' + (r.milestone || '') + '</td>' +
+            '<td class="text-left">' + dateNote + startFmt + '</td>' +
+            '<td class="text-left">' + endFmt + '</td>' +
+            '<td class="text-left">' + slippageStr + '</td>' +
+            '<td class="text-left">' + handsCell + '</td>' +
+            '<td class="text-left">' + actualEndFmt + '</td>' +
+            '<td class="text-left">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
+            '<td class="text-right">' + pctFmt + '</td>' +
+            '<td class="text-left">' +
+              '<button type="button" class="p4-detail-toggle" data-p4-detail="' + detailId +
+              '" aria-expanded="false">Details</button>' +
+              '<div id="' + detailId + '" class="p4-detail-panel" hidden>' + detailInner + '</div>' +
+            '</td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';
         document.getElementById('p4-schedule-table').innerHTML = html;
+
+        // Bind expand toggles (once per render)
+        Array.prototype.forEach.call(
+          document.querySelectorAll('#p4-schedule-table .p4-detail-toggle'),
+          function(btn) {
+            btn.addEventListener('click', function() {
+              var id = btn.getAttribute('data-p4-detail');
+              var panel = document.getElementById(id);
+              if (!panel) return;
+              var open = panel.hasAttribute('hidden');
+              if (open) {
+                panel.removeAttribute('hidden');
+                btn.setAttribute('aria-expanded', 'true');
+                btn.textContent = 'Hide';
+              } else {
+                panel.setAttribute('hidden', '');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.textContent = 'Details';
+              }
+            });
+          }
+        );
       } else {
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
@@ -4770,22 +5039,24 @@
         });
 
         Object.values(labourByProject).forEach(function(p) {
-  var rev = parseNum(col(xeroProjects.find(function(x){ return col(x,'Project ID','project_id') === p.project; }) || {}, 'Revenue','revenue'));
-  p.revenue   = rev || 0;
-  p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
-});
-var labourRows = Object.values(labourByProject)
+          var rev = parseNum(col(xeroProjects.find(function(x){
+            return col(x,'Project ID','project_id') === p.project;
+          }) || {}, 'Revenue','revenue'));
+          p.revenue   = rev || 0;
+          p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
+        });
+        var labourRows = Object.values(labourByProject)
           .sort(function(a, b) { return b.cost - a.cost; });
 
-          document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
-  { label: 'Project',  key: 'project' },
-  { label: 'Hours',    key: 'hours',    format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : '—'; } },
-  { label: 'Labour Cost', key: 'cost', format: function(v) { return v ? formatCurrency(v) : '—'; } },
-  { label: 'Revenue',  key: 'revenue',  format: function(v) { return v ? formatCurrency(v) : '—'; } },
-  { label: 'Labour %', key: 'labourPct', format: function(v) { return v ? v.toFixed(1) + '%' : '—'; } },
-  { label: 'Brand',    key: 'brand' },
-  { label: 'Department', key: 'department' }
-]);
+        document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
+          { label: 'Project',  key: 'project', align: 'left' },
+          { label: 'Hours',    key: 'hours',    align: 'right', format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : ''; } },
+          { label: 'Labour Cost', key: 'cost', align: 'right', format: function(v) { return v ? formatCurrency(v) : ''; } },
+          { label: 'Revenue',  key: 'revenue',  align: 'right', format: function(v) { return v ? formatCurrency(v) : ''; } },
+          { label: 'Labour %', key: 'labourPct', align: 'right', format: function(v) { return v ? v.toFixed(1) + '%' : ''; } },
+          { label: 'Brand',    key: 'brand', align: 'left' },
+          { label: 'Department', key: 'department', align: 'left' }
+        ]);
       } else {
         document.getElementById('p4-labour-table').innerHTML =
           '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
