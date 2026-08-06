@@ -3590,13 +3590,14 @@
           labels: { colors: '#262425' }
         }
       };
-      // Brand palette only — Deep Charcoal opacity steps for status segments
+      // Brand palette only — five Deep Charcoal tints spaced for distinguishability
+      // Indices match STATUS_ORDER: Draft, Sent, Accepted, In Progress, Awaiting Approval
       var statusShareColors = [
-        'rgba(38,36,37,0.22)',  // Draft
-        'rgba(38,36,37,0.40)',  // Sent
-        '#262425',              // Accepted
-        'rgba(38,36,37,0.62)',  // In Progress
-        'rgba(38,36,37,0.12)'   // Awaiting Approval
+        'rgba(38,36,37,0.15)',  // Draft — lightest (~15%)
+        'rgba(38,36,37,0.50)',  // Sent (~50%)
+        '#262425',              // Accepted — full Deep Charcoal (100%)
+        'rgba(38,36,37,0.75)',  // In Progress (~75%)
+        'rgba(38,36,37,0.30)'   // Awaiting Approval (~30%)
       ];
       var charcoalScale = statusShareColors;
       // Pipeline step box fills (connected stages, not volume-proportional)
