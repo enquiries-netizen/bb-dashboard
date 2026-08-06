@@ -530,7 +530,7 @@
 
           <div class="section-card">
             <div class="section-title">Critical Milestones
-              <span class="p4-section-hint">Overdue and high-risk first · Brand/Department in Details</span>
+              <span class="p4-section-hint">Overdue and high-risk first</span>
             </div>
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
@@ -4695,7 +4695,7 @@
             handsIconSvg + ' Needs More Hands</span>';
         }
         if (label === 'Understaffed, Being Addressed') {
-          // Short inline label; full wording via title + expandable Details row
+          // Short inline label; full wording on hover title
           return '<span class="p4-badge p4-badge--neutral" title="Understaffed, Being Addressed">Understaffed</span>';
         }
         return '<span class="p4-badge p4-badge--muted" title="' + String(label).replace(/"/g, '&quot;') + '">' + label + '</span>';
@@ -4909,27 +4909,38 @@
           return String(a.milestone || '').localeCompare(String(b.milestone || ''));
         });
 
-        // Dedicated scroll host (class p4-milestones-scroll) — table width is NOT force-100%
-        var detailChevron =
-          '<svg class="p4-detail-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">' +
-          '<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" ' +
-          'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        // Actual Done only when at least one row has a real date (often empty: manual diaries)
+        var showActualDone = sortedSched.some(function(r) {
+          return !!p4ParseScheduleDate(r.actualEndRaw);
+        });
+
+        function p4BrandDeptLine(r) {
+          var brand = String(r.brand || '').trim();
+          var dept = String(r.department || '').trim();
+          if (brand && dept) return brand + ' · ' + dept;
+          if (dept) return dept;
+          if (brand) return brand;
+          return '';
+        }
 
         var html = '<div class="p4-milestones-scroll" role="region" aria-label="Critical milestones table">' +
           '<table class="data-table p4-milestone-table"><thead><tr>' +
           '<th class="text-left">Project</th>' +
           '<th class="text-left">Milestone</th>' +
+          '<th class="text-left">Brand / Dept</th>' +
           '<th class="text-left">Planned Start</th>' +
           '<th class="text-left">Planned End</th>' +
           '<th class="text-left">Slippage</th>' +
-          '<th class="text-left">Staffing</th>' +
-          '<th class="text-left">Actual Done</th>' +
+          '<th class="text-left">Staffing</th>';
+        if (showActualDone) {
+          html += '<th class="text-left">Actual Done</th>';
+        }
+        html +=
           '<th class="text-left">Status</th>' +
           '<th class="text-right">% Done</th>' +
-          '<th class="text-left p4-col-details" scope="col"><span class="sr-only">Details</span></th>' +
           '</tr></thead><tbody>';
 
-        sortedSched.forEach(function(r, idx) {
+        sortedSched.forEach(function(r) {
           var overdueRow = isOverdueNorm(r);
           var startFmt = p4FmtDate(r.startD, r.startRaw) || '';
           var endFmt = p4FmtDate(r.endD, r.endRaw) || '';
@@ -4964,72 +4975,32 @@
             pctFmt = Math.round(r.pct) + '%';
           }
 
-          var detailId = 'p4-detail-' + idx;
-          var brand = r.brand || '—';
-          var department = r.department || '—';
-          var detailInner =
-            '<span class="p4-detail-line"><strong>Brand</strong> ' + brand + '</span>' +
-            '<span class="p4-detail-line"><strong>Department</strong> ' + department + '</span>';
-          if (handsLabel) {
-            detailInner += '<span class="p4-detail-line"><strong>Staffing</strong> ' + handsLabel + '</span>';
-          }
+          var brandDept = p4BrandDeptLine(r);
+          var brandDeptTitle = '';
           if (r.pctInfo && r.pctInfo.correctedFrom === 100 && r.pctInfo.reason) {
-            detailInner += '<span class="p4-detail-line p4-detail-note">' +
-              r.pctInfo.reason + '</span>';
-          }
-          if (r.dateFlag) {
-            detailInner += '<span class="p4-detail-line p4-detail-note">Source dates: ' +
-              (r.startRaw || '—') + ' → ' + (r.endRaw || '—') + ' (check sheet / day-month order)</span>';
+            brandDeptTitle = r.pctInfo.reason;
           }
 
           html += '<tr class="' + (overdueRow ? 'p4-row-risk' : '') + '">' +
             '<td class="text-left p4-col-project">' + (r.project || '') + '</td>' +
             '<td class="text-left p4-col-milestone">' + (r.milestone || '') + '</td>' +
+            '<td class="text-left p4-col-branddept"' +
+              (brandDeptTitle ? ' title="' + brandDeptTitle.replace(/"/g, '&quot;') + '"' : '') +
+              '>' + brandDept + '</td>' +
             '<td class="text-left p4-col-date">' + dateNote + startFmt + '</td>' +
             '<td class="text-left p4-col-date">' + endFmt + '</td>' +
             '<td class="text-left p4-col-slip">' + slippageStr + '</td>' +
-            '<td class="text-left p4-col-staffing">' + handsCell + '</td>' +
-            '<td class="text-left p4-col-date">' + actualEndFmt + '</td>' +
+            '<td class="text-left p4-col-staffing">' + handsCell + '</td>';
+          if (showActualDone) {
+            html += '<td class="text-left p4-col-date">' + actualEndFmt + '</td>';
+          }
+          html +=
             '<td class="text-left p4-col-status">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
             '<td class="text-right p4-col-pct">' + pctFmt + '</td>' +
-            '<td class="text-left p4-col-details">' +
-              '<button type="button" class="p4-detail-toggle p4-detail-toggle--icon" ' +
-              'data-p4-detail="' + detailId + '" aria-expanded="false" ' +
-              'aria-controls="' + detailId + '" title="Details" aria-label="Show details">' +
-              detailChevron +
-              '</button>' +
-            '</td>' +
-            '</tr>' +
-            '<tr id="' + detailId + '" class="p4-detail-row" hidden>' +
-            '<td colspan="10"><div class="p4-detail-panel">' + detailInner + '</div></td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';
         document.getElementById('p4-schedule-table').innerHTML = html;
-
-        // Bind expand toggles (once per render) — icon control, no text swap
-        Array.prototype.forEach.call(
-          document.querySelectorAll('#p4-schedule-table .p4-detail-toggle'),
-          function(btn) {
-            btn.addEventListener('click', function() {
-              var id = btn.getAttribute('data-p4-detail');
-              var panel = document.getElementById(id);
-              if (!panel) return;
-              var open = panel.hasAttribute('hidden');
-              if (open) {
-                panel.removeAttribute('hidden');
-                btn.setAttribute('aria-expanded', 'true');
-                btn.setAttribute('aria-label', 'Hide details');
-                btn.classList.add('is-open');
-              } else {
-                panel.setAttribute('hidden', '');
-                btn.setAttribute('aria-expanded', 'false');
-                btn.setAttribute('aria-label', 'Show details');
-                btn.classList.remove('is-open');
-              }
-            });
-          }
-        );
       } else {
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
