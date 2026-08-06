@@ -4691,12 +4691,14 @@
       function formatHandsBadge(label) {
         if (!label) return '';
         if (label === 'Needs More Hands') {
-          return '<span class="p4-badge p4-badge--critical">' + handsIconSvg + ' Needs More Hands</span>';
+          return '<span class="p4-badge p4-badge--critical" title="Needs More Hands">' +
+            handsIconSvg + ' Needs More Hands</span>';
         }
         if (label === 'Understaffed, Being Addressed') {
-          return '<span class="p4-badge p4-badge--neutral">Understaffed, Being Addressed</span>';
+          // Short inline label; full wording via title + expandable Details row
+          return '<span class="p4-badge p4-badge--neutral" title="Understaffed, Being Addressed">Understaffed</span>';
         }
-        return '<span class="p4-badge p4-badge--muted">' + label + '</span>';
+        return '<span class="p4-badge p4-badge--muted" title="' + String(label).replace(/"/g, '&quot;') + '">' + label + '</span>';
       }
 
       function formatStatusBadge(status, overdue) {
@@ -4907,7 +4909,14 @@
           return String(a.milestone || '').localeCompare(String(b.milestone || ''));
         });
 
-        var html = '<div class="table-wrap"><table class="data-table p4-milestone-table"><thead><tr>' +
+        // Dedicated scroll host (class p4-milestones-scroll) — table width is NOT force-100%
+        var detailChevron =
+          '<svg class="p4-detail-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">' +
+          '<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" ' +
+          'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        var html = '<div class="p4-milestones-scroll" role="region" aria-label="Critical milestones table">' +
+          '<table class="data-table p4-milestone-table"><thead><tr>' +
           '<th class="text-left">Project</th>' +
           '<th class="text-left">Milestone</th>' +
           '<th class="text-left">Planned Start</th>' +
@@ -4917,7 +4926,7 @@
           '<th class="text-left">Actual Done</th>' +
           '<th class="text-left">Status</th>' +
           '<th class="text-right">% Done</th>' +
-          '<th class="text-left">Details</th>' +
+          '<th class="text-left p4-col-details" scope="col"><span class="sr-only">Details</span></th>' +
           '</tr></thead><tbody>';
 
         sortedSched.forEach(function(r, idx) {
@@ -4961,6 +4970,9 @@
           var detailInner =
             '<span class="p4-detail-line"><strong>Brand</strong> ' + brand + '</span>' +
             '<span class="p4-detail-line"><strong>Department</strong> ' + department + '</span>';
+          if (handsLabel) {
+            detailInner += '<span class="p4-detail-line"><strong>Staffing</strong> ' + handsLabel + '</span>';
+          }
           if (r.pctInfo && r.pctInfo.correctedFrom === 100) {
             detailInner += '<span class="p4-detail-line p4-detail-note">' +
               (r.pctInfo.reason || '% Done adjusted from unreliable 100%') + '</span>';
@@ -4971,26 +4983,31 @@
           }
 
           html += '<tr class="' + (overdueRow ? 'p4-row-risk' : '') + '">' +
-            '<td class="text-left">' + (r.project || '') + '</td>' +
-            '<td class="text-left">' + (r.milestone || '') + '</td>' +
-            '<td class="text-left">' + dateNote + startFmt + '</td>' +
-            '<td class="text-left">' + endFmt + '</td>' +
-            '<td class="text-left">' + slippageStr + '</td>' +
-            '<td class="text-left">' + handsCell + '</td>' +
-            '<td class="text-left">' + actualEndFmt + '</td>' +
-            '<td class="text-left">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
-            '<td class="text-right">' + pctFmt + '</td>' +
-            '<td class="text-left">' +
-              '<button type="button" class="p4-detail-toggle" data-p4-detail="' + detailId +
-              '" aria-expanded="false">Details</button>' +
-              '<div id="' + detailId + '" class="p4-detail-panel" hidden>' + detailInner + '</div>' +
+            '<td class="text-left p4-col-project">' + (r.project || '') + '</td>' +
+            '<td class="text-left p4-col-milestone">' + (r.milestone || '') + '</td>' +
+            '<td class="text-left p4-col-date">' + dateNote + startFmt + '</td>' +
+            '<td class="text-left p4-col-date">' + endFmt + '</td>' +
+            '<td class="text-left p4-col-slip">' + slippageStr + '</td>' +
+            '<td class="text-left p4-col-staffing">' + handsCell + '</td>' +
+            '<td class="text-left p4-col-date">' + actualEndFmt + '</td>' +
+            '<td class="text-left p4-col-status">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
+            '<td class="text-right p4-col-pct">' + pctFmt + '</td>' +
+            '<td class="text-left p4-col-details">' +
+              '<button type="button" class="p4-detail-toggle p4-detail-toggle--icon" ' +
+              'data-p4-detail="' + detailId + '" aria-expanded="false" ' +
+              'aria-controls="' + detailId + '" title="Details" aria-label="Show details">' +
+              detailChevron +
+              '</button>' +
             '</td>' +
+            '</tr>' +
+            '<tr id="' + detailId + '" class="p4-detail-row" hidden>' +
+            '<td colspan="10"><div class="p4-detail-panel">' + detailInner + '</div></td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';
         document.getElementById('p4-schedule-table').innerHTML = html;
 
-        // Bind expand toggles (once per render)
+        // Bind expand toggles (once per render) — icon control, no text swap
         Array.prototype.forEach.call(
           document.querySelectorAll('#p4-schedule-table .p4-detail-toggle'),
           function(btn) {
@@ -5002,11 +5019,13 @@
               if (open) {
                 panel.removeAttribute('hidden');
                 btn.setAttribute('aria-expanded', 'true');
-                btn.textContent = 'Hide';
+                btn.setAttribute('aria-label', 'Hide details');
+                btn.classList.add('is-open');
               } else {
                 panel.setAttribute('hidden', '');
                 btn.setAttribute('aria-expanded', 'false');
-                btn.textContent = 'Details';
+                btn.setAttribute('aria-label', 'Show details');
+                btn.classList.remove('is-open');
               }
             });
           }

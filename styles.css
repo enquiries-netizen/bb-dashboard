@@ -470,14 +470,49 @@ select {
   background: rgba(210, 212, 213, 0.4);
 }
 
+/* Compact icon control for Critical Milestones Details column */
+.p4-detail-toggle--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid var(--gray);
+  background: var(--white);
+  color: var(--charcoal);
+  flex-shrink: 0;
+}
+
+.p4-detail-toggle--icon .p4-detail-chevron {
+  display: block;
+  transition: transform 0.15s ease;
+}
+
+.p4-detail-toggle--icon.is-open .p4-detail-chevron {
+  transform: rotate(90deg);
+}
+
 .p4-detail-panel {
-  margin-top: 6px;
+  margin-top: 0;
   padding: 8px 10px;
   border: 1px solid rgba(188, 189, 190, 0.5);
   background: rgba(210, 212, 213, 0.25);
   font-size: 11px;
   color: var(--charcoal);
   box-shadow: none;
+}
+
+.p4-detail-row > td {
+  padding: 0 8px 10px !important;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+}
+
+.p4-detail-row[hidden] {
+  display: none !important;
 }
 
 .p4-detail-panel[hidden] {
@@ -505,83 +540,142 @@ select {
   margin-top: 4px;
 }
 
+/* Screen-reader only label for icon column header */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 #p4-schedule-table .data-table th.text-right,
 #p4-schedule-table .data-table td.text-right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-/* Critical Milestones: never clip rightmost cols (Actual Done / % Done / Details).
-   Scroll on the wrap (not the table); table keeps natural width so columns don't squeeze. */
+/*
+  Critical Milestones layout (laptop 1280–1440 failure case):
+  1) Scroll host owns overflow-x — NOT the <table>
+  2) Table uses max-content width so it can exceed the host (scrollbar has range)
+  3) Details column sticky right so the chevron is never clipped
+*/
 #p4-schedule-table {
   max-width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
-#p4-schedule-table .table-wrap {
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
+#p4-schedule-table .p4-milestones-scroll {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  /* Leave room so sticky right:0 and the last-col icon clear the scrollbar */
+  padding-bottom: 4px;
 }
 
-#p4-schedule-table .data-table.p4-milestone-table {
-  width: max-content;
-  min-width: 100%;
+/* Override global .data-table { width: 100% } — that force-shrink is what killed scroll */
+#p4-schedule-table .p4-milestone-table {
+  width: max-content !important;
+  min-width: 1080px;
+  max-width: none !important;
   table-layout: auto;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  box-sizing: border-box;
 }
 
 #p4-schedule-table .p4-milestone-table th,
 #p4-schedule-table .p4-milestone-table td {
   padding: 6px 8px;
-  vertical-align: top;
+  vertical-align: middle;
+  background: var(--white);
+  box-sizing: border-box;
 }
 
-/* Flexible text columns: cap width so date/%/Details stay in view on laptops when possible */
-#p4-schedule-table .p4-milestone-table th:nth-child(1),
-#p4-schedule-table .p4-milestone-table td:nth-child(1) {
-  max-width: 9.5rem;
+#p4-schedule-table .p4-milestone-table thead th {
+  background: var(--white);
+}
+
+#p4-schedule-table .p4-milestone-table tr.p4-row-risk > td {
+  background: #F0F1F1;
+}
+
+#p4-schedule-table .p4-col-project {
+  max-width: 8.5rem;
   white-space: normal;
   word-break: break-word;
 }
 
-#p4-schedule-table .p4-milestone-table th:nth-child(2),
-#p4-schedule-table .p4-milestone-table td:nth-child(2) {
-  max-width: 10rem;
-  white-space: normal;
-  word-break: break-word;
-}
-
-#p4-schedule-table .p4-milestone-table th:nth-child(6),
-#p4-schedule-table .p4-milestone-table td:nth-child(6) {
+#p4-schedule-table .p4-col-milestone {
   max-width: 9rem;
   white-space: normal;
+  word-break: break-word;
 }
 
-/* Fixed-purpose columns stay fully visible */
-#p4-schedule-table .p4-milestone-table th:nth-child(3),
-#p4-schedule-table .p4-milestone-table td:nth-child(3),
-#p4-schedule-table .p4-milestone-table th:nth-child(4),
-#p4-schedule-table .p4-milestone-table td:nth-child(4),
-#p4-schedule-table .p4-milestone-table th:nth-child(5),
-#p4-schedule-table .p4-milestone-table td:nth-child(5),
-#p4-schedule-table .p4-milestone-table th:nth-child(7),
-#p4-schedule-table .p4-milestone-table td:nth-child(7),
-#p4-schedule-table .p4-milestone-table th:nth-child(8),
-#p4-schedule-table .p4-milestone-table td:nth-child(8),
-#p4-schedule-table .p4-milestone-table th:nth-child(9),
-#p4-schedule-table .p4-milestone-table td:nth-child(9) {
+#p4-schedule-table .p4-col-date,
+#p4-schedule-table .p4-col-slip,
+#p4-schedule-table .p4-col-pct,
+#p4-schedule-table .p4-col-status {
   white-space: nowrap;
 }
 
-/* Details column must never compress / clip the toggle button */
-#p4-schedule-table .p4-milestone-table th:nth-child(10),
-#p4-schedule-table .p4-milestone-table td:nth-child(10) {
+#p4-schedule-table .p4-col-staffing {
   white-space: nowrap;
-  min-width: 5.5rem;
-  padding-right: 12px;
+}
+
+#p4-schedule-table .p4-col-staffing .p4-badge {
+  max-width: 9.5rem;
+}
+
+/* Sticky action column — always visible at right edge of the scroll host */
+#p4-schedule-table .p4-milestone-table th.p4-col-details,
+#p4-schedule-table .p4-milestone-table td.p4-col-details {
+  position: sticky;
+  right: 0;
+  z-index: 4;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  padding: 4px;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--white);
+  border-left: 1px solid var(--silver);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+#p4-schedule-table .p4-milestone-table thead th.p4-col-details {
+  z-index: 5;
+  background: var(--white);
+}
+
+#p4-schedule-table .p4-milestone-table tr.p4-row-risk > td.p4-col-details {
+  background: #F0F1F1;
+}
+
+#p4-schedule-table .p4-milestone-table tr:hover > td:not(.p4-col-details) {
+  /* keep global hover soft; sticky col stays solid */
+  background: rgba(38, 36, 37, 0.025);
+}
+
+#p4-schedule-table .p4-milestone-table tr:hover > td.p4-col-details {
+  background: var(--white);
+}
+
+#p4-schedule-table .p4-milestone-table tr.p4-row-risk:hover > td.p4-col-details {
+  background: #F0F1F1;
 }
 
 
