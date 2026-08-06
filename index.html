@@ -1264,6 +1264,55 @@
       return val === undefined || val === null ? '' : val;
     }
 
+    /**
+     * Department name helpers (shared by P3 / P11 / any page filter).
+     * Collapse known typos (e.g. Maintainance → Maintenance) so one canonical
+     * dropdown option is shown even if a sparse tab still has the old spelling.
+     */
+    function normalizeDeptKey(s) {
+      return String(s || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/maintainance/g, 'maintenance');
+    }
+
+    /** Prefer CONFIG.DEPARTMENTS spelling; always fix Maintainance typo in display. */
+    function canonicalDeptName(s) {
+      var raw = String(s || '').trim().replace(/\s+/g, ' ');
+      if (!raw) return '';
+      var key = normalizeDeptKey(raw);
+      var master = (typeof CONFIG !== 'undefined' && CONFIG.DEPARTMENTS) ? CONFIG.DEPARTMENTS : [];
+      for (var i = 0; i < master.length; i++) {
+        if (normalizeDeptKey(master[i]) === key) return master[i];
+      }
+      return raw.replace(/Maintainance/gi, 'Maintenance');
+    }
+
+    function deptField(r) {
+      return col(r, 'Department', 'department', 'Deparment') || '';
+    }
+
+    /** Unique department labels for a dropdown, recomputed each call from current rows. */
+    function uniqueDeptListFromRows(rowArrays) {
+      var byKey = {};
+      (rowArrays || []).forEach(function(rows) {
+        (rows || []).forEach(function(r) {
+          var can = canonicalDeptName(deptField(r));
+          if (!can) return;
+          byKey[normalizeDeptKey(can)] = can;
+        });
+      });
+      return Object.keys(byKey).map(function(k) { return byKey[k]; }).sort(function(a, b) {
+        return a.localeCompare(b);
+      });
+    }
+
+    function rowsMatchDept(r, selectedDept) {
+      if (!selectedDept || selectedDept === 'ALL') return true;
+      return normalizeDeptKey(deptField(r)) === normalizeDeptKey(selectedDept);
+    }
+
 
     // ═══════════════════════════════════════════════════════════
     // TABLE BUILDER
@@ -3368,10 +3417,8 @@
       }
       function filterByDept(rows) {
         if (!activeP3Dept || activeP3Dept === 'ALL') return rows;
-        var target = String(activeP3Dept).toLowerCase();
-        return rows.filter(function(r) {
-          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim().toLowerCase();
-          return d === target;
+        return (rows || []).filter(function(r) {
+          return rowsMatchDept(r, activeP3Dept);
         });
       }
       function isBlank(v) {
@@ -3493,19 +3540,13 @@
       ];
       var charcoalScale = funnelBrandColors;
 
-      // Rebuild Department options from all three tabs (pre-dept filter)
+      // Rebuild Department options from current sheet rows each render (not cached).
+      // Canonicalise known typos so "Maintainance" and "Maintenance" collapse to one option.
       var brandedQuotes   = applyGlobal(window._p3Quotes);
       var brandedProjects = applyGlobal(window._p3Projects);
       var brandedAccuracy = applyGlobal(window._p3Accuracy);
 
-      var deptSet = {};
-      [brandedQuotes, brandedProjects, brandedAccuracy].forEach(function(rows) {
-        rows.forEach(function(r) {
-          var d = String(col(r, 'Department', 'department', 'Deparment') || '').trim();
-          if (d) deptSet[d] = true;
-        });
-      });
-      var deptList = Object.keys(deptSet).sort();
+      var deptList = uniqueDeptListFromRows([brandedQuotes, brandedProjects, brandedAccuracy]);
       var deptSelect = document.getElementById('p3-dept-filter');
       if (deptSelect) {
         var prev = activeP3Dept;
@@ -3516,8 +3557,20 @@
           opt.textContent = d;
           deptSelect.appendChild(opt);
         });
-        if (prev !== 'ALL' && deptSet[prev]) deptSelect.value = prev;
-        else { activeP3Dept = 'ALL'; deptSelect.value = 'ALL'; }
+        var prevOk = prev && prev !== 'ALL' && deptList.some(function(d) {
+          return normalizeDeptKey(d) === normalizeDeptKey(prev);
+        });
+        if (prevOk) {
+          // Prefer the canonical option value after typo collapse
+          var match = deptList.filter(function(d) {
+            return normalizeDeptKey(d) === normalizeDeptKey(prev);
+          })[0];
+          activeP3Dept = match || prev;
+          deptSelect.value = activeP3Dept;
+        } else {
+          activeP3Dept = 'ALL';
+          deptSelect.value = 'ALL';
+        }
         if (!_p3DeptBound) {
           _p3DeptBound = true;
           deptSelect.addEventListener('change', function() {
@@ -6024,16 +6077,10 @@ var labourRows = Object.values(labourByProject)
       function applyGlobal(rows) {
         return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
       }
-      function normalizeDeptName(s) {
-        return String(s || '').trim().toLowerCase()
-          .replace(/\s+/g, ' ')
-          .replace(/maintainance/g, 'maintenance');
-      }
       function filterByDept(rows) {
         if (!activeP11Dept || activeP11Dept === 'ALL') return rows;
-        var target = normalizeDeptName(activeP11Dept);
-        return rows.filter(function(r) {
-          return normalizeDeptName(col(r, 'Department', 'department', 'Deparment')) === target;
+        return (rows || []).filter(function(r) {
+          return rowsMatchDept(r, activeP11Dept);
         });
       }
       function yn(val) {
@@ -6105,9 +6152,15 @@ var labourRows = Object.values(labourByProject)
           deptSelect.appendChild(opt);
         });
         var prevOk = prev && prev !== 'ALL' && deptList.some(function(d) {
-          return normalizeDeptName(d) === normalizeDeptName(prev);
+          return normalizeDeptKey(d) === normalizeDeptKey(prev);
         });
-        if (prevOk) deptSelect.value = prev;
+        if (prevOk) {
+          var match = deptList.filter(function(d) {
+            return normalizeDeptKey(d) === normalizeDeptKey(prev);
+          })[0];
+          activeP11Dept = match || prev;
+          deptSelect.value = activeP11Dept;
+        }
         else { activeP11Dept = 'ALL'; deptSelect.value = 'ALL'; }
         if (!_p11DeptBound) {
           _p11DeptBound = true;
