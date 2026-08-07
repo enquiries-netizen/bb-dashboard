@@ -1135,6 +1135,141 @@ select {
   margin: 0;
 }
 
+/* P6 Capacity & Labour — monochrome polish */
+.p6-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.p6-chart-card {
+  background: var(--white);
+  border: 1px solid var(--silver);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.p6-chart-card--wide {
+  margin-bottom: 24px;
+}
+
+.p6-chart-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+  font-family: var(--font-heading);
+}
+
+.p6-chart-hint {
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.35;
+}
+
+.p6-section-h {
+  margin-top: 28px;
+  margin-bottom: 12px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  color: var(--charcoal);
+}
+
+.p6-hire-guide {
+  background: var(--white);
+  border: 1px solid var(--silver);
+  border-left: 3px solid var(--charcoal);
+  padding: 14px 16px;
+  margin: 16px 0 8px;
+  border-radius: var(--radius-sm);
+}
+
+.p6-hire-guide-title {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: 0.3px;
+}
+
+.p6-hire-guide-list {
+  margin: 10px 0 0;
+  padding-left: 0;
+  list-style: none;
+  line-height: 1.7;
+  font-size: 12.5px;
+  color: var(--charcoal);
+}
+
+.p6-hire-guide-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.p6-sig {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.p6-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.p6-badge--error {
+  background: var(--charcoal);
+  color: var(--white);
+  border: 1px solid var(--charcoal);
+}
+
+.p6-signal-cell {
+  white-space: nowrap;
+}
+
+.p6-signal-label {
+  font-size: 11px;
+  color: var(--charcoal);
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+.p6-row-anomaly td {
+  background: rgba(210, 212, 213, 0.4);
+}
+
+.p6-pending {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  font-style: italic;
+}
+
+.p6-capacity-table .text-right,
+.p6-labour-table .text-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .p6-charts-grid { grid-template-columns: 1fr; }
+}
+
 /* P8 week-over-week hub sections */
 .p8-wow-section {
   margin-top: 20px;

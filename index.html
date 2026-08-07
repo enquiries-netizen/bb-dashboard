@@ -2553,12 +2553,18 @@
         renderWowGrid('p8-wow-sales', null, 'Data not available for Sales week comparison.');
       }
 
-      // ── Capacity WoW from Buildpass_Labour Week Number ──────
+      // ── Capacity WoW from Buildpass_Labour (deduped weekly hours) ─
+      var labDedupP8 = typeof p6DedupLabourRows === 'function' ? p6DedupLabourRows(labF) : labF;
       var hoursByWeekNum = {};
-      labF.forEach(function(r) {
-        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
+      labDedupP8.forEach(function(r) {
+        var w = typeof p6LabourWeekNum === 'function'
+          ? p6LabourWeekNum(r)
+          : parseNum(col(r, 'Week Number', 'week number'));
         if (!w) return;
-        var h = parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
+        var h = typeof p6LabourHours === 'function'
+          ? p6LabourHours(r)
+          : parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
+        if (h === null || h === undefined || isNaN(h)) return;
         hoursByWeekNum[w] = (hoursByWeekNum[w] || 0) + h;
       });
       var labWeeks = Object.keys(hoursByWeekNum).map(Number).sort(function(a, b) { return a - b; });
@@ -7600,8 +7606,185 @@
     // ═══════════════════════════════════════════════════════════════
     // P6 — CAPACITY & LABOUR
     // Sources: Capacity tab, Buildpass_Labour tab
-    // Tables:  Capacity summary by week, Labour detail
+    // Root-cause note (2026): Capacity “Hours Logged” was a naive SUM of all
+    // Buildpass_Labour rows per employee/week. Duplicate timesheet clones
+    // (same employee + same shift date + same hours, often multi-job re-posts)
+    // inflated totals (e.g. Colby 147.5 hrs / 388%, team ~1800 hrs in Wk 30).
+    // Fix: fingerprint-dedupe labour before any hours aggregation, then rebuild
+    // utilisation / hire signals from corrected hours.
     // ═══════════════════════════════════════════════════════════════
+
+    var P6_STANDARD_WEEK_HRS = 40;
+    var P6_ANOMALY_UTIL_PCT = 120; // ~48 hrs on a 40h week
+
+    function p6NormEmpName(s) {
+      return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    /** Strict week number — do not fall back to loose "Week" aliases that can bind wrong cols. */
+    function p6LabourWeekNum(r) {
+      return parseNum(col(r, 'Week Number', 'week number')) || 0;
+    }
+
+    function p6LabourHoursRaw(r) {
+      // Prefer explicit daily hours column name
+      var v = col(r, 'Hours (daily)', 'Hours (Daily)', 'hours (daily)');
+      if (v === '' || v === null || v === undefined) return '';
+      return v;
+    }
+
+    /** null when blank/missing (for Pending Timesheet); number otherwise. */
+    function p6LabourHours(r) {
+      var raw = p6LabourHoursRaw(r);
+      if (raw === '' || raw === null || raw === undefined) return null;
+      var n = parseNum(raw);
+      return isNaN(n) ? null : n;
+    }
+
+    /**
+     * Collapse duplicate timesheet clones: same person, same shift date, same
+     * hours amount (common when one day is re-posted against multiple jobs).
+     * Distinct hours on the same day (e.g. 7.5 + 2.5) are kept.
+     */
+    function p6DedupLabourRows(rows) {
+      var seen = {};
+      var out = [];
+      (rows || []).forEach(function(r) {
+        var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
+        if (!emp) return;
+        var date = String(col(r, 'Shift Date', 'shift date', 'Date', 'date') || '').trim();
+        var hrs = p6LabourHours(r);
+        var hrsKey = hrs === null ? 'na' : String(Math.round(hrs * 100) / 100);
+        var key;
+        if (date) {
+          key = emp + '|' + date + '|' + hrsKey;
+        } else {
+          // No date: include site/project so different sites don't collapse
+          key = emp + '|w' + p6LabourWeekNum(r) + '|' + hrsKey + '|' +
+            String(col(r, 'Xero Project J#', 'Site / Area', 'site / area') || '').trim();
+        }
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push(r);
+      });
+      return out;
+    }
+
+    /** employee|week -> total hours after dedupe */
+    function p6HoursByEmpWeek(labDeduped) {
+      var map = {};
+      (labDeduped || []).forEach(function(r) {
+        var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
+        var w = p6LabourWeekNum(r);
+        var h = p6LabourHours(r);
+        if (!emp || !w || h === null) return;
+        var k = emp + '|' + w;
+        map[k] = (map[k] || 0) + h;
+      });
+      return map;
+    }
+
+    function p6TeamHoursByWeek(labDeduped) {
+      var map = {};
+      (labDeduped || []).forEach(function(r) {
+        var w = p6LabourWeekNum(r);
+        var h = p6LabourHours(r);
+        if (!w || h === null) return;
+        map[w] = (map[w] || 0) + h;
+      });
+      return map;
+    }
+
+    function p6ParseUtilPct(val) {
+      if (val === null || val === undefined || val === '') return 0;
+      var n = parseFloat(String(val).replace(/%/g, '').trim());
+      return isNaN(n) ? 0 : n;
+    }
+
+    /**
+     * Hire signal from utilisation. Anomaly (>120%) is never "At Capacity".
+     * Returns { flag, kind: 'error'|'at'|'high'|'healthy'|'low' }
+     */
+    function p6SignalFromUtil(utilPct) {
+      var u = utilPct || 0;
+      if (u > P6_ANOMALY_UTIL_PCT) {
+        return { flag: 'Timesheet Error', kind: 'error' };
+      }
+      if (u > 100) return { flag: 'At Capacity', kind: 'at' };
+      if (u >= 75) return { flag: 'High', kind: 'high' };
+      if (u < 50) return { flag: 'Low Utilisation', kind: 'low' };
+      return { flag: '', kind: 'healthy' };
+    }
+
+    function p6SignalIcon(kind) {
+      var c = '#262425';
+      var g = '#BCBDBE';
+      var s = '#D2D4D5';
+      if (kind === 'error') {
+        return '<span class="p6-badge p6-badge--error" title="Utilisation over 120% after dedupe — check timesheet">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+          '<path d="M12 8v5M12 16h.01" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' +
+          '<circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.5" fill="none"/></svg>' +
+          ' TIMESHEET ERROR</span>';
+      }
+      if (kind === 'at') {
+        return '<span class="p6-sig" title="At Capacity / overworked (>100%)">' +
+          '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">' +
+          '<circle cx="7" cy="7" r="5.5" fill="' + c + '"/></svg></span>';
+      }
+      if (kind === 'high') {
+        return '<span class="p6-sig" title="High (75–100%)">' +
+          '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">' +
+          '<circle cx="7" cy="7" r="5.5" fill="none" stroke="' + c + '" stroke-width="1.4"/>' +
+          '<path d="M7 1.5a5.5 5.5 0 0 0 0 11Z" fill="' + c + '"/></svg></span>';
+      }
+      if (kind === 'low') {
+        return '<span class="p6-sig" title="Low utilisation (<50%)">' +
+          '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">' +
+          '<circle cx="7" cy="7" r="5.5" fill="' + s + '" stroke="' + g + '" stroke-width="1.2"/>' +
+          '<path d="M7 4v5M5 7.5L7 10l2-2.5" fill="none" stroke="' + c + '" stroke-width="1.3" stroke-linecap="round"/></svg></span>';
+      }
+      // healthy open circle
+      return '<span class="p6-sig" title="Healthy (50–75%)">' +
+        '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">' +
+        '<circle cx="7" cy="7" r="5.5" fill="none" stroke="' + c + '" stroke-width="1.4"/></svg></span>';
+    }
+
+    /**
+     * Overlay deduped labour hours onto Capacity rows (correct Hours Logged + util).
+     * Drops inflated Sheet Capacity totals caused by duplicate labour SUM.
+     */
+    function p6EnrichCapacityRows(capRows, empWeekHours) {
+      return (capRows || []).map(function(r) {
+        var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
+        var w = parseInt(col(r, 'Week', 'week'), 10) || 0;
+        var avail = parseNum(col(r, 'Hours Available', 'hours available'));
+        if (!avail || avail <= 0) avail = P6_STANDARD_WEEK_HRS;
+        var out = {};
+        // shallow clone of sheet row so we can override
+        Object.keys(r).forEach(function(k) { out[k] = r[k]; });
+        var k = emp + '|' + w;
+        var hrs;
+        if (empWeekHours[k] !== undefined) {
+          hrs = Math.round(empWeekHours[k] * 10) / 10;
+          out['Hours Logged'] = hrs;
+        } else {
+          hrs = parseFloat(col(r, 'Hours Logged', 'hours logged')) || 0;
+          out._hrsFromSheet = true;
+        }
+        var util = avail > 0 ? Math.round((hrs / avail) * 100) : 0;
+        out['Utilisation %'] = util + '%';
+        out._hrsNum = hrs;
+        out._utilNum = util;
+        out._avail = avail;
+        var sig = p6SignalFromUtil(util);
+        out._signalKind = sig.kind;
+        out['Hire Signal Flag'] = sig.flag;
+        out._anomaly = sig.kind === 'error';
+        return out;
+      });
+    }
+
     async function loadP6() {
       showLoading(true);
       removeError('p6');
@@ -7616,7 +7799,6 @@
         };
         document.getElementById('p6-content').innerHTML = renderP6(data);
         setTimeout(function() {
-          // Destroy legacy donut if a prior visit registered it
           if (_charts['p6-donut-chart']) {
             _charts['p6-donut-chart'].destroy();
             delete _charts['p6-donut-chart'];
@@ -7626,70 +7808,112 @@
           var brandSoftGray = '#BCBDBE';
           var brandSilver   = '#D2D4D5';
 
-          // Hiring-signal threshold (85%) + end % labels on utilisation bars
+          // Bullet util: solid L2 fill up to 100%, solid L1 (black) past 100%; line at 100%
           var p6UtilPlugins = [{
-            id: 'p6HiringThreshold',
+            id: 'p6Util100Line',
             afterDatasetsDraw: function(chart) {
               var xScale = chart.scales.x;
               var yScale = chart.scales.y;
               if (!xScale || !yScale) return;
-              var x = xScale.getPixelForValue(85);
+              var x = xScale.getPixelForValue(100);
               var ctx = chart.ctx;
               ctx.save();
               ctx.beginPath();
-              ctx.setLineDash([6, 4]);
-              ctx.strokeStyle = brandSoftGray;
+              ctx.setLineDash([]);
+              ctx.strokeStyle = brandCharcoal;
               ctx.lineWidth = 1.5;
               ctx.moveTo(x, yScale.top);
               ctx.lineTo(x, yScale.bottom);
               ctx.stroke();
+              ctx.fillStyle = brandSoftGray;
+              ctx.font = '600 10px Montserrat, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('100%', x, yScale.top - 4);
               ctx.restore();
             }
           }, {
             id: 'p6BarEndLabels',
             afterDatasetsDraw: function(chart) {
               var ctx = chart.ctx;
-              chart.data.datasets.forEach(function(dataset, di) {
-                var meta = chart.getDatasetMeta(di);
-                meta.data.forEach(function(bar, index) {
-                  var value = dataset.data[index];
-                  if (value === null || value === undefined) return;
-                  ctx.save();
-                  ctx.fillStyle = brandCharcoal;
-                  ctx.font = '500 11px Montserrat, sans-serif';
-                  ctx.textAlign = 'left';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(value + '%', bar.x + 6, bar.y);
-                  ctx.restore();
-                });
+              var std = chart.data.datasets[0];
+              var ot = chart.data.datasets[1];
+              if (!std) return;
+              var meta0 = chart.getDatasetMeta(0);
+              var meta1 = ot ? chart.getDatasetMeta(1) : null;
+              std.data.forEach(function(v, index) {
+                var total = (v || 0) + (ot && ot.data[index] ? ot.data[index] : 0);
+                if (total === null || total === undefined) return;
+                var bar = (meta1 && meta1.data[index] && ot.data[index] > 0)
+                  ? meta1.data[index]
+                  : meta0.data[index];
+                if (!bar) return;
+                ctx.save();
+                ctx.fillStyle = brandCharcoal;
+                ctx.font = '500 11px Montserrat, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.round(total) + '%', bar.x + 6, bar.y);
+                ctx.restore();
               });
             }
           }];
 
-          if (document.getElementById('p6-bar-chart')) {
+          if (document.getElementById('p6-bar-chart') && window._p6BarData) {
+            var utilVals = window._p6BarData;
+            var stdPart = utilVals.map(function(u) { return Math.min(u || 0, 100); });
+            var otPart  = utilVals.map(function(u) { return Math.max(0, (u || 0) - 100); });
+            var xMax = Math.max(150, Math.ceil(Math.max.apply(null, utilVals.concat([100])) / 10) * 10);
             makeChart('p6-bar-chart', {
               type: 'bar',
               data: {
                 labels: window._p6BarLabels,
-                datasets: [{
-                  data: window._p6BarData,
-                  backgroundColor: brandCharcoal,
-                  borderWidth: 0,
-                  borderRadius: 4
-                }]
+                datasets: [
+                  {
+                    label: 'Up to 100%',
+                    data: stdPart,
+                    backgroundColor: brandSoftGray,
+                    borderWidth: 0,
+                    borderRadius: 0,
+                    stack: 'util'
+                  },
+                  {
+                    label: 'Over 100%',
+                    data: otPart,
+                    backgroundColor: brandCharcoal,
+                    borderWidth: 0,
+                    borderRadius: 0,
+                    stack: 'util'
+                  }
+                ]
               },
               options: {
                 indexAxis: 'y',
                 responsive: true,
-                layout: { padding: { right: 36 } },
-                plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                layout: { padding: { right: 40, top: 12 } },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(ctx) {
+                        var i = ctx.dataIndex;
+                        return (window._p6BarLabels[i] || '') + ': ' + Math.round(utilVals[i] || 0) + '%';
+                      }
+                    }
+                  }
+                },
                 scales: {
                   x: {
-                    max: 150,
+                    stacked: true,
+                    max: xMax,
+                    beginAtZero: true,
                     grid: { color: brandSilver },
-                    ticks: { color: brandCharcoal, callback: function(v){ return v + '%'; } }
+                    ticks: {
+                      color: brandSoftGray,
+                      callback: function(v) { return v + '%'; }
+                    }
                   },
                   y: {
+                    stacked: true,
                     grid: { display: false },
                     ticks: { color: brandCharcoal }
                   }
@@ -7708,7 +7932,7 @@
                   data: window._p6DeptData,
                   backgroundColor: brandCharcoal,
                   borderWidth: 0,
-                  borderRadius: 4
+                  borderRadius: 0
                 }]
               },
               options: {
@@ -7726,7 +7950,7 @@
                   x: {
                     beginAtZero: true,
                     grid: { color: brandSilver },
-                    ticks: { color: brandCharcoal }
+                    ticks: { color: brandSoftGray }
                   },
                   y: {
                     grid: { display: false },
@@ -7741,14 +7965,15 @@
             makeChart('p6-trend-chart', {
               type: 'line',
               data: {
-                labels: window._p6TrendWeeks.map(function(w){ return 'Wk ' + w; }),
+                labels: (window._p6TrendWeeks || []).map(function(w) { return 'Wk ' + w; }),
                 datasets: [{
                   data: window._p6TrendData,
                   borderColor: brandCharcoal,
-                  backgroundColor: brandSilver,
+                  backgroundColor: 'rgba(210,212,213,0.45)',
                   fill: true,
-                  tension: 0.4,
-                  pointRadius: 4,
+                  tension: 0,
+                  stepped: 'middle',
+                  pointRadius: 3,
                   pointBackgroundColor: brandCharcoal,
                   pointBorderColor: brandCharcoal,
                   borderWidth: 2
@@ -7759,20 +7984,19 @@
                 plugins: { legend: { display: false } },
                 scales: {
                   y: {
-                    beginAtZero: false,
+                    beginAtZero: true,
                     grid: { color: brandSilver },
-                    ticks: { color: brandCharcoal }
+                    ticks: { color: brandSoftGray }
                   },
                   x: {
                     grid: { display: false },
-                    ticks: { color: brandCharcoal }
+                    ticks: { color: brandSoftGray }
                   }
                 }
               }
             });
           }
 
-          // This-week hours sparkline pulse
           drawKpiSparkline('p6-hours-spark', window._p6HoursSparkVals || []);
         }, 300);
       } catch (err) {
@@ -7785,35 +8009,34 @@
     }
 
     function renderP6(data) {
-      // ── Read Capacity tab ──────────────────────────────────
-      var capRows = (data['Capacity'] || {}).rows || [];
-      // ── Read Buildpass_Labour tab for month filter ─────────
+      var capRowsRaw = (data['Capacity'] || {}).rows || [];
       var labRowsRaw = (data['Buildpass_Labour'] || {}).rows || [];
-      // Global Brand/Month/Year filters (header) stay reactive for labour pulses + summary
       var labRows = filterByMonths(
         filterByYear(filterByBrand(labRowsRaw, activeBrand), activeYear),
         activeMonths
       );
       var capRowsFiltered = filterByMonths(
-        filterByYear(filterByBrand(capRows, activeBrand), activeYear),
+        filterByYear(filterByBrand(capRowsRaw, activeBrand), activeYear),
         activeMonths
       );
-      if (capRowsFiltered.length) capRows = capRowsFiltered;
+      var capRowsIn = capRowsFiltered.length ? capRowsFiltered : capRowsRaw;
 
-      // Build month list from Buildpass_Labour col O
+      // ── ROOT FIX: dedupe labour, then rebuild capacity hours/util ──
+      var labDeduped = p6DedupLabourRows(labRows);
+      var empWeekHrs = p6HoursByEmpWeek(labDeduped);
+      var capRows = p6EnrichCapacityRows(capRowsIn, empWeekHrs);
+      var teamWeekHrs = p6TeamHoursByWeek(labDeduped);
+
       var months = [];
-      labRows.forEach(function(r) {
+      labDeduped.forEach(function(r) {
         var m = col(r, 'Month', 'month');
         if (m && months.indexOf(m) === -1) months.push(m);
       });
       months.sort();
-
-      // Build brand list
       var brands = ['All', 'BBBS', 'RMH'];
 
       var html = '<div class="page-header"><h1>P6: Capacity &amp; Labour</h1></div>';
 
-      // ── Filters ────────────────────────────────────────────
       html += '<div class="filters-bar">';
       html += '<label>Month: <select id="p6-month-filter" onchange="renderP6Filter()"><option value="">All</option>';
       months.forEach(function(m) { html += '<option value="' + m + '">' + m + '</option>'; });
@@ -7823,21 +8046,14 @@
       html += '</select></label>';
       html += '</div>';
 
-      // ── This-week hours pulse (light signal; full WoW on P8) ──
-      var labWeekHrsMap = {};
-      labRows.forEach(function(r) {
-        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
-        if (!w) return;
-        var h = parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
-        labWeekHrsMap[w] = (labWeekHrsMap[w] || 0) + h;
-      });
-      var labWeekSeriesKeys = Object.keys(labWeekHrsMap).map(Number).sort(function(a, b) { return a - b; });
+      // Pulse — deduped week totals
+      var labWeekSeriesKeys = Object.keys(teamWeekHrs).map(Number).sort(function(a, b) { return a - b; });
       var labPulseLatest = labWeekSeriesKeys.length ? labWeekSeriesKeys[labWeekSeriesKeys.length - 1] : null;
       var labPulseVals = labWeekSeriesKeys.slice(-8).map(function(w) {
-        return Math.round((labWeekHrsMap[w] || 0) * 10) / 10;
+        return Math.round((teamWeekHrs[w] || 0) * 10) / 10;
       });
       var labPulseThis = labPulseLatest != null
-        ? Math.round((labWeekHrsMap[labPulseLatest] || 0) * 10) / 10
+        ? Math.round((teamWeekHrs[labPulseLatest] || 0) * 10) / 10
         : null;
 
       html += '<div class="p6-week-pulse card">';
@@ -7855,123 +8071,103 @@
       html += '</div>';
       window._p6HoursSparkVals = labPulseVals;
 
-      // ── CHARTS SECTION ───────────────────────────────────────
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">';
+      html += '<div class="p6-charts-grid">';
 
-      // Chart 1 — Utilisation bar chart (Capacity, latest week only)
+      // Chart 1 — bullet util (latest capacity week, corrected)
       var latestWeek = 0;
       capRows.forEach(function(r) {
-        var w = parseInt(col(r,'Week','week')) || 0;
+        var w = parseInt(col(r, 'Week', 'week'), 10) || 0;
         if (w > latestWeek) latestWeek = w;
       });
       var weekRows = capRows.filter(function(r) {
-        return parseInt(col(r,'Week','week')) === latestWeek;
+        return parseInt(col(r, 'Week', 'week'), 10) === latestWeek;
+      }).slice().sort(function(a, b) {
+        return (b._utilNum || 0) - (a._utilNum || 0);
       });
-      var barLabels = weekRows.map(function(r) { return col(r,'Employee Name','employee name') || ''; });
-      var barData   = weekRows.map(function(r) { return parseInt(col(r,'Utilisation %','utilisation %')) || 0; });
+      var barLabels = weekRows.map(function(r) { return col(r, 'Employee Name', 'employee name') || ''; });
+      var barData = weekRows.map(function(r) { return r._utilNum || 0; });
 
-      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Team utilisation: Week ' + latestWeek + '</p>';
+      html += '<div class="p6-chart-card">';
+      html += '<p class="p6-chart-title">Team utilisation: Week ' + latestWeek + '</p>';
+      html += '<p class="p6-chart-hint">Dark segment = hours past 100% · black line = 40h / 100%</p>';
       html += '<canvas id="p6-bar-chart" height="220"></canvas>';
       html += '</div>';
 
-      // Chart 2 — Hours by Department (Buildpass_Labour, latest week — same scope as utilisation)
-      // Hours live in col J as "Hours (daily)"; parseNum strips commas / blanks → 0
-      var labLatestWeek = 0;
-      labRows.forEach(function(r) {
-        var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
-        if (w > labLatestWeek) labLatestWeek = w;
-      });
+      // Chart 2 — hours by dept from deduped labour, latest week
+      var labLatestWeek = labPulseLatest || 0;
       var deptHours = {};
-      labRows.filter(function(r) {
-        return parseNum(col(r, 'Week Number', 'week number', 'Week', 'week')) === labLatestWeek;
+      labDeduped.filter(function(r) {
+        return p6LabourWeekNum(r) === labLatestWeek;
       }).forEach(function(r) {
-        var rawDept = String(col(r, 'Department', 'department') || '')
-          .replace(/\s+/g, ' ')
-          .trim();
+        var rawDept = String(col(r, 'Department', 'department') || '').replace(/\s+/g, ' ').trim();
         var dept = rawDept || 'Unknown';
-        var hours = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+        var hours = p6LabourHours(r);
+        if (hours === null) return;
         deptHours[dept] = (deptHours[dept] || 0) + hours;
       });
-      // Rank most hours at top; keep only positive totals so axis scales to real data
       var deptRanked = Object.keys(deptHours).map(function(d) {
         return { dept: d, hours: Math.round(deptHours[d] * 10) / 10 };
-      }).filter(function(e) {
-        return e.hours > 0;
-      }).sort(function(a, b) { return b.hours - a.hours; });
+      }).filter(function(e) { return e.hours > 0; })
+        .sort(function(a, b) { return b.hours - a.hours; });
       var deptLabels = deptRanked.map(function(e) { return e.dept; });
-      var deptData   = deptRanked.map(function(e) { return e.hours; });
+      var deptData = deptRanked.map(function(e) { return e.hours; });
 
-      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Hours by department: Week ' + labLatestWeek + '</p>';
+      html += '<div class="p6-chart-card">';
+      html += '<p class="p6-chart-title">Hours by department: Week ' + labLatestWeek + '</p>';
       html += '<canvas id="p6-dept-chart" height="220"></canvas>';
       html += '</div>';
-
       html += '</div>';
 
-      // Chart 3 — Weekly trend line (Capacity)
-      var weekTotals = {};
-      capRows.forEach(function(r) {
-        var w = col(r,'Week','week');
-        var h = parseFloat(col(r,'Hours Logged','hours logged')) || 0;
-        if (w) weekTotals[w] = (weekTotals[w] || 0) + h;
-      });
-      var trendWeeks = Object.keys(weekTotals).map(Number).sort(function(a,b){return a-b;}).slice(-10);
-      var trendData  = trendWeeks.map(function(w){ return Math.round(weekTotals[w]*10)/10; });
+      // Chart 3 — stepped trend from deduped labour (not inflated Capacity sum)
+      var trendWeeks = Object.keys(teamWeekHrs).map(Number).sort(function(a, b) { return a - b; }).slice(-10);
+      var trendData = trendWeeks.map(function(w) { return Math.round((teamWeekHrs[w] || 0) * 10) / 10; });
 
-      html += '<div style="background:#FFFFFF;border:0.5px solid #D2D4D5;border-radius:12px;padding:16px;margin-bottom:24px">';
-      html += '<p style="margin:0 0 12px;font-size:13px;font-weight:500;color:#262425">Total team hours: last 10 weeks</p>';
+      html += '<div class="p6-chart-card p6-chart-card--wide">';
+      html += '<p class="p6-chart-title">Total team hours: last 10 weeks</p>';
+      html += '<p class="p6-chart-hint">Stepped line (weekly buckets, not a smooth spline)</p>';
       html += '<canvas id="p6-trend-chart" height="100"></canvas>';
       html += '</div>';
 
-      html += '<div class="info-legend" style="background:#f8f9fa;border-left:4px solid #6c3d91;padding:16px;margin:16px 0;border-radius:4px">';
-      html += '<strong>Hire Signal Guide:</strong>';
-      html += '<ul style="margin:8px 0 0 0;padding-left:20px;line-height:2">';
-      html += '<li>🔴 <strong>At Capacity</strong>: Fully loaded. Do not assign more work. If this shows consistently across multiple people, it\'s a signal to hire.</li>';
-      html += '<li>🟡 <strong>High</strong>: Busy but manageable. Watch closely, one more job tips them into At Capacity.</li>';
-      html += '<li>🔵 <strong>Low Utilisation</strong>: Underutilised. Check for scheduling gaps or missing timesheets.</li>';
-      html += '<li>No flag: Healthy utilisation (50–75%). No action needed.</li>';
-      html += '</ul>';
-      html += '</div>';
+      html += '<div class="p6-hire-guide">';
+      html += '<strong class="p6-hire-guide-title">Hire Signal Guide</strong>';
+      html += '<ul class="p6-hire-guide-list">';
+      html += '<li>' + p6SignalIcon('error') + ' <strong>Timesheet Error</strong>: Over ~120% util (≈48h/wk). Data check needed — not treated as At Capacity.</li>';
+      html += '<li>' + p6SignalIcon('at') + ' <strong>At Capacity</strong>: Over 100%. Fully loaded; consistent flags can mean hire.</li>';
+      html += '<li>' + p6SignalIcon('high') + ' <strong>High</strong>: 75–100%. Busy; watch closely.</li>';
+      html += '<li>' + p6SignalIcon('healthy') + ' <strong>Healthy</strong>: 50–75%. No action needed.</li>';
+      html += '<li>' + p6SignalIcon('low') + ' <strong>Low Utilisation</strong>: Under 50%. Gaps or missing timesheets.</li>';
+      html += '</ul></div>';
 
-      // ── Capacity Summary Table ─────────────────────────────
-      html += '<h2 style="margin-top:24px">Capacity Summary (by Week)</h2>';
+      html += '<h2 class="p6-section-h">Capacity Summary (by Week)</h2>';
       html += '<div id="p6-capacity-table">';
       html += buildCapacityTable(capRows, '', '');
       html += '</div>';
 
-      // ── Labour Detail Table ────────────────────────────────
-      html += '<h2 style="margin-top:32px">Labour Detail</h2>';
+      html += '<h2 class="p6-section-h">Labour Detail</h2>';
       html += '<div id="p6-labour-table">';
-      html += buildLabourTable(labRows, '', '');
+      html += buildLabourTable(labDeduped, '', '');
       html += '</div>';
 
-      // Store data for filter re-renders / page-aware assistant
-      var latestCapWeek = 0;
-      capRows.forEach(function(r) {
-        var w = parseInt(col(r, 'Week', 'week'), 10) || 0;
-        if (w > latestCapWeek) latestCapWeek = w;
-      });
-      var latestCapRows = capRows.filter(function(r) {
-        return (parseInt(col(r, 'Week', 'week'), 10) || 0) === latestCapWeek;
-      });
-      var atCap = [], highUtil = [], lowUtil = [];
+      // BB data
+      var latestCapWeek = latestWeek;
+      var latestCapRows = weekRows;
+      var atCap = [], highUtil = [], lowUtil = [], errUtil = [];
       latestCapRows.forEach(function(r) {
-        var flag = String(col(r, 'Hire Signal Flag', 'hire signal flag', 'Hire Signal') || '').trim();
         var emp = String(col(r, 'Employee Name', 'employee name') || '').trim() || 'Unknown';
-        var util = parseInt(col(r, 'Utilisation %', 'utilisation %') || '0', 10) || 0;
-        var entry = { name: emp, util: util, flag: flag, department: col(r, 'Department', 'department') || '' };
-        var fl = flag.toLowerCase();
-        if (fl.indexOf('at capacity') !== -1 || fl === 'at capacity') atCap.push(entry);
-        else if (fl.indexOf('high') !== -1) highUtil.push(entry);
-        else if (fl.indexOf('low') !== -1) lowUtil.push(entry);
+        var util = r._utilNum || 0;
+        var entry = {
+          name: emp,
+          util: util,
+          flag: r['Hire Signal Flag'] || '',
+          department: col(r, 'Department', 'department') || '',
+          hours: r._hrsNum
+        };
+        if (r._signalKind === 'error') errUtil.push(entry);
+        else if (r._signalKind === 'at') atCap.push(entry);
+        else if (r._signalKind === 'high') highUtil.push(entry);
+        else if (r._signalKind === 'low') lowUtil.push(entry);
       });
-      var weekHrs = {};
-      capRows.forEach(function(r) {
-        var w = parseInt(col(r, 'Week', 'week'), 10);
-        if (!w) return;
-        weekHrs[w] = (weekHrs[w] || 0) + (parseFloat(col(r, 'Hours Logged', 'hours logged')) || 0);
-      });
+      var weekHrs = teamWeekHrs;
       var weekKeys = Object.keys(weekHrs).map(Number).sort(function(a, b) { return a - b; });
       var weekComparison = null;
       if (weekKeys.length >= 2) {
@@ -7991,12 +8187,18 @@
       }
       setBBPageData('P6', 'P6: Capacity & Labour', {
         capacity: capRows.slice(0, 400),
-        labour: labRows.slice(0, 400),
+        labour: labDeduped.slice(0, 400),
+        labourDedupe: {
+          note: 'Hours aggregated after removing same-day, same-hours timesheet clones (employee + shift date + hours).',
+          rawRowCount: labRows.length,
+          dedupedRowCount: labDeduped.length
+        },
         capacitySummary: {
           latestWeek: latestCapWeek,
           atCapacity: atCap,
           high: highUtil,
           low: lowUtil,
+          timesheetError: errUtil,
           hoursByWeek: weekHrs,
           weekComparison: weekComparison
         },
@@ -8005,7 +8207,7 @@
           : null
       });
       window._p6Cap = capRows;
-      window._p6Lab = labRows;
+      window._p6Lab = labDeduped;
       window._p6BarLabels  = barLabels;
       window._p6BarData    = barData;
       window._p6DeptLabels = deptLabels;
@@ -8024,34 +8226,32 @@
     }
 
     function buildCapacityTable(rows, monthFilter, brandFilter) {
-      // Filter capacity by brand only (no month col in Capacity tab)
-      var filtered = rows.filter(function(r) {
+      var filtered = (rows || []).filter(function(r) {
         var b = col(r, 'Brand', 'brand') || '';
-        return (!brandFilter || b === brandFilter);
+        return (!brandFilter || b === brandFilter || brandFilter === 'All');
       });
 
       if (!filtered.length) return '<p class="no-data">No capacity data available.</p>';
 
-      var t = '<div class="table-wrap"><table class="data-table"><thead><tr>';
+      var t = '<div class="table-wrap"><table class="data-table p6-capacity-table"><thead><tr>';
       t += '<th>Week</th><th>Brand</th><th>Employee</th><th>Dept</th>';
-      
+      t += '<th class="text-right">Hours Logged</th><th class="text-right">Util %</th><th>Signal</th>';
       t += '</tr></thead><tbody>';
 
       filtered.forEach(function(r) {
-        var util = parseInt(col(r, 'Utilisation %', 'utilisation %') || '0');
-        var utilStyle = util > 100 ? 'color:#c0392b;font-weight:600'
-                      : util > 90  ? 'color:#c0392b;font-weight:600'
-                      : util > 75  ? 'color:#e67e22;font-weight:600'
-                      : util < 50  ? 'color:#2980b9;font-weight:600'
-                      : 'color:#1a7a43;font-weight:600';
-        t += '<tr>';
-        t += '<td>' + (col(r,'Week','week')||'—') + '</td>';
-        t += '<td>' + (col(r,'Brand','brand')||'—') + '</td>';
-        t += '<td>' + (col(r,'Employee Name','employee name')||'—') + '</td>';
-        t += '<td>' + (col(r,'Department','department')||'—') + '</td>';
-        t += '<td style="text-align:center">' + (col(r,'Hours Logged','hours logged')||'—') + '</td>';
-        t += '<td style="text-align:center;' + utilStyle + '">' + (col(r,'Utilisation %','utilisation %')||'—') + '</td>';
-        t += '<td>' + (col(r,'Hire Signal Flag','hire signal flag')||'') + '</td>';
+        var util = r._utilNum != null ? r._utilNum : p6ParseUtilPct(col(r, 'Utilisation %', 'utilisation %'));
+        var kind = r._signalKind || p6SignalFromUtil(util).kind;
+        var flag = r['Hire Signal Flag'] || p6SignalFromUtil(util).flag;
+        var hrs = r._hrsNum != null ? r._hrsNum : (parseFloat(col(r, 'Hours Logged', 'hours logged')) || 0);
+        t += '<tr class="' + (kind === 'error' ? 'p6-row-anomaly' : '') + '">';
+        t += '<td>' + (col(r, 'Week', 'week') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Brand', 'brand') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Employee Name', 'employee name') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Department', 'department') || '—') + '</td>';
+        t += '<td class="text-right">' + (hrs || hrs === 0 ? hrs : '—') + '</td>';
+        t += '<td class="text-right">' + util + '%</td>';
+        t += '<td class="p6-signal-cell">' + p6SignalIcon(kind) +
+          (flag ? ' <span class="p6-signal-label">' + flag + '</span>' : '') + '</td>';
         t += '</tr>';
       });
 
@@ -8060,28 +8260,45 @@
     }
 
     function buildLabourTable(rows, monthFilter, brandFilter) {
-      var filtered = rows.filter(function(r) {
-        var m = col(r,'Month','month') || '';
-        var b = col(r,'Brand','brand') || '';
-        return (!monthFilter || m === monthFilter) && (!brandFilter || b === brandFilter);
+      var filtered = (rows || []).filter(function(r) {
+        var m = col(r, 'Month', 'month') || '';
+        var b = col(r, 'Brand', 'brand') || '';
+        return (!monthFilter || m === monthFilter) &&
+          (!brandFilter || brandFilter === 'All' || b === brandFilter);
       });
 
       if (!filtered.length) return '<p class="no-data">No labour data for selected filters.</p>';
 
-      var t = '<div class="table-wrap"><table class="data-table"><thead><tr>';
-      t += '<th>Employee</th><th>Brand</th><th>Department</th><th>Week</th><th>Month</th><th>Shift Date</th><th>Hours</th><th>Labour Cost (Wk)</th>';
+      var t = '<div class="table-wrap"><table class="data-table p6-labour-table"><thead><tr>';
+      t += '<th>Employee</th><th>Brand</th><th>Department</th><th>Week</th><th>Month</th>' +
+        '<th>Shift Date</th><th class="text-right">Hours</th><th class="text-right">Labour Cost (Wk)</th>';
       t += '</tr></thead><tbody>';
 
       filtered.forEach(function(r) {
+        var hrs = p6LabourHours(r);
+        var hrsDisplay = hrs === null ? '—' : hrs;
+        // Never show a $ figure when hours are missing — false confidence
+        var costCell;
+        if (hrs === null) {
+          costCell = '<span class="p6-pending">Pending Timesheet</span>';
+        } else {
+          var costRaw = col(r, 'Labour Cost Weekly($)', 'Labour Cost Weekly ($)', 'labour cost weekly($)');
+          if (costRaw === '' || costRaw === null || costRaw === undefined) {
+            costCell = '—';
+          } else {
+            var c = parseNum(costRaw);
+            costCell = isNaN(c) ? String(costRaw) : formatCurrency(c);
+          }
+        }
         t += '<tr>';
-        t += '<td>' + (col(r,'Employee Name','employee name')||'—') + '</td>';
-        t += '<td>' + (col(r,'Brand','brand')||'—') + '</td>';
-        t += '<td>' + (col(r,'Department','department')||'—') + '</td>';
-        t += '<td style="text-align:center">' + (col(r,'Week Number','week number')||'—') + '</td>';
-        t += '<td>' + (col(r,'Month','month')||'—') + '</td>';
-        t += '<td>' + (col(r,'Shift Date','shift date')||'—') + '</td>';
-        t += '<td style="text-align:center">' + (col(r,'Hours','hours')||'—') + '</td>';
-        t += '<td style="text-align:right">$' + (col(r,'Labour Cost Weekly($)','labour cost weekly($)')||'—') + '</td>';
+        t += '<td>' + (col(r, 'Employee Name', 'employee name') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Brand', 'brand') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Department', 'department') || '—') + '</td>';
+        t += '<td style="text-align:center">' + (col(r, 'Week Number', 'week number') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Month', 'month') || '—') + '</td>';
+        t += '<td>' + (col(r, 'Shift Date', 'shift date') || '—') + '</td>';
+        t += '<td class="text-right">' + hrsDisplay + '</td>';
+        t += '<td class="text-right">' + costCell + '</td>';
         t += '</tr>';
       });
 
