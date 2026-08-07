@@ -2041,45 +2041,72 @@ select {
 }
 
 /* ─── P5 Profitability ──────────────────────────────────────── */
+
+/* Page title: force Deep Charcoal (match all other pages; avoid any cascade/tint) */
+#page-p5 .page-header .page-title {
+  color: #262425;
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Five KPIs in one row on laptop widths (not P1’s 2×2 grid) */
 #page-p5 .p5-kpi-row {
-  margin-bottom: var(--space-2);
-}
-
-#page-p5 .p5-kpi-attention-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px 10px;
   margin-bottom: var(--space-4);
-  max-width: 280px;
+  align-items: stretch;
+  max-width: none;
+  width: 100%;
 }
 
-#page-p5 .p5-kpi-attention {
-  border-top: 3px solid var(--mono-l1);
+#page-p5 .p5-kpi-card {
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid rgba(188, 189, 190, 0.4);
+  border-top: 3px solid var(--silver);
   border-radius: var(--radius);
-  padding: 14px 16px;
   background: var(--white);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
 }
 
-#page-p5 .p5-kpi-attention .kpi-label {
-  color: var(--mono-l2);
-  font-size: 10px;
+#page-p5 .p5-kpi-card .kpi-label {
+  font-family: var(--font-heading);
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  color: #BCBDBE;
+  line-height: 1.2;
 }
 
-#page-p5 .p5-kpi-attention .kpi-value {
-  color: var(--mono-l1);
-  font-size: 26px;
+#page-p5 .p5-kpi-card .kpi-value {
+  font-size: clamp(14px, 1.35vw, 20px);
   font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 6px;
+  line-height: 1.1;
+  color: #262425;
+  letter-spacing: -0.2px;
+  margin-bottom: 4px;
+  word-break: break-word;
 }
 
-#page-p5 .p5-kpi-attention .kpi-sub {
-  color: var(--mono-l2);
-  font-size: 12px;
+#page-p5 .p5-kpi-card .kpi-sub {
+  font-size: 10px;
+  font-weight: 400;
+  color: #BCBDBE;
+  line-height: 1.25;
+  margin-top: auto;
+}
+
+/* AR keeps charcoal top-edge attention marker; same compact size as siblings */
+#page-p5 .p5-kpi-card.p5-kpi-attention {
+  border-top: 3px solid #262425;
+  border-left: 1px solid rgba(188, 189, 190, 0.4);
+  border-right: 1px solid rgba(188, 189, 190, 0.4);
+  border-bottom: 1px solid rgba(188, 189, 190, 0.4);
 }
 
 /* Single white section card — charts sit inside without nested chart cards */
@@ -2215,11 +2242,20 @@ select {
   #page-p5 .p5-chart-grid.two {
     grid-template-columns: 1fr;
   }
+
+  #page-p5 .p5-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  #page-p5 .p5-kpi-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
   .p5-inv-grids { grid-template-columns: 1fr; }
-  #page-p5 .p5-kpi-attention-row { max-width: none; }
 }
 
 /* ─── Ask BB dock (global) — icon until hover; no cover of chart content ─── */
