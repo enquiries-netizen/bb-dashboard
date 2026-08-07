@@ -7695,6 +7695,108 @@
       return map;
     }
 
+    /**
+     * Department weekly average util from deduped labour:
+     * (sum hours in department that week) / (distinct employees × standard week).
+     * One hot week is noise; hiring signals use consecutive weeks > 100%.
+     */
+    function p6DepartmentUtilSeries(labDeduped) {
+      var buckets = {};
+      (labDeduped || []).forEach(function(r) {
+        var dept = String(col(r, 'Department', 'department') || '').replace(/\s+/g, ' ').trim();
+        if (!dept) return;
+        var w = p6LabourWeekNum(r);
+        var h = p6LabourHours(r);
+        var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
+        if (!w || h === null || !emp) return;
+        var k = dept + '|' + w;
+        if (!buckets[k]) {
+          buckets[k] = { dept: dept, week: w, hours: 0, emps: {} };
+        }
+        buckets[k].hours += h;
+        buckets[k].emps[emp] = true;
+      });
+
+      var byDept = {};
+      Object.keys(buckets).forEach(function(k) {
+        var b = buckets[k];
+        var headcount = Object.keys(b.emps).length;
+        if (!headcount) return;
+        var util = (b.hours / (headcount * P6_STANDARD_WEEK_HRS)) * 100;
+        if (!byDept[b.dept]) byDept[b.dept] = [];
+        byDept[b.dept].push({
+          week: b.week,
+          util: util,
+          hours: Math.round(b.hours * 10) / 10,
+          headcount: headcount
+        });
+      });
+      Object.keys(byDept).forEach(function(dept) {
+        byDept[dept].sort(function(a, b) { return a.week - b.week; });
+      });
+      return byDept;
+    }
+
+    /**
+     * Hiring signals: department average util > 100% for 3+ consecutive weeks.
+     * Returns only departments currently in (or having completed) such a run,
+     * prefer the longest / latest qualifying run per department.
+     */
+    function p6DepartmentHiringSignals(labDeduped) {
+      var series = p6DepartmentUtilSeries(labDeduped);
+      var out = [];
+      Object.keys(series).forEach(function(dept) {
+        var pts = series[dept];
+        var best = null;
+        var runStart = null;
+        var runWeeks = [];
+        var runUtils = [];
+        for (var i = 0; i < pts.length; i++) {
+          var cur = pts[i];
+          var prev = i > 0 ? pts[i - 1] : null;
+          var isOver = cur.util > 100;
+          var isConsec = prev && isOver && prev.util > 100 && cur.week === prev.week + 1;
+          if (isOver) {
+            if (isConsec) {
+              runWeeks.push(cur.week);
+              runUtils.push(cur.util);
+            } else {
+              runStart = cur.week;
+              runWeeks = [cur.week];
+              runUtils = [cur.util];
+            }
+            if (runWeeks.length >= 3) {
+              var avgUtil = runUtils.reduce(function(s, u) { return s + u; }, 0) / runUtils.length;
+              var candidate = {
+                department: dept,
+                weeks: runWeeks.slice(),
+                weekStart: runWeeks[0],
+                weekEnd: runWeeks[runWeeks.length - 1],
+                consecutiveWeeks: runWeeks.length,
+                avgUtil: Math.round(avgUtil * 10) / 10
+              };
+              if (!best ||
+                  candidate.consecutiveWeeks > best.consecutiveWeeks ||
+                  (candidate.consecutiveWeeks === best.consecutiveWeeks &&
+                   candidate.weekEnd > best.weekEnd)) {
+                best = candidate;
+              }
+            }
+          } else {
+            runStart = null;
+            runWeeks = [];
+            runUtils = [];
+          }
+        }
+        if (best) out.push(best);
+      });
+      out.sort(function(a, b) {
+        if (b.consecutiveWeeks !== a.consecutiveWeeks) return b.consecutiveWeeks - a.consecutiveWeeks;
+        return b.avgUtil - a.avgUtil;
+      });
+      return out;
+    }
+
     function p6ParseUtilPct(val) {
       if (val === null || val === undefined || val === '') return 0;
       var n = parseFloat(String(val).replace(/%/g, '').trim());
@@ -8138,6 +8240,24 @@
       html += '<li>' + p6SignalIcon('low') + ' <strong>Low Utilisation</strong>: Under 50%. Gaps or missing timesheets.</li>';
       html += '</ul></div>';
 
+      // Department hiring signal: 3+ consecutive weeks Dept avg util > 100%
+      // (decision callout — omit entirely when nothing qualifies)
+      var hireSignals = p6DepartmentHiringSignals(labDeduped);
+      if (hireSignals.length) {
+        html += '<div class="p6-hiring-callouts" role="status">';
+        hireSignals.forEach(function(sig) {
+          var label = 'Consider Hiring — ' + sig.department +
+            ' over capacity for ' + sig.consecutiveWeeks + ' consecutive weeks';
+          var detail = 'Weeks ' + sig.weekStart + '–' + sig.weekEnd +
+            ' · department average util ~' + sig.avgUtil + '% (from labour hours after dedupe)';
+          html += '<div class="p6-hiring-banner">';
+          html += '<div class="p6-hiring-banner-label">' + label + '</div>';
+          html += '<div class="p6-hiring-banner-detail">' + detail + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
       html += '<h2 class="p6-section-h">Capacity Summary (by Week)</h2>';
       html += '<div id="p6-capacity-table">';
       html += buildCapacityTable(capRows, '', '');
@@ -8200,7 +8320,8 @@
           low: lowUtil,
           timesheetError: errUtil,
           hoursByWeek: weekHrs,
-          weekComparison: weekComparison
+          weekComparison: weekComparison,
+          departmentHiringSignals: hireSignals
         },
         weekPulse: labPulseThis != null
           ? { week: labPulseLatest, hours: labPulseThis, note: 'Lightweight this-week hours only. For week-over-week Capacity go to P8.' }

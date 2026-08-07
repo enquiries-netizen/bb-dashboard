@@ -1266,6 +1266,40 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+/* Department-level hiring signal (sustained overload ≥3 weeks) */
+.p6-hiring-callouts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0 8px;
+}
+
+.p6-hiring-banner {
+  background: var(--charcoal);
+  color: var(--white);
+  border: 1px solid var(--charcoal);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  box-shadow: none;
+}
+
+.p6-hiring-banner-label {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+  color: var(--white);
+}
+
+.p6-hiring-banner-detail {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--silver);
+  letter-spacing: 0.1px;
+}
+
 @media (max-width: 900px) {
   .p6-charts-grid { grid-template-columns: 1fr; }
 }
