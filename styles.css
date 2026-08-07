@@ -22,6 +22,18 @@
   --warning:         #a05c00;
   --danger:          #a82b2b;
 
+  /* Three-level monochrome scale (reuse on any page) */
+  --mono-l1:         #262425; /* Level 1: actuals, primary figures */
+  --mono-l2:         #BCBDBE; /* Level 2: targets, support, axes */
+  --mono-l3:         #D2D4D5; /* Level 3: borders, grids, washes */
+
+  /* Spacing rhythm */
+  --space-1:         8px;
+  --space-2:         16px;
+  --space-3:         24px;
+  --space-4:         32px;
+  --space-5:         48px;
+
   --font-heading:    'Montserrat', sans-serif;
   --font-body:       'Poppins', sans-serif;
 
@@ -31,6 +43,12 @@
   --radius-sm:       6px;
   --ease:            0.15s ease-out;
 }
+
+.mono-l1 { color: var(--mono-l1); }
+.mono-l2 { color: var(--mono-l2); }
+.mono-l3 { color: var(--mono-l3); }
+.mono-bg-l3 { background: var(--mono-l3); }
+.mono-border { border-color: var(--mono-l3); }
 
 /* ─── Reset ────────────────────────────────────────────────── */
 *, *::before, *::after {
@@ -90,6 +108,8 @@ select {
   gap: 24px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--charcoal-light);
+  position: relative;
+  z-index: 50;
 }
 
 /* Logo + Company Name */
@@ -310,8 +330,11 @@ select {
   flex: 1;
   overflow-y: auto;
   padding: 26px 28px;
+  /* Clear sticky mobile header path + docked Ask BB so content isn't hidden under chrome */
+  padding-bottom: calc(var(--space-5) + 56px);
   position: relative;
   background: var(--bg);
+  scroll-padding-top: var(--space-2);
 }
 
 
@@ -1848,44 +1871,145 @@ select {
   padding: 8px 0;
 }
 
-/* ─── P5 Division Profitability ─────────────────────────────── */
-.p5-variance-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin: 0 0 10px;
-  font-size: 11px;
-  color: var(--gray);
-  font-family: var(--font-heading);
+/* ─── P5 Profitability ──────────────────────────────────────── */
+#page-p5 .p5-kpi-row {
+  margin-bottom: var(--space-2);
+}
+
+#page-p5 .p5-kpi-attention-row {
+  margin-bottom: var(--space-4);
+  max-width: 280px;
+}
+
+#page-p5 .p5-kpi-attention {
+  border-top: 3px solid var(--mono-l1);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+#page-p5 .p5-kpi-attention .kpi-label {
+  color: var(--mono-l2);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
 }
 
-.p5-variance-key-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+#page-p5 .p5-kpi-attention .kpi-value {
+  color: var(--mono-l1);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 6px;
 }
 
-.p5-variance-swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+#page-p5 .p5-kpi-attention .kpi-sub {
+  color: var(--mono-l2);
+  font-size: 12px;
 }
 
-.p5-variance-swatch.under { background: var(--silver); }
-.p5-variance-swatch.over  { background: var(--charcoal); }
+/* Single white section card — charts sit inside without nested chart cards */
+#page-p5 .p5-section {
+  background: var(--white);
+  border: 1px solid var(--mono-l3);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+#page-p5 .p5-section .section-title {
+  margin-bottom: var(--space-2);
+}
+
+#page-p5 .p5-chart-grid {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+#page-p5 .p5-chart-grid.two {
+  grid-template-columns: 1fr 1fr;
+}
+
+#page-p5 .p5-chart-block {
+  min-width: 0;
+}
+
+#page-p5 .p5-chart-block .chart-title {
+  margin-bottom: var(--space-1);
+  color: var(--mono-l2);
+}
+
+#page-p5 .p5-chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+}
+
+#page-p5 .p5-oh-block {
+  margin-bottom: var(--space-4);
+}
+
+#page-p5 .p5-oh-hint {
+  font-size: 11px;
+  margin: 0 0 var(--space-2);
+}
+
+#page-p5 .p5-oh-matrix th {
+  color: var(--mono-l2);
+}
+
+#page-p5 .p5-oh-cell {
+  min-width: 110px;
+  vertical-align: middle;
+}
+
+#page-p5 .p5-micro-track {
+  position: relative;
+  height: 8px;
+  background: rgba(210, 212, 213, 0.45);
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+
+#page-p5 .p5-micro-zero {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--mono-l1);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+#page-p5 .p5-micro-fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  height: auto;
+}
+
+#page-p5 .p5-oh-val {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 
 .p5-notes-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-2);
 }
 
 .p5-note-card {
   background: var(--white);
-  border: 1px solid var(--silver);
+  border: 1px solid var(--mono-l3);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
 }
@@ -1896,13 +2020,11 @@ select {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: var(--gray);
   margin-bottom: 8px;
 }
 
 .p5-note-body {
   font-size: 12.5px;
-  color: var(--charcoal);
   line-height: 1.55;
   white-space: pre-wrap;
 }
@@ -1910,18 +2032,94 @@ select {
 .p5-inv-grids {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-top: 8px;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .p5-dept-hint {
   font-size: 12px;
-  color: var(--gray);
   margin-top: 4px;
   max-width: 52rem;
 }
 
+@media (max-width: 900px) {
+  #page-p5 .p5-chart-grid.two {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
+  .p5-inv-grids { grid-template-columns: 1fr; }
+  #page-p5 .p5-kpi-attention-row { max-width: none; }
+}
+
+/* ─── Ask BB dock (global) — icon until hover; no cover of chart content ─── */
+#ai-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--mono-l1);
+  color: var(--white);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--mono-l1);
+  box-shadow: none;
+  overflow: hidden;
+  transition: width 0.15s ease, border-radius 0.15s ease, padding 0.15s ease;
+}
+
+#ai-fab .ai-fab-label {
+  display: none;
+  white-space: nowrap;
+  margin-left: 6px;
+}
+
+#ai-fab:hover,
+#ai-fab:focus-visible,
+#ai-fab.is-open {
+  width: auto;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 24px;
+}
+
+#ai-fab:hover .ai-fab-label,
+#ai-fab:focus-visible .ai-fab-label,
+#ai-fab.is-open .ai-fab-label {
+  display: inline;
+}
+
+#ai-panel {
+  position: fixed;
+  bottom: 78px;
+  right: 20px;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  background: var(--white);
+  border: 1px solid var(--mono-l3);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  z-index: 40;
+  box-shadow: none;
+}
+
+#ai-panel[hidden],
+#ai-panel.is-hidden {
+  display: none !important;
+}
   .p5-inv-grids { grid-template-columns: 1fr; }
 }
 
@@ -2297,6 +2495,16 @@ select {
     position: sticky;
     top: 0;
     z-index: 100;
+  }
+
+  html {
+    /* Sticky multi-row header must not hide page content under itself */
+    scroll-padding-top: 130px;
+  }
+
+  .main {
+    padding-top: 14px;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
   .header-brand {

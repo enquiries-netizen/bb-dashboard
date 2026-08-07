@@ -541,82 +541,95 @@
           </div>
         </section>
 
-        <!-- ─── P5: Division Profitability ────────────────── -->
+        <!-- ─── P5: Profitability ─────────────────────────── -->
         <section id="page-p5" class="page">
           <div class="page-header">
             <span class="page-badge">P5</span>
             <h1 class="page-title">Profitability</h1>
           </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Revenue</div>
-              <div class="kpi-value" id="kpi-p5-revenue">—</div>
-              <div class="kpi-sub" id="kpi-p5-revenue-sub">Loading...</div>
+          <!-- Primary P&L flow metrics (period) -->
+          <div class="p5-kpi-row p1-kpi-primary" aria-label="P and L for period">
+            <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+              <div class="kpi-label">Revenue</div>
+              <div class="kpi-value mono-l1" id="kpi-p5-revenue">—</div>
+              <div class="kpi-sub mono-l2" id="kpi-p5-revenue-sub">Loading...</div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Gross Profit</div>
-              <div class="kpi-value" id="kpi-p5-gp">—</div>
-              <div class="kpi-sub" id="kpi-p5-gp-sub">Loading...</div>
+            <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+              <div class="kpi-label">Gross Margin</div>
+              <div class="kpi-value mono-l1" id="kpi-p5-gm">—</div>
+              <div class="kpi-sub mono-l2" id="kpi-p5-gm-sub">Loading...</div>
             </div>
-            <div class="kpi-card card">
+            <div class="kpi-card card p1-kpi p1-kpi-primary-card">
               <div class="kpi-label">Net Profit</div>
-              <div class="kpi-value" id="kpi-p5-np">—</div>
-              <div class="kpi-sub" id="kpi-p5-np-sub">Loading...</div>
+              <div class="kpi-value mono-l1" id="kpi-p5-np">—</div>
+              <div class="kpi-sub mono-l2" id="kpi-p5-np-sub">Loading...</div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Outstanding Invoices</div>
-              <div class="kpi-value" id="kpi-p5-outstanding">—</div>
-              <div class="kpi-sub" id="kpi-p5-outstanding-sub">Loading...</div>
+            <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+              <div class="kpi-label">Net Margin</div>
+              <div class="kpi-value mono-l1" id="kpi-p5-nm">—</div>
+              <div class="kpi-sub mono-l2" id="kpi-p5-nm-sub">Loading...</div>
             </div>
           </div>
 
-          <div class="section-card">
+          <!-- Balance-sheet attention metric (point in time) -->
+          <div class="p5-kpi-attention-row" aria-label="Accounts receivable">
+            <div class="kpi-card card p5-kpi-attention">
+              <div class="kpi-label">Accounts Receivable</div>
+              <div class="kpi-value mono-l1" id="kpi-p5-ar">—</div>
+              <div class="kpi-sub mono-l2" id="kpi-p5-ar-sub">Loading...</div>
+            </div>
+          </div>
+
+          <div class="p5-section">
             <div class="section-title">Brand-Level Profitability</div>
-            <div class="chart-row two-col">
-              <div class="chart-card card">
-                <div class="chart-title">Revenue vs Target</div>
-                <canvas id="chart-p5-revenue" height="200"></canvas>
+            <div class="p5-chart-grid two">
+              <div class="p5-chart-block">
+                <div class="chart-title mono-l2">Revenue vs Target</div>
+                <div class="p5-chart-canvas-wrap">
+                  <canvas id="chart-p5-revenue" height="200"></canvas>
+                </div>
               </div>
-              <div class="chart-card card">
-                <div class="chart-title">Net Profit vs Target</div>
-                <canvas id="chart-p5-profit" height="200"></canvas>
+              <div class="p5-chart-block">
+                <div class="chart-title mono-l2">Net Profit vs Target</div>
+                <div class="p5-chart-canvas-wrap">
+                  <canvas id="chart-p5-profit" height="200"></canvas>
+                </div>
               </div>
             </div>
-            <div class="chart-row">
-              <div class="chart-card card">
-                <div class="chart-title">Overhead Variance by Month</div>
-                <div class="p5-variance-key" aria-hidden="true">
-                  <span class="p5-variance-key-item"><i class="p5-variance-swatch under"></i> Under-budget (+)</span>
-                  <span class="p5-variance-key-item"><i class="p5-variance-swatch over"></i> Over-budget (−)</span>
-                </div>
-                <canvas id="chart-p5-overhead" height="110"></canvas>
-              </div>
+            <div class="p5-chart-block p5-oh-block">
+              <div class="chart-title mono-l2">Overhead Variance</div>
+              <p class="p5-oh-hint mono-l2">Positive = under budget · Negative = over budget</p>
+              <div id="p5-overhead-matrix">Loading overhead variance...</div>
             </div>
             <div id="p5-financials-table">Loading financials...</div>
           </div>
 
-          <div class="section-card">
+          <div class="p5-section">
             <div class="section-title">Overhead Commentary</div>
             <div id="p5-overhead-notes">Loading overhead notes...</div>
           </div>
 
-          <div class="section-card">
+          <div class="p5-section">
             <div class="section-title">Invoices &amp; Cash Position</div>
-            <div class="chart-row two-col">
-              <div class="chart-card card">
-                <div class="chart-title">By Status</div>
-                <canvas id="chart-p5-inv-status" height="200"></canvas>
+            <div class="p5-chart-grid two">
+              <div class="p5-chart-block">
+                <div class="chart-title mono-l2">By Status</div>
+                <div class="p5-chart-canvas-wrap">
+                  <canvas id="chart-p5-inv-status" height="200"></canvas>
+                </div>
               </div>
-              <div class="chart-card card">
-                <div class="chart-title">Ageing Bucket</div>
-                <canvas id="chart-p5-inv-ageing" height="200"></canvas>
+              <div class="p5-chart-block">
+                <div class="chart-title mono-l2">Ageing Bucket</div>
+                <div class="p5-chart-canvas-wrap">
+                  <canvas id="chart-p5-inv-ageing" height="200"></canvas>
+                </div>
               </div>
             </div>
             <div id="p5-invoices-summary">Loading invoices...</div>
           </div>
 
-          <div class="section-card">
+          <div class="p5-section">
             <div class="section-title">Department-Level Breakdown</div>
             <div id="p5-department-section">Loading department data...</div>
           </div>
@@ -6881,9 +6894,11 @@
     }
 
     function renderP5(financials, invoices, overhead) {
-      var brandCharcoal = '#262425';
-      var brandSoftGray = '#BCBDBE';
-      var brandSilver   = '#D2D4D5';
+      // Mono contrast: L1 actuals, L2 targets/support, L3 grids/borders (CSS: --mono-l1/2/3)
+      var brandCharcoal = '#262425'; // L1
+      var brandSoftGray = '#BCBDBE'; // L2
+      var brandSilver   = '#D2D4D5'; // L3
+      var IMMATERIAL_DOLLARS = 500;
 
       function applyFilters(rows) {
         return filterByMonths(
@@ -6924,7 +6939,9 @@
 
       function fmtMoney(v) {
         if (v === '' || v === null || v === undefined) return '—';
-        return formatCurrency(parseNum(v));
+        var n = parseNum(v);
+        if (Math.abs(n) < IMMATERIAL_DOLLARS) return '~$0';
+        return formatCurrency(n);
       }
 
       function fmtMargin(v) {
@@ -6951,38 +6968,90 @@
         });
       }
 
+      /** Compact signed $ for labels: +$12k / -$149k; under $500 → ~$0 or omit */
+      function formatCompactMoney(v, omitSmall) {
+        if (v === null || v === undefined || isNaN(v)) return null;
+        if (Math.abs(v) < IMMATERIAL_DOLLARS) return omitSmall ? null : '~$0';
+        var sign = v < 0 ? '-' : '+';
+        var abs = Math.abs(v);
+        if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
+        if (abs >= 1000) return sign + '$' + Math.round(abs / 1000) + 'k';
+        return sign + '$' + Math.round(abs);
+      }
+
+      function formatVarianceLabel(actual, target) {
+        if (target === null || target === undefined || isNaN(target)) return null;
+        if (actual === null || actual === undefined || isNaN(actual)) return null;
+        var diff = actual - target;
+        var money = formatCompactMoney(diff, true);
+        if (!money) return null;
+        if (!target) return money;
+        var pct = (diff / Math.abs(target)) * 100;
+        if (isNaN(pct)) return money;
+        var pctStr = (pct > 0 ? '+' : '') + pct.toFixed(1) + '%';
+        return money + ' / ' + pctStr;
+      }
+
+      function parsePeriodLabel(lbl) {
+        var parts = String(lbl || '').trim().split(/\s+/);
+        if (parts.length < 2) return null;
+        var token = parts[0].substring(0, 3).toLowerCase();
+        var y = parseInt(parts[1], 10);
+        var mi = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === token) { mi = i; break; }
+        }
+        if (mi < 0 || isNaN(y)) return null;
+        return { monthIdx: mi, year: y, short: _MONTH_ABBR[mi] };
+      }
+
+      function daysInMonth(year, monthIdx) {
+        return new Date(year, monthIdx + 1, 0).getDate();
+      }
+
+      /** Explicit range e.g. "1 Apr – 31 Jul 2026" */
+      function formatPeriodRange(periodOrder) {
+        if (!periodOrder || !periodOrder.length) return '';
+        var a = parsePeriodLabel(periodOrder[0]);
+        var b = parsePeriodLabel(periodOrder[periodOrder.length - 1]);
+        if (!a || !b) return periodOrder[0] + (periodOrder.length > 1 ? ' – ' + periodOrder[periodOrder.length - 1] : '');
+        var endDay = daysInMonth(b.year, b.monthIdx);
+        if (a.year === b.year && a.monthIdx === b.monthIdx) {
+          return '1 ' + a.short + ' – ' + endDay + ' ' + b.short + ' ' + b.year;
+        }
+        if (a.year === b.year) {
+          return '1 ' + a.short + ' – ' + endDay + ' ' + b.short + ' ' + b.year;
+        }
+        return '1 ' + a.short + ' ' + a.year + ' – ' + endDay + ' ' + b.short + ' ' + b.year;
+      }
+
+      function asAtDateFromRange(periodOrder) {
+        if (!periodOrder || !periodOrder.length) return '';
+        var b = parsePeriodLabel(periodOrder[periodOrder.length - 1]);
+        if (!b) return '';
+        return daysInMonth(b.year, b.monthIdx) + ' ' + b.short + ' ' + b.year;
+      }
+
+      function kpiVsTargetSub(actual, targetTotal, priorActual) {
+        if (targetTotal && Math.abs(targetTotal) >= IMMATERIAL_DOLLARS) {
+          var diff = actual - targetTotal;
+          if (Math.abs(diff) < IMMATERIAL_DOLLARS) return 'On target';
+          var pct = (diff / Math.abs(targetTotal)) * 100;
+          if (diff < 0) return Math.abs(pct).toFixed(0) + '% below target';
+          return '+' + pct.toFixed(1) + '% vs target';
+        }
+        if (priorActual !== null && priorActual !== undefined && Math.abs(priorActual) >= IMMATERIAL_DOLLARS) {
+          var d2 = actual - priorActual;
+          if (Math.abs(d2) < IMMATERIAL_DOLLARS) return 'Flat vs prior period';
+          var p2 = (d2 / Math.abs(priorActual)) * 100;
+          return (p2 > 0 ? '+' : '') + p2.toFixed(1) + '% vs prior period';
+        }
+        return '';
+      }
+
       var finSorted = sortFinRows(finFiltered);
 
-      // ── KPIs ────────────────────────────────────────────────
-      var totalRev = finSorted.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
-      }, 0);
-      var totalGP = finSorted.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Gross Profit ($)', 'Gross Profit'));
-      }, 0);
-      var totalNP = finSorted.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Net Profit ($)', 'Net Profit'));
-      }, 0);
-      var outstanding = invFiltered.reduce(function(s, r) {
-        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
-        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return s;
-        return s + parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
-      }, 0);
-
-      setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub',
-        finSorted.length ? formatCurrency(totalRev) : '—',
-        finSorted.length ? 'Apr 2026+ · filtered' : 'No financials for selection');
-      setKPI('kpi-p5-gp', 'kpi-p5-gp-sub',
-        finSorted.length ? formatCurrency(totalGP) : '—',
-        finSorted.length ? 'Gross profit' : 'No data');
-      setKPI('kpi-p5-np', 'kpi-p5-np-sub',
-        finSorted.length ? formatCurrency(totalNP) : '—',
-        finSorted.length ? 'Net profit' : 'No data');
-      setKPI('kpi-p5-outstanding', 'kpi-p5-outstanding-sub',
-        invFiltered.length ? formatCurrency(outstanding) : '—',
-        invFiltered.length ? 'Authorised / unpaid' : 'No invoices for selection');
-
-      // ── Section 1 charts ────────────────────────────────────
+      // ── Period order first (needed for labels + charts) ──
       var periodOrder = [];
       finSorted.forEach(function(r) {
         var lbl = monthLabel(r);
@@ -7002,6 +7071,70 @@
       var revTarget  = sumByPeriod(['Revenue Target ($)', 'Revenue Target']);
       var npActual   = sumByPeriod(['Net Profit ($)', 'Net Profit']);
       var npTarget   = sumByPeriod(['Profit Target ($)', 'Profit Target', 'Net Profit Target ($)']);
+      var gpActual   = sumByPeriod(['Gross Profit ($)', 'Gross Profit']);
+
+      var totalRev = revActual.reduce(function(s, v) { return s + v; }, 0);
+      var totalGP = gpActual.reduce(function(s, v) { return s + v; }, 0);
+      var totalNP = npActual.reduce(function(s, v) { return s + v; }, 0);
+      var totalRevT = revTarget.reduce(function(s, v) { return s + v; }, 0);
+      var totalNpT = npTarget.reduce(function(s, v) { return s + v; }, 0);
+      var grossMarginPct = totalRev ? (totalGP / totalRev) * 100 : null;
+      var netMarginPct = totalRev ? (totalNP / totalRev) * 100 : null;
+
+      var outstanding = invFiltered.reduce(function(s, r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return s;
+        return s + parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
+      }, 0);
+
+      var rangeLabel = formatPeriodRange(periodOrder);
+      var asAtLabel = asAtDateFromRange(periodOrder);
+      var priorRev = revActual.length >= 2 ? revActual[revActual.length - 2] : null;
+      var priorNp = npActual.length >= 2 ? npActual[npActual.length - 2] : null;
+      var priorGm = null;
+      if (gpActual.length >= 2 && revActual.length >= 2 && revActual[revActual.length - 2]) {
+        priorGm = (gpActual[gpActual.length - 2] / revActual[revActual.length - 2]) * 100;
+      }
+      var priorNm = null;
+      if (npActual.length >= 2 && revActual.length >= 2 && revActual[revActual.length - 2]) {
+        priorNm = (npActual[npActual.length - 2] / revActual[revActual.length - 2]) * 100;
+      }
+
+      if (!finSorted.length) {
+        setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub', '—', 'No financials for selection');
+        setKPI('kpi-p5-gm', 'kpi-p5-gm-sub', '—', 'No data');
+        setKPI('kpi-p5-np', 'kpi-p5-np-sub', '—', 'No data');
+        setKPI('kpi-p5-nm', 'kpi-p5-nm-sub', '—', 'No data');
+      } else {
+        setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub',
+          formatCurrency(totalRev),
+          kpiVsTargetSub(totalRev, totalRevT, priorRev) || rangeLabel || 'Period total');
+        setKPI('kpi-p5-gm', 'kpi-p5-gm-sub',
+          grossMarginPct !== null ? formatPct(grossMarginPct) : '—',
+          (function() {
+            if (priorGm === null || priorGm === undefined) return 'Gross profit ÷ revenue';
+            var d = grossMarginPct - priorGm;
+            if (Math.abs(d) < 0.05) return 'Flat vs prior period';
+            return (d > 0 ? '+' : '') + d.toFixed(1) + ' pts vs prior period';
+          })());
+        setKPI('kpi-p5-np', 'kpi-p5-np-sub',
+          formatCurrency(totalNP),
+          kpiVsTargetSub(totalNP, totalNpT, priorNp) || 'Net profit for period');
+        setKPI('kpi-p5-nm', 'kpi-p5-nm-sub',
+          netMarginPct !== null ? formatPct(netMarginPct) : '—',
+          (function() {
+            if (priorNm === null || priorNm === undefined) return 'Net profit ÷ revenue';
+            var d = netMarginPct - priorNm;
+            if (Math.abs(d) < 0.05) return 'Flat vs prior period';
+            return (d > 0 ? '+' : '') + d.toFixed(1) + ' pts vs prior period';
+          })());
+      }
+
+      setKPI('kpi-p5-ar', 'kpi-p5-ar-sub',
+        invFiltered.length ? formatCurrency(outstanding) : '—',
+        invFiltered.length
+          ? ('As at ' + (asAtLabel || rangeLabel || 'selection'))
+          : 'No invoices for selection');
 
       var yTicks = {
         callback: function(v) {
@@ -7009,24 +7142,132 @@
             : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
         }
       };
-      var chartOpts = function() {
+
+      function monoScale(opts) {
+        opts = opts || {};
+        var showZeroDark = !!opts.darkZeroLine;
         return {
           responsive: true,
+          maintainAspectRatio: true,
+          layout: { padding: { top: 28, right: 8, left: 4, bottom: 4 } },
           plugins: {
-            legend: { position: 'top', labels: { color: brandCharcoal } },
+            legend: {
+              position: 'top',
+              labels: {
+                color: brandSoftGray,
+                boxWidth: 10,
+                font: { size: 11, family: 'Montserrat, sans-serif' }
+              }
+            },
             tooltip: {
               callbacks: {
-                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0); }
+                label: function(ctx) {
+                  if (ctx.raw === null || ctx.raw === undefined) return null;
+                  return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0);
+                }
               }
             }
           },
           scales: {
-            x: { grid: { display: false }, ticks: { color: brandCharcoal } },
-            y: { beginAtZero: true, ticks: Object.assign({ color: brandCharcoal }, yTicks),
-                 grid: { color: 'rgba(210,212,213,0.5)' } }
+            x: {
+              grid: { display: false },
+              ticks: { color: brandSoftGray, font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: Object.assign({ color: brandSoftGray, font: { size: 11 } }, yTicks),
+              grid: {
+                color: function(ctx) {
+                  if (showZeroDark && ctx.tick && ctx.tick.value === 0) return brandCharcoal;
+                  return 'rgba(210,212,213,0.65)'; // L3-ish
+                },
+                lineWidth: function(ctx) {
+                  if (showZeroDark && ctx.tick && ctx.tick.value === 0) return 1.5;
+                  return 1;
+                }
+              }
+            }
           }
         };
-      };
+      }
+
+      /** Chart.js plugin: variance labels above bars (omit sub-$500) */
+      function makeVarianceLabelPlugin(actuals, targets, pluginId) {
+        return {
+          id: pluginId,
+          afterDatasetsDraw: function(chart) {
+            var meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data) return;
+            var ctx = chart.ctx;
+            meta.data.forEach(function(el, i) {
+              var label = formatVarianceLabel(actuals[i], targets[i]);
+              if (!label) return;
+              var pos = el.tooltipPosition();
+              var yVal = actuals[i];
+              ctx.save();
+              ctx.fillStyle = brandSoftGray;
+              ctx.font = '600 10px Montserrat, sans-serif';
+              ctx.textAlign = 'center';
+              if (yVal >= 0) {
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, pos.x, pos.y - 6);
+              } else {
+                ctx.textBaseline = 'top';
+                ctx.fillText(label, pos.x, pos.y + 6);
+              }
+              ctx.restore();
+            });
+          }
+        };
+      }
+
+      function targetsVary(arr) {
+        var nums = (arr || []).filter(function(v) { return v !== null && !isNaN(v); });
+        if (nums.length < 2) return false;
+        var first = nums[0];
+        return nums.some(function(v) { return Math.abs(v - first) >= IMMATERIAL_DOLLARS; });
+      }
+
+      function barPlusTargetConfig(actuals, targets, actualLabel, targetLabel, darkZero) {
+        var vary = targetsVary(targets);
+        return {
+          type: 'bar',
+          data: {
+            labels: periodOrder,
+            datasets: [
+              {
+                type: 'bar',
+                label: actualLabel,
+                data: actuals,
+                backgroundColor: brandCharcoal,
+                borderColor: brandCharcoal,
+                borderWidth: 0,
+                borderRadius: 0,
+                order: 2,
+                barPercentage: 0.55,
+                categoryPercentage: 0.7
+              },
+              {
+                type: 'line',
+                label: targetLabel,
+                data: targets,
+                borderColor: brandSoftGray,
+                backgroundColor: brandSoftGray,
+                borderWidth: 2,
+                pointRadius: vary ? 3 : 0,
+                pointHoverRadius: 4,
+                pointBackgroundColor: brandSoftGray,
+                pointBorderColor: brandSoftGray,
+                fill: false,
+                tension: 0,
+                order: 1
+              }
+            ]
+          },
+          plugins: [makeVarianceLabelPlugin(actuals, targets, 'p5Var_' + actualLabel.replace(/\s/g, ''))],
+          options: monoScale({ darkZeroLine: darkZero })
+        };
+      }
 
       function destroyIf(id) {
         if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
@@ -7035,68 +7276,19 @@
       if (periodOrder.length === 0) {
         ['chart-p5-revenue', 'chart-p5-profit'].forEach(destroyIf);
       } else {
-        makeChart('chart-p5-revenue', {
-          type: 'bar',
-          data: {
-            labels: periodOrder,
-            datasets: [
-              {
-                label: 'Revenue Target',
-                data: revTarget,
-                backgroundColor: 'rgba(0,0,0,0)',
-                borderColor: brandSoftGray,
-                borderWidth: 2,
-                borderRadius: 2,
-                order: 2
-              },
-              {
-                label: 'Total Revenue',
-                data: revActual,
-                backgroundColor: brandCharcoal,
-                borderColor: brandCharcoal,
-                borderWidth: 0,
-                borderRadius: 2,
-                order: 1
-              }
-            ]
-          },
-          options: chartOpts()
-        });
-
-        makeChart('chart-p5-profit', {
-          type: 'bar',
-          data: {
-            labels: periodOrder,
-            datasets: [
-              {
-                label: 'Profit Target',
-                data: npTarget,
-                backgroundColor: 'rgba(0,0,0,0)',
-                borderColor: brandSoftGray,
-                borderWidth: 2,
-                borderRadius: 2,
-                order: 2
-              },
-              {
-                label: 'Net Profit',
-                data: npActual,
-                backgroundColor: brandCharcoal,
-                borderColor: brandCharcoal,
-                borderWidth: 0,
-                borderRadius: 2,
-                order: 1
-              }
-            ]
-          },
-          options: chartOpts()
-        });
+        makeChart('chart-p5-revenue', barPlusTargetConfig(
+          revActual, revTarget, 'Revenue', 'Target', false
+        ));
+        makeChart('chart-p5-profit', barPlusTargetConfig(
+          npActual, npTarget, 'Net Profit', 'Target', true
+        ));
       }
 
-      // ── Overhead Variance by Month (Xero_Overhead Variance $) ──
+      // ── Overhead Variance matrix (months × brands) ──
       var ohSortedChart = sortFinRows(ohFiltered);
       var ohPeriodOrder = [];
       var ohBrands = [];
-      var ohNotesMap = {}; // period|brand → Notes text from sheet
+      var ohNotesMap = {};
       ohSortedChart.forEach(function(r) {
         var lbl = monthLabel(r);
         var brand = String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown';
@@ -7106,105 +7298,77 @@
         if (note) ohNotesMap[lbl + '|' + brand] = note;
       });
       ohBrands.sort();
+      // Prefer BBBS / RMH order when present
+      ohBrands.sort(function(a, b) {
+        var pref = { BBBS: 0, RMH: 1 };
+        var pa = pref[a] !== undefined ? pref[a] : 9;
+        var pb = pref[b] !== undefined ? pref[b] : 9;
+        if (pa !== pb) return pa - pb;
+        return a.localeCompare(b);
+      });
 
-      if (!ohPeriodOrder.length) {
-        destroyIf('chart-p5-overhead');
-      } else {
-        var ohDatasets = ohBrands.map(function(brand) {
-          var data = ohPeriodOrder.map(function(lbl) {
-            var rows = ohSortedChart.filter(function(r) {
-              return monthLabel(r) === lbl &&
-                (String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown') === brand;
-            });
-            if (!rows.length) return null;
-            return rows.reduce(function(s, r) {
-              return s + parseNum(col(r, 'Variance ($)', 'Variance', 'Overhead Variance ($)', 'Overhead Variance'));
-            }, 0);
-          });
-          var colors = data.map(function(v) {
-            if (v === null || v === undefined) return 'transparent';
-            return v < 0 ? brandCharcoal : brandSilver;
-          });
-          return {
-            label: brand,
-            data: data,
-            backgroundColor: colors,
-            borderColor: colors,
-            borderWidth: 0,
-            borderRadius: 2
-          };
-        });
-
-        var varianceLabelPlugin = {
-          id: 'p5OhVarianceLabels',
-          afterDatasetsDraw: function(chart) {
-            var ctx = chart.ctx;
-            chart.data.datasets.forEach(function(dataset, di) {
-              var meta = chart.getDatasetMeta(di);
-              if (!meta || meta.hidden) return;
-              meta.data.forEach(function(el, i) {
-                var val = dataset.data[i];
-                if (val === null || val === undefined || isNaN(val)) return;
-                var pos = el.tooltipPosition();
-                ctx.save();
-                ctx.fillStyle = brandCharcoal;
-                ctx.font = '600 10px Montserrat, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = val >= 0 ? 'bottom' : 'top';
-                ctx.fillText(formatCurrency(val), pos.x, val >= 0 ? pos.y - 4 : pos.y + 4);
-                ctx.restore();
+      var ohMatrixEl = document.getElementById('p5-overhead-matrix');
+      destroyIf('chart-p5-overhead');
+      if (ohMatrixEl) {
+        if (!ohPeriodOrder.length || !ohBrands.length) {
+          ohMatrixEl.innerHTML = '<p class="no-data-msg">No overhead variance for the selected filters.</p>';
+        } else {
+          var maxAbs = 0;
+          var cellMap = {};
+          ohPeriodOrder.forEach(function(lbl) {
+            ohBrands.forEach(function(brand) {
+              var rows = ohSortedChart.filter(function(r) {
+                return monthLabel(r) === lbl &&
+                  (String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown') === brand;
               });
+              var v = rows.length
+                ? rows.reduce(function(s, r) {
+                    return s + parseNum(col(r, 'Variance ($)', 'Variance', 'Overhead Variance ($)', 'Overhead Variance'));
+                  }, 0)
+                : null;
+              cellMap[lbl + '|' + brand] = v;
+              if (v !== null && !isNaN(v)) maxAbs = Math.max(maxAbs, Math.abs(v));
             });
-          }
-        };
+          });
+          if (maxAbs < 1) maxAbs = 1;
 
-        makeChart('chart-p5-overhead', {
-          type: 'bar',
-          data: {
-            labels: ohPeriodOrder,
-            datasets: ohDatasets
-          },
-          plugins: [varianceLabelPlugin],
-          options: {
-            responsive: true,
-            layout: { padding: { top: 20, bottom: 16 } },
-            plugins: {
-              legend: {
-                position: 'top',
-                display: ohBrands.length > 1,
-                labels: { color: brandCharcoal }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(ctx) {
-                    if (ctx.raw === null || ctx.raw === undefined) return null;
-                    var brand = ctx.dataset.label || '';
-                    var period = ctx.label || '';
-                    var lines = [brand + ': ' + formatCurrency(ctx.raw || 0)];
-                    var note = ohNotesMap[period + '|' + brand];
-                    if (note) lines.push(note);
-                    return lines;
-                  }
-                }
+          var mHtml = '<div class="table-wrap"><table class="data-table p5-oh-matrix">';
+          mHtml += '<thead><tr><th class="text-left">Month</th>';
+          ohBrands.forEach(function(b) {
+            mHtml += '<th class="text-left">' + b + '</th>';
+          });
+          mHtml += '</tr></thead><tbody>';
+
+          ohPeriodOrder.forEach(function(lbl) {
+            mHtml += '<tr><td class="text-left mono-l1">' + lbl + '</td>';
+            ohBrands.forEach(function(brand) {
+              var v = cellMap[lbl + '|' + brand];
+              if (v === null || v === undefined) {
+                mHtml += '<td class="p5-oh-cell mono-l2"></td>';
+                return;
               }
-            },
-            scales: {
-              x: { grid: { display: false }, ticks: { color: brandCharcoal } },
-              y: {
-                beginAtZero: true,
-                ticks: Object.assign({ color: brandCharcoal }, yTicks),
-                grid: {
-                  color: function(ctx) {
-                    return ctx.tick.value === 0 ? brandCharcoal : 'rgba(210,212,213,0.5)';
-                  },
-                  lineWidth: function(ctx) {
-                    return ctx.tick.value === 0 ? 1.5 : 1;
-                  }
-                }
-              }
-            }
-          }
-        });
+              var pctW = Math.min(50, (Math.abs(v) / maxAbs) * 50);
+              var isPos = v >= 0;
+              var disp = Math.abs(v) < IMMATERIAL_DOLLARS
+                ? '~$0'
+                : formatCompactMoney(v, false);
+              var note = ohNotesMap[lbl + '|' + brand] || '';
+              var barStyle = isPos
+                ? 'left:50%;width:' + pctW + '%;background:' + brandSilver
+                : 'right:50%;width:' + pctW + '%;background:' + brandCharcoal;
+              mHtml += '<td class="p5-oh-cell"' + (note ? ' title="' + note.replace(/"/g, '&quot;') + '"' : '') + '>' +
+                '<div class="p5-micro-track" aria-hidden="true">' +
+                '<span class="p5-micro-zero"></span>' +
+                '<span class="p5-micro-fill" style="' + barStyle + '"></span>' +
+                '</div>' +
+                '<span class="p5-oh-val mono-l1">' + disp + '</span>' +
+                '</td>';
+            });
+            mHtml += '</tr>';
+          });
+          mHtml += '</tbody></table></div>';
+          ohMatrixEl.innerHTML = mHtml;
+        }
       }
 
       // ── Section 1 table ─────────────────────────────────────
@@ -7242,8 +7406,8 @@
           if (!note) return;
           var title = [monthLabel(r), col(r, 'Brand', 'brand')].filter(Boolean).join(' · ');
           notesHtml += '<div class="p5-note-card">' +
-            '<div class="p5-note-meta">' + title + '</div>' +
-            '<div class="p5-note-body">' + note.replace(/</g, '&lt;') + '</div>' +
+            '<div class="p5-note-meta mono-l2">' + title + '</div>' +
+            '<div class="p5-note-body mono-l1">' + note.replace(/</g, '&lt;') + '</div>' +
             '</div>';
         });
         notesHtml += '</div>';
@@ -7273,7 +7437,6 @@
       var statusLabels = Object.keys(byStatus).sort();
       var ageingLabels = Object.keys(byAgeing).sort();
       var brandOutLabels = Object.keys(byBrandOut).sort();
-
       var invPalette = [brandCharcoal, brandSoftGray, brandSilver, '#3d3b3c', '#8a8b8c'];
 
       if (!invFiltered.length) {
@@ -7295,10 +7458,10 @@
               data: statusLabels.map(function(k) { return byStatus[k]; }),
               backgroundColor: statusLabels.map(function(_, i) { return invPalette[i % invPalette.length]; }),
               borderWidth: 0,
-              borderRadius: 2
+              borderRadius: 0
             }]
           },
-          options: chartOpts()
+          options: monoScale()
         });
 
         var ageingHasData = ageingLabels.some(function(k) { return k !== '(blank)' && byAgeing[k] > 0; });
@@ -7328,10 +7491,10 @@
                   .map(function(k) { return byAgeing[k]; }),
                 backgroundColor: brandCharcoal,
                 borderWidth: 0,
-                borderRadius: 2
+                borderRadius: 0
               }]
             },
-            options: chartOpts()
+            options: monoScale()
           });
         }
       }
@@ -7341,7 +7504,7 @@
         invSummaryHtml = '<p class="no-data-msg">No invoice data for the selected filters (April 2026 onward).</p>';
       } else {
         invSummaryHtml += '<div class="p5-inv-grids">';
-        invSummaryHtml += '<div><div class="chart-title">Summary by Status</div>';
+        invSummaryHtml += '<div><div class="chart-title mono-l2">Summary by Status</div>';
         invSummaryHtml += buildTable(statusLabels.map(function(k) {
           return { Status: k, Amount: byStatus[k], Count: invFiltered.filter(function(r) {
             return String(col(r, 'Status', 'status') || 'Unknown').trim() === k;
@@ -7353,15 +7516,15 @@
         ]);
         invSummaryHtml += '</div>';
 
-        invSummaryHtml += '<div><div class="chart-title">Outstanding by Brand</div>';
+        invSummaryHtml += '<div><div class="chart-title mono-l2">Accounts Receivable by Brand</div>';
         if (!brandOutLabels.length) {
-          invSummaryHtml += '<p class="no-data-msg">No outstanding invoices in selection.</p>';
+          invSummaryHtml += '<p class="no-data-msg">No outstanding receivables in selection.</p>';
         } else {
           invSummaryHtml += buildTable(brandOutLabels.map(function(k) {
             return { Brand: k, Outstanding: byBrandOut[k] };
           }), [
             { label: 'Brand', key: 'Brand' },
-            { label: 'Outstanding', key: 'Outstanding', format: function(v) { return formatCurrency(parseNum(v)); } }
+            { label: 'AR', key: 'Outstanding', format: function(v) { return formatCurrency(parseNum(v)); } }
           ]);
         }
         invSummaryHtml += '</div></div>';
@@ -7369,7 +7532,6 @@
       document.getElementById('p5-invoices-summary').innerHTML = invSummaryHtml;
 
       // ── Section 4 — Department breakdown ────────────────────
-      // Read Department by header name (not index). Empty → "Data not available".
       var deptRows = finSorted.filter(function(r) {
         return String(col(r, 'Department', 'department') || '').trim() !== '';
       });
@@ -7380,7 +7542,7 @@
       var deptEl = document.getElementById('p5-department-section');
       if (!deptRows.length && !deptInvRows.length) {
         deptEl.innerHTML = '<p class="no-data-msg">Data not available</p>' +
-          '<p class="p5-dept-hint">Department is blank in Xero_Financials / Xero_Invoices for the current range. ' +
+          '<p class="p5-dept-hint mono-l2">Department is blank in Xero_Financials / Xero_Invoices for the current range. ' +
           'When Department is populated in the sheet, refresh to load the breakdown.</p>';
       } else {
         var deptAgg = {};
@@ -7397,8 +7559,9 @@
         var deptTableRows = Object.keys(deptAgg).sort().map(function(k) { return deptAgg[k]; });
         var html = '';
         if (deptTableRows.length) {
-          html += '<div class="chart-row"><div class="chart-card card">' +
-            '<div class="chart-title">Revenue by Department</div>' +
+          html += '<div class="p5-chart-block">' +
+            '<div class="chart-title mono-l2">Revenue by Department</div>' +
+            '<div class="p5-chart-canvas-wrap">' +
             '<canvas id="chart-p5-dept" height="160"></canvas></div></div>';
           html += buildTable(deptTableRows, [
             { label: 'Department', key: 'Department' },
@@ -7423,10 +7586,10 @@
                   data: deptTableRows.map(function(r) { return r.Revenue; }),
                   backgroundColor: brandCharcoal,
                   borderWidth: 0,
-                  borderRadius: 2
+                  borderRadius: 0
                 }]
               },
-              options: chartOpts()
+              options: monoScale()
             });
           }, 0);
         }
@@ -7946,23 +8109,27 @@
 
   <script>
     document.body.insertAdjacentHTML('beforeend',
-      '<div id="ai-fab" onclick="toggleAI()" style="position:fixed;bottom:60px;right:24px;background:#1a1a1a;color:#fff;border-radius:50px;padding:14px 22px;cursor:pointer;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px;margin-right:4px"><path d="M2 12L12 4L22 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 11V20H20V11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Ask BB</div>' +
-      '<div id="ai-panel" style="display:none;position:fixed;bottom:116px;right:24px;width:340px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);padding:16px;z-index:9999">' +
-      '<p style="margin:0 0 10px;font-weight:600;color:#1a1a1a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px;margin-right:4px"><path d="M2 12L12 4L22 12" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 11V20H20V11" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>BB: Dashboard Assistant</p>' +
+      '<div id="ai-fab" class="ai-fab" onclick="toggleAI()" role="button" tabindex="0" aria-label="Ask BB">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M4 11V20H20V11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg><span class="ai-fab-label">Ask BB</span></div>' +
+      '<div id="ai-panel" class="is-hidden" style="display:none">' +
+      '<p style="margin:0 0 10px;font-weight:600;color:#262425"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px;margin-right:4px"><path d="M2 12L12 4L22 12" stroke="#262425" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 11V20H20V11" stroke="#262425" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>BB: Dashboard Assistant</p>' +
       '<div id="ai-name-step">' +
-      '<input id="ai-name-input" type="text" placeholder="Type your first name" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px" />' +
-      '<button id="ai-name-continue" onclick="submitBbName()" style="width:100%;margin-top:8px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Continue</button>' +
-      '<div id="ai-name-error" style="display:none;margin-top:10px;font-size:13px;line-height:1.6;color:#b00020"></div>' +
+      '<input id="ai-name-input" type="text" placeholder="Type your first name" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #D2D4D5;border-radius:8px;font-size:13px" />' +
+      '<button id="ai-name-continue" onclick="submitBbName()" style="width:100%;margin-top:8px;background:#262425;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Continue</button>' +
+      '<div id="ai-name-error" style="display:none;margin-top:10px;font-size:13px;line-height:1.6;color:#262425"></div>' +
       '</div>' +
       '<div id="ai-ask-step" style="display:none">' +
-      '<p id="ai-greeting" style="margin:0 0 6px;font-size:13px;color:#333"></p>' +
-      '<a id="ai-switch-user" href="#" onclick="switchBbUser(event)" style="display:inline-block;margin:0 0 10px;font-size:12px;color:#666;text-decoration:underline">Not you? Switch user</a>' +
-      '<textarea id="ai-q" rows="2" placeholder="e.g. Who is overloaded this week?" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></textarea>' +
+      '<p id="ai-greeting" style="margin:0 0 6px;font-size:13px;color:#262425"></p>' +
+      '<a id="ai-switch-user" href="#" onclick="switchBbUser(event)" style="display:inline-block;margin:0 0 10px;font-size:12px;color:#BCBDBE;text-decoration:underline">Not you? Switch user</a>' +
+      '<textarea id="ai-q" rows="2" placeholder="e.g. Who is overloaded this week?" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #D2D4D5;border-radius:8px;font-size:13px"></textarea>' +
       '<div style="display:flex;gap:8px;margin-top:8px">' +
-      '<button onclick="askAI()" style="flex:1;background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Ask</button>' +
-      '<button onclick="askAI(true)" style="flex:1;background:#333;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">🔊 Ask &amp; Speak</button>' +
+      '<button onclick="askAI()" style="flex:1;background:#262425;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Ask</button>' +
+      '<button onclick="askAI(true)" style="flex:1;background:#3d3b3c;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600">Ask &amp; Speak</button>' +
       '</div>' +
-      '<div id="ai-answer" style="margin-top:10px;font-size:13px;line-height:1.6;color:#333;max-height:220px;overflow-y:auto"></div>' +
+      '<div id="ai-answer" style="margin-top:10px;font-size:13px;line-height:1.6;color:#262425;max-height:220px;overflow-y:auto"></div>' +
       '</div>' +
       '</div>');
 
@@ -8056,11 +8223,17 @@
 
     function toggleAI() {
       var p = document.getElementById('ai-panel');
-      var opening = p.style.display === 'none';
+      var fab = document.getElementById('ai-fab');
+      var opening = p.style.display === 'none' || p.classList.contains('is-hidden');
       p.style.display = opening ? 'block' : 'none';
       if (opening) {
+        p.classList.remove('is-hidden');
+        if (fab) fab.classList.add('is-open');
         refreshBbPanel();
         maybeShowBbProactiveInsights(true);
+      } else {
+        p.classList.add('is-hidden');
+        if (fab) fab.classList.remove('is-open');
       }
     }
 
