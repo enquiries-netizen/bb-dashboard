@@ -1270,7 +1270,7 @@
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy historical only for completed jobs with final labour and material costs - else exact text that accuracy unavailable; estimator ranks only if 5+ completed jobs with data; job budget/actual on P4. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
-      P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: left ~70% Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12; muted project bars, tentative outlined, leave hatched, overallocation accent stripe, actual overlay); right ~30% 12-week department capacity heatmap (util vs dept availability; bands <60 under / 60-85 healthy / 85-100 watch / >100 over / grey gap); lower Planned vs Actual/Forecast chart + Capacity Exceptions action table (Priority, Issue, Impact, Action). Employee detail tables behind drill-down only on planning. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
+      P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction (placeholder). Page shows title and notice that data is being finalised. Full customer-journey rebuild paused until updated Client Satisfaction data arrives. Answer only that the page is parked / pending data finalisation; do not invent CSAT, NPS, or review metrics.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
@@ -17180,8 +17180,23 @@
       html += p6RenderActions(m);
       html += '</div></div>';
 
+      html += '<div class="p6-hybrid-grid">';
+      html += '<div class="p6-section-card p6-weekly-cap-card">';
+      html += '<div class="p6-section-title">Weekly Capacity</div>';
+      html += '<p class="p6-section-hint">Available vs scheduled hours by planning week (Current model / Capacity series). Max 6 weeks from selected week.</p>';
+      html += p6RenderWeeklyCapacity(m);
+      html += '</div>';
+      html += '<div class="p6-section-card p6-assign-card">';
+      html += '<div class="p6-section-title">Assignment Summary</div>';
+      html += '<p class="p6-section-hint">Project labour for Week ' + m.selectedWeek +
+        '. Planned demand and role pending when no source. Variance shown only when both planned and actual exist.</p>';
+      html += p6RenderAssignmentSummary(m);
+      html += '</div>';
+      html += '</div>';
+
       html += '<details class="p6-drill">';
       html += '<summary>Employee capacity detail (Week ' + m.selectedWeek + ')</summary>';
+      html += '<p class="p6-section-hint">Per-person util and timesheet status for the selected week. Expand only when drilling into exceptions.</p>';
       html += p6BuildCapacityDetail(m);
       html += '</details>';
 
@@ -17673,6 +17688,227 @@
       });
       h += '</tbody></table></div>';
       return h;
+    }
+
+    /**
+     * Compact weekly available-vs-scheduled bars from m.series (same Capacity sheet path as chart).
+     * Horizon: selected week + next weeks, 4-6 rows max. No invented hours.
+     */
+    function p6WeeklyCapacityRows(m) {
+      var byWeek = {};
+      (m.series || []).forEach(function(s) { byWeek[s.week] = s; });
+      var start = m.selectedWeek;
+      var rows = [];
+      var i;
+      for (i = 0; i < 6; i++) {
+        var w = start + i;
+        var s = byWeek[w];
+        if (!s) continue;
+        var avail = s.available;
+        var sched = s.scheduled;
+        var util = (avail != null && avail > 0 && sched != null) ? (sched / avail) * 100 : null;
+        rows.push({
+          week: w,
+          available: avail,
+          scheduled: sched,
+          util: util,
+          scheduledPending: !!s.scheduledPending,
+          isSelectedWeek: w === m.selectedWeek,
+          isTodayWeek: !!s.isTodayWeek
+        });
+      }
+      if (rows.length < 4) {
+        (m.series || []).forEach(function(s) {
+          if (rows.length >= 6) return;
+          if (s.week < start || s.week >= start + 8) return;
+          var exists = rows.some(function(r) { return r.week === s.week; });
+          if (exists) return;
+          var util2 = (s.available != null && s.available > 0 && s.scheduled != null)
+            ? (s.scheduled / s.available) * 100 : null;
+          rows.push({
+            week: s.week,
+            available: s.available,
+            scheduled: s.scheduled,
+            util: util2,
+            scheduledPending: !!s.scheduledPending,
+            isSelectedWeek: s.week === m.selectedWeek,
+            isTodayWeek: !!s.isTodayWeek
+          });
+        });
+        rows.sort(function(a, b) { return a.week - b.week; });
+      }
+      return rows.slice(0, 6);
+    }
+
+    function p6WeeklyBarTone(util, incomplete) {
+      if (incomplete || util == null || isNaN(util)) return 'gap';
+      if (util > 100) return 'over';
+      if (util >= P6_UTIL_HEALTHY_HI) return 'watch';
+      return 'healthy';
+    }
+
+    function p6RenderWeeklyCapacity(m) {
+      var rows = p6WeeklyCapacityRows(m);
+      if (!rows.length) {
+        return '<p class="no-data-msg">No weekly capacity series for this horizon.</p>';
+      }
+      var h = '<div class="p6-week-bars" role="list" aria-label="Weekly capacity">';
+      rows.forEach(function(r) {
+        var hasHours = r.available != null && r.scheduled != null;
+        var incomplete = !hasHours || (r.scheduledPending && r.scheduled == null);
+        var tone = p6WeeklyBarTone(r.util, incomplete || r.util == null);
+        var fillPct = 0;
+        var overflow = false;
+        if (hasHours && r.available > 0) {
+          fillPct = Math.min(100, (r.scheduled / r.available) * 100);
+          overflow = r.scheduled > r.available;
+        }
+        var utilLabel = r.util != null
+          ? p6FmtPct(r.util)
+          : 'Pending';
+        var title = 'W' + r.week + ': avail ' +
+          (r.available != null ? p6FmtHours(r.available) + ' h' : 'Pending') +
+          ', scheduled ' +
+          (r.scheduled != null ? p6FmtHours(r.scheduled) + ' h' : 'Pending');
+        h += '<div class="p6-week-bar-row' + (r.isSelectedWeek ? ' is-selected' : '') +
+          '" role="listitem" title="' + p6Esc(title) + '">';
+        h += '<span class="p6-week-bar-label">W' + r.week +
+          (r.isTodayWeek ? ' <span class="p6-muted">today</span>' : '') + '</span>';
+        h += '<div class="p6-week-bar-track">';
+        h += '<div class="p6-week-bar-fill p6-week-bar-fill--' + tone +
+          '" style="width:' + p6Round1(fillPct) + '%"></div>';
+        if (overflow) {
+          h += '<div class="p6-week-bar-overflow" aria-hidden="true"></div>';
+        }
+        h += '</div>';
+        h += '<span class="p6-week-bar-util p6-week-bar-util--' + tone + '">' +
+          (utilLabel === 'Pending'
+            ? '<span class="p6-pending-inline">Pending</span>'
+            : p6Esc(utilLabel)) + '</span>';
+        h += '<span class="p6-week-bar-meta">' +
+          (r.available != null ? p6FmtHours(r.available) : '-') + ' av / ' +
+          (r.scheduled != null ? p6FmtHours(r.scheduled) : '-') + ' sch</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      return h;
+    }
+
+    /**
+     * Compact assignment rows from m.projects + labour roles for selected week.
+     * Planned/required hours stay Pending until a demand source exists (no fake zeros).
+     */
+    function p6AssignmentRows(m) {
+      var roleByKey = {};
+      (m.labDeduped || []).forEach(function(r) {
+        if (p6LabourWeekNum(r) !== m.selectedWeek) return;
+        var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
+        var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
+        var key = job || site || '(unassigned)';
+        var role = String(col(r, 'Role', 'role') || '').trim();
+        if (!role || /leave|training|holiday|public holiday|rdo|sick|personal/i.test(role)) return;
+        if (!roleByKey[key]) roleByKey[key] = {};
+        roleByKey[key][role] = (roleByKey[key][role] || 0) + 1;
+      });
+      var peopleByEmp = {};
+      (m.people || []).forEach(function(p) { peopleByEmp[p.emp] = p; });
+
+      var keys = Object.keys(m.projects || {}).sort(function(a, b) {
+        return (m.projects[b].assignedHours || 0) - (m.projects[a].assignedHours || 0);
+      });
+      return keys.map(function(k) {
+        var p = m.projects[k];
+        var planned = p.requiredHours != null ? p.requiredHours : null;
+        var actual = p.assignedHours != null ? p.assignedHours : null;
+        var variance = (planned != null && actual != null) ? p6Round1(planned - actual) : null;
+        var roleCounts = roleByKey[k] || {};
+        var roleNames = Object.keys(roleCounts).sort(function(a, b) {
+          return roleCounts[b] - roleCounts[a];
+        });
+        var role = roleNames.length ? roleNames[0] : null;
+        if (roleNames.length > 1) role = roleNames[0] + ' +' + (roleNames.length - 1);
+
+        var over = false;
+        var missing = false;
+        var completeN = 0;
+        var peopleN = 0;
+        Object.keys(p.people || {}).forEach(function(ek) {
+          peopleN++;
+          var person = peopleByEmp[ek];
+          if (!person) return;
+          if (person.overallocHrs > 0.05 || person.planningStatus === 'Overallocated' ||
+              person.planningStatus === 'Allocation Conflict') over = true;
+          if (person.timesheetStatus === 'Missing') missing = true;
+          if (person.timesheetStatus === 'Complete' || person.timesheetStatus === 'Overtime Recorded') {
+            completeN++;
+          }
+        });
+
+        var status;
+        if (over) status = 'At Risk';
+        else if (!m.scheduleLive && (m.weekInProgress || !m.weekEnded)) status = 'Tentative';
+        else if (variance != null && variance < -0.05) status = 'At Risk';
+        else if (peopleN > 0 && completeN === peopleN && !missing) status = 'Confirmed';
+        else if (actual != null && actual > 0 && !missing) status = 'On Track';
+        else if (missing || actual == null) status = 'Tentative';
+        else status = 'On Track';
+
+        return {
+          project: p.job || k,
+          site: p.client || '',
+          role: role,
+          planned: planned,
+          actual: actual,
+          variance: variance,
+          status: status
+        };
+      });
+    }
+
+    function p6AssignmentStatusChip(status) {
+      var cls = 'p6-chip p6-chip--pill';
+      if (status === 'At Risk' || status === 'Conflict') cls += ' p6-chip--risk';
+      else if (status === 'Tentative') cls += ' p6-chip--action';
+      else if (status === 'On Track' || status === 'Confirmed') cls += ' p6-chip--healthy';
+      else cls += ' p6-chip--gap';
+      return '<span class="' + cls + '">' + p6Esc(status) + '</span>';
+    }
+
+    function p6RenderAssignmentSummary(m) {
+      var rows = p6AssignmentRows(m);
+      if (!rows.length) {
+        return '<p class="no-data-msg">No project labour assignments for Week ' + m.selectedWeek + '.</p>';
+      }
+      var t = '<div class="table-wrap"><table class="data-table p6-assign-table"><thead><tr>';
+      t += '<th>Project</th><th>Role</th><th class="text-right">Planned</th>';
+      t += '<th class="text-right">Actual</th><th class="text-right">Labour Variance</th><th>Status</th>';
+      t += '</tr></thead><tbody>';
+      rows.forEach(function(r) {
+        t += '<tr>';
+        t += '<td>' + p6Esc(r.project) +
+          (r.site ? '<div class="p6-muted">' + p6Esc(r.site) + '</div>' : '') + '</td>';
+        t += '<td>' + (r.role
+          ? p6Esc(r.role)
+          : '<span class="p6-pending-inline">Pending</span>') + '</td>';
+        t += '<td class="text-right">' + (r.planned != null
+          ? p6FmtHours(r.planned) + ' h'
+          : '<span class="p6-pending-inline">Pending</span>') + '</td>';
+        t += '<td class="text-right">' + (r.actual != null
+          ? p6FmtHours(r.actual) + ' h'
+          : '<span class="p6-pending-inline">Pending</span>') + '</td>';
+        if (r.variance == null) {
+          t += '<td class="text-right"><span class="p6-pending-inline">Pending</span></td>';
+        } else {
+          var adverse = r.variance < -0.05;
+          var varCls = adverse ? ' p6-var--adverse' : (r.variance > 0.05 ? ' p6-var--favourable' : '');
+          var sign = r.variance > 0 ? '+' : '';
+          t += '<td class="text-right' + varCls + '">' + sign + p6FmtHours(r.variance) + ' h</td>';
+        }
+        t += '<td>' + p6AssignmentStatusChip(r.status) + '</td>';
+        t += '</tr>';
+      });
+      t += '</tbody></table></div>';
+      return t;
     }
 
     function p6BuildCapacityDetail(m) {

@@ -2591,9 +2591,118 @@ select {
 #page-p6 .p6-capacity-table .text-right,
 #page-p6 .p6-labour-table .text-right,
 #page-p6 .p6-project-table .text-right,
-#page-p6 .p6-actions-table .text-right {
+#page-p6 .p6-actions-table .text-right,
+#page-p6 .p6-assign-table .text-right {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Hybrid: Weekly Capacity bars + Assignment Summary */
+#page-p6 .p6-hybrid-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 16px;
+  margin: 4px 0 12px;
+  align-items: start;
+}
+
+#page-p6 .p6-week-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#page-p6 .p6-week-bar-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 56px;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  font-size: 12px;
+}
+
+#page-p6 .p6-week-bar-row.is-selected .p6-week-bar-label {
+  font-weight: 700;
+}
+
+#page-p6 .p6-week-bar-label {
+  grid-row: 1 / 3;
+  font-weight: 600;
+  color: var(--charcoal);
+  font-variant-numeric: tabular-nums;
+}
+
+#page-p6 .p6-week-bar-track {
+  position: relative;
+  height: 10px;
+  background: #E8EAED;
+  border-radius: 2px;
+  overflow: hidden;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#page-p6 .p6-week-bar-fill {
+  height: 100%;
+  min-width: 0;
+  border-radius: 2px 0 0 2px;
+}
+
+#page-p6 .p6-week-bar-fill--healthy { background: var(--p6-healthy, #4B7A5A); }
+#page-p6 .p6-week-bar-fill--watch { background: var(--p6-watch, #F59E0B); }
+#page-p6 .p6-week-bar-fill--over { background: var(--p6-accent, #EA580C); }
+#page-p6 .p6-week-bar-fill--gap { background: var(--p6-neutral-data-gap, #9CA3AF); }
+
+#page-p6 .p6-week-bar-overflow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--p6-accent, #EA580C),
+    var(--p6-accent, #EA580C) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.85;
+}
+
+#page-p6 .p6-week-bar-util {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+#page-p6 .p6-week-bar-util--healthy { color: var(--p6-healthy, #4B7A5A); }
+#page-p6 .p6-week-bar-util--watch { color: #B45309; }
+#page-p6 .p6-week-bar-util--over { color: var(--p6-accent, #EA580C); }
+#page-p6 .p6-week-bar-util--gap { color: var(--p6-muted, #6B7280); }
+
+#page-p6 .p6-week-bar-meta {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 10px;
+  color: var(--gray);
+  font-variant-numeric: tabular-nums;
+}
+
+#page-p6 .p6-assign-table td {
+  font-size: 12px;
+  vertical-align: top;
+}
+
+#page-p6 .p6-var--adverse {
+  color: var(--p6-accent, #EA580C);
+  font-weight: 600;
+}
+
+#page-p6 .p6-var--favourable {
+  color: var(--p6-healthy, #4B7A5A);
 }
 
 #page-p6 .p6-total-row td {
@@ -2604,6 +2713,7 @@ select {
 @media (max-width: 1200px) {
   #page-p6 .p6-kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #page-p6 .p6-lower-grid { grid-template-columns: 1fr; }
+  #page-p6 .p6-hybrid-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -6182,6 +6292,32 @@ p.p3-section-hint {
 #page-p6.p6-test-palette .data-table td {
   color: var(--p6-text);
   border-bottom-color: var(--p6-border);
+}
+
+#page-p6.p6-test-palette .p6-var--adverse {
+  color: var(--p6-accent);
+}
+
+#page-p6.p6-test-palette .p6-var--favourable {
+  color: var(--p6-healthy);
+}
+
+#page-p6.p6-test-palette .p6-week-bar-fill--healthy { background: var(--p6-healthy); }
+#page-p6.p6-test-palette .p6-week-bar-fill--watch { background: var(--p6-watch); }
+#page-p6.p6-test-palette .p6-week-bar-fill--over { background: var(--p6-accent); }
+#page-p6.p6-test-palette .p6-week-bar-fill--gap { background: var(--p6-neutral-data-gap); }
+#page-p6.p6-test-palette .p6-week-bar-util--healthy { color: var(--p6-healthy); }
+#page-p6.p6-test-palette .p6-week-bar-util--watch { color: #B45309; }
+#page-p6.p6-test-palette .p6-week-bar-util--over { color: var(--p6-accent); }
+#page-p6.p6-test-palette .p6-week-bar-util--gap { color: var(--p6-muted); }
+#page-p6.p6-test-palette .p6-week-bar-overflow {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--p6-accent),
+    var(--p6-accent) 2px,
+    transparent 2px,
+    transparent 4px
+  );
 }
 
 /* END TEST PALETTE P6 */
