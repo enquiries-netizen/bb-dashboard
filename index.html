@@ -561,7 +561,7 @@
 
           <div class="section-card p4-labour-section">
             <div class="section-title-row">
-              <div class="section-title">Labour Cost by Job</div>
+              <div class="section-title">Job Costing</div>
               <div class="filter-group p4-labour-dept-filter">
                 <span class="filter-label">Department</span>
                 <select class="filter-select page-filter-select" id="p4-labour-dept-filter" aria-label="Filter labour by department">
@@ -571,34 +571,37 @@
             </div>
             <p class="p4-labour-filter-cue">Brand · Month · Year filters apply above. Department filters this section only.</p>
 
-            <div class="p4-labour-overview">
-              <div class="p4-labour-kpis" aria-label="Labour cost summary">
-                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
-                  <div class="kpi-label">Total Hours</div>
-                  <div class="kpi-value" id="kpi-p4-labour-hours">—</div>
-                  <div class="kpi-sub" id="kpi-p4-labour-hours-sub">Across all jobs</div>
-                </div>
-                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
-                  <div class="kpi-label">Total Labour Cost</div>
-                  <div class="kpi-value" id="kpi-p4-labour-cost">—</div>
-                  <div class="kpi-sub" id="kpi-p4-labour-cost-sub">Across all jobs</div>
-                </div>
-                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
-                  <div class="kpi-label">Average Cost Per Job</div>
-                  <div class="kpi-value" id="kpi-p4-labour-avg">—</div>
-                  <div class="kpi-sub" id="kpi-p4-labour-avg-sub">Total cost ÷ jobs</div>
-                </div>
+            <!-- Job Costing KPIs: Total Labour Cost, Total Revenue, Avg Margin (live from table rows) -->
+            <div class="p4-jco-kpis" aria-label="Job costing summary">
+              <div class="p4-jco-kpi-card">
+                <div class="p4-jco-kpi-label">Total Labour Cost</div>
+                <div class="p4-jco-kpi-value" id="kpi-p4-labour-cost">-</div>
+                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-cost-sub">Loading...</div>
               </div>
-              <div class="chart-card card p4-labour-chart-card">
-                <div class="chart-title">Top 5 Most Expensive Jobs</div>
-                <p class="p4-labour-outlier-note" id="p4-labour-outlier-note" hidden></p>
-                <div class="p4-labour-chart-wrap">
-                  <canvas id="chart-p4-labour-top5"></canvas>
-                </div>
+              <div class="p4-jco-kpi-card">
+                <div class="p4-jco-kpi-label">Total Revenue</div>
+                <div class="p4-jco-kpi-value" id="kpi-p4-labour-revenue">-</div>
+                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-revenue-sub">Loading...</div>
+              </div>
+              <div class="p4-jco-kpi-card">
+                <div class="p4-jco-kpi-label">Avg Margin</div>
+                <div class="p4-jco-kpi-value" id="kpi-p4-labour-margin">-</div>
+                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-margin-sub">Loading...</div>
               </div>
             </div>
 
-            <div id="p4-labour-table">Loading labour data...</div>
+            <div class="chart-card card p4-labour-chart-card">
+              <div class="chart-title">Top 5 Most Expensive Jobs</div>
+              <p class="p4-labour-outlier-note" id="p4-labour-outlier-note" hidden></p>
+              <div class="p4-labour-chart-wrap">
+                <canvas id="chart-p4-labour-top5"></canvas>
+              </div>
+            </div>
+
+            <div class="p4-jco-table-card">
+              <div class="p4-jco-table-title">Job Costing Overview</div>
+              <div id="p4-labour-table">Loading labour data...</div>
+            </div>
           </div>
         </section>
 
@@ -4946,8 +4949,8 @@
         ['kpi-p4-active','kpi-p4-ontrack','kpi-p4-overdue','kpi-p4-labour'].forEach(function(id) {
           setKPI(id, id + '-sub', '—', 'Syncs every Friday 6pm via Buildpass Schedule task');
         });
-        ['kpi-p4-labour-hours', 'kpi-p4-labour-cost', 'kpi-p4-labour-avg'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', '');
+        ['kpi-p4-labour-cost', 'kpi-p4-labour-revenue', 'kpi-p4-labour-margin'].forEach(function(id) {
+          setKPI(id, id + '-sub', '-', '');
         });
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
@@ -5709,7 +5712,7 @@
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
       }
 
-      // ── Labour Cost by Job (summary KPIs + Top 5 chart + detail table) ──
+      // ── Job Costing (KPIs + Top 5 chart + Job Costing Overview table) ──
       function destroyP4LabourChart() {
         if (_charts['chart-p4-labour-top5']) {
           _charts['chart-p4-labour-top5'].destroy();
@@ -5719,8 +5722,8 @@
 
       function clearP4LabourSectionEmpty(msg) {
         destroyP4LabourChart();
-        ['kpi-p4-labour-hours', 'kpi-p4-labour-cost', 'kpi-p4-labour-avg'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', '');
+        ['kpi-p4-labour-cost', 'kpi-p4-labour-revenue', 'kpi-p4-labour-margin'].forEach(function(id) {
+          setKPI(id, id + '-sub', '-', '');
         });
         var noteEl = document.getElementById('p4-labour-outlier-note');
         if (noteEl) {
@@ -5729,6 +5732,34 @@
         }
         var tableElLab = document.getElementById('p4-labour-table');
         if (tableElLab) tableElLab.innerHTML = '<p class="no-data-msg">' + msg + '</p>';
+      }
+
+      function p4JcoCell(text, isEmpty) {
+        if (isEmpty) return '<span class="p4-jco-null">-</span>';
+        return text;
+      }
+
+      function p4JcoMoneyCell(raw) {
+        var formatted = formatLiveMoneyOrDash(raw);
+        return p4JcoCell(formatted, formatted === '-');
+      }
+
+      function p4JcoPill(text, kind) {
+        var t = String(text || '').trim();
+        if (!t) return '<span class="p4-jco-null">-</span>';
+        var cls = kind === 'brand' ? 'p4-jco-pill p4-jco-pill--action' : 'p4-jco-pill p4-jco-pill--neutral';
+        return '<span class="' + cls + '">' + t + '</span>';
+      }
+
+      function p4JcoLabourPctCell(pct) {
+        if (!pct || !(pct > 0)) return '<span class="p4-jco-null">-</span>';
+        var label = pct.toFixed(1) + '%';
+        var barW = Math.min(100, Math.max(0, pct));
+        return '<div class="p4-jco-pct">' +
+          '<span class="p4-jco-pct-label">' + label + '</span>' +
+          '<span class="p4-jco-pct-track" aria-hidden="true">' +
+          '<span class="p4-jco-pct-fill" style="width:' + barW.toFixed(1) + '%"></span>' +
+          '</span></div>';
       }
 
       // Department filter options from labour rows already reduced by Brand/Month/Year
@@ -5824,25 +5855,45 @@
         var totalHrs = labourRows.reduce(function(s, p) { return s + (p.hours || 0); }, 0);
         var totalCostJobs = labourRows.reduce(function(s, p) { return s + (p.cost || 0); }, 0);
         var jobCount = labourRows.length;
-        var avgCost = jobCount ? totalCostJobs / jobCount : 0;
+        // Revenue + cost universe for margin: only jobs with live Xero revenue
+        var totalRevenueJobs = 0;
+        var costOnRevenueJobs = 0;
+        var jobsWithRevenue = 0;
+        labourRows.forEach(function(p) {
+          if (p.revenueRawPresent && p.revenue > 0) {
+            totalRevenueJobs += p.revenue;
+            costOnRevenueJobs += (p.cost || 0);
+            jobsWithRevenue += 1;
+          }
+        });
+        // Weighted margin % = (Revenue - Labour Cost) / Revenue on the same job set
+        var avgMarginPct = null;
+        if (totalRevenueJobs > 0) {
+          avgMarginPct = ((totalRevenueJobs - costOnRevenueJobs) / totalRevenueJobs) * 100;
+        }
 
-        setKPI(
-          'kpi-p4-labour-hours',
-          'kpi-p4-labour-hours-sub',
-          totalHrs ? (totalHrs >= 1000 ? totalHrs.toFixed(0) : totalHrs.toFixed(1)) : '0',
-          jobCount + ' job' + (jobCount !== 1 ? 's' : '')
-        );
         setKPI(
           'kpi-p4-labour-cost',
           'kpi-p4-labour-cost-sub',
           totalCostJobs ? formatCurrency(totalCostJobs) : '$0',
-          'Sum of labour cost'
+          jobCount + ' job' + (jobCount !== 1 ? 's' : '') +
+            (totalHrs ? ' · ' + (totalHrs >= 1000 ? totalHrs.toFixed(0) : totalHrs.toFixed(1)) + ' hrs' : '')
         );
         setKPI(
-          'kpi-p4-labour-avg',
-          'kpi-p4-labour-avg-sub',
-          avgCost ? formatCurrency(avgCost) : '$0',
-          'Total cost ÷ ' + jobCount + ' job' + (jobCount !== 1 ? 's' : '')
+          'kpi-p4-labour-revenue',
+          'kpi-p4-labour-revenue-sub',
+          jobsWithRevenue ? formatCurrency(totalRevenueJobs) : '-',
+          jobsWithRevenue
+            ? jobsWithRevenue + ' job' + (jobsWithRevenue !== 1 ? 's' : '') + ' with revenue'
+            : 'Not yet matched from Xero'
+        );
+        setKPI(
+          'kpi-p4-labour-margin',
+          'kpi-p4-labour-margin-sub',
+          avgMarginPct !== null ? avgMarginPct.toFixed(1) + '%' : '-',
+          avgMarginPct !== null
+            ? '(Revenue - Labour) ÷ Revenue'
+            : 'Needs revenue on job rows'
         );
 
         var top5 = labourRows.slice(0, 5);
@@ -5947,38 +5998,41 @@
           });
         }
 
-        // Detail table — enriched with live Xero_Projects columns (Job # match)
+        // Job Costing Overview table - live Buildpass_Labour + Xero_Projects (Job # match)
         var th =
-          '<th class="text-left">Project</th>' +
-          '<th class="text-left">Client Name</th>' +
-          '<th class="text-right">Hours</th>' +
-          '<th class="text-right">Labour Cost</th>' +
-          '<th class="text-right">Actual-Labour</th>' +
-          '<th class="text-right">Actual-Variations</th>' +
-          '<th class="text-right">Total Budget</th>' +
-          '<th class="text-right">Revenue</th>' +
-          '<th class="text-right">Labour %</th>' +
-          '<th class="text-left">Brand</th>' +
-          '<th class="text-left">Department</th>';
+          '<th class="p4-jco-th p4-jco-th--left">Project</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Client Name</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Hours</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Labour Cost</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual-Labour</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual-Variations</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Total Budget</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Revenue</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Labour %</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Brand</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Department</th>';
         var trs = labourRows.map(function(p) {
           var isTop = !!top5Keys[p.project];
+          var hrsTxt = p.hours ? parseFloat(p.hours).toFixed(1) : '';
+          var costTxt = p.cost ? formatCurrency(p.cost) : '';
+          var revTxt = p.revenueRawPresent && p.revenue ? formatCurrency(p.revenue) : '';
           return '<tr class="' + (isTop ? 'p4-labour-row-top5' : '') + '">' +
-            '<td class="text-left">' + (p.project || '-') + '</td>' +
-            '<td class="text-left">' + (p.clientName || '-') + '</td>' +
-            '<td class="text-right">' + (p.hours ? parseFloat(p.hours).toFixed(1) + ' hrs' : '-') + '</td>' +
-            '<td class="text-right">' + (p.cost ? formatCurrency(p.cost) : '-') + '</td>' +
-            '<td class="text-right">' + formatLiveMoneyOrDash(p.actualLabour) + '</td>' +
-            '<td class="text-right">' + formatLiveMoneyOrDash(p.actualVariations) + '</td>' +
-            '<td class="text-right">' + formatLiveMoneyOrDash(p.totalBudget) + '</td>' +
-            '<td class="text-right">' + (p.revenue ? formatCurrency(p.revenue) : '-') + '</td>' +
-            '<td class="text-right">' + (p.labourPct ? p.labourPct.toFixed(1) + '%' : '-') + '</td>' +
-            '<td class="text-left">' + (p.brand || '-') + '</td>' +
-            '<td class="text-left">' + (p.department || '-') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--project">' + p4JcoCell(p.project || '-', !p.project) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoCell(p.clientName || '-', !p.clientName) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, !hrsTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(costTxt, !costTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualLabour) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualVariations) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.totalBudget) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(revTxt || '-', !revTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num p4-jco-td--pct">' + p4JcoLabourPctCell(p.labourPct) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.brand, 'brand') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.department, 'dept') + '</td>' +
             '</tr>';
         }).join('');
         document.getElementById('p4-labour-table').innerHTML =
-          '<div class="table-wrap p4-labour-table-wrap">' +
-          '<table class="data-table p4-labour-table">' +
+          '<div class="table-wrap p4-labour-table-wrap p4-jco-table-wrap">' +
+          '<table class="data-table p4-labour-table p4-jco-table">' +
           '<thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
       } else {
         clearP4LabourSectionEmpty(
