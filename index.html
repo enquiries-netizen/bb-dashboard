@@ -533,6 +533,29 @@
             <div class="section-title">Milestone Schedule
               <span class="p4-section-hint">Overdue and high-risk first</span>
             </div>
+            <!-- Milestone Schedule split-view KPIs (live; updated by renderP4MilestoneSchedule) -->
+            <div class="p4-ms-kpi-row" id="p4-ms-kpi-row" hidden>
+              <div class="p4-ms-kpi-card">
+                <div class="p4-ms-kpi-label">Overdue Milestones</div>
+                <div class="p4-ms-kpi-main">
+                  <span class="p4-ms-kpi-value" id="p4-ms-kpi-overdue">0 / 0</span>
+                  <span class="p4-ms-kpi-badge p4-ms-kpi-badge--warn" id="p4-ms-kpi-overdue-badge" hidden>Overdue</span>
+                </div>
+              </div>
+              <div class="p4-ms-kpi-card">
+                <div class="p4-ms-kpi-label">Max Slippage</div>
+                <div class="p4-ms-kpi-main">
+                  <span class="p4-ms-kpi-value p4-ms-kpi-value--accent" id="p4-ms-kpi-slip">0 Days</span>
+                </div>
+              </div>
+              <div class="p4-ms-kpi-card">
+                <div class="p4-ms-kpi-label">Resource Bottleneck</div>
+                <div class="p4-ms-kpi-main">
+                  <span class="p4-ms-kpi-value" id="p4-ms-kpi-hands">0</span>
+                  <span class="p4-ms-kpi-hands-label" id="p4-ms-kpi-hands-label">Needs More Hands</span>
+                </div>
+              </div>
+            </div>
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
 
@@ -4838,6 +4861,8 @@
         });
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
+        var msKpiEarly = document.getElementById('p4-ms-kpi-row');
+        if (msKpiEarly) msKpiEarly.hidden = true;
         document.getElementById('p4-labour-table').innerHTML =
           '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
         var olNote = document.getElementById('p4-labour-outlier-note');
@@ -4982,10 +5007,10 @@
         });
       }
 
-      // ── Milestone Schedule: sticky table + pixel Gantt (planned vs delay) ────
+      // ── Milestone Schedule: split-view Gantt (Project | Milestone | Slip + timeline)
       var tableEl = document.getElementById('p4-schedule-table');
       var MS_DAY = 86400000;
-      var P4_MS_LEFT_W = 760;
+      var P4_MS_LEFT_W = 320; // 3 sticky cols only
       var P4_MS_PX_PER_DAY = 10;
 
       function p4TimelineStatusKey(r) {
@@ -5036,7 +5061,7 @@
       function p4BrandDeptLine(r) {
         var brand = String(r.brand || '').trim();
         var dept = String(r.department || '').trim();
-        if (brand && dept) return brand + ' · ' + dept;
+        if (brand && dept) return brand + ' / ' + dept;
         if (dept) return dept;
         if (brand) return brand;
         return '';
@@ -5062,8 +5087,95 @@
         return d.getTime();
       }
 
+      /** Slippage days as signed number (null if unknown). Positive = late. */
+      function p4SlippageDays(r) {
+        if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
+          var d = parseInt(r.slippageRaw, 10);
+          if (!isNaN(d)) return d;
+        }
+        if (isOverdueNorm(r) && r.endD && !isNaN(r.endD.getTime())) {
+          var daysLate = Math.round((today - r.endD) / MS_DAY);
+          if (daysLate > 0) return daysLate;
+        }
+        return null;
+      }
+
+      /** Compact left-col slip display: +91d / 0d / early. */
+      function p4SlippageCell(r) {
+        var days = p4SlippageDays(r);
+        if (days === null) {
+          if (isOverdueNorm(r)) return { text: '', delayed: false };
+          return { text: '0d', delayed: false };
+        }
+        if (days > 0) return { text: '+' + days + 'd', delayed: true };
+        if (days < 0) return { text: days + 'd', delayed: false };
+        return { text: '0d', delayed: false };
+      }
+
+      function p4StaffingIsBottleneck(label) {
+        return label === 'Needs More Hands' || label === 'Understaffed, Being Addressed';
+      }
+
+      function p4StaffingCompactText(label) {
+        if (!label) return '-';
+        if (label === 'Needs More Hands') return 'Needs Hands';
+        if (label === 'Understaffed, Being Addressed') return 'Understaffed';
+        if (label === 'Not enough data yet') return 'No data yet';
+        return label;
+      }
+
+      function p4StatusDisplay(r) {
+        var overdueRow = isOverdueNorm(r);
+        var s = String(r.status || '').trim();
+        var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+        if (lower === 'complete' || lower === 'completed') return 'Completed';
+        if (lower === 'cancelled' || lower === 'canceled') return 'Cancelled';
+        if (lower === 'in progress') return 'In Progress';
+        if (lower === 'not started') return 'Not Started';
+        if (overdueRow || lower === 'overdue') return 'OVERDUE';
+        return s || '-';
+      }
+
+      function updateP4MsKpis(sortedSched) {
+        var kpiRow = document.getElementById('p4-ms-kpi-row');
+        var overdueEl = document.getElementById('p4-ms-kpi-overdue');
+        var badgeEl = document.getElementById('p4-ms-kpi-overdue-badge');
+        var slipEl = document.getElementById('p4-ms-kpi-slip');
+        var handsEl = document.getElementById('p4-ms-kpi-hands');
+        if (!kpiRow || !overdueEl) return;
+
+        if (!sortedSched || !sortedSched.length) {
+          kpiRow.hidden = true;
+          return;
+        }
+        kpiRow.hidden = false;
+
+        // Universe = full filtered schedule set (same Y as "Showing X of Y")
+        var total = sortedSched.length;
+        var overdueCount = 0;
+        var maxSlip = 0;
+        var handsCount = 0;
+        sortedSched.forEach(function(r) {
+          if (isOverdueNorm(r)) overdueCount++;
+          var d = p4SlippageDays(r);
+          if (d != null && d > maxSlip) maxSlip = d;
+          var handsLabel = handsByProject[r.project] || '';
+          if (p4StaffingIsBottleneck(handsLabel)) handsCount++;
+        });
+
+        overdueEl.textContent = overdueCount + ' / ' + total;
+        if (badgeEl) badgeEl.hidden = overdueCount <= 0;
+        if (slipEl) {
+          slipEl.textContent = maxSlip > 0 ? ('+' + maxSlip + ' Days') : '0 Days';
+          slipEl.classList.toggle('p4-ms-kpi-value--accent', maxSlip > 0);
+        }
+        if (handsEl) handsEl.textContent = String(handsCount);
+      }
+
       function renderP4MilestoneSchedule(sortedSched) {
         if (!tableEl) return;
+        updateP4MsKpis(sortedSched);
+
         if (!sortedSched || !sortedSched.length) {
           tableEl.innerHTML =
             '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
@@ -5090,7 +5202,7 @@
           if (r.endD && !isNaN(r.endD.getTime())) extendRange(p4StartOfDay(r.endD));
           var ad = p4ParseScheduleDate(r.actualEndRaw);
           if (ad) extendRange(p4StartOfDay(ad));
-          // Delay bars run planned-end → today for overdue / late in-progress
+          // Delay bars run planned-end to today for overdue / late in-progress
           if ((stKey === 'overdue' || stKey === 'in-progress') && r.endD && !isNaN(r.endD.getTime())) {
             if (p4StartOfDay(r.endD) < todayMs) extendRange(todayMs);
           }
@@ -5103,11 +5215,10 @@
           rangeMax += MS_DAY * 7;
         }
         if (hasRange) {
-          // Light pad only — do NOT snap back a full previous month (that shoved bars off-screen)
+          // Light pad only - do NOT snap back a full previous month
           rangeMin = p4StartOfWeekMon(rangeMin - MS_DAY * 3);
           var endD = new Date(rangeMax + MS_DAY * 10);
           endD.setHours(0, 0, 0, 0);
-          // End of the week of (max + pad), not end of next calendar month
           rangeMax = p4StartOfWeekMon(endD.getTime()) + MS_DAY * 6;
         }
         var rangeDays = hasRange ? Math.max(1, Math.round((rangeMax - rangeMin) / MS_DAY) + 1) : 1;
@@ -5115,11 +5226,10 @@
 
         function xOf(ms) {
           if (!hasRange || ms == null || isNaN(ms)) return null;
-          // Do not clamp — bars outside pad shouldn't be hidden by max clamp at 0 width issues
           return ((ms - rangeMin) / MS_DAY) * P4_MS_PX_PER_DAY;
         }
 
-        // Month bands
+        // Month / week headers
         var monthsHtml = '';
         var weeksHtml = '';
         var weekLinesHtml = '';
@@ -5196,29 +5306,26 @@
           var x1 = xOf(tEnd);
           var actualD = p4ParseScheduleDate(r.actualEndRaw);
           var actualMs = actualD ? p4StartOfDay(actualD) : null;
-          var startLabel = p4FmtDate(r.startD, r.startRaw) || '—';
-          var endLabel = p4FmtDate(r.endD, r.endRaw) || '—';
-          var plannedTitle = 'Planned ' + startLabel + ' → ' + endLabel;
+          var startLabel = p4FmtDate(r.startD, r.startRaw) || '-';
+          var endLabel = p4FmtDate(r.endD, r.endRaw) || '-';
+          var plannedTitle = 'Planned ' + startLabel + ' to ' + endLabel;
 
           var html = '';
-          // Planned window — always the light reference bar
+          // Planned window: thin faded muted reference bar
           html += barSlice(x0, x1, 'p4-ms-bar--planned', plannedTitle);
 
           if (statusKey === 'completed') {
-            // Solid charcoal across planned window
             html += barSlice(x0, x1, 'p4-ms-bar--completed', 'Completed');
-            // If finished after planned end, charcoal delay stub to actual end
             if (actualMs !== null && actualMs > tEnd) {
               html += barSlice(x1, xOf(actualMs), 'p4-ms-bar--slip', 'Delay to actual end');
             }
           } else if (statusKey === 'in-progress') {
             html += barSlice(x0, x1, 'p4-ms-bar--in-progress', 'In Progress');
-            // If already past planned end while in progress, show delay to today
             if (todayMs > tEnd) {
               html += barSlice(x1, xOf(todayMs), 'p4-ms-bar--slip', 'Delay past planned end');
             }
           } else if (statusKey === 'overdue') {
-            // Dual treatment: planned (faded) + solid charcoal delay planned-end → today
+            // Dual: planned (faded) + solid accent delay planned-end to today
             var slipTo = todayMs;
             if (actualMs !== null && actualMs > tEnd) slipTo = Math.max(slipTo, actualMs);
             if (slipTo < tEnd) slipTo = tEnd;
@@ -5236,69 +5343,33 @@
             return (
               '<div class="p4-ms-cell p4-ms-c-project">Project</div>' +
               '<div class="p4-ms-cell p4-ms-c-milestone">Milestone</div>' +
-              '<div class="p4-ms-cell p4-ms-c-brand">Brand / Dept</div>' +
-              '<div class="p4-ms-cell p4-ms-c-date"><span class="p4-ms-th-stack">Planned<br>Start</span></div>' +
-              '<div class="p4-ms-cell p4-ms-c-date"><span class="p4-ms-th-stack">Planned<br>End</span></div>' +
-              '<div class="p4-ms-cell p4-ms-c-slip">Slippage</div>' +
-              '<div class="p4-ms-cell p4-ms-c-staff">Staffing</div>' +
-              '<div class="p4-ms-cell p4-ms-c-status">Status</div>' +
-              '<div class="p4-ms-cell p4-ms-c-pct">% Done</div>'
+              '<div class="p4-ms-cell p4-ms-c-slip">Slippage</div>'
             );
           }
-          var overdueRow = isOverdueNorm(r);
-          var startFmt = p4FmtDate(r.startD, r.startRaw) || '';
-          var endFmt = p4FmtDate(r.endD, r.endRaw) || '';
-          var slippageStr = '';
-          if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
-            var d = parseInt(r.slippageRaw, 10);
-            if (!isNaN(d)) {
-              if (d > 0) slippageStr = '+' + d + ' days';
-              else if (d < 0) slippageStr = Math.abs(d) + ' days early';
-              else slippageStr = 'On Schedule';
-            }
-          } else if (overdueRow && r.endD) {
-            var daysLate = Math.round((today - r.endD) / MS_DAY);
-            if (daysLate > 0) slippageStr = '+' + daysLate + ' days';
-          } else if (!overdueRow && r.status && String(r.status).toLowerCase().indexOf('complete') === -1) {
-            slippageStr = 'On Schedule';
-          }
-          var handsLabel = handsByProject[r.project] || '';
-          var handsCell = formatHandsBadge(handsLabel, { compact: true });
-          var dateNote = r.dateFlag
-            ? '<span class="p4-badge p4-badge--critical" title="Planned Start is after Planned End">' +
-              r.dateFlag + '</span> '
-            : '';
-          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '';
-          var brandDept = p4BrandDeptLine(r);
+          var slip = p4SlippageCell(r);
+          var slipClass = slip.delayed ? ' p4-ms-c-slip--late' : ' p4-ms-c-slip--ok';
           return (
             '<div class="p4-ms-cell p4-ms-c-project" title="' + p4EscAttr(r.project || '') + '">' +
             p4EscHtml(r.project || '') + '</div>' +
             '<div class="p4-ms-cell p4-ms-c-milestone" title="' + p4EscAttr(r.milestone || '') + '">' +
             p4EscHtml(r.milestone || '') + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-brand">' + p4EscHtml(brandDept) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-date">' + dateNote + p4EscHtml(startFmt) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-date">' + p4EscHtml(endFmt) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-slip">' + p4EscHtml(slippageStr) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-staff">' + handsCell + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-status">' + formatStatusBadge(r.status, overdueRow) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-pct">' + p4EscHtml(pctFmt) + '</div>'
+            '<div class="p4-ms-cell p4-ms-c-slip' + slipClass + '">' + p4EscHtml(slip.text) + '</div>'
           );
         }
 
         function drawerPayload(r) {
-          var actualD = p4ParseScheduleDate(r.actualEndRaw);
-          var handsLabel = handsByProject[r.project] || '—';
-          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '—';
+          var handsLabel = handsByProject[r.project] || '';
+          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '-';
           return {
-            project: r.project || '—',
-            milestone: r.milestone || '—',
-            staffing: handsLabel || '—',
+            project: r.project || '-',
+            milestone: r.milestone || '-',
+            staffing: p4StaffingCompactText(handsLabel),
+            staffingFull: handsLabel || '-',
             pct: pctFmt,
-            plannedStart: p4FmtDate(r.startD, r.startRaw) || '—',
-            plannedEnd: p4FmtDate(r.endD, r.endRaw) || '—',
-            actualEnd: actualD ? p4FmtDate(actualD, r.actualEndRaw) : (r.actualEndRaw || '—'),
-            status: r.status || '—',
-            brandDept: p4BrandDeptLine(r) || '—'
+            plannedStart: p4FmtDate(r.startD, r.startRaw) || '-',
+            plannedEnd: p4FmtDate(r.endD, r.endRaw) || '-',
+            status: p4StatusDisplay(r),
+            brandDept: p4BrandDeptLine(r) || '-'
           };
         }
 
@@ -5308,12 +5379,15 @@
         var toggleLabel = p4ScheduleShowAll
           ? 'Show Overdue &amp; In Progress only'
           : 'Show all milestones';
+        // Active filter: default risk-first view (not show-all)
+        var toggleActiveClass = !p4ScheduleShowAll ? ' is-active' : '';
 
         var html =
           '<div class="p4-ms" role="region" aria-label="Milestone Schedule">' +
           '<div class="p4-ms-toolbar">' +
           '<span class="p4-ms-meta">' + metaText + '</span>' +
-          '<button type="button" class="p4-ms-toggle" id="p4-ms-toggle">' + toggleLabel + '</button>' +
+          '<button type="button" class="p4-ms-toggle' + toggleActiveClass + '" id="p4-ms-toggle">' +
+          toggleLabel + '</button>' +
           '</div>' +
           '<div class="p4-ms-legend" aria-hidden="true">' +
           '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--planned"></i>Planned window</span>' +
@@ -5342,7 +5416,7 @@
         html +=
           '<div class="p4-ms-scroll">' +
           '<div class="p4-ms-inner" style="min-width:' + (P4_MS_LEFT_W + timelineW) + 'px">' +
-          // Sticky data table column
+          // Sticky left: Project | Milestone | Slippage
           '<div class="p4-ms-sticky-left" style="width:' + P4_MS_LEFT_W + 'px">' +
           '<div class="p4-ms-left-row p4-ms-left-row--head">' +
           '<div class="p4-ms-left-grid">' + rowLeftCells(null, true) + '</div></div>';
@@ -5356,7 +5430,7 @@
 
         html +=
           '</div>' +
-          // Timeline
+          // Timeline Gantt
           '<div class="p4-ms-timeline" style="width:' + timelineW + 'px">' +
           '<div class="p4-ms-timeline-head">' +
           '<div class="p4-ms-months" style="width:' + timelineW + 'px">' + monthsHtml + '</div>' +
@@ -5380,25 +5454,24 @@
 
         html +=
           '</div></div></div>' +
-          // Drawer
+          // Slide-out drawer
           '<div class="p4-ms-drawer-backdrop" id="p4-ms-drawer-backdrop" hidden></div>' +
           '<aside class="p4-ms-drawer" id="p4-ms-drawer" hidden aria-label="Milestone details">' +
           '<div class="p4-ms-drawer-head">' +
           '<div>' +
           '<div class="p4-ms-drawer-kicker">Milestone detail</div>' +
-          '<h3 class="p4-ms-drawer-title" id="p4-ms-drawer-title">—</h3>' +
+          '<h3 class="p4-ms-drawer-title" id="p4-ms-drawer-title">-</h3>' +
           '<p class="p4-ms-drawer-sub" id="p4-ms-drawer-sub"></p>' +
           '</div>' +
-          '<button type="button" class="p4-ms-drawer-close" id="p4-ms-drawer-close" aria-label="Close">×</button>' +
+          '<button type="button" class="p4-ms-drawer-close" id="p4-ms-drawer-close" aria-label="Close">x</button>' +
           '</div>' +
           '<dl class="p4-ms-drawer-dl">' +
-          '<div><dt>Status</dt><dd id="p4-ms-d-status">—</dd></div>' +
-          '<div><dt>Staffing</dt><dd id="p4-ms-d-staff">—</dd></div>' +
-          '<div><dt>% Done</dt><dd id="p4-ms-d-pct">—</dd></div>' +
-          '<div><dt>Planned Start</dt><dd id="p4-ms-d-ps">—</dd></div>' +
-          '<div><dt>Planned End</dt><dd id="p4-ms-d-pe">—</dd></div>' +
-          '<div><dt>Actual End</dt><dd id="p4-ms-d-ae">—</dd></div>' +
-          '<div><dt>Brand / Dept</dt><dd id="p4-ms-d-bd">—</dd></div>' +
+          '<div><dt>Brand / Dept</dt><dd id="p4-ms-d-bd">-</dd></div>' +
+          '<div><dt>Planned Start</dt><dd id="p4-ms-d-ps">-</dd></div>' +
+          '<div><dt>Planned End</dt><dd id="p4-ms-d-pe">-</dd></div>' +
+          '<div><dt>Staffing Status</dt><dd id="p4-ms-d-staff">-</dd></div>' +
+          '<div><dt>Status</dt><dd id="p4-ms-d-status">-</dd></div>' +
+          '<div><dt>Completion %</dt><dd id="p4-ms-d-pct">-</dd></div>' +
           '</dl>' +
           '</aside></div>';
 
@@ -5428,14 +5501,20 @@
           var r = visible[idx];
           if (!r || !drawer) return;
           var p = drawerPayload(r);
-          document.getElementById('p4-ms-drawer-title').textContent = p.milestone;
-          document.getElementById('p4-ms-drawer-sub').textContent = p.project;
+          // Title = full project name; sub = milestone
+          document.getElementById('p4-ms-drawer-title').textContent = p.project;
+          document.getElementById('p4-ms-drawer-sub').textContent = p.milestone;
           document.getElementById('p4-ms-d-status').textContent = p.status;
-          document.getElementById('p4-ms-d-staff').textContent = p.staffing;
+          var staffDd = document.getElementById('p4-ms-d-staff');
+          staffDd.textContent = p.staffing;
+          if (p.staffingFull && p.staffingFull !== p.staffing) {
+            staffDd.setAttribute('title', p.staffingFull);
+          } else {
+            staffDd.removeAttribute('title');
+          }
           document.getElementById('p4-ms-d-pct').textContent = p.pct;
           document.getElementById('p4-ms-d-ps').textContent = p.plannedStart;
           document.getElementById('p4-ms-d-pe').textContent = p.plannedEnd;
-          document.getElementById('p4-ms-d-ae').textContent = p.actualEnd;
           document.getElementById('p4-ms-d-bd').textContent = p.brandDept;
           drawer.hidden = false;
           if (backdrop) backdrop.hidden = false;
@@ -5462,7 +5541,7 @@
           });
         });
 
-        // Scroll timeline so Today (or earliest visible bar) is on-screen, not empty left months
+        // Scroll timeline so Today is on-screen
         function scrollTimelineIntoView() {
           var scrollEl = tableEl.querySelector('.p4-ms-scroll');
           if (!scrollEl || !hasRange) return;
@@ -5500,6 +5579,8 @@
         });
         renderP4MilestoneSchedule(sortedSched);
       } else {
+        var msKpiEmpty = document.getElementById('p4-ms-kpi-row');
+        if (msKpiEmpty) msKpiEmpty.hidden = true;
         tableEl.innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
       }
