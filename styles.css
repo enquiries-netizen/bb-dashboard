@@ -5218,8 +5218,8 @@ select {
 }
 
 #page-p3.p3-test-palette .page-badge {
-  background: var(--p3-text);
-  color: #fff;
+  background: var(--p3-accent);
+  color: #FFFFFF;
 }
 
 #page-p3.p3-test-palette .card,
