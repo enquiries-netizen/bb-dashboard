@@ -875,65 +875,142 @@
           </div>
         </section>
 
-        <!-- ─── P8: Weekly Overview ────────────────────────── -->
-        <section id="page-p8" class="page">
-          <div class="page-header">
-            <span class="page-badge">P8</span>
-            <h1 class="page-title">Weekly Overview</h1>
-          </div>
-
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Leads This Week</div>
-              <div class="kpi-value" id="kpi-week-leads">—</div>
-              <div class="kpi-sub" id="kpi-week-leads-sub">Loading...</div>
+        <!-- ─── P8: Weekly Overview (management meeting) ─── -->
+        <!-- p8-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p8" class="page p8-test-palette">
+          <div class="p8-layout">
+            <div class="p8-head">
+              <div class="page-header p8-page-header">
+                <span class="page-badge">P8</span>
+                <h1 class="page-title">Weekly Overview</h1>
+              </div>
+              <p class="p8-period" id="p8-period-label">Week ending...</p>
+              <div class="p8-head-meta">
+                <div class="filter-group p8-week-filter">
+                  <span class="filter-label">Week Ending</span>
+                  <select class="filter-select page-filter-select" id="p8-week-ending" aria-label="Week ending">
+                    <option value="">Loading weeks...</option>
+                  </select>
+                </div>
+                <p class="p8-compare-cue" id="p8-compare-cue">Compared to previous week</p>
+                <p class="p8-freshness-summary" id="p8-freshness-summary" aria-live="polite"></p>
+                <p class="p8-updated" id="p8-last-updated">Last updated...</p>
+              </div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Revenue This Week</div>
-              <div class="kpi-value" id="kpi-week-revenue">—</div>
-              <div class="kpi-sub" id="kpi-week-revenue-sub">Loading...</div>
+
+            <!-- 6 primary KPI cards -->
+            <div class="p8-kpi-band" id="p8-kpi-band" aria-label="Weekly management KPIs">
+              <div class="kpi-card card p8-kpi" data-kpi="revenue">
+                <div class="kpi-label">Revenue</div>
+                <div class="kpi-value" id="p8-kpi-rev">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-rev-meta">Loading...</div>
+              </div>
+              <div class="kpi-card card p8-kpi" data-kpi="leads">
+                <div class="kpi-label">Leads and Qualified Leads</div>
+                <div class="kpi-value" id="p8-kpi-leads">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-leads-meta">Loading...</div>
+              </div>
+              <div class="kpi-card card p8-kpi" data-kpi="quotes">
+                <div class="kpi-label">Quotes Sent</div>
+                <div class="kpi-value" id="p8-kpi-quotes">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-quotes-meta">Loading...</div>
+              </div>
+              <div class="kpi-card card p8-kpi" data-kpi="wins">
+                <div class="kpi-label">Jobs Won</div>
+                <div class="kpi-value" id="p8-kpi-wins">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-wins-meta">Loading...</div>
+              </div>
+              <div class="kpi-card card p8-kpi" data-kpi="labour">
+                <div class="kpi-label">Productive Labour</div>
+                <div class="kpi-value" id="p8-kpi-labour">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-labour-meta">Loading...</div>
+              </div>
+              <div class="kpi-card card p8-kpi" data-kpi="delivery">
+                <div class="kpi-label">Project Delivery</div>
+                <div class="kpi-value" id="p8-kpi-delivery">0</div>
+                <div class="p8-kpi-meta" id="p8-kpi-delivery-meta">Loading...</div>
+              </div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Quotes Sent</div>
-              <div class="kpi-value" id="kpi-week-quotes">—</div>
-              <div class="kpi-sub" id="kpi-week-quotes-sub">Loading...</div>
+
+            <!-- Secondary strip -->
+            <div class="p8-secondary-strip" id="p8-secondary-strip" aria-label="Secondary metrics">
+              <div class="p8-sec-item"><span class="p8-sec-label">Gross Margin</span><span class="p8-sec-value" id="p8-sec-gm">Not available</span></div>
+              <div class="p8-sec-item"><span class="p8-sec-label">Cash Collected</span><span class="p8-sec-value" id="p8-sec-cash">Not available</span></div>
+              <div class="p8-sec-item"><span class="p8-sec-label">Overdue AR</span><span class="p8-sec-value" id="p8-sec-ar">Not available</span></div>
+              <div class="p8-sec-item"><span class="p8-sec-label">Variations Awaiting Approval</span><span class="p8-sec-value" id="p8-sec-vars">Not available</span></div>
+              <div class="p8-sec-item"><span class="p8-sec-label">Safety / Quality Incidents</span><span class="p8-sec-value" id="p8-sec-safety">Not available</span></div>
+              <div class="p8-sec-item"><span class="p8-sec-label">Customer Issues</span><span class="p8-sec-value" id="p8-sec-cust">Not available</span></div>
             </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Jobs Won</div>
-              <div class="kpi-value" id="kpi-week-jobs">—</div>
-              <div class="kpi-sub" id="kpi-week-jobs-sub">Loading...</div>
+
+            <!-- Scorecard | Attention -->
+            <div class="p8-main-row">
+              <div class="section-card p8-panel">
+                <div class="section-title">Weekly Performance Scorecard
+                  <span class="p8-section-hint">Rows open source pages</span>
+                </div>
+                <div id="p8-scorecard" class="p8-table-wrap">Loading scorecard...</div>
+              </div>
+              <div class="section-card p8-panel">
+                <div class="section-title">Management Attention
+                  <span class="p8-section-hint">Real exceptions only</span>
+                </div>
+                <div id="p8-attention" class="p8-table-wrap">Loading attention items...</div>
+              </div>
             </div>
-          </div>
 
-          <!-- Week-over-week comparison hub (Sales / Capacity / Marketing) -->
-          <div class="section-card p8-wow-section">
-            <div class="section-title">Sales (Week over Week)</div>
-            <p class="p8-section-hint">This week vs last week from GHL leads and pipeline. Full comparison hub for Sales.</p>
-            <div class="p8-wow-grid" id="p8-wow-sales">Loading sales week comparison...</div>
-          </div>
-
-          <div class="section-card p8-wow-section">
-            <div class="section-title">Capacity (Week over Week)</div>
-            <p class="p8-section-hint">Total hours logged from Buildpass Labour by week number.</p>
-            <div class="p8-wow-grid" id="p8-wow-capacity">Loading capacity week comparison...</div>
-          </div>
-
-          <div class="section-card p8-wow-section">
-            <div class="section-title">Marketing (Week over Week)</div>
-            <p class="p8-section-hint">Spend and leads from Weekly Summary (Marketing), by Brand and Department.</p>
-            <div class="p8-wow-grid" id="p8-wow-marketing">Loading marketing week comparison...</div>
-          </div>
-
-          <div class="chart-row">
-            <div class="chart-card card">
-              <div class="chart-title">Weekly Leads &amp; Revenue Trend (Last 12 Weeks)</div>
-              <canvas id="chart-p8-leads" height="90"></canvas>
+            <!-- 8-week trend small multiples (no dual-axis) -->
+            <div class="p8-trends-row">
+              <div class="section-card p8-panel p8-trend-card">
+                <div class="chart-title">Sales Activity (8 weeks)</div>
+                <p class="p8-section-hint">Leads to qualified to quotes to wins · 4-week average</p>
+                <div class="p8-chart-wrap"><canvas id="chart-p8-funnel" aria-label="Sales activity funnel trend"></canvas></div>
+              </div>
+              <div class="section-card p8-panel p8-trend-card">
+                <div class="chart-title">Financial (8 weeks)</div>
+                <p class="p8-section-hint">Revenue and GP vs weekly target · 4-week average</p>
+                <div class="p8-chart-wrap"><canvas id="chart-p8-financial" aria-label="Financial trend"></canvas></div>
+              </div>
+              <div class="section-card p8-panel p8-trend-card">
+                <div class="chart-title">Project Delivery (8 weeks)</div>
+                <p class="p8-section-hint">Completed, delayed, upcoming · 4-week average</p>
+                <div class="p8-chart-wrap"><canvas id="chart-p8-delivery" aria-label="Delivery trend"></canvas></div>
+              </div>
+              <div class="section-card p8-panel p8-trend-card">
+                <div class="chart-title">Workforce (8 weeks)</div>
+                <p class="p8-section-hint">Available, scheduled, productive · 4-week average</p>
+                <div class="p8-chart-wrap"><canvas id="chart-p8-workforce" aria-label="Workforce trend"></canvas></div>
+              </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">Weekly Summary: Last 12 Weeks</div>
-            <div id="p8-weekly-table">Loading weekly data...</div>
+            <!-- Seven-day commitments timeline Mon-Fri compact -->
+            <div class="section-card p8-panel">
+              <div class="section-title">Seven-day Commitments
+                <span class="p8-section-hint">Mon-Fri · multi-day bars · milestone diamonds · Today highlight</span>
+              </div>
+              <div id="p8-timeline" class="p8-timeline">Loading timeline...</div>
+            </div>
+
+            <!-- Wins · Risks · Decisions -->
+            <div class="p8-wrd-row">
+              <div class="section-card p8-panel">
+                <div class="section-title">Wins</div>
+                <ul class="p8-wrd-list" id="p8-wins-list"><li class="p8-wrd-empty">None this week</li></ul>
+              </div>
+              <div class="section-card p8-panel">
+                <div class="section-title">Risks</div>
+                <ul class="p8-wrd-list" id="p8-risks-list"><li class="p8-wrd-empty">None flagged</li></ul>
+              </div>
+              <div class="section-card p8-panel">
+                <div class="section-title">Decisions</div>
+                <ul class="p8-wrd-list" id="p8-decisions-list"><li class="p8-wrd-empty">None pending</li></ul>
+              </div>
+            </div>
+
+            <!-- Data freshness -->
+            <div class="section-card p8-panel">
+              <div class="section-title">Data Freshness</div>
+              <div id="p8-freshness-table" class="p8-table-wrap">Loading source status...</div>
+            </div>
           </div>
         </section>
 
@@ -12499,11 +12576,12 @@
     var P6_UTIL_HEALTHY_HI = 85;    // healthy band upper
     var P6_UTIL_WATCH_HI = 100;     // watch band upper (near capacity)
     var P6_STD_WEEK_HRS = 38;       // fallback only when Hours Available blank
-    var P6_HEATMAP_WEEKS = 12;
+    var P6_HEATMAP_WEEKS = 8;       // mockup: 8-week capacity heatmap
     var P6_HORIZON_WEEKS = 12;      // gantt horizon from selected week
     var P6_DAILY_WEEKS = 4;         // weeks 1-4 of horizon shown daily
     var P6_UNUSUAL_DAY_HRS = 14;    // single-day hours after dedupe → Unusual Hours
-    var P6_PROJECT_COLORS = ['var(--p6-project-1, #9CA3AF)', 'var(--p6-project-2, #A8B0BD)', 'var(--p6-project-3, #8B94A3)'];
+    var P6_PROJECT_COLORS = ['var(--p6-project-1)', 'var(--p6-project-2)', 'var(--p6-project-3)'];
+    var P6_RISK_BANNER_KEY = 'p6-risk-banner-dismissed';
 
     function p6Esc(s) {
       return String(s == null ? '' : s)
@@ -13094,7 +13172,7 @@
         crews[d] = roll;
       });
 
-      // Heatmap: 12 weeks × departments; util = hours ÷ dept availability
+      // Heatmap: 8 weeks x departments; util = hours / dept availability
       var heatmapWeeks = [];
       for (var hw = 0; hw < P6_HEATMAP_WEEKS; hw++) {
         heatmapWeeks.push(selectedWeek - Math.floor(P6_HEATMAP_WEEKS / 2) + hw);
@@ -13474,8 +13552,11 @@
       };
     }
 
-    async function loadP6() {
-      showLoading(true);
+    async function loadP6(opts) {
+      opts = opts || {};
+      var silent = !!opts.silent;
+      var preserve = silent || !!opts.preserve;
+      if (!silent) showLoading(true);
       removeError('p6');
       try {
         var results = await Promise.all([
@@ -13486,24 +13567,45 @@
           capacity: results[0] || [],
           labour: results[1] || []
         };
-        window._p6SelectedWeek = null;
-        window._p6ViewMode = 'people';
-        window._p6WorkspaceMode = 'planning';
-        window._p6Expanded = {};
-        window._p6Filters = { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
-        // Soft-align page brand filter with global brand if set
-        if (typeof activeBrand !== 'undefined' && activeBrand && activeBrand !== 'ALL') {
-          window._p6Filters.brand = activeBrand;
+        if (!preserve) {
+          window._p6SelectedWeek = null;
+          window._p6ViewMode = 'people';
+          window._p6WorkspaceMode = 'planning';
+          window._p6Expanded = {};
+          window._p6DeptInit = false;
+          window._p6Filters = { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
+          if (typeof activeBrand !== 'undefined' && activeBrand && activeBrand !== 'ALL') {
+            window._p6Filters.brand = activeBrand;
+          }
         }
         document.getElementById('p6-content').innerHTML = renderP6();
         setTimeout(function() { p6MountCharts(); }, 80);
       } catch (err) {
         console.error('P6 load error:', err);
-        showError('p6', 'Could not load Capacity & Labour data. Check sheet permissions.');
+        if (!silent) {
+          showError('p6', 'Could not load Capacity & Labour data. Check sheet permissions.');
+        }
       } finally {
-        showLoading(false);
+        if (!silent) showLoading(false);
         init3DTilt();
       }
+    }
+
+    function p6RefreshSilent() {
+      if (typeof clearSheetsCache === 'function') clearSheetsCache();
+      loadP6({ silent: true, preserve: true });
+    }
+
+    function p6DismissRiskBanner() {
+      try { sessionStorage.setItem(P6_RISK_BANNER_KEY, '1'); } catch (e) {}
+      window._p6RiskBannerDismissed = true;
+      var el = document.getElementById('p6-risk-banner');
+      if (el) el.setAttribute('hidden', '');
+    }
+
+    function p6IsRiskBannerDismissed() {
+      if (window._p6RiskBannerDismissed) return true;
+      try { return sessionStorage.getItem(P6_RISK_BANNER_KEY) === '1'; } catch (e) { return false; }
     }
 
     /**
@@ -13548,74 +13650,53 @@
 
     function p6RenderShell(model) {
       var m = model;
-      var k = m.kpis;
       var mode = window._p6WorkspaceMode || 'planning';
       var filters = m.filters || {};
       var fo = m.filterOptions || { brands: [], depts: [], crews: [], projects: [] };
       var html = '';
 
-      html += '<div class="page-header">';
+      html += '<div class="page-header p6-page-header">';
+      html += '<div class="p6-page-header-left">';
       html += '<span class="page-badge">P6</span>';
       html += '<h1 class="page-title">Capacity &amp; Labour</h1>';
       html += '</div>';
+      html += '<div class="p6-header-meta">';
+      html += '<span class="p6-updated">Updated ' + p6Esc(m.lastUpdated) + '</span>';
+      html += '<button type="button" class="p6-refresh-btn" onclick="p6RefreshSilent()" title="Refresh data" aria-label="Refresh P6 data">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">';
+      html += '<path d="M20 12a8 8 0 1 1-2.3-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+      html += '<path d="M20 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+      html += '</svg></button>';
+      html += '</div></div>';
 
-      // Dual-mode workspace toggle
-      html += '<div class="p6-mode-bar">';
-      html += '<div class="p6-toggle p6-mode-toggle" role="group" aria-label="Workspace mode">';
-      html += '<button type="button" class="p6-toggle-btn' + (mode !== 'actuals' ? ' is-active' : '') +
-        '" onclick="p6SetWorkspaceMode(\'planning\')">Capacity Planning</button>';
-      html += '<button type="button" class="p6-toggle-btn' + (mode === 'actuals' ? ' is-active' : '') +
-        '" onclick="p6SetWorkspaceMode(\'actuals\')">Actuals &amp; Timesheets</button>';
-      html += '</div>';
-      html += '<span class="p6-updated">Last updated ' + p6Esc(m.lastUpdated) + '</span>';
-      html += '</div>';
-
-      // Week horizon + filters (no primary Refresh; no Month/Year primary)
-      html += '<div class="p6-toolbar">';
-      html += '<div class="p6-week-controls">';
-      html += '<label class="p6-filter-label">Planning week ';
-      html += '<select id="p6-week-select" class="p6-select" onchange="p6OnWeekChange(this.value)">';
-      var weeks = m.allWeeks.slice();
-      if (weeks.indexOf(m.selectedWeek) < 0) weeks.push(m.selectedWeek);
-      // Extend horizon options for forward weeks
-      for (var ew = m.selectedWeek; ew < m.selectedWeek + P6_HORIZON_WEEKS; ew++) {
-        if (weeks.indexOf(ew) < 0) weeks.push(ew);
-      }
-      weeks.sort(function(a, b) { return a - b; });
-      weeks.forEach(function(w) {
-        html += '<option value="' + w + '"' + (w === m.selectedWeek ? ' selected' : '') + '>Week ' + w + '</option>';
-      });
-      html += '</select></label>';
-      if (m.weekInProgress) {
-        html += '<span class="p6-week-state">In progress · actuals vs elapsed available</span>';
-      } else if (m.weekEnded) {
-        html += '<span class="p6-week-state">Complete week</span>';
-      } else {
-        html += '<span class="p6-week-state">Future week · schedule Pending when not live</span>';
-      }
-      html += '</div>';
-
-      html += '<div class="p6-filters">';
+      html += '<div class="p6-header-filters">';
       html += p6FilterSelect('Brand', 'brand', fo.brands, filters.brand);
       html += p6FilterSelect('Department', 'dept', fo.depts, filters.dept);
       html += p6FilterSelect('Crew', 'crew', fo.crews, filters.crew);
       html += p6FilterSelect('Project', 'project', fo.projects, filters.project);
+
+      var weeks = m.allWeeks.slice();
+      if (weeks.indexOf(m.selectedWeek) < 0) weeks.push(m.selectedWeek);
+      for (var ew = m.selectedWeek; ew < m.selectedWeek + P6_HORIZON_WEEKS; ew++) {
+        if (weeks.indexOf(ew) < 0) weeks.push(ew);
+      }
+      weeks.sort(function(a, b) { return a - b; });
+      html += '<label class="p6-filter-label">Week ';
+      html += '<select id="p6-week-select" class="p6-select" onchange="p6OnWeekChange(this.value)">';
+      weeks.forEach(function(w) {
+        html += '<option value="' + w + '"' + (w === m.selectedWeek ? ' selected' : '') + '>Week ' + w + '</option>';
+      });
+      html += '</select></label>';
       html += '</div>';
 
-      html += '<span class="p6-legend-mini" title="Capacity state colours. Project Gantt bars use muted greys (not status). Orange only for genuine overallocation.">';
-      html += '<span class="p6-leg-dot p6-leg--under"></span>&lt;' + P6_UTIL_UNDER_PCT + '% ';
-      html += '<span class="p6-leg-dot p6-leg--healthy"></span>' + P6_UTIL_HEALTHY_LO + '-' + P6_UTIL_HEALTHY_HI + '% ';
-      html += '<span class="p6-leg-dot p6-leg--watch"></span>' + P6_UTIL_HEALTHY_HI + '-' + P6_UTIL_WATCH_HI + '% ';
-      html += '<span class="p6-leg-dot p6-leg--over"></span>&gt;100% ';
-      html += '<span class="p6-leg-dot p6-leg--gap"></span>Data gap';
-      html += '</span></div>';
-
-      html += '<div class="p6-dq-banner">';
-      html += '<div><strong>Data:</strong> Capacity + Buildpass_Labour live (deduped). ';
-      html += p6Esc(m.scheduleNote) + ' ';
-      html += 'Site Diaries allocation: <span class="p6-pending-inline">Pending</span>. ';
-      html += 'Forecast project demand / labour budgets: <span class="p6-pending-inline">Pending</span>. ';
-      html += 'All panels share Week <strong>' + m.selectedWeek + '</strong>.</div></div>';
+      html += '<div class="p6-mode-tabs" role="tablist" aria-label="Workspace mode">';
+      html += '<button type="button" role="tab" class="p6-mode-tab' + (mode !== 'actuals' ? ' is-active' : '') +
+        '" aria-selected="' + (mode !== 'actuals' ? 'true' : 'false') +
+        '" onclick="p6SetWorkspaceMode(\'planning\')">Capacity Planning</button>';
+      html += '<button type="button" role="tab" class="p6-mode-tab' + (mode === 'actuals' ? ' is-active' : '') +
+        '" aria-selected="' + (mode === 'actuals' ? 'true' : 'false') +
+        '" onclick="p6SetWorkspaceMode(\'actuals\')">Actuals &amp; Timesheets</button>';
+      html += '</div>';
 
       if (mode === 'actuals') {
         html += p6RenderActualsMode(m);
@@ -13625,6 +13706,25 @@
 
       p6SetBB(m);
       return html;
+    }
+
+    function p6SvgIcon(kind) {
+      if (kind === 'capacity') {
+        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      }
+      if (kind === 'schedule') {
+        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.5v3M16 3.5v3M4 10h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      }
+      if (kind === 'util') {
+        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 17l5-5 3.5 3.5L20 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      }
+      if (kind === 'over') {
+        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4l9 16H3L12 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      }
+      if (kind === 'unalloc') {
+        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 12h16" stroke="currentColor" stroke-width="1.8"/><path d="M14 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5v9M9.5 9.5c.6-1 1.6-1.5 2.5-1.5 1.4 0 2.5.8 2.5 2s-1.1 2-2.5 2h-1c-1.4 0-2.5.8-2.5 2s1.1 2 2.5 2c.9 0 1.9-.5 2.5-1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
     }
 
     function p6FilterSelect(label, key, options, selected) {
@@ -13644,70 +13744,119 @@
 
       html += '<div class="p6-kpi-row">';
       html += p6KpiCard('Available Capacity', k.available != null ? p6FmtHours(k.available) + ' h' : 'Pending',
-        'Hours Available net leave / training / holidays', null);
+        'Hours Available net leave / training / holidays', null, 'capacity', 'healthy');
       html += p6KpiCard('Scheduled Hours',
         k.scheduled != null ? p6FmtHours(k.scheduled) + ' h' : 'Pending',
-        k.scheduledPending || k.scheduled == null ? 'Forward schedule not live' : 'Best-effort allocation (deduped)', null);
+        k.scheduledPending || k.scheduled == null ? 'Forward schedule not live' : 'Best-effort allocation (deduped)',
+        null, 'schedule', 'action');
       html += p6KpiCard('Forecast Utilisation',
         k.forecastUtil != null ? p6FmtPct(k.forecastUtil) : 'Pending',
-        'Scheduled ÷ Available · Week ' + m.selectedWeek,
+        'Scheduled / Available · Week ' + m.selectedWeek,
         k.forecastUtil != null && k.forecastUtil > 100 ? 'risk' :
-          (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null));
+          (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null),
+        'util', 'healthy');
       var overSub = (k.overPeople || 0) + ' people · ' + p6FmtHours(k.overallocated) + ' h excess';
       html += p6KpiCard('Overallocated Capacity',
         (k.overPeople || 0) > 0 ? (k.overPeople + ' · ' + p6FmtHours(k.overallocated) + ' h') : p6FmtHours(k.overallocated) + ' h',
-        overSub, k.overallocated > 0 ? 'risk' : null);
+        overSub, k.overallocated > 0 ? 'risk' : null, 'over', 'accent');
       html += p6KpiCard('Unallocated Capacity',
         k.unallocated != null ? p6FmtHours(k.unallocated) + ' h' : 'Pending',
-        'max(0, Available − Scheduled)', null);
+        'max(0, Available - Scheduled)', null, 'unalloc', 'action');
       html += p6KpiCard('Forecast Labour Cost',
         k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
-        'Employee-week once. vs project labour budget: Pending', 'gap');
+        'Employee-week once. vs project labour budget: Pending', 'gap', 'cost', 'action');
       html += '</div>';
 
-      // Main: ~70% Gantt | ~30% heatmap
+      var riskMsg = p6BuildRiskBannerMessage(m);
+      if (riskMsg) {
+        var dismissed = p6IsRiskBannerDismissed();
+        html += '<div id="p6-risk-banner" class="p6-risk-banner"' + (dismissed ? ' hidden' : '') + '>';
+        html += '<div class="p6-risk-banner-body"><span class="p6-risk-banner-icon" aria-hidden="true">!</span>';
+        html += '<div>' + riskMsg + '</div></div>';
+        html += '<button type="button" class="p6-risk-banner-close" onclick="p6DismissRiskBanner()" aria-label="Dismiss warning">×</button>';
+        html += '</div>';
+      }
+
       html += '<div class="p6-main-grid">';
       html += '<div class="p6-section-card p6-main-gantt">';
       html += '<div class="p6-section-head">';
-      html += '<div><div class="p6-section-title">Crew Allocation Planner</div>';
-      html += '<p class="p6-section-hint">Department → Crew → Employee. Crews collapsed by default. Horizon: daily W1-4, weekly W5-12 from planning week. Solid = confirmed project (muted), outlined = tentative, hatch = leave, accent stripe = overallocation, dark overlay = actuals on past days.</p></div>';
-      html += '<div class="p6-toggle" role="group" aria-label="Planner view">';
-      html += '<button type="button" class="p6-toggle-btn' + (window._p6ViewMode !== 'project' ? ' is-active' : '') +
+      html += '<div><div class="p6-section-title">Crew Allocation</div>';
+      html += '<p class="p6-section-hint">Expand departments to allocate by crew and person. Horizon: daily W1-4, weekly W5-12 from planning week.</p></div>';
+      html += '<div class="p6-view-toggle" role="group" aria-label="Planner view">';
+      html += '<button type="button" class="p6-view-btn' + (window._p6ViewMode !== 'project' ? ' is-active' : '') +
         '" onclick="p6SetViewMode(\'people\')">People View</button>';
-      html += '<button type="button" class="p6-toggle-btn' + (window._p6ViewMode === 'project' ? ' is-active' : '') +
+      html += '<button type="button" class="p6-view-btn' + (window._p6ViewMode === 'project' ? ' is-active' : '') +
         '" onclick="p6SetViewMode(\'project\')">Project View</button>';
       html += '</div></div>';
       html += '<div id="p6-gantt">' + p6RenderGantt(m) + '</div>';
+      html += p6RenderGanttLegend();
       html += '</div>';
 
       html += '<div class="p6-section-card p6-main-heatmap">';
-      html += '<div class="p6-section-title">12-week department capacity</div>';
-      html += '<p class="p6-section-hint">Actual productive hours ÷ departmental available hours. Grey = data gap. Thresholds: under &lt;' +
-        P6_UTIL_UNDER_PCT + '%, healthy ' + P6_UTIL_HEALTHY_LO + '-' + P6_UTIL_HEALTHY_HI +
-        '%, near ≤100%, over &gt;100%.</p>';
+      html += '<div class="p6-section-title">8-week capacity</div>';
+      html += '<p class="p6-section-hint">Actual productive hours / departmental available hours. Grey = data gap.</p>';
       html += p6RenderHeatmap(m);
+      html += p6RenderHeatmapLegend();
       html += '</div></div>';
 
-      // Lower: chart | action panel
       html += '<div class="p6-lower-grid">';
       html += '<div class="p6-section-card">';
-      html += '<div class="p6-section-title">Planned vs Actual / Forecast labour</div>';
-      html += '<p class="p6-section-hint">Available Capacity · Scheduled Hours · Actual Productive · Forecast Project Demand · Tentative Pipeline. Today separates historical and future.</p>';
+      html += '<div class="p6-section-title">Labour Plan vs Actual &amp; Forecast</div>';
+      html += '<p class="p6-section-hint">Available Capacity, Scheduled Hours, Actual Productive Hours, Forecast Demand. Today marks the current planning week.</p>';
       html += '<div class="p6-chart-wrap"><canvas id="p6-hours-chart" height="160"></canvas></div>';
       html += '</div>';
       html += '<div class="p6-section-card">';
-      html += '<div class="p6-section-title">Capacity Exceptions</div>';
-      html += '<p class="p6-section-hint">Flags only: overallocation, labour gaps, spare (after timesheets complete), missing timesheets, leave conflicts.</p>';
+      html += '<div class="p6-section-title">Capacity Actions</div>';
+      html += '<p class="p6-section-hint">Real exceptions only: overallocation, spare after complete timesheets, missing timesheets, unusual hours.</p>';
       html += p6RenderActions(m);
       html += '</div></div>';
 
-      // Employee detail behind drill-down only
       html += '<details class="p6-drill">';
       html += '<summary>Employee capacity detail (Week ' + m.selectedWeek + ')</summary>';
       html += p6BuildCapacityDetail(m);
       html += '</details>';
 
       return html;
+    }
+
+    function p6BuildRiskBannerMessage(m) {
+      var k = m.kpis || {};
+      var parts = [];
+      if ((k.overPeople || 0) > 0) {
+        parts.push((k.overPeople || 0) + ' people overallocated for Week ' + m.selectedWeek +
+          ' (' + p6FmtHours(k.overallocated) + ' h excess).');
+      }
+      var near = (m.people || []).filter(function(p) { return p.planningStatus === 'Near Capacity'; }).length;
+      if (near > 0) {
+        parts.push(near + ' people are near capacity (watch band).');
+      }
+      if (!parts.length && k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI && k.forecastUtil <= P6_UTIL_WATCH_HI) {
+        parts.push('Forecast utilisation is in the watch band at ' + p6FmtPct(k.forecastUtil) + ' for Week ' + m.selectedWeek + '.');
+      }
+      if (!parts.length) return '';
+      return '<strong>Capacity risk:</strong> ' + parts.join(' ');
+    }
+
+    function p6RenderGanttLegend() {
+      var h = '<div class="p6-gantt-legend" aria-label="Gantt legend">';
+      h += '<span class="p6-gantt-leg"><span class="p6-gantt-leg-swatch p6-gantt-leg--confirmed"></span>Confirmed</span>';
+      h += '<span class="p6-gantt-leg"><span class="p6-gantt-leg-swatch p6-gantt-leg--tentative"></span>Tentative</span>';
+      h += '<span class="p6-gantt-leg"><span class="p6-gantt-leg-swatch p6-gantt-leg--leave"></span>Leave</span>';
+      h += '<span class="p6-gantt-leg"><span class="p6-gantt-leg-swatch p6-gantt-leg--over"></span>Overallocated</span>';
+      h += '<span class="p6-gantt-leg"><span class="p6-gantt-leg-swatch p6-gantt-leg--milestone"></span>Milestone</span>';
+      h += '</div>';
+      return h;
+    }
+
+    function p6RenderHeatmapLegend() {
+      var h = '<div class="p6-hm-legend" aria-label="Heatmap colour bands">';
+      h += '<span class="p6-hm-leg"><span class="p6-leg-dot p6-leg--under"></span>&lt;' + P6_UTIL_UNDER_PCT + '% under</span>';
+      h += '<span class="p6-hm-leg"><span class="p6-leg-dot p6-leg--healthy"></span>' + P6_UTIL_HEALTHY_LO + '-' + P6_UTIL_HEALTHY_HI + '% healthy</span>';
+      h += '<span class="p6-hm-leg"><span class="p6-leg-dot p6-leg--watch"></span>' + P6_UTIL_HEALTHY_HI + '-' + P6_UTIL_WATCH_HI + '% watch</span>';
+      h += '<span class="p6-hm-leg"><span class="p6-leg-dot p6-leg--over"></span>&gt;100% over</span>';
+      h += '<span class="p6-hm-leg"><span class="p6-leg-dot p6-leg--gap"></span>Data gap</span>';
+      h += '</div>';
+      return h;
     }
 
     function p6RenderActualsMode(m) {
@@ -13756,13 +13905,16 @@
       return html;
     }
 
-    function p6KpiCard(label, value, sub, tone) {
+    function p6KpiCard(label, value, sub, tone, iconKind, iconTone) {
       var cls = 'p6-kpi-card';
       if (tone === 'risk') cls += ' p6-kpi--risk';
       else if (tone === 'watch') cls += ' p6-kpi--watch';
       else if (tone === 'gap') cls += ' p6-kpi--gap';
+      var iconCls = 'p6-kpi-icon p6-kpi-icon--' + (iconTone || 'action');
       return '<div class="' + cls + '">' +
-        '<div class="kpi-label">' + p6Esc(label) + '</div>' +
+        '<div class="p6-kpi-top">' +
+        '<span class="' + iconCls + '">' + p6SvgIcon(iconKind || 'capacity') + '</span>' +
+        '<div class="kpi-label">' + p6Esc(label) + '</div></div>' +
         '<div class="kpi-value">' + value + '</div>' +
         '<div class="kpi-sub">' + p6Esc(sub) + '</div></div>';
     }
@@ -13820,7 +13972,6 @@
       var today = new Date();
       today.setHours(0, 0, 0, 0);
       var todayPct = null;
-      // Approximate today position across mixed day/week cells using linear index
       for (var ti = 0; ti < cells.length; ti++) {
         var c = cells[ti];
         if (c.type === 'day' && c.date.getTime() === today.getTime()) {
@@ -13835,6 +13986,16 @@
             break;
           }
         }
+      }
+
+      if (!window._p6Expanded) window._p6Expanded = {};
+      if (!window._p6DeptInit) {
+        window._p6DeptInit = true;
+        Object.keys(m.deptsTree || {}).forEach(function(d) {
+          if (window._p6Expanded['dept||' + d] === undefined) {
+            window._p6Expanded['dept||' + d] = true;
+          }
+        });
       }
 
       var h = '<div class="p6-gantt">';
@@ -13858,12 +14019,33 @@
       deptNames.forEach(function(dept) {
         var tree = m.deptsTree[dept];
         var crewNames = Object.keys(tree.crews).sort();
-        // Department band
-        h += '<div class="p6-gantt-row p6-gantt-row--dept">';
+        var deptKey = 'dept||' + dept;
+        var deptOpen = window._p6Expanded[deptKey] !== false;
+
+        var dAvail = 0, dSched = 0, dHasSched = false, dOver = 0;
+        crewNames.forEach(function(cn) {
+          var cr = tree.crews[cn];
+          dAvail += cr.available || 0;
+          if (cr.hasAnySchedule) { dSched += cr.scheduled || 0; dHasSched = true; }
+          dOver += cr.overallocHrs || 0;
+        });
+        var dUtil = dAvail > 0 && dHasSched ? (dSched / dAvail) * 100 : null;
+
+        h += '<div class="p6-gantt-row p6-gantt-row--dept' + (dOver > 0 ? ' is-over' : '') + '">';
         h += '<div class="p6-gantt-fixed">';
-        h += '<span></span><span class="p6-gantt-dept">' + p6Esc(dept) + '</span>';
-        h += '<span class="num"></span><span class="num"></span><span class="num"></span>';
+        h += '<button type="button" class="p6-expand p6-chevron' + (deptOpen ? ' is-open' : '') +
+          '" data-key="' + p6Esc(deptKey) +
+          '" onclick="p6ToggleExpand(this.getAttribute(\'data-key\'))" aria-expanded="' + deptOpen +
+          '" aria-label="Toggle ' + p6Esc(dept) + '"><span class="p6-chevron-icon"></span></button>';
+        h += '<span class="p6-gantt-dept" title="' + p6Esc(dept) + '">' + p6Esc(dept) +
+          ' <span class="p6-muted">(' + crewNames.length + ')</span></span>';
+        h += '<span class="num">' + p6FmtHours(dAvail) + '</span>';
+        h += '<span class="num">' + (dHasSched ? p6FmtHours(dSched) :
+          '<span class="p6-pending-inline">Pending</span>') + '</span>';
+        h += '<span class="num">' + (dUtil != null ? p6FmtPct(dUtil) : '-') + '</span>';
         h += '</div><div class="p6-gantt-track p6-gantt-track--dept"></div></div>';
+
+        if (!deptOpen) return;
 
         crewNames.forEach(function(crewName) {
           var crew = tree.crews[crewName];
@@ -13872,9 +14054,10 @@
           var util = crew.forecastUtil;
           h += '<div class="p6-gantt-row p6-gantt-row--crew' + (crew.overallocHrs > 0 ? ' is-over' : '') + '">';
           h += '<div class="p6-gantt-fixed">';
-          h += '<button type="button" class="p6-expand" data-key="' + p6Esc(expKey) +
-            '" onclick="p6ToggleCrew(this.getAttribute(\'data-key\'))" aria-expanded="' + expanded + '">' +
-            (expanded ? '−' : '+') + '</button>';
+          h += '<button type="button" class="p6-expand p6-chevron' + (expanded ? ' is-open' : '') +
+            '" data-key="' + p6Esc(expKey) +
+            '" onclick="p6ToggleExpand(this.getAttribute(\'data-key\'))" aria-expanded="' + expanded +
+            '" aria-label="Toggle crew"><span class="p6-chevron-icon"></span></button>';
           h += '<span class="p6-gantt-name" title="' + p6Esc(crewName) + '">' + p6Esc(crewName) +
             ' <span class="p6-muted">(' + crew.members.length + ')</span></span>';
           h += '<span class="num">' + p6FmtHours(crew.available) + '</span>';
@@ -14111,15 +14294,15 @@
           ' after dedupe. Unfilled project demand stays Pending until a demand source is wired.</p>';
       }
       var h = '<div class="table-wrap"><table class="data-table p6-actions-table"><thead><tr>';
-      h += '<th>Priority</th><th>Capacity Issue</th><th>Impact</th><th>Action</th></tr></thead><tbody>';
+      h += '<th>Action</th><th>Impact</th><th>Recommended</th><th>Priority</th></tr></thead><tbody>';
       list.forEach(function(a) {
+        var priLabel = a.severity === 'risk' ? 'High' : 'Medium';
+        var chipTone = a.severity === 'risk' ? 'risk' : (a.severity === 'gap' ? 'gap' : 'watch');
         h += '<tr class="p6-action-row p6-action-row--' + p6Esc(a.severity) + '">';
-        h += '<td><span class="p6-chip p6-chip--' +
-          (a.severity === 'risk' ? 'risk' : a.severity === 'watch' ? 'watch' :
-            a.severity === 'action' ? 'action' : 'gap') + '">' + p6Esc(a.priority) + '</span></td>';
         h += '<td>' + p6Esc(a.issue) + '</td>';
         h += '<td>' + p6Esc(a.impact) + '</td>';
         h += '<td>' + p6Esc(a.action) + '</td>';
+        h += '<td><span class="p6-chip p6-chip--' + chipTone + ' p6-chip--pill">' + p6Esc(priLabel) + '</span></td>';
         h += '</tr>';
       });
       h += '</tbody></table></div>';
@@ -14314,10 +14497,18 @@
       p6Remount();
     }
 
-    function p6ToggleCrew(key) {
+    function p6ToggleExpand(key) {
       window._p6Expanded = window._p6Expanded || {};
-      window._p6Expanded[key] = !window._p6Expanded[key];
+      if (String(key).indexOf('dept||') === 0) {
+        window._p6Expanded[key] = window._p6Expanded[key] === false ? true : false;
+      } else {
+        window._p6Expanded[key] = !window._p6Expanded[key];
+      }
       p6Remount();
+    }
+
+    function p6ToggleCrew(key) {
+      p6ToggleExpand(key);
     }
 
     function p6MountCharts() {
@@ -14330,7 +14521,6 @@
       var sched = m.series.map(function(s) { return s.scheduled; });
       var prod = m.series.map(function(s) { return s.productive; });
       var forecast = m.series.map(function() { return null; });
-      var tentative = m.series.map(function() { return null; });
 
       var todayIdx = -1;
       m.series.forEach(function(s, i) {
@@ -14338,13 +14528,12 @@
       });
 
       var p6Colors = {
-        text: '#111827',
-        muted: '#6B7280',
-        border: '#E2E4E8',
-        action: '#2563EB',
-        healthy: '#4B7A5A',
-        watch: '#F59E0B',
-        gap: '#9CA3AF'
+        textHex: '#111827',
+        mutedHex: '#6B7280',
+        borderHex: '#E2E4E8',
+        actionHex: '#2563EB',
+        healthyHex: '#4B7A5A',
+        gapHex: '#9CA3AF'
       };
 
       makeChart('p6-hours-chart', {
@@ -14355,7 +14544,7 @@
             {
               label: 'Available Capacity',
               data: avail,
-              borderColor: p6Colors.muted,
+              borderColor: p6Colors.healthyHex,
               backgroundColor: 'transparent',
               borderWidth: 2,
               tension: 0,
@@ -14364,7 +14553,7 @@
             {
               label: 'Scheduled Hours',
               data: sched,
-              borderColor: p6Colors.action,
+              borderColor: p6Colors.actionHex,
               backgroundColor: 'transparent',
               borderWidth: 2,
               borderDash: m.scheduleLive ? [] : [6, 4],
@@ -14374,27 +14563,19 @@
             {
               label: 'Actual Productive Hours',
               data: prod,
-              borderColor: p6Colors.healthy,
-              backgroundColor: 'rgba(75,122,90,0.12)',
+              borderColor: p6Colors.mutedHex,
+              backgroundColor: 'transparent',
               borderWidth: 2,
               fill: false,
               tension: 0,
               pointRadius: 3
             },
             {
-              label: 'Forecast Project Demand (Pending)',
+              label: 'Forecast Demand',
               data: forecast,
-              borderColor: p6Colors.gap,
+              borderColor: p6Colors.gapHex,
               borderDash: [4, 4],
-              borderWidth: 1,
-              pointRadius: 0
-            },
-            {
-              label: 'Tentative Pipeline Demand (Pending)',
-              data: tentative,
-              borderColor: p6Colors.watch,
-              borderDash: [2, 3],
-              borderWidth: 1,
+              borderWidth: 1.5,
               pointRadius: 0
             }
           ]
@@ -14405,7 +14586,7 @@
           plugins: {
             legend: {
               display: true,
-              labels: { color: p6Colors.muted, boxWidth: 12, font: { size: 11 } }
+              labels: { color: p6Colors.mutedHex, boxWidth: 12, font: { size: 11 } }
             },
             tooltip: {
               callbacks: {
@@ -14419,12 +14600,12 @@
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: p6Colors.border },
-              ticks: { color: p6Colors.muted }
+              grid: { color: p6Colors.borderHex },
+              ticks: { color: p6Colors.mutedHex }
             },
             x: {
               grid: { display: false },
-              ticks: { color: p6Colors.muted }
+              ticks: { color: p6Colors.mutedHex }
             }
           }
         },
@@ -14440,12 +14621,12 @@
             ctx.save();
             ctx.beginPath();
             ctx.setLineDash([4, 3]);
-            ctx.strokeStyle = p6Colors.text;
+            ctx.strokeStyle = p6Colors.textHex;
             ctx.lineWidth = 1.5;
             ctx.moveTo(x, yScale.top);
             ctx.lineTo(x, yScale.bottom);
             ctx.stroke();
-            ctx.fillStyle = p6Colors.muted;
+            ctx.fillStyle = p6Colors.mutedHex;
             ctx.font = '600 10px Montserrat, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('Today', x, yScale.top - 4);
