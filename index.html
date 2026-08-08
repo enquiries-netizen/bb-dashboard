@@ -108,186 +108,142 @@
           <p class="loading-text">Loading dashboard data...</p>
         </div>
 
-        <!-- ─── P1: Executive Snapshot (Targets tab) ──────── -->
-        <!-- Group 1: actual+target KPIs | Group 2: not-yet-tracked -->
-        <section id="page-p1" class="page active">
+        <!-- ─── P1: Executive Snapshot (decision cockpit) ──────── -->
+        <!-- p1-test-palette = scoped visual tokens (CSS/JS only for this page) -->
+        <section id="page-p1" class="page active p1-test-palette">
           <div class="p1-layout">
             <div class="p1-head">
-              <div class="p1-watermark" aria-hidden="true">
-                <svg class="p1-watermark-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
               <div class="page-header p1-page-header">
                 <span class="page-badge">P1</span>
                 <h1 class="page-title p1-page-title">Executive Snapshot</h1>
               </div>
-              <p class="p1-filter-cue" id="p1-filter-cue">Brand · Month · Year filters apply above</p>
-            </div>
-
-            <!-- Group 1: metrics with actual vs target (headline) -->
-            <div class="p1-kpi-primary" aria-label="Primary targets">
-              <div class="kpi-card card kpi-card--primary p1-kpi p1-kpi-primary-card" data-kpi="revenue">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M12 7v10M9.5 9.5c.5-1 1.5-1.5 2.5-1.5s2 .6 2 1.75-1 1.5-2.5 1.75-2.5.75-2.5 1.75 1 1.75 2.5 1.75 2-.5 2.5-1.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div class="kpi-label">Revenue Target (MTD)</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-revenue-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-revenue-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-revenue-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-revenue-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-revenue-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
-
-              <div class="kpi-card card p1-kpi p1-kpi-primary-card" data-kpi="margin">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M8 16L16 8M9.5 9.5h.01M14.5 14.5h.01" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <div class="kpi-label">Gross Margin Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-margin-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-margin-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-margin-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-margin-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-margin-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
-
-              <div class="kpi-card card p1-kpi p1-kpi-primary-card" data-kpi="jobs">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div class="kpi-label">Jobs Won Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-jobs-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-jobs-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-jobs-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-jobs-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-jobs-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
-              </div>
-
-              <div class="kpi-card card p1-kpi p1-kpi-primary-card" data-kpi="lead">
-                <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="9" cy="8" r="3" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                  <circle cx="17" cy="9" r="2.5" stroke="#262425" stroke-width="1.5"/>
-                  <path d="M21 19c0-2.2-1.5-3.8-3.5-4.5" stroke="#262425" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <div class="kpi-label">Lead Target</div>
-                <div class="kpi-value-row">
-                  <div class="kpi-value" id="kpi-lead-target">—</div>
-                  <span class="kpi-exceeded-flag" id="kpi-lead-exceeded" hidden aria-label="Target exceeded">
-                    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                </div>
-                <svg class="kpi-sparkline" id="kpi-lead-spark" hidden aria-hidden="true"></svg>
-                <div class="kpi-sub" id="kpi-lead-target-sub">Loading...</div>
-                <div class="kpi-progress" id="kpi-lead-progress">
-                  <div class="kpi-progress-track">
-                    <div class="kpi-progress-fill" style="width:0%"></div>
-                    <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                  </div>
-                  <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
-                </div>
+              <div class="p1-meta-row">
+                <p class="p1-filter-cue" id="p1-filter-cue">Brand · Period · Year</p>
+                <p class="p1-last-updated" id="p1-last-updated">Last updated - awaiting load</p>
               </div>
             </div>
 
-            <!-- Group 2: targets not set / no comparable progress % -->
-            <div class="p1-kpi-untracked">
-              <p class="p1-untracked-label">Not yet tracked</p>
-              <div class="p1-kpi-untracked-grid">
-                <div class="kpi-card card p1-kpi p1-kpi-untracked-card" data-kpi="quotes">
-                  <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#262425" stroke-width="1.5" stroke-linejoin="round"/>
-                    <path d="M14 3v5h5M9 13h6M9 17h4" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <div class="kpi-label">Quotes Target</div>
-                  <div class="kpi-value-row">
-                    <div class="kpi-value" id="kpi-quote-target">—</div>
-                    <span class="kpi-exceeded-flag" id="kpi-quote-exceeded" hidden aria-label="Target exceeded">
-                      <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                  </div>
-                  <svg class="kpi-sparkline" id="kpi-quote-spark" hidden aria-hidden="true"></svg>
-                  <div class="kpi-sub" id="kpi-quote-target-sub">Loading...</div>
-                  <div class="kpi-progress" id="kpi-quote-progress">
-                    <div class="kpi-progress-track">
-                      <div class="kpi-progress-fill" style="width:0%"></div>
-                      <span class="kpi-progress-over-tick" aria-hidden="true"></span>
+            <!-- Section 1: 6 KPI cards (actual as hero) -->
+            <div class="p1-kpi-row" aria-label="Executive KPIs">
+              <div class="kpi-card card p1-kpi" data-kpi="revenue" id="p1-kpi-revenue">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Revenue</div>
+                  <span class="p1-status-dot" id="p1-st-revenue" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-rev">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-rev-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-rev-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-rev-note"></div>
+              </div>
+              <div class="kpi-card card p1-kpi" data-kpi="margin" id="p1-kpi-margin">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Gross Margin</div>
+                  <span class="p1-status-dot" id="p1-st-margin" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-gm">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-gm-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-gm-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-gm-note"></div>
+              </div>
+              <div class="kpi-card card p1-kpi" data-kpi="opprofit" id="p1-kpi-op">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Operating Profit</div>
+                  <span class="p1-status-dot" id="p1-st-op" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-op">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-op-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-op-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-op-note"></div>
+              </div>
+              <div class="kpi-card card p1-kpi" data-kpi="cash" id="p1-kpi-cash">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Cash Position</div>
+                  <span class="p1-status-dot" id="p1-st-cash" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-cash">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-cash-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-cash-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-cash-note"></div>
+              </div>
+              <div class="kpi-card card p1-kpi" data-kpi="workload" id="p1-kpi-wl">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Secured Workload</div>
+                  <span class="p1-status-dot" id="p1-st-wl" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-wl">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-wl-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-wl-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-wl-note"></div>
+              </div>
+              <div class="kpi-card card p1-kpi" data-kpi="health" id="p1-kpi-health">
+                <div class="p1-kpi-top">
+                  <div class="kpi-label">Project Health</div>
+                  <span class="p1-status-dot" id="p1-st-health" data-status="muted" title="Status"></span>
+                </div>
+                <div class="kpi-value" id="kpi-p1-health">Pending</div>
+                <div class="kpi-sub" id="kpi-p1-health-sub">Loading...</div>
+                <div class="p1-kpi-meta" id="kpi-p1-health-meta"></div>
+                <div class="p1-kpi-note" id="kpi-p1-health-note"></div>
+              </div>
+            </div>
+
+            <!-- Section 2+4 mid: two columns -->
+            <div class="p1-mid">
+              <div class="p1-col p1-col--left">
+                <div class="chart-card card p1-panel">
+                  <div class="p1-panel-head">
+                    <div class="chart-title">Performance vs plan</div>
+                    <div class="p1-metric-toggle" id="p1-plan-toggle" role="tablist" aria-label="Chart metric">
+                      <button type="button" class="p1-toggle-btn is-active" data-metric="revenue">Revenue</button>
+                      <button type="button" class="p1-toggle-btn" data-metric="gp">Gross Profit</button>
+                      <button type="button" class="p1-toggle-btn" data-metric="op">Operating Profit</button>
                     </div>
-                    <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
                   </div>
+                  <div class="p1-chart-wrap">
+                    <canvas id="chart-p1-plan"></canvas>
+                  </div>
+                  <p class="p1-panel-hint" id="p1-plan-hint">Actual columns, solid target line, dashed forecast. Future months shown lighter.</p>
                 </div>
-
-                <div class="kpi-card card p1-kpi p1-kpi-untracked-card" data-kpi="activejobs">
-                  <svg class="kpi-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M3 20h18M5 20V9l7-5 7 5v11M10 20v-5h4v5" stroke="#262425" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <div class="kpi-label">Active Jobs Target</div>
-                  <div class="kpi-value-row">
-                    <div class="kpi-value" id="kpi-activejobs-target">—</div>
-                    <span class="kpi-exceeded-flag" id="kpi-activejobs-exceeded" hidden aria-label="Target exceeded">
-                      <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#262425" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
+                <div class="section-card card p1-panel" id="p1-cash-outlook">
+                  <div class="section-title">Cash outlook</div>
+                  <div class="p1-cash-kpis" id="p1-cash-kpis">Loading...</div>
+                  <div class="p1-chart-wrap p1-chart-wrap--sm">
+                    <canvas id="chart-p1-cash13"></canvas>
                   </div>
-                  <svg class="kpi-sparkline" id="kpi-activejobs-spark" hidden aria-hidden="true"></svg>
-                  <div class="kpi-sub" id="kpi-activejobs-target-sub">Loading...</div>
-                  <div class="kpi-progress" id="kpi-activejobs-progress">
-                    <div class="kpi-progress-track">
-                      <div class="kpi-progress-fill" style="width:0%"></div>
-                      <span class="kpi-progress-over-tick" aria-hidden="true"></span>
-                    </div>
-                    <div class="kpi-progress-meta"><span class="kpi-progress-pct"></span><span class="kpi-progress-note"></span></div>
+                  <div class="p1-debtors" id="p1-debtors">Awaiting data</div>
+                </div>
+              </div>
+              <div class="p1-col p1-col--right">
+                <div class="section-card card p1-panel" id="p1-portfolio">
+                  <div class="p1-panel-head">
+                    <div class="section-title">Portfolio health</div>
+                    <button type="button" class="p1-link-btn" id="p1-goto-p4">View Job Performance</button>
                   </div>
+                  <div class="p1-health-counts" id="p1-health-counts">Loading...</div>
+                  <div class="p1-portfolio-metrics" id="p1-portfolio-metrics"></div>
+                  <div class="p1-table-wrap" id="p1-portfolio-table">Loading...</div>
+                </div>
+                <div class="section-card card p1-panel" id="p1-workload">
+                  <div class="section-title">Workload / capacity</div>
+                  <div id="p1-workload-body">Loading...</div>
                 </div>
               </div>
             </div>
 
-            <div class="chart-row p1-chart-row">
-              <div class="chart-card card p1-chart-card">
-                <div class="chart-title">Monthly Revenue Targets</div>
-                <div class="p1-chart-wrap">
-                  <canvas id="chart-p1-revenue"></canvas>
-                </div>
-              </div>
+            <!-- Section 5: Executive action panel -->
+            <div class="section-card card p1-panel p1-action-panel">
+              <div class="section-title">Executive action panel</div>
+              <p class="p1-panel-hint">Exceptions only - derived from live KPI, cash, and portfolio signals. Empty is OK.</p>
+              <div class="p1-table-wrap" id="p1-action-table">Loading...</div>
             </div>
 
-            <div class="section-card p1-detail-card">
-              <div class="section-title">Annual Targets by Month</div>
-              <div id="p1-targets-table">Loading targets...</div>
-              <p class="p1-footnote">Source: Targets · Xero Financials · GHL Leads / Pipeline. Values reflect Brand / Month / Year filters.</p>
-            </div>
+            <p class="p1-data-quality" id="p1-data-quality">Data quality: checking sources...</p>
+
+            <!-- Collapsed detail: no longer a hero (hidden unless expanded) -->
+            <details class="p1-detail-collapse">
+              <summary>Annual targets by month (detail)</summary>
+              <div id="p1-targets-table">Awaiting data</div>
+            </details>
           </div>
         </section>
 
@@ -1060,7 +1016,7 @@
     window._currentPage = { key: '', name: '', data: {} };
 
     var BB_PAGE_DIRECTORY = {
-      P1: 'Executive Snapshot. Layout: (1) Group 1 primary KPI row: Revenue Target (MTD), Gross Margin Target, Jobs Won Target, Lead Target. Each has both an actual value and a target so progress percentage is real. Revenue Target uses a top-border marker as the single most emphasized card. (2) Group 2 quieter row labeled "Not yet tracked": Quotes Target and Active Jobs Target, missing a target and/or actual so cannot show meaningful progress yet. (3) Below both groups: Monthly Revenue Targets chart. Answer only from live page data (targets, financials, leads).',
+      P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
       P2: 'Sales & Pipeline (restructured). Layout: (1) KPI band as a 3x2 grid: Volume row = Leads, Quotes, Wins; Efficiency row = Win Rate, Total Spend, Cost Per Lead. Each KPI card has the current value, a trend sparkline, a directional delta vs last week, and a short source note (e.g. From GHL leads / Paid ad spend). (2) Pipeline Funnel: horizontal stepped bars Lead (solid black) → Quoted (dark grey / Soft Gray) → Won (light grey / Brilliant Silver); each bar shows count and conversion % from the prior stage (Quoted from Lead, Won from Quote). If Quote-to-Won exceeds 100%, that is a known out-of-cohort quirk (wins in this period did not all originate from quotes in the same period), footnoted on the page, explain it calmly if asked, do not treat it as a calculation error. (3) Lead Source Performance: channel breakdown of where leads originate (e.g. Facebook Ads, Website booking, Word of Mouth, Others), with counts. (4) Campaign Performance: full-width dual Y-axis chart, Ad Spend as black columns (left axis) vs Cost Per Lead as grey line with open circular nodes (right axis) per campaign. Use this structure when answering (e.g. why is Win Rate low, what is driving Cost Per Lead up, explain the funnel) from live page data only. For full week-over-week Sales comparison across periods, send the user to P8.',
       P3: 'Quoting & Estimating. Layout: (1) Quoting Funnel by Status is a horizontal status pipeline of connected boxes (Draft, Sent, Accepted, In Progress, Awaiting Approval, etc.), not a classic drop-off funnel shape, because these statuses are not a strict sequential reduction. (2) Quotes by Status Share is a 100% stacked horizontal bar (not a donut). (3) Quotes by Estimator is dual-axis: quote volume as bars, Avg Days to Decision as a solid black line, plus a target line for days to decision pulled live from the Targets tab. (4) Quoting Funnel Detail table: text columns left-aligned, numbers right-aligned. Also covers budget vs actual per quote and estimating accuracy where data is loaded. Answer only from live page data.',
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
@@ -1932,19 +1888,37 @@
     // Chart:  Monthly Target (outline) vs Actual Revenue (fill)
     // Table:  All targets by month
     // ═══════════════════════════════════════════════════════════════
+    // P1 — EXECUTIVE SNAPSHOT (decision cockpit)
+    // Sources: Targets · Xero_Financials · CashFlow_Forecast · Xero_Invoices
+    //          · Xero_Projects · Buildpass_Schedules · Buildpass_Labour
+    //          · GHL_Pipeline (weighted pipeline) · Weekly_Summary fallback
+    // KPIs: Revenue · Gross Margin · Operating Profit · Cash · Secured Workload · Project Health
+    // Shared: buildProjectHealthRollups / p4ClassifyProjectHealth (same as P4)
+    // ═══════════════════════════════════════════════════════════════
+    var _p1PlanMetric = 'revenue';
+    var _p1PlanBound = false;
+    var _p1NavBound = false;
+    var _p1Cache = null;
+
     async function loadP1() {
       showLoading(true);
       removeError('p1');
       try {
         var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.TARGETS),
+          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.GHL_LEADS).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.GHL_PIPELINE).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.CASHFLOW_FORECAST).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.GHL_PIPELINE).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY).catch(function() { return []; })
         ]);
-        renderP1(results[0], results[1], results[2], results[3], results[4], results[5]);
+        renderP1(
+          results[0], results[1], results[2], results[3], results[4],
+          results[5], results[6], results[7], results[8]
+        );
       } catch (err) {
         console.error('P1 load error:', err);
         showError('p1', 'Could not load data. Check your API key in config.js and sheet permissions.');
@@ -1954,159 +1928,41 @@
       }
     }
 
-    function renderP1(targets, xeroFinancials, ghlLeads, ghlPipeline, xeroProjects, weeklySummary) {
-      function applyFilters(rows) {
-        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+    function renderP1(targets, xeroFinancials, cashForecast, invoices, xeroProjects, schedule, labour, ghlPipeline, weeklySummary) {
+      _p1Cache = {
+        targets: targets, xeroFinancials: xeroFinancials, cashForecast: cashForecast,
+        invoices: invoices, xeroProjects: xeroProjects, schedule: schedule,
+        labour: labour, ghlPipeline: ghlPipeline, weeklySummary: weeklySummary
+      };
+
+      // Test palette tokens for charts (scoped to P1 only)
+      var P1 = {
+        canvas: '#F8FAFC', surface: '#FFFFFF', text: '#111827', muted: '#6B7280',
+        border: '#E2E4E8', accent: '#EA580C', watch: '#F59E0B', action: '#2563EB'
+      };
+
+      function asPct(n) {
+        if (n === null || n === undefined || isNaN(n)) return null;
+        return Math.abs(n) <= 1 ? n * 100 : n;
       }
 
-      var branded  = filterByBrand(targets || [], activeBrand);
-      var filtered = filterByMonths(filterByYear(branded, activeYear), activeMonths);
-      var xeroFiltered   = applyFilters(xeroFinancials);
-      var leadsFiltered  = applyFilters(ghlLeads);
-      var pipeFiltered   = applyFilters(ghlPipeline);
-      var weeklyFiltered = applyFilters(weeklySummary);
-      var projectsFiltered = filterByBrand(xeroProjects || [], activeBrand);
-
-      // Tier-1 filter cue: Brand / Month / Year read right under the title
-      var cueEl = document.getElementById('p1-filter-cue');
-      if (cueEl) {
-        var monthLabel = (!activeMonths || !activeMonths.length)
-          ? 'All months'
-          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months');
-        var yearLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
-        var brandLabel = activeBrand || 'ALL';
-        cueEl.textContent = brandLabel + '  ·  ' + monthLabel + '  ·  ' + yearLabel;
+      function monthKey(r) {
+        return String(r['Month'] || col(r, 'Month', 'month') || '').trim() + ' ' +
+          String(r['Year'] || col(r, 'Year', 'year') || '').trim();
       }
 
-      setBBPageData('P1', 'P1: Executive Snapshot', {
-        targets: filtered,
-        xeroFinancials: xeroFiltered,
-        leads: leadsFiltered.slice(0, 200),
-        pipeline: pipeFiltered.slice(0, 200),
-        projects: projectsFiltered.slice(0, 200),
-        weekly: weeklyFiltered,
-        monthlyRevenue: (function() {
-          var map = {};
-          (xeroFiltered || []).forEach(function(r) {
-            var m = String(col(r, 'Month', 'month') || '').trim();
-            var y = String(col(r, 'Year', 'year') || '').trim();
-            var k = (m + (y ? ' ' + y : '')).trim();
-            if (!k) return;
-            map[k] = (map[k] || 0) + parseNum(col(r,
-              'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
-          });
-          return map;
-        })()
-      });
-
-      function setKpiExceeded(flagId, exceeded) {
-        var el = document.getElementById(flagId);
-        if (!el) return;
-        if (exceeded) el.removeAttribute('hidden');
-        else el.setAttribute('hidden', '');
-      }
-
-      function p1DirIcon(dir) {
-        // P1 progress notes: charcoal glyphs only (no green/red traffic-light)
-        if (dir === 'up') {
-          return '<svg class="kpi-dir-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
-            '<path d="M6 2.2L10.2 8.5H1.8L6 2.2z" fill="#262425"/></svg>';
+      function normalizeMonthKey(key) {
+        var s = String(key || '').trim();
+        var m = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (!m) return s;
+        var token = m[1].substring(0, 3).toLowerCase();
+        var idx = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === token) { idx = i; break; }
         }
-        return '<svg class="kpi-dir-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">' +
-          '<path d="M6 9.8L1.8 3.5h8.4L6 9.8z" fill="#262425"/></svg>';
-      }
-
-      function setKpiProgress(progressId, actual, target, flagId) {
-        var root = document.getElementById(progressId);
-        if (!root) return;
-        var fill = root.querySelector('.kpi-progress-fill');
-        var pctEl = root.querySelector('.kpi-progress-pct');
-        var noteEl = root.querySelector('.kpi-progress-note');
-        var hasActual = actual !== null && actual !== undefined && !isNaN(actual);
-        var hasTarget = target !== null && target !== undefined && !isNaN(target) && target > 0;
-        if (!hasActual || !hasTarget) {
-          if (fill) fill.style.width = '0%';
-          if (pctEl) pctEl.textContent = '';
-          if (noteEl) noteEl.textContent = 'Actuals not yet tracked';
-          root.classList.add('is-untracked');
-          root.classList.remove('is-exceeded');
-          if (flagId) setKpiExceeded(flagId, false);
-          return;
-        }
-        var pct = (actual / target) * 100;
-        var exceeded = pct > 100;
-        // Cap fill at 100% so overshoot never looks like a layout bug
-        if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
-        if (pctEl) pctEl.textContent = Math.round(pct) + '%';
-        if (noteEl) {
-          if (exceeded) {
-            noteEl.innerHTML = p1DirIcon('up') + ' +' + Math.round(pct - 100) + '% over';
-          } else if (pct < 100) {
-            noteEl.innerHTML = p1DirIcon('down') + ' ' + Math.round(100 - pct) + '% under';
-          } else {
-            noteEl.textContent = '';
-          }
-        }
-        root.classList.remove('is-untracked');
-        root.classList.toggle('is-exceeded', exceeded);
-        if (flagId) setKpiExceeded(flagId, exceeded);
-      }
-
-      function clearKpiProgress() {
-        [
-          ['kpi-revenue-progress', 'kpi-revenue-exceeded'],
-          ['kpi-margin-progress', 'kpi-margin-exceeded'],
-          ['kpi-lead-progress', 'kpi-lead-exceeded'],
-          ['kpi-jobs-progress', 'kpi-jobs-exceeded'],
-          ['kpi-quote-progress', 'kpi-quote-exceeded'],
-          ['kpi-activejobs-progress', 'kpi-activejobs-exceeded']
-        ].forEach(function(pair) { setKpiProgress(pair[0], null, null, pair[1]); });
-        ['kpi-revenue-spark','kpi-margin-spark','kpi-lead-spark',
-         'kpi-jobs-spark','kpi-quote-spark','kpi-activejobs-spark']
-          .forEach(function(id) { renderSparkline(id, null); });
-      }
-
-      /** Draw a sparkline with flat area fill (no gradient); thicker stroke. */
-      function renderSparkline(svgId, values) {
-        var svg = document.getElementById(svgId);
-        if (!svg) return;
-        var nums = (values || []).filter(function(v) {
-          return v !== null && v !== undefined && !isNaN(v);
-        });
-        if (nums.length < 2) {
-          svg.innerHTML = '';
-          svg.setAttribute('hidden', '');
-          return;
-        }
-        var w = 140, h = 18, pad = 2;
-        var min = Math.min.apply(null, nums);
-        var max = Math.max.apply(null, nums);
-        var range = max - min || 1;
-        var coords = nums.map(function(v, i) {
-          return {
-            x: pad + (i / (nums.length - 1)) * (w - pad * 2),
-            y: pad + (1 - (v - min) / range) * (h - pad * 2)
-          };
-        });
-        var linePts = coords.map(function(p) {
-          return p.x.toFixed(1) + ',' + p.y.toFixed(1);
-        }).join(' ');
-        var baseY = (h - pad).toFixed(1);
-        var areaD =
-          'M' + coords[0].x.toFixed(1) + ',' + baseY +
-          ' L' + coords.map(function(p) {
-            return p.x.toFixed(1) + ',' + p.y.toFixed(1);
-          }).join(' L') +
-          ' L' + coords[coords.length - 1].x.toFixed(1) + ',' + baseY +
-          ' Z';
-        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-        svg.setAttribute('preserveAspectRatio', 'none');
-        // Flat Brilliant Silver area (solid low opacity), charcoal stroke
-        svg.innerHTML =
-          '<path d="' + areaD + '" fill="#D2D4D5" fill-opacity="0.45" stroke="none"/>' +
-          '<polyline fill="none" stroke="#262425" stroke-width="2.1" ' +
-          'stroke-linecap="round" stroke-linejoin="round" points="' + linePts + '"/>';
-        svg.removeAttribute('hidden');
+        if (idx < 0) return s;
+        var full = new Date(parseInt(m[2], 10), idx, 1).toLocaleString('en-AU', { month: 'long' });
+        return full + ' ' + m[2];
       }
 
       function parseMonthYearKey(key) {
@@ -2127,378 +1983,1061 @@
         return full + ' ' + year;
       }
 
-      function trailingMonthKeys(endKey, n) {
-        var p = parseMonthYearKey(endKey);
-        if (!p) return [];
-        var keys = [];
-        for (var i = n - 1; i >= 0; i--) {
-          var d = new Date(p.year, p.month - i, 1);
-          keys.push(monthKeyFromYM(d.getFullYear(), d.getMonth()));
-        }
-        return keys;
+      function hasMoneyField(raw) {
+        if (raw === '' || raw === null || raw === undefined) return false;
+        var s = String(raw).trim();
+        if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'na') return false;
+        return true;
       }
 
-      function sparkValuesForKeys(keys, lookup) {
+      function sumField(rows, names) {
+        var total = 0;
+        var any = false;
+        (rows || []).forEach(function(r) {
+          var raw = col.apply(null, [r].concat(names));
+          if (!hasMoneyField(raw) && raw !== 0 && raw !== '0') return;
+          any = true;
+          total += parseNum(raw);
+        });
+        return any ? total : null;
+      }
+
+      function avgPctField(rows, names) {
         var vals = [];
-        keys.forEach(function(k) {
-          if (Object.prototype.hasOwnProperty.call(lookup, k) &&
-              lookup[k] !== null && lookup[k] !== undefined && !isNaN(lookup[k])) {
-            vals.push(lookup[k]);
-          }
+        (rows || []).forEach(function(r) {
+          var raw = col.apply(null, [r].concat(names));
+          if (raw === '' || raw === null || raw === undefined) return;
+          var n = asPct(parseNum(raw));
+          if (n !== null && !isNaN(n)) vals.push(n);
         });
-        return vals;
+        if (!vals.length) return null;
+        return vals.reduce(function(s, n) { return s + n; }, 0) / vals.length;
       }
 
-      function normalizeMonthKey(key) {
-        var p = parseMonthYearKey(key);
-        return p ? monthKeyFromYM(p.year, p.month) : String(key || '').trim();
+      function fmtMoneyOrPending(v, pendingLabel) {
+        if (v === null || v === undefined || isNaN(v)) return pendingLabel || 'Pending';
+        return formatCurrency(v);
       }
 
-      function monthKey(r) {
-        return String(r['Month'] || '').trim() + ' ' + String(r['Year'] || '').trim();
+      function fmtPtsVariance(actual, target) {
+        if (actual == null || target == null || isNaN(actual) || isNaN(target)) return null;
+        var d = actual - target;
+        var sign = d > 0 ? '+' : '';
+        var fav = d >= 0 ? 'favourable' : 'unfavourable';
+        return sign + d.toFixed(1) + ' pts ' + fav;
       }
 
-      /** Normalise margin values that may be stored as 0.37 or 37%. */
-      function asPct(n) {
-        if (n === null || n === undefined || isNaN(n)) return null;
-        return Math.abs(n) <= 1 ? n * 100 : n;
+      function fmtDollarVariance(actual, target) {
+        if (actual == null || target == null || isNaN(actual) || isNaN(target)) return null;
+        var d = actual - target;
+        var sign = d > 0 ? '+' : '-';
+        return sign + formatCurrency(Math.abs(d));
       }
 
-      if (filtered.length === 0) {
-        ['kpi-revenue-target','kpi-margin-target','kpi-lead-target',
-         'kpi-jobs-target','kpi-quote-target','kpi-activejobs-target'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', 'No data for selection');
-        });
-        clearKpiProgress();
-        if (_charts['chart-p1-revenue']) { _charts['chart-p1-revenue'].destroy(); delete _charts['chart-p1-revenue']; }
-        document.getElementById('p1-targets-table').innerHTML =
-          '<p class="no-data-msg">No targets data for the selected filters.</p>';
-        return;
+      function trackStatus(actual, target, higherIsBetter) {
+        if (actual == null || target == null || isNaN(actual) || isNaN(target) || !target) {
+          return { key: 'muted', label: 'Awaiting data' };
+        }
+        var ratio = higherIsBetter !== false ? (actual / target) : (target / actual);
+        // Margin/profit special: variance in relative gap
+        if (higherIsBetter === 'margin') {
+          var pts = actual - target;
+          if (pts >= -1) return { key: 'on-track', label: 'On track' };
+          if (pts >= -4) return { key: 'watch', label: 'Watch' };
+          return { key: 'off-track', label: 'Off track' };
+        }
+        if (ratio >= 0.95) return { key: 'on-track', label: 'On track' };
+        if (ratio >= 0.80) return { key: 'watch', label: 'Watch' };
+        return { key: 'off-track', label: 'Off track' };
       }
 
-      // KPI cards: SUM across all divisions for current (or last available) month
-      var now       = new Date();
-      var monthName = now.toLocaleString('en-AU', { month: 'long' });
-      var monthYear = now.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
-
-      var kpiRows = filtered.filter(function(r) {
-        return String(r['Month'] || '').toLowerCase().indexOf(monthName.toLowerCase()) !== -1;
-      });
-      if (kpiRows.length === 0) {
-        var lastMonth = filtered[filtered.length - 1]['Month'];
-        kpiRows = filtered.filter(function(r) { return r['Month'] === lastMonth; });
-        monthYear = lastMonth + ' ' + (filtered[filtered.length - 1]['Year'] || '');
-      }
-      var kpiMonthKey = monthKey(kpiRows[0]);
-
-      var revTarget      = kpiRows.reduce(function(s,r){ return s + parseNum(r['Revenue Target ($)']); }, 0);
-      var leadsTarget    = kpiRows.reduce(function(s,r){ return s + parseNum(r['Leads Target (monthly)']); }, 0);
-      var jobsTarget     = kpiRows.reduce(function(s,r){ return s + parseNum(r['Jobs Won Target']); }, 0);
-      var quotesTarget   = kpiRows.reduce(function(s,r){ return s + parseNum(r['Quote Volume']); }, 0);
-      var marginTarget   = asPct(parseNum(kpiRows[0]['Gross Margin Target %']));
-
-      // ── Actuals (same patterns as P2 / P5 / P4) ─────────────────
-      function monthLabelFromParts(parts) {
-        if (!parts || _MONTH_ABBR.indexOf(parts.month) < 0) return '';
-        var full = new Date(Number(parts.year), _MONTH_ABBR.indexOf(parts.month), 1)
-          .toLocaleString('en-AU', { month: 'long' });
-        return full + ' ' + parts.year;
+      function setStatusDot(id, statusKey, label) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var key = statusKey || 'muted';
+        if (key === 'at-risk') key = 'off-track';
+        el.setAttribute('data-status', key);
+        el.title = label || '';
+        el.setAttribute('aria-label', label || 'Status unknown');
       }
 
-      function rowMatchesKpiMonth(r) {
-        var d = col(r, 'Date Created', 'Created Date', 'created_date', 'Date', 'date',
-                    'Last Activity Date', 'Quote Sent Date', 'Close Date') || '';
-        var label = monthLabelFromParts(parseRowDateParts(d));
-        if (label) return label === kpiMonthKey;
-        // Fall back to Month/Year columns when present
-        if (r['Month'] || r['month']) return monthKey(r) === kpiMonthKey;
-        return false;
-      }
-
-      function revenueFromXeroRows(rows) {
-        return rows.reduce(function(s, r) {
-          return s + parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
-        }, 0);
-      }
-
-      var xeroKpiRows = xeroFiltered.filter(function(r) { return monthKey(r) === kpiMonthKey; });
-      var revActual = xeroKpiRows.length ? revenueFromXeroRows(xeroKpiRows) : null;
-      var marginActual = null;
-      if (xeroKpiRows.length > 0) {
-        var marginVals = xeroKpiRows.map(function(r) {
-          var raw = col(r, 'Gross Margin %', 'Gross Margin', 'GP%');
-          if (raw === '' || raw === null || raw === undefined) return null;
-          return asPct(parseNum(raw));
-        }).filter(function(n) { return n !== null && !isNaN(n); });
-        if (marginVals.length) {
-          marginActual = marginVals.reduce(function(s, n) { return s + n; }, 0) / marginVals.length;
+      function setCard(heroId, subId, metaId, noteId, statusId, pack) {
+        setKPI(heroId, subId, pack.hero, pack.sub || '');
+        var meta = document.getElementById(metaId);
+        if (meta) meta.textContent = pack.meta || '';
+        var note = document.getElementById(noteId);
+        if (note) note.textContent = pack.note || '';
+        setStatusDot(statusId, pack.statusKey, pack.statusLabel);
+        var card = document.getElementById(pack.cardId);
+        if (card) {
+          card.classList.remove('p1-kpi--off', 'p1-kpi--watch', 'p1-kpi--ok');
+          if (pack.statusKey === 'off-track' || pack.statusKey === 'at-risk') card.classList.add('p1-kpi--off');
+          else if (pack.statusKey === 'watch') card.classList.add('p1-kpi--watch');
+          else if (pack.statusKey === 'on-track') card.classList.add('p1-kpi--ok');
         }
       }
 
-      // Weekly_Summary fallback when Xero has no row for the KPI month
-      if (revActual === null && weeklyFiltered.length > 0) {
-        var weekMatchRows = weeklyFiltered.filter(function(r) {
-          return monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start'))) === kpiMonthKey;
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      // ── Period semantics: KPI period must agree with labels ──
+      var now = new Date();
+      var clockYear = now.getFullYear();
+      var clockMonthIdx = now.getMonth();
+      var filterYear = (activeYear && activeYear !== 'ALL') ? parseInt(activeYear, 10) : clockYear;
+      if (isNaN(filterYear)) filterYear = clockYear;
+
+      var kpiMonthIdx;
+      var kpiIsSingleMonth;
+      var periodSourceNote = '';
+      if (activeMonths && activeMonths.length === 1) {
+        var tok = String(activeMonths[0]).substring(0, 3).toLowerCase();
+        kpiMonthIdx = -1;
+        for (var mi = 0; mi < _MONTH_ABBR.length; mi++) {
+          if (_MONTH_ABBR[mi].toLowerCase() === tok) { kpiMonthIdx = mi; break; }
+        }
+        if (kpiMonthIdx < 0) kpiMonthIdx = clockMonthIdx;
+        kpiIsSingleMonth = true;
+      } else if (activeMonths && activeMonths.length > 1) {
+        // Multi-month selection: do not claim pure MTD
+        kpiIsSingleMonth = false;
+        kpiMonthIdx = clockMonthIdx;
+        periodSourceNote = 'Multi-month header filter';
+      } else {
+        // Header is "All months" - KPI uses current month so label matches MTD (not "All months")
+        kpiMonthIdx = (filterYear === clockYear) ? clockMonthIdx : 0;
+        kpiIsSingleMonth = true;
+        periodSourceNote = 'Header month is All - KPI period uses ' +
+          (filterYear === clockYear ? 'current month' : 'January of selected year');
+      }
+
+      var kpiMonthKey = monthKeyFromYM(filterYear, kpiMonthIdx);
+      var kpiMonthLabel = new Date(filterYear, kpiMonthIdx, 1).toLocaleString('en-AU', { month: 'long' });
+      var periodTag = kpiIsSingleMonth ? (kpiMonthLabel + ' ' + filterYear + ' (MTD)') : ('Multi-month · ' + filterYear);
+
+      var cueEl = document.getElementById('p1-filter-cue');
+      if (cueEl) {
+        var brandLabel = activeBrand || 'ALL';
+        cueEl.textContent = brandLabel + '  ·  KPI period: ' + periodTag +
+          (periodSourceNote ? '  ·  ' + periodSourceNote : '');
+      }
+
+      var lastEl = document.getElementById('p1-last-updated');
+      if (lastEl) {
+        lastEl.textContent = 'Last updated ' + now.toLocaleString('en-AU', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
         });
-        if (weekMatchRows.length) {
-          revActual = weekMatchRows.reduce(function(s, r) {
+      }
+
+      // Brand-scoped series (year for chart); monthly rows for KPI month
+      var brandTargets = filterByBrand(targets || [], activeBrand);
+      var yearTargets = (activeYear && activeYear !== 'ALL')
+        ? filterByYear(brandTargets, activeYear)
+        : brandTargets;
+      var brandXero = filterByBrand(xeroFinancials || [], activeBrand);
+      var yearXero = (activeYear && activeYear !== 'ALL')
+        ? filterByYear(brandXero, activeYear)
+        : brandXero;
+      var brandWeekly = filterByBrand(weeklySummary || [], activeBrand);
+      var brandPipe = filterByBrand(ghlPipeline || [], activeBrand);
+      var brandProjects = filterByBrand(xeroProjects || [], activeBrand);
+
+      function rowsForMonthKey(rows, key) {
+        return (rows || []).filter(function(r) {
+          return normalizeMonthKey(monthKey(r)) === normalizeMonthKey(key);
+        });
+      }
+
+      var xeroMtd = rowsForMonthKey(yearXero, kpiMonthKey);
+      var targetMtd = rowsForMonthKey(yearTargets, kpiMonthKey);
+      // If no target rows for exact month, try Month column match by name only
+      if (!targetMtd.length) {
+        targetMtd = yearTargets.filter(function(r) {
+          return String(r['Month'] || '').toLowerCase().indexOf(kpiMonthLabel.toLowerCase()) !== -1;
+        });
+      }
+
+      // YTD: Jan through KPI month in filter year
+      function isYtdMonth(r) {
+        var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+        if (!p) return false;
+        if (p.year !== filterYear) return false;
+        return p.month <= kpiMonthIdx;
+      }
+      var xeroYtd = yearXero.filter(isYtdMonth);
+      var targetYtd = yearTargets.filter(isYtdMonth);
+
+      // Prior month for trend
+      var priorIdx = kpiMonthIdx - 1;
+      var priorYear = filterYear;
+      if (priorIdx < 0) { priorIdx = 11; priorYear = filterYear - 1; }
+      var priorKey = monthKeyFromYM(priorYear, priorIdx);
+      var xeroPrior = (filterByYear(brandXero, String(priorYear)) || brandXero).filter(function(r) {
+        return normalizeMonthKey(monthKey(r)) === normalizeMonthKey(priorKey);
+      });
+
+      // Exceptions collector for action panel
+      var actions = [];
+
+      function pushAction(priority, issue, impact, owner, required) {
+        actions.push({
+          priority: priority,
+          issue: issue,
+          impact: impact || 'Pending',
+          owner: owner || 'TBD',
+          action: required || 'Review'
+        });
+      }
+
+      // ── Revenue ──
+      var revActualMtd = sumField(xeroMtd, ['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue']);
+      if (revActualMtd === null && brandWeekly.length) {
+        // Weekly_Summary fallback only when Xero empty for month
+        var weekHits = brandWeekly.filter(function(r) {
+          var d = parseRowDateParts(col(r, 'Week Start', 'week_start'));
+          if (!d) return false;
+          var full = new Date(Number(d.year), _MONTH_ABBR.indexOf(d.month), 1)
+            .toLocaleString('en-AU', { month: 'long' });
+          return (full + ' ' + d.year) === kpiMonthKey;
+        });
+        if (weekHits.length) {
+          revActualMtd = weekHits.reduce(function(s, r) {
             return s + parseNum(col(r, 'Revenue ($)', 'Revenue'));
           }, 0);
         }
       }
-
-      function isWonStatus(status) {
-        return String(status || '').toLowerCase() === 'won';
-      }
-      function stageOf(r) {
-        return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
-      }
-      function statusOf(r) {
-        return String(col(r, 'Status', 'status') || '').trim();
-      }
-      function isQuotedStage(s) {
-        var t = s.toLowerCase();
-        return t === 'quoted' || t.indexOf('quoted') !== -1;
+      var revActualYtd = sumField(xeroYtd, ['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue']);
+      var revTargetMtd = sumField(targetMtd, ['Revenue Target ($)', 'Revenue Target']);
+      var revTargetYtd = sumField(targetYtd, ['Revenue Target ($)', 'Revenue Target']);
+      var revPrior = sumField(xeroPrior, ['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue']);
+      // Month-end forecast: linear day-of-month extrapolation only when MTD live and mid-month
+      var daysInKpiMonth = new Date(filterYear, kpiMonthIdx + 1, 0).getDate();
+      var dayOfMonth = (filterYear === clockYear && kpiMonthIdx === clockMonthIdx) ? now.getDate() : daysInKpiMonth;
+      var revForecastMe = null;
+      if (revActualMtd != null && dayOfMonth > 0 && dayOfMonth < daysInKpiMonth) {
+        revForecastMe = revActualMtd * (daysInKpiMonth / dayOfMonth);
       }
 
-      // MTD actuals: restrict GHL rows to the same month as the KPI target
-      var leadsMtd = leadsFiltered.filter(rowMatchesKpiMonth);
-      var hasLeadActuals = leadsFiltered.length > 0;
-      var leadsActual = leadsMtd.length;
-      var quotesActual = leadsMtd.filter(function(r) {
-        var stage = stageOf(r);
-        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
-        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
-      }).length;
-      var jobsActual = leadsMtd.filter(function(r) {
-        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
-      }).length;
+      var revStatus = trackStatus(revActualMtd, revTargetMtd, true);
+      var revVar = (revActualMtd != null && revTargetMtd != null) ? fmtDollarVariance(revActualMtd, revTargetMtd) : null;
+      var revTrend = (revActualMtd != null && revPrior != null && revPrior !== 0)
+        ? (((revActualMtd - revPrior) / Math.abs(revPrior)) * 100)
+        : null;
+      setCard('kpi-p1-rev', 'kpi-p1-rev-sub', 'kpi-p1-rev-meta', 'kpi-p1-rev-note', 'p1-st-revenue', {
+        cardId: 'p1-kpi-revenue',
+        hero: revActualMtd != null ? formatCurrency(revActualMtd) : 'Pending',
+        sub: revActualMtd != null
+          ? ('Actual MTD · ' + periodTag)
+          : 'Awaiting Xero_Financials for ' + periodTag,
+        meta: [
+          revTargetMtd != null ? ('Target ' + formatCurrency(revTargetMtd)) : 'Target Pending',
+          revVar ? ('Var ' + revVar) : '',
+          revActualYtd != null ? ('YTD ' + formatCurrency(revActualYtd)) : 'YTD Pending'
+        ].filter(Boolean).join(' · '),
+        note: [
+          revForecastMe != null ? ('Forecast to month-end ~' + formatCurrency(revForecastMe)) : '',
+          revTrend != null ? ((revTrend >= 0 ? '+' : '') + revTrend.toFixed(1) + '% vs prior month') : 'Trend vs prior: Pending'
+        ].filter(Boolean).join(' · '),
+        statusKey: revActualMtd == null ? 'muted' : revStatus.key,
+        statusLabel: revActualMtd == null ? 'Awaiting data' : revStatus.label
+      });
+      if (revStatus.key === 'off-track' && revActualMtd != null) {
+        pushAction('High', 'Revenue off track vs MTD target', revVar || 'See Revenue KPI', 'Finance', 'Review sales throughput and month-end forecast');
+      } else if (revStatus.key === 'watch' && revActualMtd != null) {
+        pushAction('Medium', 'Revenue on Watch vs MTD target', revVar || 'See Revenue KPI', 'Finance', 'Close gap to target before month-end');
+      }
 
-      // Active jobs: Xero_Projects not completed/closed (P4-style count)
-      var activeJobsActual = projectsFiltered.filter(function(r) {
+      // ── Gross Margin ──
+      var gmActual = avgPctField(xeroMtd, ['Gross Margin %', 'Gross Margin', 'GP%']);
+      if (gmActual == null && revActualMtd != null && revActualMtd !== 0) {
+        var gpMtd = sumField(xeroMtd, ['Gross Profit ($)', 'Gross Profit']);
+        if (gpMtd != null) gmActual = (gpMtd / revActualMtd) * 100;
+      }
+      var gmTarget = null;
+      if (targetMtd.length) {
+        var tgm = asPct(parseNum(targetMtd[0]['Gross Margin Target %']));
+        if (tgm != null && !isNaN(tgm)) gmTarget = tgm;
+      }
+      var gmPrior = avgPctField(xeroPrior, ['Gross Margin %', 'Gross Margin', 'GP%']);
+      var gmStatus = trackStatus(gmActual, gmTarget, 'margin');
+      var gmPts = fmtPtsVariance(gmActual, gmTarget);
+      setCard('kpi-p1-gm', 'kpi-p1-gm-sub', 'kpi-p1-gm-meta', 'kpi-p1-gm-note', 'p1-st-margin', {
+        cardId: 'p1-kpi-margin',
+        hero: gmActual != null ? formatPct(gmActual) : 'Pending',
+        sub: gmActual != null ? ('Actual · ' + periodTag) : 'Awaiting Gross Margin % in Xero_Financials',
+        meta: [
+          gmTarget != null ? ('Target ' + formatPct(gmTarget)) : 'Target Pending',
+          gmPts || ''
+        ].filter(Boolean).join(' · '),
+        note: gmPrior != null && gmActual != null
+          ? ((gmActual - gmPrior >= 0 ? '+' : '') + (gmActual - gmPrior).toFixed(1) + ' pts vs prior month')
+          : 'Trend vs prior: Pending',
+        statusKey: gmActual == null ? 'muted' : gmStatus.key,
+        statusLabel: gmActual == null ? 'Awaiting data' : gmStatus.label
+      });
+      if (gmStatus.key === 'off-track' && gmActual != null) {
+        pushAction('High', 'Gross margin off track', gmPts || formatPct(gmActual), 'Operations', 'Review job cost leaks and pricing');
+      }
+
+      // ── Operating Profit (Net Profit in Xero_Financials) ──
+      var opActualYtd = sumField(xeroYtd, ['Net Profit ($)', 'Net Profit', 'Operating Profit ($)', 'Operating Profit']);
+      var opTargetYtd = sumField(targetYtd, ['Profit Target ($)', 'Profit Target', 'Net Profit Target ($)']);
+      var opPriorYtd = null;
+      var priorYtdRows = brandXero.filter(function(r) {
+        var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+        if (!p) return false;
+        if (p.year !== filterYear - 1) return false;
+        return p.month <= kpiMonthIdx;
+      });
+      opPriorYtd = sumField(priorYtdRows, ['Net Profit ($)', 'Net Profit', 'Operating Profit ($)', 'Operating Profit']);
+      var opStatus = trackStatus(opActualYtd, opTargetYtd, true);
+      var opVar = (opActualYtd != null && opTargetYtd != null) ? fmtDollarVariance(opActualYtd, opTargetYtd) : null;
+      setCard('kpi-p1-op', 'kpi-p1-op-sub', 'kpi-p1-op-meta', 'kpi-p1-op-note', 'p1-st-op', {
+        cardId: 'p1-kpi-op',
+        hero: opActualYtd != null ? formatCurrency(opActualYtd) : 'Pending',
+        sub: opActualYtd != null ? ('Actual YTD to ' + kpiMonthLabel) : 'Awaiting Net Profit in Xero_Financials',
+        meta: [
+          opTargetYtd != null ? ('Budget YTD ' + formatCurrency(opTargetYtd)) : 'Budget Pending',
+          opVar ? ('Var ' + opVar) : ''
+        ].filter(Boolean).join(' · '),
+        note: opPriorYtd != null && opActualYtd != null
+          ? ('Prior year YTD ' + formatCurrency(opPriorYtd) + ' · ' +
+             fmtDollarVariance(opActualYtd, opPriorYtd) + ' vs prior year')
+          : 'Prior year: Pending',
+        statusKey: opActualYtd == null ? 'muted' : opStatus.key,
+        statusLabel: opActualYtd == null ? 'Awaiting data' : opStatus.label
+      });
+      if (opStatus.key === 'off-track' && opActualYtd != null) {
+        pushAction('High', 'Operating profit off track vs budget YTD', opVar || 'See Operating Profit KPI', 'Finance', 'Review opex and margin mix');
+      }
+
+      // ── Cash Position (P9 path) ──
+      function isForecastDataRow(r) {
+        var week = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
+        if (!week) return false;
+        if (/^last updated/i.test(week)) return false;
+        return !!parseRowDateParts(week);
+      }
+      function sortByWeek(rows) {
+        return rows.slice().sort(function(a, b) {
+          var pa = parseRowDateParts(col(a, 'Week Start', 'week_start', 'Week', 'week'));
+          var pb = parseRowDateParts(col(b, 'Week Start', 'week_start', 'Week', 'week'));
+          if (!pa && !pb) return 0;
+          if (!pa) return 1;
+          if (!pb) return -1;
+          var ia = _MONTH_ABBR.indexOf(pa.month);
+          var ib = _MONTH_ABBR.indexOf(pb.month);
+          if (pa.year !== pb.year) return Number(pa.year) - Number(pb.year);
+          if (ia !== ib) return ia - ib;
+          var da = String(col(a, 'Week Start', 'week_start') || '').split('/')[0];
+          var db = String(col(b, 'Week Start', 'week_start') || '').split('/')[0];
+          return (parseInt(da, 10) || 0) - (parseInt(db, 10) || 0);
+        });
+      }
+      var cfAll = (cashForecast || []).filter(isForecastDataRow);
+      var cfBrand = filterByBrand(cfAll, activeBrand);
+      var cfSorted = sortByWeek(cfBrand).slice(0, 13);
+      var cashAvail = null;
+      var cashSeries = [];
+      var cashLabels = [];
+      var lowestBal = null;
+      if (cfSorted.length) {
+        cashSeries = cfSorted.map(function(r) {
+          return parseNum(col(r, 'Closing Balance', 'closing_balance', 'Close Balance'));
+        });
+        var hasClosing = cashSeries.some(function(v) { return v !== 0; });
+        if (!hasClosing) {
+          cashSeries = cfSorted.map(function(r) {
+            return parseNum(col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow'));
+          });
+        } else {
+          cashAvail = cashSeries[0];
+          lowestBal = Math.min.apply(null, cashSeries);
+        }
+        cashLabels = cfSorted.map(function(r) {
+          var raw = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
+          var parts = raw.split('/');
+          if (parts.length === 3) {
+            var d = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10);
+            if (m >= 1 && m <= 12) return (d < 10 ? '0' : '') + d + ' ' + _MONTH_ABBR[m - 1];
+          }
+          return raw || '-';
+        });
+      }
+
+      function ageingBucketForInvoice(r) {
+        var bucket = String(col(r, 'Ageing Bucket', 'Ageing', 'aging bucket', 'Aging Bucket') || '').trim();
+        if (bucket) return bucket;
+        var daysRaw = col(r, 'Days Overdue', 'days overdue', 'Days');
+        if (daysRaw !== '' && daysRaw !== null && daysRaw !== undefined) {
+          var days = parseNum(daysRaw);
+          if (days <= 0) return 'Current';
+          if (days <= 30) return '0-30';
+          if (days <= 60) return '31-60';
+          if (days <= 90) return '61-90';
+          return '90+';
+        }
+        var dueStr = String(col(r, 'Due Date', 'due date') || '').trim();
+        if (!dueStr) return '';
+        var parts = dueStr.split('/');
+        if (parts.length !== 3) return '';
+        var due = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        if (isNaN(due.getTime())) return '';
+        var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+        var diff = Math.floor((t0 - due) / 86400000);
+        if (diff <= 0) return 'Current';
+        if (diff <= 30) return '0-30';
+        if (diff <= 60) return '31-60';
+        if (diff <= 90) return '61-90';
+        return '90+';
+      }
+
+      var invBrand = filterByBrand(invoices || [], activeBrand);
+      var byAgeing = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0, Current: 0 };
+      var overdueDebtors = 0;
+      var hasInvoiceAgeing = false;
+      invBrand.forEach(function(r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return;
+        var age = ageingBucketForInvoice(r);
+        if (!age) return;
+        var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
+        hasInvoiceAgeing = true;
+        if (byAgeing[age] === undefined) byAgeing[age] = 0;
+        byAgeing[age] += amt;
+        if (age !== 'Current' && age !== '0-30') overdueDebtors += amt;
+        else if (age === '0-30') {
+          // include 0-30 as debtors outstanding but not severely overdue total below
+        }
+      });
+      // All non-current open as "overdue debtors" for KPI note
+      var debtorsOpen = 0;
+      if (hasInvoiceAgeing) {
+        Object.keys(byAgeing).forEach(function(k) {
+          if (k === 'Current') return;
+          debtorsOpen += byAgeing[k] || 0;
+        });
+        overdueDebtors = (byAgeing['31-60'] || 0) + (byAgeing['61-90'] || 0) + (byAgeing['90+'] || 0);
+      } else if (cfSorted.length) {
+        var snap = null;
+        for (var si = cfSorted.length - 1; si >= 0; si--) {
+          var row = cfSorted[si];
+          var hasAr = ['AR 0-30', 'AR 31-60', 'AR 61-90', 'AR 90+'].some(function(k) {
+            return String(col(row, k) || '').trim() !== '';
+          });
+          if (hasAr) { snap = row; break; }
+        }
+        if (snap) {
+          hasInvoiceAgeing = true;
+          byAgeing['0-30'] = parseNum(col(snap, 'AR 0-30'));
+          byAgeing['31-60'] = parseNum(col(snap, 'AR 31-60'));
+          byAgeing['61-90'] = parseNum(col(snap, 'AR 61-90'));
+          byAgeing['90+'] = parseNum(col(snap, 'AR 90+'));
+          debtorsOpen = byAgeing['0-30'] + byAgeing['31-60'] + byAgeing['61-90'] + byAgeing['90+'];
+          overdueDebtors = byAgeing['31-60'] + byAgeing['61-90'] + byAgeing['90+'];
+        }
+      }
+
+      var cashStatus = { key: 'muted', label: 'Awaiting data' };
+      if (cashAvail != null) {
+        if (lowestBal != null && lowestBal < 0) cashStatus = { key: 'off-track', label: 'Off track' };
+        else if (lowestBal != null && cashAvail > 0 && lowestBal < cashAvail * 0.4) cashStatus = { key: 'watch', label: 'Watch' };
+        else cashStatus = { key: 'on-track', label: 'On track' };
+      }
+      setCard('kpi-p1-cash', 'kpi-p1-cash-sub', 'kpi-p1-cash-meta', 'kpi-p1-cash-note', 'p1-st-cash', {
+        cardId: 'p1-kpi-cash',
+        hero: cashAvail != null ? formatCurrency(cashAvail) : 'Pending',
+        sub: cashAvail != null
+          ? ('Available cash · first 13-week close')
+          : 'Awaiting CashFlow_Forecast Closing Balance',
+        meta: lowestBal != null
+          ? ('Lowest in 13 wks ' + formatCurrency(lowestBal))
+          : '13-week low: Pending',
+        note: hasInvoiceAgeing
+          ? ('Overdue debtors 30+ ' + formatCurrency(overdueDebtors) + ' · open AR ' + formatCurrency(debtorsOpen))
+          : 'Overdue debtors: Pending',
+        statusKey: cashAvail == null ? 'muted' : cashStatus.key,
+        statusLabel: cashAvail == null ? 'Awaiting data' : cashStatus.label
+      });
+      if (cashStatus.key === 'off-track') {
+        pushAction('High', 'Cash forecast dips below zero in 13-week outlook',
+          lowestBal != null ? formatCurrency(lowestBal) : 'See Cash KPI', 'Finance', 'Protect collections and major outflows');
+      } else if (cashStatus.key === 'watch') {
+        pushAction('Medium', 'Cash cushion tight in 13-week outlook',
+          lowestBal != null ? formatCurrency(lowestBal) : 'See Cash KPI', 'Finance', 'Review AR collections timing');
+      }
+      if (hasInvoiceAgeing && overdueDebtors > 0) {
+        pushAction('Medium', 'Overdue debtors (31 days+)', formatCurrency(overdueDebtors), 'Finance', 'Chase aged receivables');
+      }
+
+      // ── Secured Workload ──
+      // Live backlog proxy: sum Total Budget on active Xero projects.
+      // Months of coverage / required target: no live field → Pending components.
+      var securedBacklog = null;
+      var securedJobs = 0;
+      brandProjects.forEach(function(r) {
         var st = String(col(r, 'Status', 'status') || '').toLowerCase();
-        return st && st !== 'completed' && st !== 'complete' && st !== 'closed' &&
-               st !== 'cancelled' && st !== 'canceled';
-      }).length;
-      // No Active Jobs Target column on Targets tab yet
-      var activeJobsTarget = null;
-
-      setKPI('kpi-revenue-target',    'kpi-revenue-target-sub',    revTarget    ? formatCurrency(revTarget) : '—', revTarget    ? monthYear + ' target' : 'Check Targets tab');
-      setKPI('kpi-margin-target',     'kpi-margin-target-sub',     marginTarget ? formatPct(marginTarget)   : '—', marginTarget ? 'Gross margin target' : 'Check Targets tab');
-      setKPI('kpi-lead-target',       'kpi-lead-target-sub',       leadsTarget  || '—', leadsTarget  ? 'Monthly leads target' : 'Check Targets tab');
-      setKPI('kpi-jobs-target',       'kpi-jobs-target-sub',       jobsTarget   || '—', jobsTarget   ? 'Jobs won target'      : 'Check Targets tab');
-      setKPI('kpi-quote-target', 'kpi-quote-target-sub',
-        quotesTarget || '—',
-        quotesTarget ? 'Quote volume target' : 'Quote Volume not set in Targets');
-      setKPI('kpi-activejobs-target', 'kpi-activejobs-target-sub',
-        activeJobsActual || '—',
-        activeJobsTarget
-          ? 'Active jobs target'
-          : (activeJobsActual ? 'Open Xero projects · no target in Targets' : 'No active-jobs target in Targets'));
-
-      setKpiProgress('kpi-revenue-progress', revActual, revTarget || null, 'kpi-revenue-exceeded');
-      setKpiProgress('kpi-margin-progress', marginActual, marginTarget || null, 'kpi-margin-exceeded');
-      setKpiProgress('kpi-lead-progress', hasLeadActuals ? leadsActual : null, leadsTarget || null, 'kpi-lead-exceeded');
-      setKpiProgress('kpi-jobs-progress', hasLeadActuals ? jobsActual : null, jobsTarget || null, 'kpi-jobs-exceeded');
-      setKpiProgress('kpi-quote-progress', hasLeadActuals ? quotesActual : null, quotesTarget || null, 'kpi-quote-exceeded');
-      setKpiProgress('kpi-activejobs-progress', activeJobsActual || null, activeJobsTarget, 'kpi-activejobs-exceeded');
-
-      // ── Sparklines: trailing 6 months (brand-scoped; omit if <2 pts) ─
-      var sparkMonths = trailingMonthKeys(kpiMonthKey, 6);
-      var brandXero = filterByBrand(xeroFinancials || [], activeBrand);
-      var brandLeads = filterByBrand(ghlLeads || [], activeBrand);
-      var brandWeekly = filterByBrand(weeklySummary || [], activeBrand);
-
-      var revByMonth = {};
-      var revXeroMonths = {};
-      brandXero.forEach(function(r) {
-        var k = normalizeMonthKey(monthKey(r));
-        if (!k) return;
-        revXeroMonths[k] = true;
-        revByMonth[k] = (revByMonth[k] || 0) +
-          parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
+        if (st === 'completed' || st === 'complete' || st === 'closed' ||
+            st === 'cancelled' || st === 'canceled') return;
+        var live = readXeroProjectLive(r);
+        if (!p4MoneyPresent(live.totalBudgetRaw)) return;
+        securedJobs++;
+        securedBacklog = (securedBacklog || 0) + parseNum(live.totalBudgetRaw);
       });
-      brandWeekly.forEach(function(r) {
-        var k = normalizeMonthKey(monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start'))));
-        if (!k || revXeroMonths[k]) return;
-        revByMonth[k] = (revByMonth[k] || 0) + parseNum(col(r, 'Revenue ($)', 'Revenue'));
+      var monthsCoverage = null; // no required capacity run-rate field live
+      setCard('kpi-p1-wl', 'kpi-p1-wl-sub', 'kpi-p1-wl-meta', 'kpi-p1-wl-note', 'p1-st-wl', {
+        cardId: 'p1-kpi-wl',
+        hero: securedBacklog != null ? formatCurrency(securedBacklog) : 'Pending',
+        sub: securedBacklog != null
+          ? ('Active contract value · ' + securedJobs + ' job' + (securedJobs !== 1 ? 's' : ''))
+          : 'Awaiting Total Budget on Xero_Projects',
+        meta: 'Months of coverage: Pending',
+        note: 'Required coverage target: Pending · no live run-rate source',
+        statusKey: securedBacklog == null ? 'muted' : 'on-track',
+        statusLabel: securedBacklog == null ? 'Awaiting data' : 'On track'
       });
 
-      var marginSumByMonth = {};
-      var marginCntByMonth = {};
-      brandXero.forEach(function(r) {
-        var k = normalizeMonthKey(monthKey(r));
-        if (!k) return;
-        var raw = col(r, 'Gross Margin %', 'Gross Margin', 'GP%');
-        if (raw === '' || raw === null || raw === undefined) return;
-        var n = asPct(parseNum(raw));
-        if (n === null || isNaN(n)) return;
-        marginSumByMonth[k] = (marginSumByMonth[k] || 0) + n;
-        marginCntByMonth[k] = (marginCntByMonth[k] || 0) + 1;
+      // ── Project Health (shared P4 path) ──
+      var ph = buildProjectHealthRollups(schedule, labour, xeroProjects, {
+        brand: activeBrand,
+        year: activeYear,
+        months: activeMonths
       });
-      var marginByMonth = {};
-      Object.keys(marginSumByMonth).forEach(function(k) {
-        marginByMonth[k] = marginSumByMonth[k] / marginCntByMonth[k];
+      var activeList = (ph.allRollups || []).filter(function(p) { return p.isActive; });
+      var nOn = activeList.filter(function(p) { return p.health === 'on-track'; }).length;
+      var nWatch = activeList.filter(function(p) { return p.health === 'watch'; }).length;
+      var nRisk = activeList.filter(function(p) { return p.health === 'at-risk'; }).length;
+      var healthStatus = { key: 'muted', label: 'Awaiting data' };
+      if (activeList.length) {
+        if (nRisk > 0) healthStatus = { key: 'off-track', label: 'Off track' };
+        else if (nWatch > 0) healthStatus = { key: 'watch', label: 'Watch' };
+        else healthStatus = { key: 'on-track', label: 'On track' };
+      }
+      setCard('kpi-p1-health', 'kpi-p1-health-sub', 'kpi-p1-health-meta', 'kpi-p1-health-note', 'p1-st-health', {
+        cardId: 'p1-kpi-health',
+        hero: activeList.length ? (nOn + ' on track') : 'Pending',
+        sub: activeList.length
+          ? (nWatch + ' attention · ' + nRisk + ' delayed / at risk')
+          : 'Awaiting Buildpass schedule + P4 rollup',
+        meta: activeList.length ? (activeList.length + ' active projects') : '',
+        note: 'Change vs last month: Pending (no prior snapshot stored)',
+        statusKey: activeList.length ? healthStatus.key : 'muted',
+        statusLabel: activeList.length ? healthStatus.label : 'Awaiting data'
       });
+      if (nRisk > 0) {
+        pushAction('High', nRisk + ' project' + (nRisk !== 1 ? 's' : '') + ' at risk (P4 rules)',
+          'See Portfolio health', 'Project leads', 'Open Job Performance and clear blockers');
+      }
 
-      var leadsByMonth = {};
-      var jobsByMonth = {};
-      var quotesByMonth = {};
-      brandLeads.forEach(function(r) {
-        var d = col(r, 'Date Created', 'Created Date', 'created_date', 'Date', 'date',
-                    'Last Activity Date', 'Quote Sent Date', 'Close Date') || '';
-        var k = normalizeMonthKey(monthLabelFromParts(parseRowDateParts(d)));
-        if (!k && (r['Month'] || r['month'])) k = normalizeMonthKey(monthKey(r));
-        if (!k) return;
-        leadsByMonth[k] = (leadsByMonth[k] || 0) + 1;
-        var stage = stageOf(r);
-        var status = statusOf(r);
-        if (isWonStatus(status) || stage.toLowerCase() === 'won') {
-          jobsByMonth[k] = (jobsByMonth[k] || 0) + 1;
-        }
-        if (isQuotedStage(stage) || isWonStatus(status) || stage.toLowerCase() === 'won' ||
-            !!col(r, 'Quote Sent Date', 'quote_sent_date')) {
-          quotesByMonth[k] = (quotesByMonth[k] || 0) + 1;
-        }
-      });
+      // ── Performance vs plan chart (12 months) ──
+      var monthLabels = [];
+      var monthKeys12 = [];
+      for (var m12 = 0; m12 < 12; m12++) {
+        monthKeys12.push(monthKeyFromYM(filterYear, m12));
+        monthLabels.push(_MONTH_ABBR[m12]);
+      }
+      var isFutureMonth = function(mIdx) {
+        if (filterYear > clockYear) return true;
+        if (filterYear < clockYear) return false;
+        return mIdx > clockMonthIdx;
+      };
 
-      renderSparkline('kpi-revenue-spark', sparkValuesForKeys(sparkMonths, revByMonth));
-      renderSparkline('kpi-margin-spark', sparkValuesForKeys(sparkMonths, marginByMonth));
-      renderSparkline('kpi-lead-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
-      renderSparkline('kpi-jobs-spark', sparkValuesForKeys(sparkMonths, jobsByMonth));
-      renderSparkline('kpi-quote-spark', sparkValuesForKeys(sparkMonths, quotesByMonth));
-      // Active jobs: snapshot only in Xero_Projects — no monthly history → omit
-      renderSparkline('kpi-activejobs-spark', null);
+      function seriesByMonth(rows, names, useAvgPct) {
+        return monthKeys12.map(function(k) {
+          var hits = rowsForMonthKey(rows, k);
+          if (!hits.length) return null;
+          if (useAvgPct) return avgPctField(hits, names);
+          return sumField(hits, names);
+        });
+      }
 
-      // ── Chart: Target (outline) vs Actual (fill) ────────────────
-      var monthOrder = [];
-      filtered.forEach(function(r) {
-        var key = monthKey(r);
-        if (key.trim() && monthOrder.indexOf(key) === -1) monthOrder.push(key);
-      });
+      function targetSeries(nameKeys) {
+        return monthKeys12.map(function(k) {
+          var hits = yearTargets.filter(function(r) {
+            return normalizeMonthKey(monthKey(r)) === normalizeMonthKey(k);
+          });
+          if (!hits.length) {
+            hits = yearTargets.filter(function(r) {
+              var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+              var q = parseMonthYearKey(k);
+              return p && q && p.month === q.month && p.year === q.year;
+            });
+          }
+          return sumField(hits, nameKeys);
+        });
+      }
 
-      var targetData = monthOrder.map(function(m) {
-        return filtered.filter(function(r) { return monthKey(r) === m; })
-                       .reduce(function(s, r) { return s + parseNum(r['Revenue Target ($)']); }, 0);
-      });
-
-      // Actual revenue by month — Xero_Financials first (P5), then Weekly, then Won deals
-      var actualByMonth = {};
-      var xeroMonths = {};
-      xeroFiltered.forEach(function(r) {
-        var k = monthKey(r);
-        if (!k.trim()) return;
-        xeroMonths[k] = true;
-        actualByMonth[k] = (actualByMonth[k] || 0) +
-          parseNum(col(r, 'Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'));
-      });
-      weeklyFiltered.forEach(function(r) {
-        var k = monthLabelFromParts(parseRowDateParts(col(r, 'Week Start', 'week_start')));
-        if (!k || xeroMonths[k]) return;
-        actualByMonth[k] = (actualByMonth[k] || 0) + parseNum(col(r, 'Revenue ($)', 'Revenue'));
-      });
-      monthOrder.forEach(function(m) {
-        if (actualByMonth[m] !== undefined) return;
-        var wonSum = pipeFiltered.reduce(function(s, r) {
-          if (!isWonStatus(statusOf(r)) && stageOf(r).toLowerCase() !== 'won') return s;
-          var d = col(r, 'Close Date', 'close_date', 'Created Date', 'created_date', 'Date Created') || '';
-          var k = monthLabelFromParts(parseRowDateParts(d));
-          if (k !== m) return s;
-          return s + parseNum(col(r, 'Value ($)', 'Value', 'value', 'Deal Value'));
-        }, 0);
-        if (wonSum > 0) actualByMonth[m] = wonSum;
-      });
-
-      var actualData = monthOrder.map(function(m) {
-        return actualByMonth[m] !== undefined ? actualByMonth[m] : 0;
-      });
-
-      var yTicks = {
-        callback: function(v) {
-          return '$' + (v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+      window._p1PlanSeries = {
+        revenue: {
+          actual: seriesByMonth(yearXero, ['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'], false),
+          target: targetSeries(['Revenue Target ($)', 'Revenue Target']),
+          prior: seriesByMonth(
+            brandXero.filter(function(r) {
+              var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+              return p && p.year === filterYear - 1;
+            }),
+            ['Total Revenue ($)', 'Total Revenue', 'Revenue ($)', 'Revenue'], false
+          )
+        },
+        gp: {
+          actual: seriesByMonth(yearXero, ['Gross Profit ($)', 'Gross Profit'], false),
+          target: monthKeys12.map(function() { return null; }), // no dedicated GP $ target column reliably
+          prior: seriesByMonth(
+            brandXero.filter(function(r) {
+              var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+              return p && p.year === filterYear - 1;
+            }),
+            ['Gross Profit ($)', 'Gross Profit'], false
+          )
+        },
+        op: {
+          actual: seriesByMonth(yearXero, ['Net Profit ($)', 'Net Profit', 'Operating Profit ($)', 'Operating Profit'], false),
+          target: targetSeries(['Profit Target ($)', 'Profit Target', 'Net Profit Target ($)']),
+          prior: seriesByMonth(
+            brandXero.filter(function(r) {
+              var p = parseMonthYearKey(normalizeMonthKey(monthKey(r)));
+              return p && p.year === filterYear - 1;
+            }),
+            ['Net Profit ($)', 'Net Profit', 'Operating Profit ($)', 'Operating Profit'], false
+          )
         }
       };
 
-      makeChart('chart-p1-revenue', {
-        type: 'bar',
-        data: {
-          labels: monthOrder,
-          datasets: [
-            {
-              label: 'Target',
-              data: targetData,
-              backgroundColor: 'rgba(0,0,0,0)',
-              borderColor: '#BCBDBE',
-              borderWidth: 2,
-              borderRadius: 2,
-              order: 2
-            },
-            {
-              label: 'Actual Revenue',
-              data: actualData,
-              backgroundColor: '#262425',
-              borderColor: '#262425',
-              borderWidth: 0,
-              borderRadius: 2,
-              order: 1
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0); }
-              }
-            }
-          },
-          scales: {
-            x: { grid: { display: false } },
-            y: {
-              beginAtZero: true,
-              ticks: yTicks,
-              // Quiet grid lines so bars stay primary
-              grid: { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 }
-            }
-          }
-        }
+      // Simple forecast line: for future months, use target if present else null (no invent)
+      Object.keys(window._p1PlanSeries).forEach(function(mk) {
+        var s = window._p1PlanSeries[mk];
+        s.forecast = monthKeys12.map(function(k, i) {
+          if (!isFutureMonth(i)) return null;
+          if (s.target[i] != null) return s.target[i];
+          return null;
+        });
+        s.actualBars = s.actual.map(function(v, i) {
+          if (isFutureMonth(i)) return null;
+          return v;
+        });
+        s.futureBars = s.actual.map(function(v, i) {
+          // future target as light forecast fill when no actual
+          if (!isFutureMonth(i)) return null;
+          return s.target[i];
+        });
       });
 
-      // ── Table — zebra + inline % bars for Win Rate / Gross Margin ─
-      var marginNums = filtered.map(function(r) { return asPct(parseNum(r['Gross Margin Target %'])) || 0; });
-      var winNums    = filtered.map(function(r) { return asPct(parseNum(r['Win Rate target'])) || 0; });
-      var maxMargin  = Math.max.apply(null, marginNums.concat([1]));
-      var maxWin     = Math.max.apply(null, winNums.concat([1]));
+      function drawPlanChart(metric) {
+        var pack = window._p1PlanSeries[metric] || window._p1PlanSeries.revenue;
+        var yTicks = {
+          callback: function(v) {
+            return '$' + (Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
+              : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+          }
+        };
+        var datasets = [
+          {
+            type: 'bar',
+            label: 'Actual',
+            data: pack.actualBars,
+            backgroundColor: P1.text,
+            borderWidth: 0,
+            order: 3,
+            barPercentage: 0.7,
+            categoryPercentage: 0.8
+          },
+          {
+            type: 'bar',
+            label: 'Forecast band',
+            data: pack.futureBars,
+            backgroundColor: 'rgba(37, 99, 235, 0.18)',
+            borderWidth: 0,
+            order: 4
+          },
+          {
+            type: 'bar',
+            label: 'Prior year',
+            data: pack.prior,
+            backgroundColor: 'rgba(107, 114, 128, 0.28)',
+            borderWidth: 0,
+            order: 5
+          },
+          {
+            type: 'line',
+            label: 'Target',
+            data: pack.target,
+            borderColor: P1.muted,
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.15,
+            order: 1
+          },
+          {
+            type: 'line',
+            label: 'Forecast',
+            data: pack.forecast,
+            borderColor: P1.action,
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            tension: 0.15,
+            order: 2
+          }
+        ];
+        // Drop fully-null series so legend stays honest
+        datasets = datasets.filter(function(ds) {
+          return (ds.data || []).some(function(v) { return v !== null && v !== undefined; });
+        });
 
-      function pctBarHtml(display, pctVal, maxVal) {
-        if (display === '' || display === null || display === undefined) return '—';
-        var n = asPct(parseNum(display));
-        if (n === null || isNaN(n)) return display || '—';
-        var w = Math.max(0, Math.min(100, (n / maxVal) * 100));
-        var text = String(display).indexOf('%') !== -1 ? String(display) : formatPct(n);
-        return '<div class="pct-bar-cell">' +
-          '<div class="pct-bar-fill" style="width:' + w + '%"></div>' +
-          '<span class="pct-bar-text">' + text + '</span></div>';
+        var hint = document.getElementById('p1-plan-hint');
+        if (hint) {
+          if (metric === 'gp' && !(pack.target || []).some(function(v) { return v != null; })) {
+            hint.textContent = 'Gross Profit targets: Pending (no dedicated GP $ target column). Actuals from Xero_Financials when live. Future months lighter.';
+          } else {
+            hint.textContent = 'Actual columns, solid target line, dashed forecast. Future months shown lighter. Metric: ' +
+              (metric === 'gp' ? 'Gross Profit' : metric === 'op' ? 'Operating Profit' : 'Revenue') + '.';
+          }
+        }
+
+        makeChart('chart-p1-plan', {
+          type: 'bar',
+          data: { labels: monthLabels, datasets: datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { boxWidth: 10, color: P1.muted, font: { size: 10 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    if (ctx.raw === null || ctx.raw === undefined) return ctx.dataset.label + ': Pending';
+                    return ctx.dataset.label + ': ' + formatCurrency(ctx.raw);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: P1.muted, maxRotation: 0, font: { size: 10 } }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: Object.assign({ color: P1.muted, font: { size: 10 } }, yTicks),
+                grid: { color: 'rgba(226, 228, 232, 0.9)', lineWidth: 1 }
+              }
+            }
+          }
+        });
       }
 
-      var tableCols = [
-        { label: 'Month',    key: 'Month' },
-        { label: 'Division', key: 'Division' },
-        { label: 'Revenue Target',    key: 'Revenue Target ($)',                  format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
-        { label: 'Profit Target',     key: 'Profit Target ($)',                   format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
-        { label: 'Gross Margin',      key: 'Gross Margin Target %',               format: function(v){ return pctBarHtml(v, asPct(parseNum(v)), maxMargin); } },
-        { label: 'Leads Target',      key: 'Leads Target (monthly)',              format: function(v){ return v || '—'; } },
-        { label: 'Jobs Won Target',   key: 'Jobs Won Target',                     format: function(v){ return v || '—'; } },
-        { label: 'Win Rate',          key: 'Win Rate target',                     format: function(v){ return pctBarHtml(v, asPct(parseNum(v)), maxWin); } },
-        { label: 'Overhead Budget',   key: 'Overhead Budget $ (Monthly Expenses)',format: function(v){ return v ? formatCurrency(parseNum(v)) : '—'; } },
-        { label: 'Labour Hrs Budget', key: 'Labour Hour Budget',                  format: function(v){ return v || '—'; } }
-      ];
-      document.getElementById('p1-targets-table').innerHTML = buildTable(filtered, tableCols);
-      var p1Table = document.querySelector('#p1-targets-table .data-table');
-      if (p1Table) p1Table.classList.add('p1-targets-zebra');
+      if (!_p1PlanBound) {
+        _p1PlanBound = true;
+        var toggles = document.getElementById('p1-plan-toggle');
+        if (toggles) {
+          toggles.addEventListener('click', function(e) {
+            var btn = e.target.closest('.p1-toggle-btn');
+            if (!btn) return;
+            _p1PlanMetric = btn.getAttribute('data-metric') || 'revenue';
+            toggles.querySelectorAll('.p1-toggle-btn').forEach(function(b) {
+              b.classList.toggle('is-active', b === btn);
+            });
+            drawPlanChart(_p1PlanMetric);
+          });
+        }
+      }
+      // Sync active button
+      var togRoot = document.getElementById('p1-plan-toggle');
+      if (togRoot) {
+        togRoot.querySelectorAll('.p1-toggle-btn').forEach(function(b) {
+          b.classList.toggle('is-active', b.getAttribute('data-metric') === _p1PlanMetric);
+        });
+      }
+      drawPlanChart(_p1PlanMetric);
+
+      // ── Portfolio health panel ──
+      var countsEl = document.getElementById('p1-health-counts');
+      if (countsEl) {
+        if (!activeList.length) {
+          countsEl.innerHTML = '<p class="p1-pending-line">Portfolio counts: Pending / Awaiting schedule data</p>';
+        } else {
+          countsEl.innerHTML =
+            '<div class="p1-count p1-count--ok"><span class="p1-count-n">' + nOn + '</span><span class="p1-count-l">On track</span></div>' +
+            '<div class="p1-count p1-count--watch"><span class="p1-count-n">' + nWatch + '</span><span class="p1-count-l">Attention</span></div>' +
+            '<div class="p1-count p1-count--off"><span class="p1-count-n">' + nRisk + '</span><span class="p1-count-l">Delayed</span></div>';
+        }
+      }
+      var metEl = document.getElementById('p1-portfolio-metrics');
+      if (metEl) {
+        var valueAtRisk = 0;
+        var valueAtRiskN = 0;
+        var slipDays = [];
+        activeList.forEach(function(p) {
+          if (p.health === 'at-risk' || p.health === 'watch') {
+            if (p.totalBudget != null) {
+              valueAtRisk += p.totalBudget;
+              valueAtRiskN++;
+            }
+          }
+          if (p.maxSlipDays > 0) slipDays.push(p.maxSlipDays);
+        });
+        var avgSlip = slipDays.length
+          ? Math.round(slipDays.reduce(function(s, n) { return s + n; }, 0) / slipDays.length)
+          : null;
+        metEl.innerHTML =
+          '<div class="p1-metric-line"><span>Total value at risk</span><strong>' +
+            (valueAtRiskN ? formatCurrency(valueAtRisk) : 'Pending') +
+          '</strong></div>' +
+          '<div class="p1-metric-line"><span>Expected completion slippage</span><strong>' +
+            (avgSlip != null ? avgSlip + ' days avg (open slips)' : 'Pending') +
+          '</strong></div>';
+      }
+
+      var tableEl = document.getElementById('p1-portfolio-table');
+      if (tableEl) {
+        var ranked = activeList.slice().sort(function(a, b) {
+          var rank = { 'at-risk': 0, watch: 1, 'on-track': 2 };
+          var ra = rank[a.health] != null ? rank[a.health] : 9;
+          var rb = rank[b.health] != null ? rank[b.health] : 9;
+          if (ra !== rb) return ra - rb;
+          return (b.maxSlipDays || 0) - (a.maxSlipDays || 0);
+        }).slice(0, 5);
+        if (!ranked.length) {
+          tableEl.innerHTML = '<p class="p1-pending-line">No active projects for current filters.</p>';
+        } else {
+          var th = '<table class="data-table p1-table"><thead><tr>' +
+            '<th>Project</th><th>Contract Value</th><th>Completion %</th><th>Forecast Margin</th>' +
+            '<th>Schedule status</th><th>Primary issue</th></tr></thead><tbody>';
+          ranked.forEach(function(p) {
+            var issue = '-';
+            if (p.handsSignal === 'Needs More Hands') issue = 'Needs more hands';
+            else if (p.handsSignal === 'Understaffed, Being Addressed') issue = 'Understaffed (addressing)';
+            else if (p.maxSlipDays >= 21) issue = 'Slippage ' + p.maxSlipDays + 'd';
+            else if (p.overdueCount >= 2) issue = p.overdueCount + ' overdue milestones';
+            else if (p.overdueCount === 1) issue = '1 overdue milestone';
+            else if (p.health === 'watch') issue = 'Progress lag vs time';
+            else if (p.health === 'on-track') issue = '-';
+            th += '<tr>' +
+              '<td>' + esc(p.project) + '</td>' +
+              '<td class="text-right">' + (p.totalBudget != null ? p4FormatMoneyAbbrev(p.totalBudget) : 'Pending') + '</td>' +
+              '<td class="text-right">' + (p.progressAvg != null ? p.progressAvg + '%' : 'Pending') + '</td>' +
+              '<td class="text-right">' + (p.forecastMarginPending ? 'Pending' : formatPct(p.forecastMargin)) + '</td>' +
+              '<td><span class="p1-status-pill p1-status-pill--' + esc(p.health) + '">' + esc(p4HealthLabel(p.health)) + '</span></td>' +
+              '<td>' + esc(issue) + '</td></tr>';
+          });
+          th += '</tbody></table>';
+          tableEl.innerHTML = th;
+        }
+      }
+
+      var gotoP4 = document.getElementById('p1-goto-p4');
+      if (gotoP4 && !_p1NavBound) {
+        _p1NavBound = true;
+        gotoP4.addEventListener('click', function() {
+          showPage('p4');
+          if (typeof loadP4 === 'function') loadP4();
+          if (typeof init3DTilt === 'function') init3DTilt();
+        });
+      }
+
+      // ── Cash outlook panel ──
+      var cashKpis = document.getElementById('p1-cash-kpis');
+      if (cashKpis) {
+        cashKpis.innerHTML =
+          '<div class="p1-mini"><span class="p1-mini-l">13-week low</span><span class="p1-mini-v">' +
+            (lowestBal != null ? formatCurrency(lowestBal) : 'Pending') + '</span></div>' +
+          '<div class="p1-mini"><span class="p1-mini-l">Available cash</span><span class="p1-mini-v">' +
+            (cashAvail != null ? formatCurrency(cashAvail) : 'Pending') + '</span></div>';
+      }
+      if (cfSorted.length && cashSeries.length) {
+        makeChart('chart-p1-cash13', {
+          type: 'line',
+          data: {
+            labels: cashLabels,
+            datasets: [{
+              label: 'Closing Balance',
+              data: cashSeries,
+              borderColor: P1.text,
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: P1.muted, maxRotation: 45, font: { size: 9 } } },
+              y: {
+                ticks: {
+                  color: P1.muted,
+                  font: { size: 9 },
+                  callback: function(v) {
+                    return '$' + (Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
+                      : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+                  }
+                },
+                grid: { color: 'rgba(226,228,232,0.9)' }
+              }
+            }
+          }
+        });
+      } else if (_charts['chart-p1-cash13']) {
+        _charts['chart-p1-cash13'].destroy();
+        delete _charts['chart-p1-cash13'];
+      }
+
+      var debtEl = document.getElementById('p1-debtors');
+      if (debtEl) {
+        if (!hasInvoiceAgeing) {
+          debtEl.innerHTML = '<p class="p1-pending-line">Debtors 30 / 60 / 90: Pending · major receipts/payments: check CashFlow_Forecast rows</p>';
+        } else {
+          debtEl.innerHTML =
+            '<div class="p1-debtor-grid">' +
+              '<div><span>0-30</span><strong>' + formatCurrency(byAgeing['0-30'] || 0) + '</strong></div>' +
+              '<div><span>31-60</span><strong>' + formatCurrency(byAgeing['31-60'] || 0) + '</strong></div>' +
+              '<div><span>61-90</span><strong>' + formatCurrency(byAgeing['61-90'] || 0) + '</strong></div>' +
+              '<div><span>90+</span><strong>' + formatCurrency(byAgeing['90+'] || 0) + '</strong></div>' +
+            '</div>';
+        }
+      }
+
+      // ── Workload / capacity ──
+      var wlBody = document.getElementById('p1-workload-body');
+      if (wlBody) {
+        var pipeWeighted = null;
+        var pipeAny = false;
+        brandPipe.forEach(function(r) {
+          var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+          var stage = String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').toLowerCase();
+          if (st === 'won' || stage === 'won' || st === 'lost' || stage === 'lost') return;
+          var val = parseNum(col(r, 'Value ($)', 'Value', 'value', 'Deal Value'));
+          if (!val) return;
+          pipeAny = true;
+          // No live probability column assumed - mark component pending rather than invent weight
+        });
+        // Stack: secured (live) → probable (pending) → gap (pending)
+        var secured = securedBacklog;
+        wlBody.innerHTML =
+          '<div class="p1-stack">' +
+            '<div class="p1-stack-row"><span>Secured (active contracts)</span><strong>' +
+              (secured != null ? formatCurrency(secured) : 'Pending') + '</strong></div>' +
+            '<div class="p1-stack-bar" aria-hidden="true">' +
+              '<span class="p1-stack-seg p1-stack-seg--secured" style="width:' +
+                (secured != null ? '62%' : '0%') + '"></span>' +
+              '<span class="p1-stack-seg p1-stack-seg--prob" style="width:0%"></span>' +
+              '<span class="p1-stack-seg p1-stack-seg--gap" style="width:' +
+                (secured != null ? '38%' : '100%') + '"></span>' +
+            '</div>' +
+            '<div class="p1-stack-row"><span>Pipeline-weighted (6 mo)</span><strong>Pending</strong></div>' +
+            '<div class="p1-stack-row"><span>Labour capacity (6 mo)</span><strong>Pending</strong></div>' +
+            '<div class="p1-stack-row"><span>Expected capacity gap</span><strong>Pending</strong></div>' +
+            '<p class="p1-pending-line">' +
+              (pipeAny
+                ? 'Open pipeline rows exist but no live win-probability field for weighted 6-month load.'
+                : 'Pipeline weighting and labour capacity require sources not yet wired for coverage maths.') +
+            '</p>' +
+          '</div>';
+      }
+
+      // ── Executive action panel ──
+      var actEl = document.getElementById('p1-action-table');
+      if (actEl) {
+        if (!actions.length) {
+          actEl.innerHTML = '<p class="p1-pending-line">No exceptions flagged from live sources for this period.</p>';
+        } else {
+          var priRank = { High: 0, Medium: 1, Low: 2 };
+          actions.sort(function(a, b) {
+            return (priRank[a.priority] != null ? priRank[a.priority] : 9) -
+              (priRank[b.priority] != null ? priRank[b.priority] : 9);
+          });
+          var ah = '<table class="data-table p1-table"><thead><tr>' +
+            '<th>Priority</th><th>Issue</th><th>Financial Impact</th><th>Owner</th><th>Required Action</th>' +
+            '</tr></thead><tbody>';
+          actions.forEach(function(a) {
+            ah += '<tr>' +
+              '<td><span class="p1-priority p1-priority--' + esc(String(a.priority).toLowerCase()) + '">' +
+                esc(a.priority) + '</span></td>' +
+              '<td>' + esc(a.issue) + '</td>' +
+              '<td>' + esc(a.impact) + '</td>' +
+              '<td>' + esc(a.owner) + '</td>' +
+              '<td>' + esc(a.action) + '</td></tr>';
+          });
+          ah += '</tbody></table>';
+          actEl.innerHTML = ah;
+        }
+      }
+
+      // ── Data quality one-liner ──
+      var dq = document.getElementById('p1-data-quality');
+      if (dq) {
+        var bits = [];
+        if (revActualMtd == null) bits.push('Revenue MTD pending');
+        if (gmActual == null) bits.push('Gross margin pending');
+        if (opActualYtd == null) bits.push('Operating profit pending');
+        if (cashAvail == null) bits.push('Cash closing balance pending');
+        if (securedBacklog == null) bits.push('Secured workload pending');
+        if (!activeList.length) bits.push('Project health awaiting schedule');
+        bits.push('Forecast margin / Total Actual await Xero_Bills');
+        bits.push('Months-of-coverage target pending');
+        dq.textContent = 'Data quality: ' + bits.join(' · ');
+      }
+
+      // ── Collapsed annual targets detail ──
+      var det = document.getElementById('p1-targets-table');
+      if (det) {
+        if (!yearTargets.length) {
+          det.innerHTML = '<p class="p1-pending-line">No targets rows for selection.</p>';
+        } else {
+          var tableCols = [
+            { label: 'Month', key: 'Month' },
+            { label: 'Division', key: 'Division' },
+            { label: 'Revenue Target', key: 'Revenue Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
+            { label: 'Profit Target', key: 'Profit Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
+            { label: 'Gross Margin', key: 'Gross Margin Target %', format: function(v) {
+              var n = asPct(parseNum(v));
+              return n != null ? formatPct(n) : '-';
+            } }
+          ];
+          det.innerHTML = buildTable(yearTargets, tableCols);
+        }
+      }
+
+      setBBPageData('P1', 'P1: Executive Snapshot', {
+        period: periodTag,
+        periodNote: periodSourceNote,
+        kpis: {
+          revenue: { actualMtd: revActualMtd, actualYtd: revActualYtd, target: revTargetMtd, status: revStatus.label },
+          grossMargin: { actual: gmActual, target: gmTarget, status: gmStatus.label },
+          operatingProfit: { actualYtd: opActualYtd, budgetYtd: opTargetYtd, priorYtd: opPriorYtd },
+          cash: { available: cashAvail, lowest13: lowestBal, overdueDebtors: hasInvoiceAgeing ? overdueDebtors : null },
+          securedWorkload: { backlog: securedBacklog, monthsCoverage: null },
+          projectHealth: { onTrack: nOn, attention: nWatch, atRisk: nRisk }
+        },
+        portfolio: activeList.slice(0, 50).map(function(p) {
+          return {
+            project: p.project, health: p.health, progress: p.progressAvg,
+            totalBudget: p.totalBudget, maxSlipDays: p.maxSlipDays
+          };
+        }),
+        actions: actions,
+        pendingNote: 'Never invent numbers. Pending / Awaiting data when sources incomplete. Project health uses buildProjectHealthRollups (same P4 rules).'
+      });
     }
 
 
@@ -4704,37 +5243,30 @@
       return /commenc|start on site|possession|handover|practical completion|pc\b|roof|lock[- ]?up|slab/.test(s);
     }
 
-    function renderP4(schedule, labour, xeroProjects) {
-      window._p4ScheduleRows = schedule;
-      window._p4LabourRows = labour;
-      window._p4XeroProjects = xeroProjects;
-
+    /**
+     * Shared project-health rollup (P1 portfolio + P4 Job Performance).
+     * Same status algorithm: p4ClassifyProjectHealth (schedule slippage,
+     * overdue milestones, staffing trends, progress vs time). Do not fork.
+     */
+    function buildProjectHealthRollups(schedule, labour, xeroProjects, opts) {
+      opts = opts || {};
+      var brand = opts.brand != null ? opts.brand : 'ALL';
+      var year = opts.year != null ? opts.year : 'ALL';
+      var months = opts.months || [];
       var today = new Date();
       today.setHours(0, 0, 0, 0);
       var MS_DAY = 86400000;
 
-      // P4 chart tokens: test palette when .p4-test-palette is on #page-p4 only
-      var p4PaletteEl = document.getElementById('page-p4');
-      var p4UseTestPalette = !!(p4PaletteEl && p4PaletteEl.classList.contains('p4-test-palette'));
-      var brandCharcoal = p4UseTestPalette ? '#111827' : '#262425';
-      var brandSoftGray = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
-      var brandSilver = p4UseTestPalette ? '#E5E7EB' : '#D2D4D5';
-      var brandAccent = p4UseTestPalette ? '#EA580C' : brandCharcoal;
-      var brandAmber = '#F59E0B';
-      var brandMuted = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
-
-      function applyP4Filters(rows) {
+      function applyFilters(rows) {
         return filterByMonths(
-          filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
-          activeMonths
+          filterByYear(filterByBrand(rows || [], brand), year),
+          months
         );
       }
-      var schedRaw = applyP4Filters(schedule);
-      var labourFiltered = applyP4Filters(labour);
-      // Xero_Projects is a snapshot - brand filter only (same as P5)
-      var xeroFiltered = filterByBrand(xeroProjects || [], activeBrand);
+      var schedRaw = applyFilters(schedule);
+      var labourFiltered = applyFilters(labour);
+      var xeroFiltered = filterByBrand(xeroProjects || [], brand);
 
-      // Normalise each schedule row once
       var schedFiltered = schedRaw.map(function(r) {
         var startRaw = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date', 'Planned Start');
         var endRaw = col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date', 'Planned End');
@@ -4837,16 +5369,6 @@
         return jobsMatchByNumber(a, b);
       }
 
-      function p4FindXeroProject(jobRef) {
-        return findXeroProjectByJob(xeroProjects || [], jobRef);
-      }
-
-      // ── Needs More Hands (overdue projects) ─
-      var projectsFromSched = [];
-      schedFiltered.forEach(function(r) {
-        if (r.project && projectsFromSched.indexOf(r.project) === -1) projectsFromSched.push(r.project);
-      });
-
       var overdueItems = schedFiltered.filter(isOverdueNorm);
       var overdueProjects = [];
       overdueItems.forEach(function(r) {
@@ -4941,43 +5463,6 @@
         };
       });
 
-      function formatStatusBadge(status, overdue) {
-        var s = String(status || '').trim();
-        var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
-        if (lower === 'complete' || lower === 'completed') {
-          return '<span class="p4-badge p4-badge--completed">Completed</span>';
-        }
-        if (lower === 'cancelled' || lower === 'canceled') {
-          return '<span class="p4-badge p4-badge--muted">Cancelled</span>';
-        }
-        if (lower === 'in progress') {
-          return '<span class="p4-badge p4-badge--neutral">In Progress</span>';
-        }
-        if (lower === 'not started') {
-          return '<span class="p4-badge p4-badge--muted">Not Started</span>';
-        }
-        if (overdue || lower === 'overdue') {
-          return '<span class="p4-badge p4-badge--critical">OVERDUE</span>';
-        }
-        if (!s) return '';
-        return '<span class="p4-badge p4-badge--muted">' + s + '</span>';
-      }
-
-      function formatHealthBadge(healthKey) {
-        var label = p4HealthLabel(healthKey);
-        if (healthKey === 'at-risk') {
-          return '<span class="p4-health-pill p4-health-pill--risk"><i class="p4-health-dot"></i>' + label + '</span>';
-        }
-        if (healthKey === 'watch') {
-          return '<span class="p4-health-pill p4-health-pill--watch"><i class="p4-health-dot"></i>' + label + '</span>';
-        }
-        if (healthKey === 'on-track') {
-          return '<span class="p4-health-pill p4-health-pill--ok"><i class="p4-health-dot"></i>' + label + '</span>';
-        }
-        return '<span class="p4-health-pill p4-health-pill--muted"><i class="p4-health-dot"></i>' + label + '</span>';
-      }
-
-      // ── Aggregate labour by project ─
       var labourByProject = {};
       labourFiltered.forEach(function(r) {
         var project = p4LabourJobId(r);
@@ -5004,7 +5489,6 @@
         if (b && !labourByProject[project].brand) labourByProject[project].brand = b;
       });
 
-      // ── Build shared project rollup universe ─
       var rollupMap = {};
       function ensureRollup(name) {
         var key = String(name || '').trim();
@@ -5081,7 +5565,6 @@
 
       Object.keys(labourByProject).forEach(function(labKey) {
         var lab = labourByProject[labKey];
-        // Prefer match to existing schedule project name
         var matched = null;
         Object.keys(rollupMap).forEach(function(rk) {
           if (matched) return;
@@ -5095,7 +5578,6 @@
         if (lab.department && !p.department) p.department = lab.department;
       });
 
-      // Attach Xero fields
       (xeroFiltered || []).forEach(function(xRow) {
         var keys = xeroProjectJobKeys(xRow);
         if (!keys.length) return;
@@ -5107,7 +5589,6 @@
           }
         });
         if (!matched) {
-          // Include active Xero jobs even without schedule/labour rows
           var name = keys[0];
           matched = ensureRollup(
             col(xRow, 'Project Name', 'project_name', 'Project') || name
@@ -5140,7 +5621,6 @@
         if (created && !matched.minStart) matched.minStart = created;
       });
 
-      // Finalise each rollup
       var allRollups = Object.keys(rollupMap).map(function(k) { return rollupMap[k]; });
       allRollups.forEach(function(p) {
         if (p.progressVals.length) {
@@ -5150,14 +5630,12 @@
         }
         p.endDate = p.maxEnd;
         p.handsSignal = handsByProject[p.project] || '';
-        // Staffing lookup may use job# mismatch - try lab match keys
         if (!p.handsSignal) {
           overdueProjects.forEach(function(op) {
             if (!p.handsSignal && p4JobsMatch(op, p.project)) p.handsSignal = handsByProject[op] || '';
           });
         }
 
-        // Terminal states from milestones
         if (p.milestones.length) {
           var allCancelled = p.milestones.every(function(m) {
             var s = String(m.status || '').toLowerCase();
@@ -5178,7 +5656,6 @@
           }
         }
 
-        // Time elapsed vs planned span
         if (p.minStart && p.maxEnd && !isNaN(p.minStart.getTime()) && !isNaN(p.maxEnd.getTime())) {
           var span = p.maxEnd - p.minStart;
           if (span > 0) {
@@ -5188,24 +5665,21 @@
           }
         }
 
-        // Partial actual so far = labour + variations when present (Total Actual still incomplete)
         var soFar = 0;
         var hasPartial = false;
         if (p.actualLabour != null) { soFar += p.actualLabour; hasPartial = true; }
         if (p.actualVariations != null) { soFar += p.actualVariations; hasPartial = true; }
-        // Prefer timesheet labour cost when Xero actual-labour blank but Buildpass labour exists
         if (!hasPartial && p.labourCost > 0) {
           soFar = p.labourCost;
           hasPartial = true;
         }
         p.actualSoFar = hasPartial ? soFar : null;
-        // Total Actual (full) awaits Xero_Bills -> forecast margin/cost Pending
         p.totalActualComplete = false;
         p.forecastMarginPending = true;
         p.forecastCostPending = true;
         p.forecastMargin = null;
         p.forecastCost = null;
-        p.labourVariancePending = true; // no budgeted labour field in live sheets
+        p.labourVariancePending = true;
 
         if (p.totalBudget != null && p.totalBudget > 0 && p.actualSoFar != null) {
           p.budgetConsumedPct = (p.actualSoFar / p.totalBudget) * 100;
@@ -5217,6 +5691,91 @@
         p.isActive = !p.isCompleted && !p.isCancelled;
         p.health = p4ClassifyProjectHealth(p);
       });
+
+      return {
+        today: today,
+        MS_DAY: MS_DAY,
+        schedFiltered: schedFiltered,
+        labourFiltered: labourFiltered,
+        xeroFiltered: xeroFiltered,
+        allRollups: allRollups,
+        handsByProject: handsByProject,
+        handsDetail: handsDetail,
+        isOverdueNorm: isOverdueNorm,
+        p4JobsMatch: p4JobsMatch
+      };
+    }
+
+    function renderP4(schedule, labour, xeroProjects) {
+      window._p4ScheduleRows = schedule;
+      window._p4LabourRows = labour;
+      window._p4XeroProjects = xeroProjects;
+
+      // P4 chart tokens: test palette when .p4-test-palette is on #page-p4 only
+      var p4PaletteEl = document.getElementById('page-p4');
+      var p4UseTestPalette = !!(p4PaletteEl && p4PaletteEl.classList.contains('p4-test-palette'));
+      var brandCharcoal = p4UseTestPalette ? '#111827' : '#262425';
+      var brandSoftGray = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
+      var brandSilver = p4UseTestPalette ? '#E5E7EB' : '#D2D4D5';
+      var brandAccent = p4UseTestPalette ? '#EA580C' : brandCharcoal;
+      var brandAmber = '#F59E0B';
+      var brandMuted = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
+
+      var ph = buildProjectHealthRollups(schedule, labour, xeroProjects, {
+        brand: activeBrand,
+        year: activeYear,
+        months: activeMonths
+      });
+      var today = ph.today;
+      var MS_DAY = ph.MS_DAY;
+      var schedFiltered = ph.schedFiltered;
+      var labourFiltered = ph.labourFiltered;
+      var xeroFiltered = ph.xeroFiltered;
+      var allRollups = ph.allRollups;
+      var handsByProject = ph.handsByProject;
+      var handsDetail = ph.handsDetail;
+      var isOverdueNorm = ph.isOverdueNorm;
+      var p4JobsMatch = ph.p4JobsMatch;
+
+      function p4FindXeroProject(jobRef) {
+        return findXeroProjectByJob(xeroProjects || [], jobRef);
+      }
+
+      function formatStatusBadge(status, overdue) {
+        var s = String(status || '').trim();
+        var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+        if (lower === 'complete' || lower === 'completed') {
+          return '<span class="p4-badge p4-badge--completed">Completed</span>';
+        }
+        if (lower === 'cancelled' || lower === 'canceled') {
+          return '<span class="p4-badge p4-badge--muted">Cancelled</span>';
+        }
+        if (lower === 'in progress') {
+          return '<span class="p4-badge p4-badge--neutral">In Progress</span>';
+        }
+        if (lower === 'not started') {
+          return '<span class="p4-badge p4-badge--muted">Not Started</span>';
+        }
+        if (overdue || lower === 'overdue') {
+          return '<span class="p4-badge p4-badge--critical">OVERDUE</span>';
+        }
+        if (!s) return '';
+        return '<span class="p4-badge p4-badge--muted">' + s + '</span>';
+      }
+
+      function formatHealthBadge(healthKey) {
+        var label = p4HealthLabel(healthKey);
+        if (healthKey === 'at-risk') {
+          return '<span class="p4-health-pill p4-health-pill--risk"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        if (healthKey === 'watch') {
+          return '<span class="p4-health-pill p4-health-pill--watch"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        if (healthKey === 'on-track') {
+          return '<span class="p4-health-pill p4-health-pill--ok"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        return '<span class="p4-health-pill p4-health-pill--muted"><i class="p4-health-dot"></i>' + label + '</span>';
+      }
 
       // ── Department + Status filters ─
       var deptSourceRows = [];
@@ -5329,6 +5888,7 @@
           };
         }),
         handsSignals: handsByProject,
+        handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
         pendingNote: 'Forecast Gross Margin and Total Actual await Xero_Bills. Labour Variance awaits budgeted labour field.'
       });
