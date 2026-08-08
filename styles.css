@@ -3536,3 +3536,308 @@ select {
   padding-top: 10px;
   padding-bottom: 10px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   TEST PALETTE — remove to revert to brand default
+   P4 only: "Concrete & Safety Orange" visual experiment.
+   Scoped to #page-p4.p4-test-palette — does NOT touch :root / other pages.
+   To revert: delete this whole block + remove class "p4-test-palette"
+   from #page-p4 in index.html (and the p4UseTestPalette branch in renderP4).
+═══════════════════════════════════════════════════════════════ */
+#page-p4.p4-test-palette {
+  --p4-test-canvas:  #9CA3AF;
+  --p4-test-surface: #E5E7EB;
+  --p4-test-text:    #111827;
+  --p4-test-muted:   #6B7280;
+  --p4-test-accent:  #EA580C;
+
+  /* Canvas fill when P4 is the active page (overflows main padding) */
+  background: var(--p4-test-canvas);
+  color: var(--p4-test-text);
+  margin: -26px -28px;
+  padding: 26px 28px calc(var(--space-5) + 56px);
+  min-height: calc(100vh - var(--header-h) - 8px);
+  box-sizing: border-box;
+}
+
+#page-p4.p4-test-palette .page-title {
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .page-badge {
+  background: var(--p4-test-accent);
+  color: #FFFFFF;
+}
+
+#page-p4.p4-test-palette .card,
+#page-p4.p4-test-palette .section-card,
+#page-p4.p4-test-palette .chart-card,
+#page-p4.p4-test-palette .kpi-card {
+  background: var(--p4-test-surface);
+  border-color: rgba(107, 114, 128, 0.35);
+}
+
+#page-p4.p4-test-palette .kpi-card {
+  border-top: 3px solid var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette .kpi-label,
+#page-p4.p4-test-palette .kpi-sub,
+#page-p4.p4-test-palette .p4-section-hint,
+#page-p4.p4-test-palette .p4-chart-note,
+#page-p4.p4-test-palette .p4-labour-filter-cue,
+#page-p4.p4-test-palette .filter-label,
+#page-p4.p4-test-palette .no-data-msg {
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette .kpi-value,
+#page-p4.p4-test-palette .section-title,
+#page-p4.p4-test-palette .chart-title {
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p1-kpi-primary-card .kpi-label {
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette .p1-kpi-primary-card .kpi-value {
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p1-kpi-primary-card .kpi-sub {
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette .filter-select,
+#page-p4.p4-test-palette .page-filter-select {
+  background: var(--p4-test-surface);
+  color: var(--p4-test-text);
+  border-color: var(--p4-test-muted);
+}
+
+/* Badges: critical → accent */
+#page-p4.p4-test-palette .p4-badge--critical {
+  background: var(--p4-test-accent);
+  border-color: var(--p4-test-accent);
+  color: #FFFFFF;
+}
+
+#page-p4.p4-test-palette .p4-badge--neutral {
+  background: var(--p4-test-surface);
+  border: 1px solid var(--p4-test-muted);
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p4-badge--muted {
+  background: transparent;
+  border: 1px solid var(--p4-test-muted);
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette .p4-hands-needs {
+  color: var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette .p4-hands-addressed,
+#page-p4.p4-test-palette .p4-hands-nodata {
+  color: var(--p4-test-muted);
+}
+
+/* Milestone Schedule Gantt surfaces */
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-meta,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-legend-item,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-empty,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-week span,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row--head .p4-ms-cell,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-nodates {
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-toggle {
+  color: var(--p4-test-text);
+  border-color: var(--p4-test-muted);
+  background: var(--p4-test-surface);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-toggle:hover {
+  border-color: var(--p4-test-accent);
+  background: var(--p4-test-surface);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-scroll,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-sticky-left,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row--head,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-grid,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-timeline,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-timeline-head,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-lane {
+  background: var(--p4-test-surface);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-cell,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-month span,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-c-slip {
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row--risk,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row--risk .p4-ms-left-grid,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-lane--risk {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-row-hit:hover .p4-ms-left-grid,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-row-hit:hover.p4-ms-lane {
+  background: rgba(234, 88, 12, 0.1);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-row-hit.is-active .p4-ms-left-grid,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-row-hit.is-active.p4-ms-lane {
+  background: rgba(234, 88, 12, 0.16);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--slip,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--completed {
+  background: var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--planned {
+  background: rgba(156, 163, 175, 0.55);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--in-progress {
+  background: var(--p4-test-muted);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--not-started {
+  border-color: var(--p4-test-muted);
+  background: transparent;
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--cancelled {
+  background: rgba(156, 163, 175, 0.35);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--planned {
+  background: rgba(156, 163, 175, 0.55);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--completed,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--slip {
+  background: var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--in-progress {
+  background: var(--p4-test-muted);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--not-started {
+  background: rgba(156, 163, 175, 0.2);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--cancelled {
+  background: rgba(156, 163, 175, 0.3);
+  border-color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-today {
+  border-left-color: var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-today-label {
+  color: var(--p4-test-accent);
+  background: var(--p4-test-surface);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-gridline {
+  border-left-color: rgba(107, 114, 128, 0.35);
+}
+
+/* Detail drawer (fixed, still P4-scoped via ancestry) */
+#page-p4.p4-test-palette .p4-ms-drawer {
+  background: var(--p4-test-surface);
+  border-left-color: var(--p4-test-muted);
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p4-ms-drawer-title,
+#page-p4.p4-test-palette .p4-ms-drawer-dl dd {
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p4-ms-drawer-kicker,
+#page-p4.p4-test-palette .p4-ms-drawer-sub,
+#page-p4.p4-test-palette .p4-ms-drawer-dl dt {
+  color: var(--p4-test-muted);
+}
+
+#page-p4.p4-test-palette .p4-ms-drawer-close {
+  background: var(--p4-test-surface);
+  border-color: var(--p4-test-muted);
+  color: var(--p4-test-text);
+}
+
+#page-p4.p4-test-palette .p4-ms-drawer-close:hover {
+  border-color: var(--p4-test-accent);
+  color: var(--p4-test-accent);
+}
+
+/* Labour Cost by Job */
+#page-p4.p4-test-palette .p4-labour-outlier-note {
+  color: var(--p4-test-text);
+  border-color: var(--p4-test-muted);
+  border-left-color: var(--p4-test-accent);
+  background: var(--p4-test-surface);
+}
+
+#page-p4.p4-test-palette #p4-labour-table .p4-labour-table tr.p4-labour-row-top5 > td {
+  background: rgba(234, 88, 12, 0.08);
+}
+
+#page-p4.p4-test-palette #p4-labour-table .p4-labour-table tr.p4-labour-row-top5 > td {
+  border-top-color: var(--p4-test-accent);
+}
+
+#page-p4.p4-test-palette .data-table th {
+  color: var(--p4-test-muted);
+  border-color: rgba(107, 114, 128, 0.35);
+}
+
+#page-p4.p4-test-palette .data-table td {
+  color: var(--p4-test-text);
+  border-color: rgba(107, 114, 128, 0.35);
+}
+
+#page-p4.p4-test-palette .data-table tbody tr:hover td {
+  background: rgba(234, 88, 12, 0.06);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-sticky-left {
+  border-right-color: rgba(107, 114, 128, 0.45);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row {
+  border-bottom-color: rgba(107, 114, 128, 0.28);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-left-row--head {
+  border-bottom-color: rgba(107, 114, 128, 0.4);
+}
+
+#page-p4.p4-test-palette .p4-ms-drawer-backdrop {
+  background: rgba(17, 24, 39, 0.35);
+}
+
+#page-p4.p4-test-palette .p4-row-risk td {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+/* END TEST PALETTE — P4 only */

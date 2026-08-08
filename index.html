@@ -489,7 +489,8 @@
         </section>
 
         <!-- ─── P4: Job Performance ────────────────────────── -->
-        <section id="page-p4" class="page">
+        <!-- p4-test-palette = scoped Concrete & Safety Orange visual test (CSS/JS only for this page) -->
+        <section id="page-p4" class="page p4-test-palette">
           <div class="page-header">
             <span class="page-badge">P4</span>
             <h1 class="page-title">Job Performance</h1>
@@ -4486,10 +4487,15 @@
 
       var today = new Date();
       today.setHours(0, 0, 0, 0);
-      var brandCharcoal = '#262425';
-      var brandSoftGray = '#BCBDBE';
-      var brandSilver = '#D2D4D5';
-      var brandWhite = '#FFFFFF';
+
+      // P4 chart tokens: test palette when .p4-test-palette is on #page-p4 only
+      var p4PaletteEl = document.getElementById('page-p4');
+      var p4UseTestPalette = !!(p4PaletteEl && p4PaletteEl.classList.contains('p4-test-palette'));
+      var brandCharcoal = p4UseTestPalette ? '#111827' : '#262425';
+      var brandSoftGray = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
+      var brandSilver = p4UseTestPalette ? '#E5E7EB' : '#D2D4D5';
+      var brandWhite = p4UseTestPalette ? '#E5E7EB' : '#FFFFFF';
+      var brandAccent = p4UseTestPalette ? '#EA580C' : brandCharcoal;
 
       // ── Filter by Brand / Month / Year ────────────────────────
       function applyP4Filters(rows) {
@@ -4868,9 +4874,13 @@
 
       // ── Job Progress chart: desc % then Not Commenced group ─
       function getJobBarColor(pct) {
-        // Charcoal tints only (no red)
         if (pct <= 0) return brandSilver;
         var t = pct / 100;
+        if (p4UseTestPalette) {
+          // Canvas-space: muted → accent as completion rises
+          var a = 0.25 + t * 0.75;
+          return 'rgba(234,88,12,' + a.toFixed(2) + ')';
+        }
         // blend silver → charcoal as complete increases
         return 'rgba(38,36,37,' + (0.22 + t * 0.78).toFixed(2) + ')';
       }
@@ -4927,7 +4937,7 @@
                 return p.unstarted ? brandSilver : getJobBarColor(p.avg);
               }),
               borderColor: orderedJobs.map(function(p) {
-                return p.unstarted ? brandSoftGray : brandCharcoal;
+                return p.unstarted ? brandSoftGray : brandAccent;
               }),
               borderWidth: orderedJobs.map(function(p) { return p.unstarted ? 1 : 0; }),
               borderRadius: 0,
@@ -4959,7 +4969,7 @@
                   callback: function(v) { return v + '%'; },
                   font: { size: 10 }
                 },
-                grid: { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 },
+                grid: { color: p4UseTestPalette ? 'rgba(107,114,128,0.35)' : 'rgba(188,189,190,0.28)', lineWidth: 0.75 },
                 border: { color: brandSoftGray }
               },
               y: {
@@ -5654,6 +5664,12 @@
             top5[1].cost > 0 &&
             ((top5[0].cost - top5[1].cost) / top5[1].cost) * 100 >= 40;
           var barColors = top5.map(function(p, i) {
+            if (p4UseTestPalette) {
+              if (i === 0 && isOutlier) return brandAccent;
+              if (i === 0) return 'rgba(234,88,12,0.85)';
+              if (i === 1) return 'rgba(234,88,12,0.5)';
+              return brandSoftGray;
+            }
             if (i === 0 && isOutlier) return brandCharcoal;
             if (i === 0) return 'rgba(38,36,37,0.72)';
             if (i === 1) return 'rgba(38,36,37,0.5)';
@@ -5702,7 +5718,7 @@
                         : '$' + v;
                     }
                   },
-                  grid: { color: 'rgba(188,189,190,0.35)' },
+                  grid: { color: p4UseTestPalette ? 'rgba(107,114,128,0.35)' : 'rgba(188,189,190,0.35)' },
                   border: { color: brandSoftGray }
                 },
                 y: {
@@ -5718,7 +5734,7 @@
           });
         }
 
-        // Detail table — same columns; mark Top 5 rows with charcoal top-border
+        // Detail table — same columns; mark Top 5 rows with accent top-border when test palette
         var th =
           '<th class="text-left">Project</th>' +
           '<th class="text-right">Hours</th>' +
