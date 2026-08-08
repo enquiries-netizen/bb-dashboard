@@ -15044,25 +15044,6 @@
       return html;
     }
 
-    function p6SvgIcon(kind) {
-      if (kind === 'capacity') {
-        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      }
-      if (kind === 'schedule') {
-        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.5v3M16 3.5v3M4 10h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      }
-      if (kind === 'util') {
-        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 17l5-5 3.5 3.5L20 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      }
-      if (kind === 'over') {
-        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4l9 16H3L12 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      }
-      if (kind === 'unalloc') {
-        return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 12h16" stroke="currentColor" stroke-width="1.8"/><path d="M14 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      }
-      return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5v9M9.5 9.5c.6-1 1.6-1.5 2.5-1.5 1.4 0 2.5.8 2.5 2s-1.1 2-2.5 2h-1c-1.4 0-2.5.8-2.5 2s1.1 2 2.5 2c.9 0 1.9-.5 2.5-1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
-    }
-
     function p6FilterSelect(label, key, options, selected) {
       var h = '<label class="p6-filter-label">' + p6Esc(label) + ' ';
       h += '<select class="p6-select" onchange="p6OnFilterChange(\'' + key + '\', this.value)">';
@@ -15080,27 +15061,26 @@
 
       html += '<div class="p6-kpi-row">';
       html += p6KpiCard('Available Capacity', k.available != null ? p6FmtHours(k.available) + ' h' : 'Pending',
-        'Hours Available net leave / training / holidays', null, 'capacity', 'healthy');
+        'Hours Available net leave / training / holidays', null);
       html += p6KpiCard('Scheduled Hours',
         k.scheduled != null ? p6FmtHours(k.scheduled) + ' h' : 'Pending',
         k.scheduledPending || k.scheduled == null ? 'Forward schedule not live' : 'Best-effort allocation (deduped)',
-        null, 'schedule', 'action');
+        null);
       html += p6KpiCard('Forecast Utilisation',
         k.forecastUtil != null ? p6FmtPct(k.forecastUtil) : 'Pending',
         'Scheduled / Available · Week ' + m.selectedWeek,
         k.forecastUtil != null && k.forecastUtil > 100 ? 'risk' :
-          (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null),
-        'util', 'healthy');
+          (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null));
       var overSub = (k.overPeople || 0) + ' people · ' + p6FmtHours(k.overallocated) + ' h excess';
       html += p6KpiCard('Overallocated Capacity',
         (k.overPeople || 0) > 0 ? (k.overPeople + ' · ' + p6FmtHours(k.overallocated) + ' h') : p6FmtHours(k.overallocated) + ' h',
-        overSub, k.overallocated > 0 ? 'risk' : null, 'over', 'accent');
+        overSub, k.overallocated > 0 ? 'risk' : null);
       html += p6KpiCard('Unallocated Capacity',
         k.unallocated != null ? p6FmtHours(k.unallocated) + ' h' : 'Pending',
-        'max(0, Available - Scheduled)', null, 'unalloc', 'action');
+        'max(0, Available - Scheduled)', null);
       html += p6KpiCard('Forecast Labour Cost',
         k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
-        'Employee-week once. vs project labour budget: Pending', 'gap', 'cost', 'action');
+        'Employee-week once. vs project labour budget: Pending', 'gap');
       html += '</div>';
 
       var riskMsg = p6BuildRiskBannerMessage(m);
@@ -15241,16 +15221,13 @@
       return html;
     }
 
-    function p6KpiCard(label, value, sub, tone, iconKind, iconTone) {
+    function p6KpiCard(label, value, sub, tone) {
       var cls = 'p6-kpi-card';
       if (tone === 'risk') cls += ' p6-kpi--risk';
       else if (tone === 'watch') cls += ' p6-kpi--watch';
       else if (tone === 'gap') cls += ' p6-kpi--gap';
-      var iconCls = 'p6-kpi-icon p6-kpi-icon--' + (iconTone || 'action');
       return '<div class="' + cls + '">' +
-        '<div class="p6-kpi-top">' +
-        '<span class="' + iconCls + '">' + p6SvgIcon(iconKind || 'capacity') + '</span>' +
-        '<div class="kpi-label">' + p6Esc(label) + '</div></div>' +
+        '<div class="kpi-label">' + p6Esc(label) + '</div>' +
         '<div class="kpi-value">' + value + '</div>' +
         '<div class="kpi-sub">' + p6Esc(sub) + '</div></div>';
     }
