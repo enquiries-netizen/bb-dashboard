@@ -4027,7 +4027,7 @@ select {
 }
 
 #page-p4.p4-test-palette .page-badge {
-  background: var(--p4-accent);
+  background: var(--p4-text);
   color: #FFFFFF;
 }
 
@@ -5386,7 +5386,7 @@ select {
 }
 
 #page-p3.p3-test-palette .page-badge {
-  background: var(--p3-accent);
+  background: var(--p3-text);
   color: #FFFFFF;
 }
 
