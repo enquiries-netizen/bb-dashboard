@@ -17170,6 +17170,12 @@
       html += p6RenderHeatmap(m);
       html += p6RenderHeatmapLegend();
       html += '</div>';
+      html += '<div class="p6-section-card p6-assign-card">';
+      html += '<div class="p6-section-title">Assignment Summary</div>';
+      html += '<p class="p6-section-hint">Project labour for Week ' + m.selectedWeek +
+        '. Planned demand and role pending when no source. Variance shown only when both planned and actual exist.</p>';
+      html += p6RenderAssignmentSummary(m);
+      html += '</div>';
       html += '</div>';
       html += '<div class="p6-section-card p6-lower-actions">';
       html += '<div class="p6-section-title">Capacity Actions</div>';
@@ -17182,12 +17188,6 @@
       html += '<div class="p6-section-title">Weekly Capacity</div>';
       html += '<p class="p6-section-hint">Available vs scheduled hours by planning week (Current model / Capacity series). Max 6 weeks from selected week.</p>';
       html += p6RenderWeeklyCapacity(m);
-      html += '</div>';
-      html += '<div class="p6-section-card p6-assign-card">';
-      html += '<div class="p6-section-title">Assignment Summary</div>';
-      html += '<p class="p6-section-hint">Project labour for Week ' + m.selectedWeek +
-        '. Planned demand and role pending when no source. Variance shown only when both planned and actual exist.</p>';
-      html += p6RenderAssignmentSummary(m);
       html += '</div>';
       html += '</div>';
 
