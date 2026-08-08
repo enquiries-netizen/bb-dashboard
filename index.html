@@ -3497,7 +3497,8 @@
     // ═══════════════════════════════════════════════════════════════
     // P2 — SALES & PIPELINE (decision dashboard)
     // Sources: GHL_Leads, GHL_Pipeline, Marketing_Paid, Marketing_Sources, Targets
-    // GHL_Quotes: not available (API 400) - quotes from lead/quote stage + pipeline
+    // GHL_Quotes: optional (tab missing => API 400 "Unable to parse range");
+    //   quote KPIs use lead/quote stage + pipeline until the tab exists.
     // Period filter: Date Created (leads & opportunities) - labelled on page
     // Forecast chart: groups open deals by Expected Close Date month
     // Stalled threshold: 14 days (confirm with Lori/Ben)
@@ -3505,6 +3506,15 @@
     var p2ShowAllOpps = false;
     var p2FunnelMode = 'value'; // default Value
     var _p2LastPayload = null;
+    // Per-tab load meta for debug strip / soft banners (status = HTTP when known)
+    var _p2SheetMeta = {
+      leads: { ok: false, status: null },
+      pipeline: { ok: false, status: null },
+      marketing: { ok: false, status: null },
+      sources: { ok: false, status: null },
+      targets: { ok: false, status: null },
+      quotes: { ok: false, status: null }
+    };
 
     // confirm threshold with Lori/Ben
     var P2_STALLED_DAYS = 14;
@@ -3519,18 +3529,75 @@
       'Won / Lost': 0
     };
 
+    /** Soft sheet load for P2: never rejects; captures HTTP status from fetchSheet errors. */
+    function p2FetchSheet(tabName) {
+      return fetchSheet(tabName).then(function(data) {
+        return { ok: true, data: data || [], tab: tabName, status: 200 };
+      }).catch(function(err) {
+        var msg = err && err.message ? String(err.message) : String(err || '');
+        var m = msg.match(/Sheets API error\s+(\d+)/i);
+        var status = m ? parseInt(m[1], 10) : null;
+        console.warn('[P2] Sheet load failed:', tabName, status != null ? ('HTTP ' + status) : msg);
+        return { ok: false, data: [], tab: tabName, status: status, error: err };
+      });
+    }
+
     async function loadP2() {
       showLoading(true);
       removeError('p2');
       try {
-        var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.GHL_LEADS),
-          fetchSheet(CONFIG.TABS.GHL_PIPELINE),
-          fetchSheet(CONFIG.TABS.MARKETING_PAID).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.MARKETING_SOURCES).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
+        // Critical: GHL_Leads + GHL_Pipeline. Optional: marketing/sources/targets/GHL_Quotes.
+        // Never full-page fail when only an optional tab (e.g. GHL_Quotes) is missing.
+        var settled = await Promise.all([
+          p2FetchSheet(CONFIG.TABS.GHL_LEADS),
+          p2FetchSheet(CONFIG.TABS.GHL_PIPELINE),
+          p2FetchSheet(CONFIG.TABS.MARKETING_PAID),
+          p2FetchSheet(CONFIG.TABS.MARKETING_SOURCES),
+          p2FetchSheet(CONFIG.TABS.TARGETS),
+          p2FetchSheet(CONFIG.TABS.GHL_QUOTES)
         ]);
-        renderP2(results[0], results[1], results[2], results[3], results[4]);
+        var leadsR = settled[0];
+        var pipeR = settled[1];
+        var mktR = settled[2];
+        var srcR = settled[3];
+        var tgtR = settled[4];
+        var quotesR = settled[5];
+
+        _p2SheetMeta = {
+          leads: { ok: leadsR.ok, status: leadsR.status },
+          pipeline: { ok: pipeR.ok, status: pipeR.status },
+          marketing: { ok: mktR.ok, status: mktR.status },
+          sources: { ok: srcR.ok, status: srcR.status },
+          targets: { ok: tgtR.ok, status: tgtR.status },
+          quotes: { ok: quotesR.ok, status: quotesR.status }
+        };
+
+        var leadsOk = !!leadsR.ok;
+        var pipeOk = !!pipeR.ok;
+        var quotesOk = !!quotesR.ok;
+
+        // Full-page error only when both critical sheets fail
+        if (!leadsOk && !pipeOk) {
+          showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions.');
+          return;
+        }
+
+        // Soft banner: optional GHL_Quotes alone, or single critical miss with data still showing
+        if (!quotesOk && leadsOk && pipeOk) {
+          showError('p2', 'GHL_Quotes could not be loaded, other data is showing normally');
+        } else if (!leadsOk || !pipeOk) {
+          var missing = [];
+          if (!leadsOk) missing.push('GHL_Leads');
+          if (!pipeOk) missing.push('GHL_Pipeline');
+          if (!quotesOk) missing.push('GHL_Quotes');
+          showError(
+            'p2',
+            missing.join(', ') + ' could not be loaded, other data is showing normally'
+          );
+        }
+
+        // Quote KPIs still derive from pipeline stages; quotes rows reserved for when tab exists
+        renderP2(leadsR.data, pipeR.data, mktR.data, srcR.data, tgtR.data, quotesR.data);
       } catch (err) {
         console.error('P2 load error:', err);
         showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions.');
@@ -3540,13 +3607,14 @@
       }
     }
 
-    function renderP2(leads, pipeline, marketing, sources, targets) {
+    function renderP2(leads, pipeline, marketing, sources, targets, ghlQuotes) {
       _p2LastPayload = {
         leads: leads || [],
         pipeline: pipeline || [],
         marketing: marketing || [],
         sources: sources || [],
-        targets: targets || []
+        targets: targets || [],
+        ghlQuotes: ghlQuotes || []
       };
 
       // ── Date field for page period filters (documented choice) ──
@@ -4077,14 +4145,42 @@
             : '');
       }
 
-      // Data quality strip
+      // Data quality strip (includes real API status for failed tabs when known)
       var dq = document.getElementById('p2-data-quality');
       if (dq) {
         var bits = [];
-        bits.push(hasLeads ? 'GHL_Leads live (' + leadsFiltered.length + ' filtered)' : 'GHL_Leads empty');
-        bits.push(hasPipe ? 'GHL_Pipeline live (' + pipeFiltered.length + ' filtered)' : 'GHL_Pipeline empty');
-        bits.push('GHL_Quotes not available');
-        bits.push(hasMkt ? 'Marketing_Paid live' : 'Marketing_Paid pending');
+        var meta = _p2SheetMeta || {};
+        function tabStatusBit(label, hasRows, rowNote, key) {
+          var m = meta[key] || {};
+          if (m.ok === false) {
+            var st = m.status != null ? ' (API ' + m.status + ')' : '';
+            return label + ' not available' + st;
+          }
+          if (hasRows) return label + ' live' + (rowNote || '');
+          return label + ' empty';
+        }
+        bits.push(tabStatusBit(
+          'GHL_Leads',
+          hasLeads,
+          ' (' + leadsFiltered.length + ' filtered)',
+          'leads'
+        ));
+        bits.push(tabStatusBit(
+          'GHL_Pipeline',
+          hasPipe,
+          ' (' + pipeFiltered.length + ' filtered)',
+          'pipeline'
+        ));
+        var quotesLive = !!(meta.quotes && meta.quotes.ok && (ghlQuotes || []).length);
+        var quotesOkEmpty = !!(meta.quotes && meta.quotes.ok);
+        if (quotesLive) {
+          bits.push('GHL_Quotes live (' + (ghlQuotes || []).length + ')');
+        } else if (quotesOkEmpty) {
+          bits.push('GHL_Quotes live (empty)');
+        } else {
+          bits.push(tabStatusBit('GHL_Quotes', false, '', 'quotes'));
+        }
+        bits.push(tabStatusBit('Marketing_Paid', hasMkt, '', 'marketing'));
         if (openRows.length) {
           var phN = openRows.length - openWithRealValue.length;
           if (phN > 0) bits.push(phN + ' open deals with Value not entered ($1/blank)');
@@ -4753,7 +4849,8 @@
                 _p2LastPayload.pipeline,
                 _p2LastPayload.marketing,
                 _p2LastPayload.sources,
-                _p2LastPayload.targets
+                _p2LastPayload.targets,
+                _p2LastPayload.ghlQuotes
               );
             }
           });
@@ -4917,21 +5014,66 @@
         concentration: (srcList[0] && totalSrcLeads)
           ? { source: srcList[0].source, share: srcList[0].leads / totalSrcLeads }
           : null,
-        sourcesLive: { leads: hasLeads, pipeline: hasPipe, marketing: hasMkt, targets: hasTargets, ghlQuotes: false },
-        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Waterfall pending without snapshots.'
+        sourcesLive: {
+          leads: hasLeads,
+          pipeline: hasPipe,
+          marketing: hasMkt,
+          targets: hasTargets,
+          ghlQuotes: !!( _p2SheetMeta.quotes && _p2SheetMeta.quotes.ok )
+        },
+        sheetStatus: {
+          leads: _p2SheetMeta.leads,
+          pipeline: _p2SheetMeta.pipeline,
+          marketing: _p2SheetMeta.marketing,
+          quotes: _p2SheetMeta.quotes
+        },
+        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Waterfall pending without snapshots. GHL_Quotes tab is optional (missing => API 400).'
       });
     }
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P3 — QUOTING & ESTIMATING
-    // Sources: Quotes · Xero_Projects · Estimating_Accuracy
-    // Filters: Global Brand / Month / Year + page-level Department
+    // P3 — QUOTING & ESTIMATING (production-control dashboard)
+    // Sources: Quotes (live) · Estimating_Accuracy (rows exist; actuals sparse)
+    //          Xero_Projects (note → P4 / accuracy only) · Targets (margin target)
+    // GHL_Quotes: not available (API 400)
+    // Filters: Global Brand / Month / Year on Date Sent · page Department
     // ═══════════════════════════════════════════════════════════════
     var activeP3Dept = 'ALL';
     var _p3DeptBound = false;
-    // Isolated toggle: draw Targets-tab days-to-decision line on estimator chart
-    var P3_SHOW_DAYS_TARGET_LINE = true;
+    var _p3ScheduleBound = false;
+    var _p3ViewAllBound = false;
+    var p3ShowAllQuotes = false;
+    var p3ScheduleOpen = false;
+    var P3_MARGIN_WARN_THRESHOLD = 20; // Est Margin % below this → margin-warning (when present)
+    var P3_TURNAROUND_LOW_SAMPLE = 10;
+    // Stage-typical age (days) used only as Overdue PROXY when Due Date is missing
+    var P3_STAGE_SLA = {
+      brief: 7,
+      scope: 5,
+      estimating: 10,
+      review: 5,
+      sent: 14
+    };
+    // Proxy effort (hours) per active open quote when booking hours missing
+    var P3_PROXY_HOURS_PER_QUOTE = 8;
+    var P3_AVAILABLE_HOURS_WEEK = 38;
+
+    var P3_WORK_STAGES = [
+      { id: 'brief', label: 'Brief Received' },
+      { id: 'scope', label: 'Scope Complete' },
+      { id: 'estimating', label: 'Estimating' },
+      { id: 'review', label: 'Internal Review' },
+      { id: 'sent', label: 'Sent/Awaiting Decision' }
+    ];
+
+    var P3_GANTT_SEGS = [
+      { id: 'scope', label: 'Scope' },
+      { id: 'measure', label: 'Site Measure' },
+      { id: 'estimating', label: 'Estimating' },
+      { id: 'review', label: 'Internal Review' },
+      { id: 'ready', label: 'Ready to Send' }
+    ];
 
     async function loadP3() {
       showLoading(true);
@@ -4939,11 +5081,22 @@
       try {
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.QUOTES),
-          fetchSheet(CONFIG.TABS.XERO_PROJECTS),
-          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY),
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
         ]);
-        renderP3(results[0], results[1], results[2], results[3]);
+        // Probe GHL_Quotes once for data-quality flag (historically API 400)
+        var ghlQuotesLive = false;
+        try {
+          var ghl = await fetchSheet(CONFIG.TABS.GHL_QUOTES);
+          ghlQuotesLive = Array.isArray(ghl) && ghl.length > 0;
+        } catch (e) {
+          ghlQuotesLive = false;
+        }
+        renderP3(results[0], results[1], results[2], results[3], {
+          ghlQuotesLive: ghlQuotesLive,
+          loadedAt: new Date()
+        });
       } catch (err) {
         console.error('P3 load error:', err);
         showError('p3', 'Could not load Quoting & Estimating data. Check sheet permissions.');
@@ -4954,11 +5107,9 @@
     }
 
     /**
-     * Read days-to-decision target from Targets tab (not hard-coded).
-     * Tries common header names; falls back to first numeric cell whose header
-     * mentions both day(s) and decision / turnaround.
+     * Gross margin target % from Targets tab (not hard-coded).
      */
-    function readDaysToDecisionTarget(targetsRows) {
+    function readMarginTargetPct(targetsRows) {
       if (!targetsRows || !targetsRows.length) return null;
       var branded = filterByMonths(
         filterByYear(filterByBrand(targetsRows, activeBrand), activeYear),
@@ -4966,55 +5117,31 @@
       );
       var rows = branded.length ? branded : (filterByBrand(targetsRows, activeBrand) || targetsRows);
       if (!rows.length) return null;
-
-      var exactKeys = [
-        'Days to Decision Target',
-        'Avg Days to Decision Target',
-        'Days To Decision Target',
-        'Decision Days Target',
-        'Quote Decision Days Target',
-        'Days to Decision',
-        'Avg Days to Decision',
-        'Turnaround Target (Days)',
-        'Decision Turnaround (Days)',
-        'Target Days to Decision'
-      ];
-
-      function pickFromRow(r) {
-        var i, k, v, nk;
-        for (i = 0; i < exactKeys.length; i++) {
-          v = parseNum(col(r, exactKeys[i]));
-          if (v > 0) return v;
-        }
-        var keys = Object.keys(r || {});
-        for (i = 0; i < keys.length; i++) {
-          k = keys[i];
-          nk = String(k || '').toLowerCase().replace(/\s+/g, ' ');
-          if (
-            (nk.indexOf('day') !== -1) &&
-            (nk.indexOf('decision') !== -1 || nk.indexOf('turnaround') !== -1 || nk.indexOf('quote') !== -1)
-          ) {
-            v = parseNum(r[k]);
-            if (v > 0 && v < 365) return v;
-          }
-        }
-        return null;
-      }
-
       var found = null;
       rows.forEach(function(r) {
         if (found !== null) return;
-        var n = pickFromRow(r);
-        if (n !== null) found = n;
+        var v = parseNum(col(r,
+          'Gross Margin Target %', 'Gross Margin Target', 'Margin Target %',
+          'Target Margin %', 'Quoted Margin Target %'));
+        if (v > 0 && v < 100) found = v;
       });
       return found;
     }
 
-    function renderP3(quotes, projects, accuracy, targets) {
+    function escapeP3(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderP3(quotes, projects, accuracy, targets, meta) {
       window._p3Quotes   = quotes   || [];
       window._p3Projects = projects || [];
       window._p3Accuracy = accuracy || [];
       window._p3Targets  = targets  || [];
+      window._p3Meta     = meta || window._p3Meta || { ghlQuotesLive: false, loadedAt: new Date() };
 
       function applyGlobal(rows) {
         return filterByMonths(filterByYear(filterByBrand(rows, activeBrand), activeYear), activeMonths);
@@ -5028,15 +5155,6 @@
       function isBlank(v) {
         return v === null || v === undefined || String(v).trim() === '';
       }
-      // Quotes tab fields — match row-1 headers only (layout after Project Type removal):
-      // A Quote ID · B Date Sent · C Contact Name · D Brand · E Department ·
-      // F Quote Value ($) · G Labour Est ($) · H Materials Est ($) ·
-      // I Subcontractors Est ($) · J Allowances Est ($) · K Est Margin % ·
-      // L Status · M Date Accepted · N Days to Decision · O Xero Project ID ·
-      // P Estimator Name  (never use column letters/indexes at runtime)
-      function rawCol(row) {
-        return rawColByNames(row, Array.prototype.slice.call(arguments, 1));
-      }
       function statusOf(r) {
         return String(col(r, 'Status', 'status') || '').trim();
       }
@@ -5045,20 +5163,17 @@
           'Quote Value ($)', 'Quote Value', 'quote_value', 'Value ($)', 'Value'));
       }
       function labourEst(r) {
-        return parseNum(col(r, 'Labour Est ($)', 'Labour Est', 'Labour Estimate ($)', 'Labour'));
+        var raw = rawColByNames(r, ['Labour Est ($)', 'Labour Est', 'Labour Estimate ($)', 'Labour']);
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
       }
       function materialsEst(r) {
-        return parseNum(col(r, 'Materials Est ($)', 'Materials Est', 'Materials Estimate ($)', 'Materials'));
-      }
-      function subcontractorsEst(r) {
-        return parseNum(col(r,
-          'Subcontractors Est ($)', 'Subcontractors Est', 'Subcontractor Est ($)', 'Subs Est ($)'));
-      }
-      function allowancesEst(r) {
-        return parseNum(col(r, 'Allowances Est ($)', 'Allowances Est', 'Allowance Est ($)'));
+        var raw = rawColByNames(r, ['Materials Est ($)', 'Materials Est', 'Materials Estimate ($)', 'Materials']);
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
       }
       function estMarginPct(r) {
-        var raw = rawCol(r, 'Est Margin %', 'Est Margin', 'Estimated Margin %', 'Margin %');
+        var raw = rawColByNames(r, ['Est Margin %', 'Est Margin', 'Estimated Margin %', 'Margin %', 'Quoted Margin %']);
         if (isBlank(raw)) return null;
         return parseNum(raw);
       }
@@ -5070,81 +5185,127 @@
       function estimatorOf(r) {
         return String(col(r, 'Estimator Name', 'Estimator', 'estimator_name', 'estimator') || '').trim() || 'Unassigned';
       }
+      function quoteIdOf(r) {
+        return String(col(r, 'Quote ID', 'QuoteID', 'GHL Quote ID', 'Quote #') || '').trim() || '—';
+      }
+      function contactOf(r) {
+        return String(col(r, 'Contact Name', 'Contact', 'Client', 'Client Name') || '').trim() || '—';
+      }
+      function dateSentOf(r) {
+        return col(r, 'Date Sent', 'Date Quoted', 'Date', 'Created Date', 'Date Created') || '';
+      }
+      function dateAcceptedOf(r) {
+        return col(r, 'Date Accepted', 'Accepted Date', 'date_accepted') || '';
+      }
+      function dueDateOf(r) {
+        var raw = col(r, 'Due Date', 'due date', 'Target Send Date', 'Submission Date', 'Due');
+        return isBlank(raw) ? null : raw;
+      }
+      function bookedHoursOf(r) {
+        var raw = rawColByNames(r, [
+          'Booked Hours', 'Est Hours', 'Estimate Hours', 'Hours Est',
+          'Estimated Hours', 'Effort Hours', 'Hrs Est'
+        ]);
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
+      }
+      function availableHoursOf(r) {
+        var raw = rawColByNames(r, [
+          'Available Hours', 'Hours Available', 'Capacity Hours', 'Weekly Available Hours'
+        ]);
+        if (isBlank(raw)) return null;
+        return parseNum(raw);
+      }
+
+      // ── Status → production stage (fuzzy) ─────────────────────
+      function normalizeStatusKey(s) {
+        return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      }
+      function isTerminalStatus(s) {
+        var k = normalizeStatusKey(s);
+        if (!k) return false;
+        return (
+          k.indexOf('accept') !== -1 ||
+          k.indexOf('won') !== -1 ||
+          k.indexOf('lost') !== -1 ||
+          k.indexOf('declin') !== -1 ||
+          k.indexOf('reject') !== -1 ||
+          k.indexOf('cancel') !== -1 ||
+          k.indexOf('complete') !== -1 ||
+          k === 'closed'
+        );
+      }
+      /**
+       * Map free-text Status to work-queue stage id.
+       * Draft-like → brief; scope* → scope; estimate/in progress → estimating;
+       * review/approval → review; sent/awaiting decision → sent.
+       * Terminal statuses return null (out of work queue).
+       */
+      function mapStatusToStage(status) {
+        var k = normalizeStatusKey(status);
+        if (!k) return 'brief';
+        if (isTerminalStatus(status)) return null;
+        if (k.indexOf('scope') !== -1) return 'scope';
+        if (
+          k.indexOf('review') !== -1 ||
+          k.indexOf('approval') !== -1 ||
+          k.indexOf('internal') !== -1
+        ) return 'review';
+        if (
+          k.indexOf('sent') !== -1 ||
+          k.indexOf('awaiting decision') !== -1 ||
+          k.indexOf('quoted') !== -1 ||
+          k.indexOf('client') !== -1 ||
+          k.indexOf('outstanding') !== -1
+        ) return 'sent';
+        if (
+          k.indexOf('estimat') !== -1 ||
+          k.indexOf('in progress') !== -1 ||
+          k.indexOf('pricing') !== -1 ||
+          k.indexOf('costing') !== -1
+        ) return 'estimating';
+        if (
+          k.indexOf('brief') !== -1 ||
+          k.indexOf('draft') !== -1 ||
+          k.indexOf('received') !== -1 ||
+          k.indexOf('new') !== -1
+        ) return 'brief';
+        // Unknown open status → Estimating so it stays visible operationally
+        return 'estimating';
+      }
+
+      function daysBetween(a, b) {
+        if (!a || !b) return null;
+        var ms = b.getTime() - a.getTime();
+        return Math.floor(ms / 86400000);
+      }
+
+      function formatDateTimeAU(d) {
+        if (!d || isNaN(d.getTime())) return '—';
+        return d.toLocaleString('en-AU', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      }
+
+      function formatDateAU(d) {
+        if (!d || isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('en-AU');
+      }
+
+      // Destroy any legacy P3 charts left from prior versions
       function clearP3Charts() {
         ['chart-p3-value', 'chart-p3-status-share'].forEach(function(id) {
           if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
         });
-        // Legacy apex ids + estimator
         ['chart-p3-funnel', 'chart-p3-estimator', 'chart-p3-donut'].forEach(destroyApex);
         Object.keys(_apexCharts).forEach(function(id) {
           if (id.indexOf('chart-p3-acc-') === 0) destroyApex(id);
         });
       }
-      function setChartOrPlaceholder(canvasId, hasData, config) {
-        var canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        var wrap = canvas.parentElement;
-        var existing = wrap.querySelector('.chart-placeholder');
-        if (existing) existing.remove();
-        if (!hasData) {
-          if (_charts[canvasId]) { _charts[canvasId].destroy(); delete _charts[canvasId]; }
-          canvas.style.display = 'none';
-          var ph = document.createElement('div');
-          ph.className = 'chart-placeholder';
-          ph.innerHTML = '<span>Data not yet available</span>';
-          wrap.appendChild(ph);
-          return;
-        }
-        canvas.style.display = '';
-        makeChart(canvasId, config);
-      }
-      var apexBase = {
-        chart: {
-          fontFamily: 'Montserrat, sans-serif',
-          toolbar: { show: false },
-          background: 'transparent',
-          dropShadow: { enabled: false }
-        },
-        theme: { mode: 'light' },
-        dataLabels: {
-          enabled: false,
-          style: { fontFamily: 'Poppins, sans-serif' }
-        },
-        fill: { type: 'solid', gradient: { enabled: false } },
-        grid: {
-          borderColor: 'rgba(188,189,190,0.28)',
-          strokeDashArray: 0
-        },
-        tooltip: {
-          theme: 'light',
-          style: { fontFamily: 'Poppins, sans-serif', fontSize: '12px' }
-        },
-        legend: {
-          fontFamily: 'Montserrat, sans-serif',
-          labels: { colors: '#262425' }
-        }
-      };
-      // Brand palette only — five Deep Charcoal tints spaced for distinguishability
-      // Indices match STATUS_ORDER: Draft, Sent, Accepted, In Progress, Awaiting Approval
-      var statusShareColors = [
-        'rgba(38,36,37,0.15)',  // Draft — lightest (~15%)
-        'rgba(38,36,37,0.50)',  // Sent (~50%)
-        '#262425',              // Accepted — full Deep Charcoal (100%)
-        'rgba(38,36,37,0.75)',  // In Progress (~75%)
-        'rgba(38,36,37,0.30)'   // Awaiting Approval (~30%)
-      ];
-      var charcoalScale = statusShareColors;
-      // Pipeline step box fills (connected stages, not volume-proportional)
-      var pipelineStepColors = [
-        { bg: 'rgba(38,36,37,0.22)', fg: '#262425' },
-        { bg: 'rgba(38,36,37,0.40)', fg: '#262425' },
-        { bg: '#262425', fg: '#FFFFFF' },
-        { bg: 'rgba(38,36,37,0.62)', fg: '#FFFFFF' },
-        { bg: '#D2D4D5', fg: '#262425' }
-      ];
+      clearP3Charts();
 
-      // Rebuild Department options from current sheet rows each render (not cached).
-      // Canonicalise known typos so "Maintainance" and "Maintenance" collapse to one option.
+      // Department options
       var brandedQuotes   = applyGlobal(window._p3Quotes);
       var brandedProjects = applyGlobal(window._p3Projects);
       var brandedAccuracy = applyGlobal(window._p3Accuracy);
@@ -5164,7 +5325,6 @@
           return normalizeDeptKey(d) === normalizeDeptKey(prev);
         });
         if (prevOk) {
-          // Prefer the canonical option value after typo collapse
           var match = deptList.filter(function(d) {
             return normalizeDeptKey(d) === normalizeDeptKey(prev);
           })[0];
@@ -5178,7 +5338,7 @@
           _p3DeptBound = true;
           deptSelect.addEventListener('change', function() {
             activeP3Dept = this.value || 'ALL';
-            renderP3(window._p3Quotes, window._p3Projects, window._p3Accuracy, window._p3Targets);
+            renderP3(window._p3Quotes, window._p3Projects, window._p3Accuracy, window._p3Targets, window._p3Meta);
             init3DTilt();
           });
         }
@@ -5187,686 +5347,1115 @@
       var quotesFiltered   = filterByDept(brandedQuotes);
       var projectsFiltered = filterByDept(brandedProjects);
       var accuracyFiltered = filterByDept(brandedAccuracy);
-      var daysTargetVal = readDaysToDecisionTarget(window._p3Targets);
-
-      // Map Quotes by header name (not index) so shifted columns stay correct.
-      var quotesHeaderMapped = quotesFiltered.map(function(r) {
-        return {
-          'Quote ID':              col(r, 'Quote ID', 'QuoteID'),
-          'Date Sent':             col(r, 'Date Sent', 'Date'),
-          'Contact Name':          col(r, 'Contact Name', 'Contact'),
-          'Brand':                 col(r, 'Brand', 'brand'),
-          'Department':            col(r, 'Department', 'department'),
-          'Quote Value ($)':       quoteValue(r),
-          'Labour Est ($)':        labourEst(r),
-          'Materials Est ($)':     materialsEst(r),
-          'Subcontractors Est ($)': subcontractorsEst(r),
-          'Allowances Est ($)':    allowancesEst(r),
-          'Est Margin %':          estMarginPct(r),
-          'Status':                statusOf(r),
-          'Date Accepted':         col(r, 'Date Accepted'),
-          'Days to Decision':      daysToDecision(r),
-          'Xero Project ID':       col(r, 'Xero Project ID', 'Xero Project J#'),
-          'Estimator Name':        estimatorOf(r)
-        };
-      });
-      if (quotesHeaderMapped.length && typeof console !== 'undefined') {
-        console.log('[P3] Quotes header-map sample:', quotesHeaderMapped[0]);
+      var marginTargetVal  = readMarginTargetPct(window._p3Targets);
+      if (marginTargetVal !== null && marginTargetVal > 0) {
+        P3_MARGIN_WARN_THRESHOLD = marginTargetVal;
       }
 
-      setBBPageData('P3', 'P3: Quoting & Estimating', {
-        quotes:   quotesHeaderMapped.slice(0, 200),
-        projects: projectsFiltered.slice(0, 200),
-        accuracy: accuracyFiltered.slice(0, 200),
-        daysToDecisionTarget: daysTargetVal
-      });
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var loadedAt = (window._p3Meta && window._p3Meta.loadedAt)
+        ? new Date(window._p3Meta.loadedAt)
+        : new Date();
 
-      // ── Status pipeline buckets ──────────────────────────────────
-      var STATUS_ORDER = ['Draft', 'Sent', 'Accepted', 'In Progress', 'Awaiting Approval'];
-      var statusStats = {};
-      STATUS_ORDER.forEach(function(s) {
-        statusStats[s] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
-      });
-      var otherStatus = {};
+      var updEl = document.getElementById('p3-last-updated');
+      if (updEl) {
+        updEl.textContent = 'Last updated ' + formatDateTimeAU(loadedAt);
+      }
 
-      quotesFiltered.forEach(function(r) {
-        var s = statusOf(r);
-        var key = s;
-        var match = STATUS_ORDER.find(function(label) {
-          return label.toLowerCase() === s.toLowerCase();
-        });
-        if (match) key = match;
-        else if (!s) key = 'Draft';
-        else {
-          if (!otherStatus[s]) otherStatus[s] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
-          key = s;
+      var hasDueDates = quotesFiltered.some(function(r) { return dueDateOf(r) !== null; });
+      var hasBookedHours = quotesFiltered.some(function(r) { return bookedHoursOf(r) !== null; });
+      var hasMarginVals = quotesFiltered.some(function(r) { return estMarginPct(r) !== null; });
+      var hasHoursAvailField = quotesFiltered.some(function(r) { return availableHoursOf(r) !== null; });
+      var ghlLive = !!(window._p3Meta && window._p3Meta.ghlQuotesLive);
+      var quotesLive = quotesFiltered.length > 0 || (window._p3Quotes && window._p3Quotes.length > 0);
+
+      // Build enriched quote models
+      var models = quotesFiltered.map(function(r) {
+        var status = statusOf(r);
+        var stageId = mapStatusToStage(status);
+        var terminal = stageId === null;
+        var sentD = parseFlexibleDate(dateSentOf(r));
+        var accD = parseFlexibleDate(dateAcceptedOf(r));
+        var dueRaw = dueDateOf(r);
+        var dueD = dueRaw ? parseFlexibleDate(dueRaw) : null;
+        var ageDays = sentD ? daysBetween(sentD, today) : null;
+        if (ageDays !== null && ageDays < 0) ageDays = 0;
+        var margin = estMarginPct(r);
+        var value = quoteValue(r);
+        var estimator = estimatorOf(r);
+        var unassigned = !estimator || estimator === 'Unassigned';
+        var lab = labourEst(r);
+        var mat = materialsEst(r);
+        var daysDec = daysToDecision(r);
+        var booked = bookedHoursOf(r);
+
+        var dueSource = 'none';
+        var isOverdue = false;
+        var dueNext7 = false;
+        if (dueD) {
+          dueSource = 'date';
+          var dDays = daysBetween(today, dueD);
+          if (dDays !== null && dDays < 0 && !terminal) isOverdue = true;
+          if (dDays !== null && dDays >= 0 && dDays <= 7 && !terminal) dueNext7 = true;
+        } else if (!terminal && ageDays !== null && stageId) {
+          // Age proxy vs stage SLA (explicitly labeled Proxy elsewhere)
+          dueSource = 'proxy';
+          var sla = P3_STAGE_SLA[stageId] != null ? P3_STAGE_SLA[stageId] : 14;
+          if (ageDays > sla) isOverdue = true;
+          var toSla = sla - ageDays;
+          if (toSla >= 0 && toSla <= 7) dueNext7 = true;
         }
-        var bucket = statusStats[key] || otherStatus[key];
-        if (!bucket) {
-          otherStatus[key] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
-          bucket = otherStatus[key];
+
+        var marginWarn = margin !== null && margin < P3_MARGIN_WARN_THRESHOLD;
+        var missing = [];
+        if (value <= 0) missing.push('value');
+        if (margin === null) missing.push('margin');
+        if (lab === null) missing.push('labour est');
+        if (mat === null) missing.push('materials est');
+        if (unassigned) missing.push('estimator');
+        if (!sentD) missing.push('date');
+
+        var daysInStage = ageDays; // no stage-entry dates in Quotes tab
+
+        var requiredAction = 'Monitor';
+        if (terminal && normalizeStatusKey(status).indexOf('accept') !== -1) {
+          requiredAction = 'Hand off / convert';
+        } else if (isOverdue && stageId === 'sent') {
+          requiredAction = 'Chase client decision';
+        } else if (isOverdue) {
+          requiredAction = 'Clear overdue estimating work';
+        } else if (missing.indexOf('estimator') !== -1) {
+          requiredAction = 'Assign estimator';
+        } else if (missing.length >= 2 && stageId && stageId !== 'sent') {
+          requiredAction = 'Complete missing estimate inputs';
+        } else if (marginWarn) {
+          requiredAction = 'Review margin before send';
+        } else if (stageId === 'review') {
+          requiredAction = 'Complete internal review';
+        } else if (stageId === 'sent') {
+          requiredAction = 'Follow up client';
+        } else if (stageId === 'brief' || stageId === 'scope') {
+          requiredAction = 'Advance to estimating';
+        } else if (stageId === 'estimating') {
+          requiredAction = 'Complete estimate';
         }
-        bucket.count++;
-        bucket.value += quoteValue(r);
-        var days = daysToDecision(r);
-        if (days !== null) { bucket.daysSum += days; bucket.daysN++; }
+
+        return {
+          row: r,
+          id: quoteIdOf(r),
+          client: contactOf(r),
+          status: status || '—',
+          stageId: stageId,
+          stageLabel: stageId
+            ? (P3_WORK_STAGES.filter(function(s) { return s.id === stageId; })[0] || {}).label || stageId
+            : (isTerminalStatus(status) ? status : '—'),
+          terminal: terminal,
+          value: value,
+          margin: margin,
+          marginWarn: marginWarn,
+          estimator: estimator,
+          unassigned: unassigned,
+          sentDate: sentD,
+          sentDateStr: dateSentOf(r),
+          acceptedDate: accD,
+          dueDate: dueD,
+          dueSource: dueSource,
+          ageDays: ageDays,
+          daysInStage: daysInStage,
+          daysToDecision: daysDec,
+          isOverdue: isOverdue,
+          dueNext7: dueNext7,
+          missing: missing,
+          bookedHours: booked,
+          labourEst: lab,
+          materialsEst: mat,
+          requiredAction: requiredAction
+        };
       });
 
-      var totalQuotes = quotesFiltered.length;
-      var totalValue  = quotesFiltered.reduce(function(s, r) { return s + quoteValue(r); }, 0);
-      var acceptedN   = (statusStats['Accepted'] || { count: 0 }).count;
-      var daysVals = quotesFiltered.map(daysToDecision).filter(function(d) { return d !== null; });
-      var avgDays = daysVals.length
-        ? daysVals.reduce(function(s, n) { return s + n; }, 0) / daysVals.length
+      var openModels = models.filter(function(m) { return !m.terminal; });
+      var sentModels = models.filter(function(m) { return m.stageId === 'sent'; });
+
+      // ── Data quality line ────────────────────────────────────
+      var dqParts = [];
+      dqParts.push(quotesLive ? 'Quotes: live' : 'Quotes: no rows for selection');
+      dqParts.push(ghlLive ? 'GHL_Quotes: live' : 'GHL_Quotes: not available (API gap)');
+      var accCompleteN = 0;
+      accuracyFiltered.forEach(function(r) {
+        var acRaw = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']);
+        var alRaw = rawColByNames(r, ['Labour Variance %', 'Labour Variance', 'Actual Labour']);
+        var amRaw = rawColByNames(r, ['Materials Variance %', 'Materials Variance', 'Actual Materials']);
+        var ac = !isBlank(acRaw) && parseNum(acRaw) > 0;
+        // Require positive actual cost as minimum completion signal
+        if (ac) accCompleteN++;
+        // silence unused: labour/materials fields checked later for richer metrics
+        void alRaw; void amRaw;
+      });
+      if (accCompleteN > 0) {
+        dqParts.push('Estimating_Accuracy: ' + accCompleteN + ' completed with actual cost');
+      } else {
+        dqParts.push('Estimating_Accuracy: pending final labour/material costs');
+      }
+      if (!hasDueDates) dqParts.push('Due dates: pending (overdue uses age proxy)');
+      if (!hasBookedHours) dqParts.push('Booking hours: pending (capacity uses proxy)');
+      if (!hasMarginVals) dqParts.push('Est Margin %: awaiting data');
+      var dqEl = document.getElementById('p3-data-quality');
+      if (dqEl) dqEl.textContent = dqParts.join(' · ');
+
+      // ── KPIs ─────────────────────────────────────────────────
+      var inProg = openModels.filter(function(m) {
+        return m.stageId === 'brief' || m.stageId === 'scope' ||
+          m.stageId === 'estimating' || m.stageId === 'review';
+      });
+      var overdueList = openModels.filter(function(m) { return m.isOverdue; });
+      var due7List = openModels.filter(function(m) { return m.dueNext7 && !m.isOverdue; });
+      var awaitingVal = sentModels.reduce(function(s, m) { return s + m.value; }, 0);
+
+      var turnaroundVals = models.map(function(m) { return m.daysToDecision; })
+        .filter(function(d) { return d !== null && !isNaN(d); });
+      // Also accept from accepted quotes via date math if Days blank
+      models.forEach(function(m) {
+        if (m.daysToDecision !== null) return;
+        if (m.sentDate && m.acceptedDate) {
+          var dd = daysBetween(m.sentDate, m.acceptedDate);
+          if (dd !== null && dd >= 0) turnaroundVals.push(dd);
+        }
+      });
+      // de-dupe if we double-added - use set of pairs instead: keep simple sum
+      var avgTurn = turnaroundVals.length
+        ? turnaroundVals.reduce(function(s, n) { return s + n; }, 0) / turnaroundVals.length
+        : null;
+      var turnN = turnaroundVals.length;
+
+      var marginVals = models.map(function(m) { return m.margin; })
+        .filter(function(v) { return v !== null && !isNaN(v); });
+      var avgMargin = marginVals.length
+        ? marginVals.reduce(function(s, n) { return s + n; }, 0) / marginVals.length
         : null;
 
-      if (totalQuotes === 0) {
-        ['kpi-p3-quotes','kpi-p3-value','kpi-p3-accepted','kpi-p3-days']
-          .forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
+      if (!quotesLive && models.length === 0) {
+        setKPI('kpi-p3-inprog', 'kpi-p3-inprog-sub', '—', 'No data for selection');
+        setKPI('kpi-p3-due7', 'kpi-p3-due7-sub', '—', 'No data for selection');
+        setKPI('kpi-p3-overdue', 'kpi-p3-overdue-sub', '—', 'No data for selection');
+        setKPI('kpi-p3-awaiting', 'kpi-p3-awaiting-sub', '—', 'No data for selection');
+        setKPI('kpi-p3-turnaround', 'kpi-p3-turnaround-sub', '—', 'No data for selection');
+        setKPI('kpi-p3-margin', 'kpi-p3-margin-sub', '—', 'No data for selection');
       } else {
-        setKPI('kpi-p3-quotes',   'kpi-p3-quotes-sub',   totalQuotes, 'From Quotes tab');
-        setKPI('kpi-p3-value',    'kpi-p3-value-sub',    formatCurrency(totalValue), 'Sum of quote values');
-        setKPI('kpi-p3-accepted', 'kpi-p3-accepted-sub', acceptedN, 'Status = Accepted');
-        setKPI('kpi-p3-days',     'kpi-p3-days-sub',
-          avgDays !== null ? (Math.round(avgDays * 10) / 10) : '—',
-          avgDays !== null ? 'Across ' + daysVals.length + ' decided quotes' : 'No decision days logged');
-      }
+        setKPI('kpi-p3-inprog', 'kpi-p3-inprog-sub',
+          inProg.length,
+          'Active estimating work · ' + formatCurrency(inProg.reduce(function(s, m) { return s + m.value; }, 0)));
 
-      clearP3Charts();
-
-      var funnelLabels = STATUS_ORDER.slice();
-      var funnelCounts = STATUS_ORDER.map(function(s) { return statusStats[s].count; });
-      var funnelValues = STATUS_ORDER.map(function(s) { return Math.round(statusStats[s].value); });
-      var hasFunnelData = funnelCounts.some(function(n) { return n > 0; });
-      var P3_CHARCOAL = '#262425';
-      var P3_SOFT_GRAY = '#BCBDBE';
-      var P3_SILVER = '#D2D4D5';
-      var P3_GRID = { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 };
-
-      // ── Status pipeline: equal connected boxes (not a funnel geometry) ─
-      var pipeEl = document.getElementById('p3-status-pipeline');
-      if (pipeEl) {
-        if (!hasFunnelData) {
-          pipeEl.innerHTML = '<p class="no-data-msg">No quote status data for selected filters.</p>';
+        if (!hasDueDates && dueSourceAllProxy()) {
+          setKPI('kpi-p3-due7', 'kpi-p3-due7-sub',
+            due7List.length,
+            'Proxy (no Due Date) · within stage SLA next 7d');
+          setKPI('kpi-p3-overdue', 'kpi-p3-overdue-sub',
+            overdueList.length,
+            overdueList.length
+              ? 'Proxy age vs stage SLA · not formal due dates'
+              : 'Proxy age vs stage SLA · none over');
         } else {
-          var pipeHtml = '<div class="p3-pipeline-track" role="list">';
-          STATUS_ORDER.forEach(function(label, idx) {
-            var n = statusStats[label].count;
-            var tones = pipelineStepColors[idx] || pipelineStepColors[0];
-            var style = 'background:' + tones.bg + ';color:' + tones.fg + ';';
-            pipeHtml +=
-              '<div class="p3-pipeline-step' + (idx === 0 ? ' is-first' : '') +
-              (idx === STATUS_ORDER.length - 1 ? ' is-last' : '') +
-              '" role="listitem" style="' + style + '">' +
-              '<span class="p3-pipeline-label">' + label + '</span>' +
-              '<span class="p3-pipeline-count">' + n + '</span>' +
-              '</div>';
-            if (idx < STATUS_ORDER.length - 1) {
-              pipeHtml += '<div class="p3-pipeline-connector" aria-hidden="true"></div>';
-            }
-          });
-          pipeHtml += '</div>';
-          pipeHtml += '<p class="p3-pipeline-note">Statuses are parallel queues, not a strict drop-off funnel.</p>';
-          pipeEl.innerHTML = pipeHtml;
+          setKPI('kpi-p3-due7', 'kpi-p3-due7-sub',
+            due7List.length,
+            hasDueDates ? 'Due date within 7 days' : 'Pending due dates');
+          setKPI('kpi-p3-overdue', 'kpi-p3-overdue-sub',
+            overdueList.length,
+            hasDueDates ? 'Past due date' : 'Pending due dates');
+        }
+
+        setKPI('kpi-p3-awaiting', 'kpi-p3-awaiting-sub',
+          formatCurrency(awaitingVal),
+          sentModels.length + ' quote' + (sentModels.length === 1 ? '' : 's') + ' with clients');
+
+        if (avgTurn !== null) {
+          var turnSub = 'n = ' + turnN + ' decided';
+          if (turnN < P3_TURNAROUND_LOW_SAMPLE) {
+            turnSub += ' · low sample';
+          }
+          setKPI('kpi-p3-turnaround', 'kpi-p3-turnaround-sub',
+            (Math.round(avgTurn * 10) / 10) + 'd', turnSub);
+        } else {
+          setKPI('kpi-p3-turnaround', 'kpi-p3-turnaround-sub',
+            'Pending', 'Awaiting Days to Decision on completed quotes');
+        }
+
+        if (avgMargin !== null) {
+          var mSub = 'n = ' + marginVals.length;
+          if (marginTargetVal !== null) mSub += ' · target ' + formatPct(marginTargetVal);
+          setKPI('kpi-p3-margin', 'kpi-p3-margin-sub', formatPct(avgMargin), mSub);
+        } else {
+          setKPI('kpi-p3-margin', 'kpi-p3-margin-sub',
+            'Pending', 'Awaiting Est Margin % in Quotes');
         }
       }
 
-      // ── Chart.js: Quote Value by Status ───────
-      var hasValueData = funnelValues.some(function(n) { return n > 0; });
-      setChartOrPlaceholder('chart-p3-value', hasValueData, {
-        type: 'bar',
-        data: {
-          labels: funnelLabels,
-          datasets: [{
-            label: 'Quote Value ($)',
-            data: funnelValues,
-            backgroundColor: charcoalScale,
-            borderWidth: 0,
-            borderRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: { label: function(ctx) { return formatCurrency(ctx.raw); } }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: P3_CHARCOAL, font: { size: 10 } },
-              grid: { display: false },
-              border: { color: P3_SOFT_GRAY }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                color: P3_CHARCOAL,
-                callback: function(v) { return '$' + Number(v).toLocaleString('en-AU'); }
-              },
-              grid: P3_GRID,
-              border: { color: P3_SOFT_GRAY }
-            }
-          }
-        }
-      });
-
-      // ── By estimator ──────────────────────────────────────────
-      var byEst = {};
-      quotesFiltered.forEach(function(r) {
-        var name = estimatorOf(r);
-        if (!byEst[name]) byEst[name] = { count: 0, value: 0, daysSum: 0, daysN: 0 };
-        byEst[name].count++;
-        byEst[name].value += quoteValue(r);
-        var d = daysToDecision(r);
-        if (d !== null) { byEst[name].daysSum += d; byEst[name].daysN++; }
-      });
-      var estEntries = Object.keys(byEst).map(function(k) {
-        return {
-          name: k,
-          count: byEst[k].count,
-          value: byEst[k].value,
-          avgDays: byEst[k].daysN ? byEst[k].daysSum / byEst[k].daysN : null
-        };
-      }).sort(function(a, b) { return b.count - a.count; });
-
-      var hasEstData = estEntries.some(function(e) { return e.count > 0; });
-      var estAvgDays = estEntries.map(function(e) {
-        return e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : 0;
-      });
-
-      // ── ApexCharts: Quotes by Estimator (dark grey columns + solid black days line) ─
-      // Target days line is isolated via annotations + P3_SHOW_DAYS_TARGET_LINE toggle.
-      var showDaysTarget = P3_SHOW_DAYS_TARGET_LINE && daysTargetVal !== null && daysTargetVal > 0;
-      var estDaysMax = 0;
-      estAvgDays.forEach(function(d) { if (d > estDaysMax) estDaysMax = d; });
-      if (showDaysTarget && daysTargetVal > estDaysMax) estDaysMax = daysTargetVal;
-
-      var estChartOpts = Object.assign({}, apexBase, {
-        chart: Object.assign({}, apexBase.chart, { type: 'line', height: 300 }),
-        series: [
-          {
-            name: 'Quotes',
-            type: 'column',
-            data: estEntries.map(function(e) { return e.count; })
-          },
-          {
-            name: 'Avg Days to Decision',
-            type: 'line',
-            data: estAvgDays
-          }
-        ],
-        colors: [P3_SOFT_GRAY, P3_CHARCOAL],
-        stroke: {
-          width: [0, 3.5],
-          curve: 'straight',
-          dashArray: [0, 0],
-          colors: [P3_SOFT_GRAY, P3_CHARCOAL]
-        },
-        markers: {
-          size: [0, 5],
-          colors: [P3_CHARCOAL],
-          strokeColors: '#FFFFFF',
-          strokeWidth: 2,
-          hover: { sizeOffset: 1 }
-        },
-        plotOptions: {
-          bar: { borderRadius: 0, columnWidth: '48%' }
-        },
-        xaxis: {
-          categories: estEntries.map(function(e) { return e.name; }),
-          labels: {
-            style: {
-              colors: P3_CHARCOAL,
-              fontSize: '11px',
-              fontFamily: 'Montserrat, sans-serif'
-            }
-          },
-          axisBorder: { color: P3_SOFT_GRAY },
-          axisTicks: { color: P3_SOFT_GRAY }
-        },
-        yaxis: [
-          {
-            seriesName: 'Quotes',
-            title: {
-              text: 'Quotes',
-              style: {
-                color: P3_CHARCOAL,
-                fontSize: '11px',
-                fontFamily: 'Montserrat, sans-serif'
-              }
-            },
-            labels: {
-              style: {
-                colors: P3_CHARCOAL,
-                fontSize: '11px',
-                fontFamily: 'Montserrat, sans-serif'
-              },
-              formatter: function(v) { return Math.round(v); }
-            },
-            min: 0
-          },
-          {
-            seriesName: 'Avg Days to Decision',
-            opposite: true,
-            title: {
-              text: 'Avg Days to Decision',
-              style: {
-                color: P3_CHARCOAL,
-                fontSize: '11px',
-                fontFamily: 'Montserrat, sans-serif'
-              }
-            },
-            labels: {
-              style: {
-                colors: P3_CHARCOAL,
-                fontSize: '11px',
-                fontFamily: 'Montserrat, sans-serif'
-              },
-              formatter: function(v) { return Math.round(v * 10) / 10; }
-            },
-            min: 0,
-            max: estDaysMax > 0 ? Math.ceil(estDaysMax * 1.15) : undefined
-          }
-        ],
-        legend: {
-          position: 'top',
-          horizontalAlign: 'left',
-          fontSize: '11px',
-          fontFamily: 'Montserrat, sans-serif',
-          labels: { colors: P3_CHARCOAL }
-        },
-        tooltip: Object.assign({}, apexBase.tooltip, {
-          shared: true,
-          intersect: false
-        })
-      });
-      if (showDaysTarget) {
-        // Isolated addition — set P3_SHOW_DAYS_TARGET_LINE = false to remove
-        estChartOpts.annotations = {
-          yaxis: [{
-            y: daysTargetVal,
-            yAxisIndex: 1,
-            borderColor: P3_CHARCOAL,
-            strokeDashArray: 0,
-            borderWidth: 1.5,
-            opacity: 0.85,
-            label: {
-              borderColor: P3_SOFT_GRAY,
-              borderWidth: 1,
-              text: 'Target ' + daysTargetVal + 'd',
-              position: 'right',
-              offsetX: 0,
-              style: {
-                color: P3_CHARCOAL,
-                background: '#FFFFFF',
-                fontSize: '10px',
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 600,
-                padding: { left: 6, right: 6, top: 2, bottom: 2 }
-              }
-            }
-          }]
-        };
+      function dueSourceAllProxy() {
+        return openModels.length > 0 && openModels.every(function(m) {
+          return m.dueSource === 'proxy' || m.dueSource === 'none';
+        });
       }
 
-      setApexOrPlaceholder('chart-p3-estimator', hasEstData && totalQuotes > 0, estChartOpts);
-
-      // ── Chart.js: 100% stacked horizontal Status Share ─
-      var statusShareLegend = document.getElementById('chart-p3-status-share-legend');
-      if (statusShareLegend) statusShareLegend.innerHTML = '';
-      if (hasFunnelData && totalQuotes > 0) {
-        var shareDatasets = [];
-        STATUS_ORDER.forEach(function(label, idx) {
-          var n = funnelCounts[idx];
-          if (!n) return;
-          shareDatasets.push({
-            label: label,
-            data: [n],
-            backgroundColor: statusShareColors[idx],
-            borderWidth: 0,
-            borderRadius: 0,
-            barThickness: 36
-          });
-        });
-
-        setChartOrPlaceholder('chart-p3-status-share', shareDatasets.length > 0, {
-          type: 'bar',
-          data: {
-            labels: ['Share'],
-            datasets: shareDatasets
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  title: function(items) {
-                    return items[0] ? items[0].dataset.label : '';
-                  },
-                  label: function(ctx) {
-                    var n = ctx.raw || 0;
-                    var pct = totalQuotes ? Math.round((n / totalQuotes) * 1000) / 10 : 0;
-                    return n + ' quotes (' + pct + '%)';
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                stacked: true,
-                min: 0,
-                max: totalQuotes,
-                ticks: {
-                  color: P3_CHARCOAL,
-                  font: { size: 10 },
-                  callback: function(v) {
-                    if (!totalQuotes) return v;
-                    return Math.round((v / totalQuotes) * 100) + '%';
-                  }
-                },
-                grid: P3_GRID,
-                border: { color: P3_SOFT_GRAY }
-              },
-              y: {
-                stacked: true,
-                ticks: { display: false },
-                grid: { display: false },
-                border: { display: false }
-              }
-            }
-          }
-        });
-
-        if (statusShareLegend) {
-          var legHtml = '';
-          STATUS_ORDER.forEach(function(label, idx) {
-            var n = funnelCounts[idx];
-            if (!n) return;
-            var pct = Math.round((n / totalQuotes) * 1000) / 10;
-            legHtml +=
-              '<span class="p3-share-leg-item">' +
-              '<span class="p3-share-swatch" style="background:' + statusShareColors[idx] + '"></span>' +
-              '<span class="p3-share-leg-text">' + label +
-              ' <strong>' + n + '</strong> (' + pct + '%)</span></span>';
-          });
-          statusShareLegend.innerHTML = legHtml;
+      // Toggle risk KPI styling when overdue > 0
+      var overdueCard = document.querySelector('#page-p3 [data-kpi="overdue"]');
+      if (overdueCard) {
+        if (overdueList.length > 0) overdueCard.classList.add('p3-kpi--risk');
+        else overdueCard.classList.remove('p3-kpi--risk');
+      }
+      var marginCard = document.querySelector('#page-p3 [data-kpi="margin"]');
+      if (marginCard) {
+        if (avgMargin !== null && marginTargetVal !== null && avgMargin < marginTargetVal) {
+          marginCard.classList.add('p3-kpi--warn');
+        } else {
+          marginCard.classList.remove('p3-kpi--warn');
         }
-      } else {
-        setChartOrPlaceholder('chart-p3-status-share', false, {});
       }
 
-      // ── Funnel detail table (status + estimator summary) ───────
-      var funnelRows = STATUS_ORDER.map(function(s) {
-        var b = statusStats[s];
-        return {
-          'Status': s,
-          'Count': b.count,
-          'Quote Value ($)': b.value,
-          'Avg Days to Decision': b.daysN ? Math.round((b.daysSum / b.daysN) * 10) / 10 : ''
+      // ── Work Queue ───────────────────────────────────────────
+      var stageBuckets = {};
+      P3_WORK_STAGES.forEach(function(s) {
+        stageBuckets[s.id] = {
+          label: s.label,
+          count: 0,
+          value: 0,
+          overdue: 0,
+          daysSum: 0,
+          daysN: 0,
+          estimators: {}
         };
-      }).filter(function(r) { return r.Count > 0 || totalQuotes === 0; });
-
-      // Append other statuses if any
-      Object.keys(otherStatus).forEach(function(s) {
-        var b = otherStatus[s];
-        funnelRows.push({
-          'Status': s,
-          'Count': b.count,
-          'Quote Value ($)': b.value,
-          'Avg Days to Decision': b.daysN ? Math.round((b.daysSum / b.daysN) * 10) / 10 : ''
-        });
+      });
+      openModels.forEach(function(m) {
+        var b = stageBuckets[m.stageId];
+        if (!b) return;
+        b.count++;
+        b.value += m.value;
+        if (m.isOverdue) b.overdue++;
+        if (m.daysInStage !== null) {
+          b.daysSum += m.daysInStage;
+          b.daysN++;
+        }
+        b.estimators[m.estimator] = (b.estimators[m.estimator] || 0) + 1;
       });
 
-      if (totalQuotes > 0) {
-        var estTableRows = estEntries.map(function(e) {
-          return {
-            'Estimator': e.name,
-            'Quotes': e.count,
-            'Quote Value ($)': e.value,
-            'Avg Days to Decision': e.avgDays !== null ? Math.round(e.avgDays * 10) / 10 : ''
+      var qEl = document.getElementById('p3-work-queue');
+      if (qEl) {
+        if (!openModels.length && !models.length) {
+          qEl.innerHTML = '<p class="no-data-msg">No quote data for selected filters.</p>';
+        } else {
+          var qh = '<div class="p3-queue-track" role="list">';
+          P3_WORK_STAGES.forEach(function(s, idx) {
+            var b = stageBuckets[s.id];
+            var avgD = b.daysN ? (Math.round((b.daysSum / b.daysN) * 10) / 10) : null;
+            var estNames = Object.keys(b.estimators).sort(function(a, c) {
+              return b.estimators[c] - b.estimators[a];
+            });
+            var estSummary = estNames.length
+              ? estNames.slice(0, 3).map(function(n) {
+                  return escapeP3(n) + ' (' + b.estimators[n] + ')';
+                }).join(', ') + (estNames.length > 3 ? '…' : '')
+              : '—';
+            qh += '<div class="p3-queue-stage' + (b.overdue > 0 ? ' has-overdue' : '') +
+              '" role="listitem">' +
+              '<div class="p3-queue-stage-label">' + escapeP3(s.label) + '</div>' +
+              '<div class="p3-queue-stage-count">' + b.count + '</div>' +
+              '<div class="p3-queue-stage-meta">' +
+                '<span>' + (b.value ? formatCurrency(b.value) : '$0') + '</span>' +
+                '<span>Avg ' + (avgD !== null ? avgD + 'd in stage' : 'days Pending') + '</span>' +
+                (b.overdue > 0
+                  ? '<span class="p3-queue-overdue">' + b.overdue + ' overdue</span>'
+                  : '<span class="p3-queue-ok">0 overdue</span>') +
+                '<span class="p3-queue-est" title="Assigned estimators">' + estSummary + '</span>' +
+              '</div></div>';
+            if (idx < P3_WORK_STAGES.length - 1) {
+              qh += '<div class="p3-queue-arrow" aria-hidden="true"></div>';
+            }
+          });
+          qh += '</div>';
+          qh += '<p class="p3-queue-foot">Stages are parallel production workstreams. Counts do not imply conversion drop-off.</p>';
+          qEl.innerHTML = qh;
+        }
+      }
+
+      // ── Schedule toggle ──────────────────────────────────────
+      var schedPanel = document.getElementById('p3-schedule-panel');
+      var schedToggle = document.getElementById('p3-schedule-toggle');
+      var schedCue = document.getElementById('p3-schedule-cue');
+      function applyScheduleOpen() {
+        if (!schedPanel || !schedToggle) return;
+        if (p3ScheduleOpen) {
+          schedPanel.hidden = false;
+          schedToggle.setAttribute('aria-expanded', 'true');
+          if (schedCue) schedCue.textContent = 'Hide Gantt and capacity detail';
+        } else {
+          schedPanel.hidden = true;
+          schedToggle.setAttribute('aria-expanded', 'false');
+          if (schedCue) schedCue.textContent = 'Show Gantt and capacity detail';
+        }
+      }
+      applyScheduleOpen();
+      if (schedToggle && !_p3ScheduleBound) {
+        _p3ScheduleBound = true;
+        schedToggle.addEventListener('click', function() {
+          p3ScheduleOpen = !p3ScheduleOpen;
+          applyScheduleOpen();
+        });
+      }
+
+      // ── Gantt ────────────────────────────────────────────────
+      // Timeline from min(sent, today-21) to max(today+14, due, sent+45)
+      var ganttNote = document.getElementById('p3-gantt-note');
+      var ganttEl = document.getElementById('p3-gantt');
+      var ganttPool = openModels.slice().sort(function(a, b) {
+        if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+        return b.value - a.value;
+      }).slice(0, 40);
+
+      if (ganttNote) {
+        ganttNote.textContent = hasDueDates
+          ? 'One row per open quote. Segments are production phases; dashed line is today.'
+          : 'One row per open quote. Phase bars are status-derived proxies (Quotes tab has no stage start/end dates). Dashed line is today.';
+      }
+
+      if (ganttEl) {
+        if (!ganttPool.length) {
+          ganttEl.innerHTML = '<p class="no-data-msg">No open quotes in production for selected filters.</p>';
+        } else {
+          var rangeStart = new Date(today);
+          rangeStart.setDate(rangeStart.getDate() - 21);
+          var rangeEnd = new Date(today);
+          rangeEnd.setDate(rangeEnd.getDate() + 21);
+          ganttPool.forEach(function(m) {
+            if (m.sentDate && m.sentDate < rangeStart) rangeStart = new Date(m.sentDate);
+            var endCand = m.dueDate || (m.sentDate
+              ? new Date(m.sentDate.getTime() + 45 * 86400000)
+              : null);
+            if (endCand && endCand > rangeEnd) rangeEnd = endCand;
+            if (m.isOverdue) {
+              var overEnd = new Date(today);
+              overEnd.setDate(overEnd.getDate() + 7);
+              if (overEnd > rangeEnd) rangeEnd = overEnd;
+            }
+          });
+          var rangeMs = Math.max(1, rangeEnd - rangeStart);
+
+          function pctOnTimeline(d) {
+            if (!d) return null;
+            var p = ((d - rangeStart) / rangeMs) * 100;
+            return Math.max(0, Math.min(100, p));
+          }
+
+          var todayPct = pctOnTimeline(today);
+          // Progress of Gantt segments by stage order
+          var stageToSegIdx = {
+            brief: 0, scope: 1, estimating: 2, review: 3, sent: 4
           };
-        });
-        var html = '<p class="section-subtitle" style="font-size:12px;color:#666;margin:0 0 8px">By Status</p>';
-        html += buildTable(funnelRows, [
-          { label: 'Status', key: 'Status', align: 'left' },
-          { label: 'Count', key: 'Count', align: 'right' },
-          {
-            label: 'Quote Value',
-            key: 'Quote Value ($)',
-            align: 'right',
-            format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
-          },
-          {
-            label: 'Avg Days to Decision',
-            key: 'Avg Days to Decision',
-            align: 'right',
-            format: function(v) { return v !== '' && v != null ? v : '—'; }
-          }
-        ]);
-        html += '<p class="section-subtitle" style="font-size:12px;color:#666;margin:16px 0 8px">By Estimator</p>';
-        html += buildTable(estTableRows, [
-          { label: 'Estimator', key: 'Estimator', align: 'left' },
-          { label: 'Quotes', key: 'Quotes', align: 'right' },
-          {
-            label: 'Quote Value',
-            key: 'Quote Value ($)',
-            align: 'right',
-            format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
-          },
-          {
-            label: 'Avg Days to Decision',
-            key: 'Avg Days to Decision',
-            align: 'right',
-            format: function(v) { return v !== '' && v != null ? v : '—'; }
-          }
-        ]);
-        document.getElementById('p3-funnel-table').innerHTML = html;
-      } else {
-        document.getElementById('p3-funnel-table').innerHTML =
-          '<p class="no-data-msg">No quote data for selected filters.</p>';
-      }
 
-      // ── Section 2: Budget vs Actual ────────────────────────────
-      if (projectsFiltered.length > 0) {
-        var budgetHtml = '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Project Name</th><th>Brand</th><th>Department</th><th>Status</th>' +
-          '<th>Total Budget</th><th>Total Actual</th><th>Gross Margin %</th>' +
-          '</tr></thead><tbody>';
-        projectsFiltered.forEach(function(r) {
-          var name = col(r, 'Project Name', 'project_name', 'Project') || '-';
-          var brand = col(r, 'Brand', 'brand') || '-';
-          var dept  = col(r, 'Department', 'department') || '-';
-          var st    = col(r, 'Status', 'status') || '-';
-          var budgetRaw = rawCol(r, 'Total Budget', 'total_budget', 'Budget');
-
-          var budgetStr = isBlank(budgetRaw) ? '-' : formatCurrency(parseNum(budgetRaw));
-          // Total Actual / Gross Margin depend on Actual-Other Costs (Xero_Bills) - not live yet
-          var actualStr = xeroProjectsPendingLabel();
-          var marginStr = xeroProjectsPendingLabel();
-
-          budgetHtml += '<tr>' +
-            '<td>' + name + '</td>' +
-            '<td>' + brand + '</td>' +
-            '<td>' + dept + '</td>' +
-            '<td>' + st + '</td>' +
-            '<td>' + budgetStr + '</td>' +
-            '<td>' + actualStr + '</td>' +
-            '<td>' + marginStr + '</td>' +
-            '</tr>';
-        });
-        budgetHtml += '</tbody></table></div>';
-        budgetHtml = '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
-          '<span>Total Actual and Gross Margin await Xero_Bills (Actual-Other Costs). Live budget figures are shown below.</span></div>' + budgetHtml;
-        document.getElementById('p3-budget-table').innerHTML = budgetHtml;
-      } else {
-        document.getElementById('p3-budget-table').innerHTML =
-          '<p class="no-data-msg">No project data for selected filters.</p>';
-      }
-
-      // ── Section 3: Estimating Accuracy (by estimator) ──────────
-      var gaugesEl = document.getElementById('p3-accuracy-gauges');
-      if (gaugesEl) gaugesEl.innerHTML = '';
-
-      if (accuracyFiltered.length > 0) {
-        // Aggregate by estimator name
-        var accByEst = {};
-        accuracyFiltered.forEach(function(r) {
-          var name = String(col(r, 'Estimator', 'Estimator Name', 'estimator') || '').trim() || 'Unassigned';
-          if (!accByEst[name]) {
-            accByEst[name] = {
-              quotedMarginSum: 0, quotedMarginN: 0,
-              actualMarginSum: 0, actualMarginN: 0,
-              varianceSum: 0, varianceN: 0,
-              scoreSum: 0, scoreN: 0,
-              rows: 0
-            };
-          }
-          var a = accByEst[name];
-          a.rows++;
-          var qm = rawCol(r, 'Quoted Margin %', 'Quoted Margin', 'quoted_margin');
-          if (!isBlank(qm)) { a.quotedMarginSum += parseNum(qm); a.quotedMarginN++; }
-          var am = rawCol(r, 'Actual Margin %', 'Actual Margin', 'actual_margin');
-          if (!isBlank(am)) { a.actualMarginSum += parseNum(am); a.actualMarginN++; }
-          var mv = rawCol(r, 'Margin Variance %', 'Margin Variance', 'margin_variance');
-          if (!isBlank(mv)) { a.varianceSum += parseNum(mv); a.varianceN++; }
-          var sc = rawCol(r, 'Accuracy Score', 'accuracy_score', 'Score');
-          if (!isBlank(sc)) { a.scoreSum += parseNum(sc); a.scoreN++; }
-        });
-
-        var accEntries = Object.keys(accByEst).map(function(k) {
-          var a = accByEst[k];
-          return {
-            name: k,
-            quotedMargin: a.quotedMarginN ? a.quotedMarginSum / a.quotedMarginN : null,
-            actualMargin: a.actualMarginN ? a.actualMarginSum / a.actualMarginN : null,
-            variance: a.varianceN ? a.varianceSum / a.varianceN : null,
-            score: a.scoreN ? a.scoreSum / a.scoreN : null,
-            hasActual: a.actualMarginN > 0
-          };
-        }).sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-        // ── ApexCharts: Accuracy radialBar gauge per estimator ───
-        if (gaugesEl) {
-          accEntries.forEach(function(e, idx) {
-            var awaiting = !e.hasActual;
-            var scorePct = 0;
-            if (!awaiting && e.score !== null) {
-              scorePct = e.score;
-              if (scorePct >= 0 && scorePct <= 1) scorePct = scorePct * 100;
-              scorePct = Math.max(0, Math.min(100, Math.round(scorePct * 10) / 10));
-            }
-            var gaugeId = 'chart-p3-acc-' + idx;
-            var card = document.createElement('div');
-            card.className = 'p3-accuracy-gauge-card';
-            card.innerHTML =
-              '<div id="' + gaugeId + '" class="apex-chart"></div>' +
-              '<div class="p3-gauge-caption">' +
-                (awaiting ? 'Awaiting job completion' : '') +
-              '</div>';
-            gaugesEl.appendChild(card);
-
-            var gaugeEl = document.getElementById(gaugeId);
-            if (gaugeEl && typeof ApexCharts !== 'undefined') {
-              destroyApex(gaugeId);
-              _apexCharts[gaugeId] = new ApexCharts(gaugeEl, {
-                chart: {
-                  type: 'radialBar',
-                  height: 200,
-                  fontFamily: 'Montserrat, sans-serif',
-                  toolbar: { show: false },
-                  background: 'transparent',
-                  dropShadow: { enabled: false }
-                },
-                series: [scorePct],
-                labels: [e.name],
-                colors: ['#262425'],
-                fill: {
-                  type: 'solid',
-                  gradient: { enabled: false }
-                },
-                plotOptions: {
-                  radialBar: {
-                    startAngle: -135,
-                    endAngle: 135,
-                    hollow: { size: '58%', background: 'transparent' },
-                    track: {
-                      background: '#D2D4D5',
-                      strokeWidth: '100%',
-                      dropShadow: { enabled: false }
-                    },
-                    dataLabels: {
-                      name: {
-                        show: true,
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        fontFamily: 'Montserrat, sans-serif',
-                        color: '#262425',
-                        offsetY: -8
-                      },
-                      value: {
-                        show: true,
-                        fontSize: '22px',
-                        fontWeight: 700,
-                        fontFamily: 'Poppins, sans-serif',
-                        color: '#262425',
-                        offsetY: 6,
-                        formatter: function(val) {
-                          return awaiting ? '0%' : (Math.round(Number(val) * 10) / 10) + '%';
-                        }
-                      }
-                    }
-                  }
-                },
-                stroke: { lineCap: 'round' },
-                tooltip: { enabled: false }
-              });
-              _apexCharts[gaugeId].render();
-            }
+          var gh = '<div class="p3-gantt-legend">';
+          P3_GANTT_SEGS.forEach(function(seg, i) {
+            gh += '<span class="p3-gantt-leg-item"><span class="p3-gantt-leg-swatch p3-gantt-tone-' +
+              i + '"></span>' + escapeP3(seg.label) + '</span>';
           });
-        }
+          gh += '<span class="p3-gantt-leg-item"><span class="p3-gantt-leg-swatch p3-gantt-overdue-swatch"></span>Overdue extension</span>';
+          gh += '<span class="p3-gantt-leg-item"><span class="p3-gantt-leg-swatch p3-gantt-unassigned-swatch"></span>Unassigned</span>';
+          gh += '</div>';
 
-        var anyActual = accEntries.some(function(e) { return e.hasActual; });
-        var accHtml = '';
-        if (!anyActual) {
-          accHtml += '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
-            '<span>Data not yet available — awaiting job completion before accuracy can be scored.</span></div>';
+          gh += '<div class="p3-gantt-rows">';
+          ganttPool.forEach(function(m) {
+            var start = m.sentDate || rangeStart;
+            var plannedEnd = m.dueDate || new Date(start.getTime() +
+              (P3_STAGE_SLA[m.stageId] || 14) * 86400000);
+            if (plannedEnd < start) plannedEnd = new Date(start.getTime() + 7 * 86400000);
+            var left = pctOnTimeline(start);
+            var right = pctOnTimeline(m.isOverdue && today > plannedEnd ? today : plannedEnd);
+            if (right === null) right = left;
+            var width = Math.max(2, right - left);
+            var segIdx = stageToSegIdx[m.stageId] != null ? stageToSegIdx[m.stageId] : 2;
+            var nSegs = P3_GANTT_SEGS.length;
+            // Active phases up to current stage
+            var activeN = Math.min(nSegs, segIdx + 1);
+
+            var barHtml = '<div class="p3-gantt-bar' +
+              (m.unassigned ? ' is-unassigned' : '') +
+              (m.isOverdue ? ' is-overdue' : '') +
+              '" style="left:' + left + '%;width:' + width + '%">';
+            for (var si = 0; si < activeN; si++) {
+              barHtml += '<span class="p3-gantt-seg p3-gantt-tone-' + si +
+                '" style="flex:' + (1) + '" title="' + escapeP3(P3_GANTT_SEGS[si].label) + '"></span>';
+            }
+            if (m.isOverdue && today > plannedEnd) {
+              barHtml += '<span class="p3-gantt-seg p3-gantt-seg--overdue" title="Overdue"></span>';
+            }
+            barHtml += '</div>';
+
+            var submitPct = pctOnTimeline(plannedEnd);
+            var flags = '';
+            if (m.marginWarn) flags += '<span class="p3-flag p3-flag--margin" title="Margin below threshold">Margin</span>';
+            if (m.isOverdue) flags += '<span class="p3-flag p3-flag--overdue">Overdue</span>';
+
+            gh += '<div class="p3-gantt-row' + (m.isOverdue ? ' is-overdue' : '') +
+              (m.unassigned ? ' is-unassigned' : '') + '">' +
+              '<div class="p3-gantt-label" title="' + escapeP3(m.id + ' · ' + m.client) + '">' +
+                '<span class="p3-gantt-qid">' + escapeP3(m.id) + '</span>' +
+                '<span class="p3-gantt-client">' + escapeP3(
+                  m.client.length > 22 ? m.client.slice(0, 20) + '…' : m.client
+                ) + '</span>' +
+              '</div>' +
+              '<div class="p3-gantt-track">' +
+                (todayPct !== null
+                  ? '<span class="p3-gantt-today" style="left:' + todayPct + '%" title="Today"></span>'
+                  : '') +
+                barHtml +
+                (submitPct !== null
+                  ? '<span class="p3-gantt-milestone" style="left:' + submitPct +
+                    '%" title="Submission target"></span>'
+                  : '') +
+              '</div>' +
+              '<div class="p3-gantt-meta">' +
+                '<span>' + escapeP3(m.estimator) + '</span>' +
+                '<span>' + (m.value ? formatCurrency(m.value) : '—') + '</span>' +
+                flags +
+              '</div></div>';
+          });
+          gh += '</div>';
+          if (openModels.length > ganttPool.length) {
+            gh += '<p class="p3-section-hint">Showing top ' + ganttPool.length +
+              ' of ' + openModels.length + ' open quotes (overdue and highest value first).</p>';
+          }
+          ganttEl.innerHTML = gh;
         }
-        accHtml += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Estimator</th><th>Quoted Margin %</th><th>Actual Margin %</th>' +
-          '<th>Margin Variance</th><th>Accuracy Score</th>' +
+      }
+
+      // Missing inputs + upcoming submissions (inside schedule)
+      var missEl = document.getElementById('p3-missing-inputs');
+      if (missEl) {
+        var missCounts = { margin: 0, labour: 0, materials: 0, estimator: 0, value: 0 };
+        openModels.forEach(function(m) {
+          if (m.missing.indexOf('margin') !== -1) missCounts.margin++;
+          if (m.missing.indexOf('labour est') !== -1) missCounts.labour++;
+          if (m.missing.indexOf('materials est') !== -1) missCounts.materials++;
+          if (m.missing.indexOf('estimator') !== -1) missCounts.estimator++;
+          if (m.missing.indexOf('value') !== -1) missCounts.value++;
+        });
+        missEl.innerHTML =
+          '<ul class="p3-miss-list">' +
+          '<li>Est Margin %: <strong>' + missCounts.margin + '</strong> open quotes blank</li>' +
+          '<li>Labour Est: <strong>' + missCounts.labour + '</strong> blank</li>' +
+          '<li>Materials Est: <strong>' + missCounts.materials + '</strong> blank</li>' +
+          '<li>Unassigned estimator: <strong>' + missCounts.estimator + '</strong></li>' +
+          '<li>Missing value: <strong>' + missCounts.value + '</strong></li>' +
+          '</ul>';
+      }
+      var upEl = document.getElementById('p3-upcoming-submissions');
+      if (upEl) {
+        var upcoming = openModels.filter(function(m) {
+          return m.stageId === 'review' || m.dueNext7 ||
+            (m.stageId === 'estimating' && m.ageDays !== null && m.ageDays >= 5);
+        }).sort(function(a, b) {
+          if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+          return (a.ageDays || 0) - (b.ageDays || 0);
+        }).slice(0, 8);
+        if (!upcoming.length) {
+          upEl.innerHTML = '<p class="no-data-msg">No near-term submissions signalled.</p>';
+        } else {
+          var uh = '<ul class="p3-miss-list">';
+          upcoming.forEach(function(m) {
+            uh += '<li><strong>' + escapeP3(m.id) + '</strong> · ' +
+              escapeP3(m.stageLabel) + ' · ' +
+              (m.value ? formatCurrency(m.value) : '—') +
+              (m.isOverdue ? ' · <span class="p3-text-accent">overdue</span>' : '') +
+              '</li>';
+          });
+          uh += '</ul>';
+          upEl.innerHTML = uh;
+        }
+      }
+
+      // ── Estimator capacity ───────────────────────────────────
+      var capHint = document.getElementById('p3-capacity-hint');
+      var byEstCap = {};
+      function ensureEst(name) {
+        if (!byEstCap[name]) {
+          byEstCap[name] = {
+            name: name,
+            quotes: 0,
+            value: 0,
+            booked: 0,
+            bookedKnown: false,
+            available: null,
+            overdue: 0,
+            open: 0
+          };
+        }
+        return byEstCap[name];
+      }
+      openModels.forEach(function(m) {
+        var e = ensureEst(m.estimator);
+        e.quotes++;
+        e.open++;
+        e.value += m.value;
+        if (m.isOverdue) e.overdue++;
+        if (m.bookedHours !== null) {
+          e.booked += m.bookedHours;
+          e.bookedKnown = true;
+        }
+        var av = availableHoursOf(m.row);
+        if (av !== null) {
+          e.available = (e.available == null ? 0 : e.available) + av;
+        }
+      });
+      // Terminal load not counted against capacity
+
+      var capEntries = Object.keys(byEstCap).map(function(k) { return byEstCap[k]; });
+      // Ensure Unassigned row always present for ops visibility
+      if (!byEstCap['Unassigned']) {
+        capEntries.push({
+          name: 'Unassigned', quotes: 0, value: 0, booked: 0,
+          bookedKnown: false, available: null, overdue: 0, open: 0
+        });
+      }
+      capEntries.sort(function(a, b) {
+        if (a.name === 'Unassigned') return 1;
+        if (b.name === 'Unassigned') return -1;
+        return b.open - a.open;
+      });
+
+      var anyRealHours = capEntries.some(function(e) { return e.bookedKnown; });
+      if (capHint) {
+        capHint.textContent = anyRealHours
+          ? 'Booked hours from Quotes when present'
+          : 'Pending booking hours · proxy ' + P3_PROXY_HOURS_PER_QUOTE +
+            'h per open quote · available capacity assumed ' + P3_AVAILABLE_HOURS_WEEK + 'h/wk (Proxy)';
+      }
+
+      var capEl = document.getElementById('p3-capacity-table');
+      if (capEl) {
+        if (!openModels.length) {
+          capEl.innerHTML = '<p class="no-data-msg">No open quotes for capacity rollup.</p>';
+        } else {
+          var ch = '<div class="table-wrap"><table class="data-table p3-cap-table"><thead><tr>' +
+            '<th class="text-left">Estimator</th>' +
+            '<th class="text-right">Booked Hours</th>' +
+            '<th class="text-right">Available Hours</th>' +
+            '<th class="text-right">Utilisation %</th>' +
+            '<th class="text-left">Risk</th>' +
+            '</tr></thead><tbody>';
+          capEntries.forEach(function(e) {
+            var bookedH, availH, util, utilStr, bookedStr, availStr, hoursMode;
+            if (e.bookedKnown) {
+              bookedH = e.booked;
+              bookedStr = (Math.round(bookedH * 10) / 10) + 'h';
+              hoursMode = 'live';
+            } else {
+              bookedH = e.open * P3_PROXY_HOURS_PER_QUOTE;
+              bookedStr = (Math.round(bookedH * 10) / 10) + 'h Proxy';
+              hoursMode = 'proxy';
+            }
+            if (e.available != null && e.available > 0) {
+              availH = e.available;
+              availStr = (Math.round(availH * 10) / 10) + 'h';
+            } else if (hasHoursAvailField) {
+              availH = null;
+              availStr = 'Pending';
+            } else {
+              availH = P3_AVAILABLE_HOURS_WEEK;
+              availStr = availH + 'h Proxy';
+            }
+            if (availH && availH > 0) {
+              util = (bookedH / availH) * 100;
+              utilStr = formatPct(util);
+            } else {
+              util = null;
+              utilStr = 'Pending';
+            }
+            var risk = 'Available';
+            var riskCls = 'p3-risk p3-risk--ok';
+            if (e.name === 'Unassigned' && e.open > 0) {
+              risk = 'Unassigned load';
+              riskCls = 'p3-risk p3-risk--limited';
+            } else if (util !== null && util >= 100) {
+              risk = 'Limited capacity';
+              riskCls = 'p3-risk p3-risk--limited';
+            } else if (util !== null && util >= 75) {
+              risk = 'Watch';
+              riskCls = 'p3-risk p3-risk--watch';
+            } else if (e.overdue > 0 && util !== null && util >= 60) {
+              risk = 'Watch';
+              riskCls = 'p3-risk p3-risk--watch';
+            }
+            ch += '<tr' + (e.name === 'Unassigned' ? ' class="p3-row-unassigned"' : '') + '>' +
+              '<td class="text-left">' + escapeP3(e.name) +
+                (e.open ? ' <span class="p3-cap-open">(' + e.open + ' open)</span>' : '') +
+              '</td>' +
+              '<td class="text-right">' + bookedStr + '</td>' +
+              '<td class="text-right">' + availStr + '</td>' +
+              '<td class="text-right">' + utilStr + '</td>' +
+              '<td class="text-left"><span class="' + riskCls + '">' + risk + '</span></td>' +
+              '</tr>';
+            void hoursMode;
+          });
+          ch += '</tbody></table></div>';
+          capEl.innerHTML = ch;
+        }
+      }
+
+      // ── Client-decision ageing ───────────────────────────────
+      var ageBuckets = [
+        { id: 'b0', label: '0–7 days', min: 0, max: 7, value: 0, count: 0, tone: 'muted' },
+        { id: 'b1', label: '8–14 days', min: 8, max: 14, value: 0, count: 0, tone: 'watch' },
+        { id: 'b2', label: '15–30 days', min: 15, max: 30, value: 0, count: 0, tone: 'watch' },
+        { id: 'b3', label: '31+ days', min: 31, max: 99999, value: 0, count: 0, tone: 'accent' }
+      ];
+      sentModels.forEach(function(m) {
+        var age = m.ageDays;
+        if (age === null) age = 0;
+        for (var i = 0; i < ageBuckets.length; i++) {
+          var b = ageBuckets[i];
+          if (age >= b.min && age <= b.max) {
+            b.value += m.value;
+            b.count++;
+            break;
+          }
+        }
+      });
+      var ageTotalVal = ageBuckets.reduce(function(s, b) { return s + b.value; }, 0);
+      var ageEl = document.getElementById('p3-decision-ageing');
+      if (ageEl) {
+        if (!sentModels.length) {
+          ageEl.innerHTML = '<p class="no-data-msg">No sent quotes awaiting decision for selected filters.</p>';
+        } else {
+          var ah = '<div class="p3-age-bars">';
+          ageBuckets.forEach(function(b) {
+            var pct = ageTotalVal > 0 ? (b.value / ageTotalVal) * 100 : 0;
+            ah += '<div class="p3-age-row">' +
+              '<div class="p3-age-label">' + escapeP3(b.label) +
+                '<span class="p3-age-count">' + b.count + '</span></div>' +
+              '<div class="p3-age-track">' +
+                '<div class="p3-age-fill p3-age-fill--' + b.tone +
+                  '" style="width:' + Math.max(b.value > 0 ? 2 : 0, pct) + '%"></div>' +
+              '</div>' +
+              '<div class="p3-age-value">' + formatCurrency(b.value) +
+                (ageTotalVal ? ' <span class="p3-age-pct">(' +
+                  (Math.round(pct * 10) / 10) + '%)</span>' : '') +
+              '</div></div>';
+          });
+          ah += '</div>';
+          ah += '<p class="p3-section-hint">Total awaiting: ' + formatCurrency(ageTotalVal) +
+            ' across ' + sentModels.length + ' quotes.</p>';
+          ageEl.innerHTML = ah;
+        }
+      }
+
+      // ── Action table ─────────────────────────────────────────
+      var actionRows = openModels.slice().sort(function(a, b) {
+        if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+        if (a.value !== b.value) return b.value - a.value;
+        if (a.marginWarn !== b.marginWarn) return a.marginWarn ? -1 : 1;
+        var am = a.missing.length, bm = b.missing.length;
+        if (am !== bm) return bm - am;
+        return (b.ageDays || 0) - (a.ageDays || 0);
+      });
+      // Prefer true exceptions: overdue OR high value top quartile OR margin warn OR missing>=2
+      var valueSorted = openModels.map(function(m) { return m.value; }).sort(function(a, b) { return b - a; });
+      var highValueCut = valueSorted.length
+        ? valueSorted[Math.max(0, Math.floor(valueSorted.length * 0.25))]
+        : 0;
+      var exceptions = actionRows.filter(function(m) {
+        return m.isOverdue || m.marginWarn || m.missing.length >= 2 ||
+          m.unassigned || m.value >= highValueCut;
+      });
+      if (!exceptions.length) exceptions = actionRows.slice(0, 5);
+
+      var viewBtn = document.getElementById('p3-view-all-btn');
+      var allWrap = document.getElementById('p3-all-quotes');
+      function applyViewAll() {
+        if (viewBtn) {
+          viewBtn.textContent = p3ShowAllQuotes ? 'Show exceptions only' : 'View all quotes';
+        }
+        if (allWrap) allWrap.hidden = !p3ShowAllQuotes;
+      }
+      applyViewAll();
+      if (viewBtn && !_p3ViewAllBound) {
+        _p3ViewAllBound = true;
+        viewBtn.addEventListener('click', function() {
+          p3ShowAllQuotes = !p3ShowAllQuotes;
+          applyViewAll();
+        });
+      }
+
+      function buildActionTable(rows, limit) {
+        var list = limit ? rows.slice(0, limit) : rows;
+        if (!list.length) {
+          return '<p class="no-data-msg">No open quotes requiring action.</p>';
+        }
+        var html = '<div class="table-wrap"><table class="data-table p3-action-table"><thead><tr>' +
+          '<th class="text-left">Quote</th>' +
+          '<th class="text-left">Client</th>' +
+          '<th class="text-left">Stage</th>' +
+          '<th class="text-right">Value</th>' +
+          '<th class="text-left">Due</th>' +
+          '<th class="text-left">Estimator</th>' +
+          '<th class="text-left">Required Action</th>' +
           '</tr></thead><tbody>';
-        accEntries.forEach(function(e) {
-          var quotedStr = e.quotedMargin !== null ? formatPct(e.quotedMargin) : '—';
-          var actualStr, varStr, scoreStr;
-          if (!e.hasActual) {
-            actualStr = 'Awaiting job completion';
-            varStr    = 'Awaiting job completion';
-            scoreStr  = 'Awaiting job completion';
+        list.forEach(function(m) {
+          var dueLabel;
+          if (m.dueDate) {
+            dueLabel = formatDateAU(m.dueDate);
+            if (m.isOverdue) dueLabel += ' · Overdue';
+          } else if (m.dueSource === 'proxy') {
+            dueLabel = m.isOverdue
+              ? 'Proxy overdue (' + (m.ageDays != null ? m.ageDays + 'd' : '—') + ')'
+              : 'Proxy SLA (' + (m.ageDays != null ? m.ageDays + 'd in' : 'age Pending') + ')';
           } else {
-            actualStr = e.actualMargin !== null ? formatPct(e.actualMargin) : '—';
-            varStr    = e.variance !== null ? formatPct(e.variance) : '—';
-            scoreStr  = e.score !== null ? (Math.round(e.score * 10) / 10) : '—';
+            dueLabel = 'Pending';
           }
-          accHtml += '<tr>' +
-            '<td>' + e.name + '</td>' +
-            '<td>' + quotedStr + '</td>' +
-            '<td>' + actualStr + '</td>' +
-            '<td>' + varStr + '</td>' +
-            '<td>' + scoreStr + '</td>' +
+          var rowCls = m.isOverdue ? ' class="p3-row-overdue"' :
+            (m.marginWarn ? ' class="p3-row-margin"' : '');
+          html += '<tr' + rowCls + '>' +
+            '<td class="text-left">' + escapeP3(m.id) + '</td>' +
+            '<td class="text-left">' + escapeP3(m.client) + '</td>' +
+            '<td class="text-left">' + escapeP3(m.stageLabel) + '</td>' +
+            '<td class="text-right">' + (m.value ? formatCurrency(m.value) : '—') + '</td>' +
+            '<td class="text-left">' + escapeP3(dueLabel) + '</td>' +
+            '<td class="text-left">' + escapeP3(m.estimator) + '</td>' +
+            '<td class="text-left">' + escapeP3(m.requiredAction) + '</td>' +
             '</tr>';
         });
-        accHtml += '</tbody></table></div>';
-        document.getElementById('p3-accuracy-table').innerHTML = accHtml;
-      } else {
-        if (gaugesEl) gaugesEl.innerHTML = '';
-        document.getElementById('p3-accuracy-table').innerHTML =
-          '<p class="no-data-msg">No estimating accuracy data for selected filters.</p>';
+        html += '</tbody></table></div>';
+        return html;
       }
+
+      var actEl = document.getElementById('p3-action-table');
+      if (actEl) {
+        var topN = 8;
+        var topHtml = buildActionTable(exceptions, topN);
+        if (exceptions.length > topN) {
+          topHtml += '<p class="p3-section-hint">Top ' + topN + ' exceptions · ' +
+            exceptions.length + ' total exceptions · use View all quotes for full list.</p>';
+        }
+        actEl.innerHTML = topHtml;
+      }
+
+      // Full quote detail behind View all
+      var funnelEl = document.getElementById('p3-funnel-table');
+      if (funnelEl) {
+        var allSorted = models.slice().sort(function(a, b) {
+          if (a.terminal !== b.terminal) return a.terminal ? 1 : -1;
+          if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+          return b.value - a.value;
+        });
+        funnelEl.innerHTML = buildTable(
+          allSorted.map(function(m) {
+            return {
+              'Quote': m.id,
+              'Client': m.client,
+              'Status': m.status,
+              'Stage': m.stageLabel,
+              'Quote Value ($)': m.value,
+              'Est Margin %': m.margin !== null ? m.margin : '',
+              'Days to Decision': m.daysToDecision !== null ? m.daysToDecision : '',
+              'Estimator': m.estimator,
+              'Age (days)': m.ageDays !== null ? m.ageDays : ''
+            };
+          }),
+          [
+            { label: 'Quote', key: 'Quote', align: 'left' },
+            { label: 'Client', key: 'Client', align: 'left' },
+            { label: 'Status', key: 'Status', align: 'left' },
+            { label: 'Stage', key: 'Stage', align: 'left' },
+            {
+              label: 'Value', key: 'Quote Value ($)', align: 'right',
+              format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
+            },
+            {
+              label: 'Est Margin', key: 'Est Margin %', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return 'Pending';
+                return formatPct(parseNum(v));
+              }
+            },
+            {
+              label: 'Days to Decision', key: 'Days to Decision', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return v;
+              }
+            },
+            { label: 'Estimator', key: 'Estimator', align: 'left' },
+            {
+              label: 'Age (days)', key: 'Age (days)', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return v;
+              }
+            }
+          ]
+        );
+      }
+
+      // ── Estimating Accuracy (completed jobs only) ────────────
+      var accBody = document.getElementById('p3-accuracy-body');
+      function hasFinalActualCost(r) {
+        var acRaw = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs', 'Total Actual Cost']);
+        if (isBlank(acRaw)) return false;
+        var n = parseNum(acRaw);
+        return n > 0;
+      }
+      function hasLabourActualSignal(r) {
+        var keys = [
+          'Labour Variance %', 'Labour Variance', 'Actual Labour',
+          'Actual Labour Hours', 'Labour Actual', 'Actual Labour Cost'
+        ];
+        for (var i = 0; i < keys.length; i++) {
+          var raw = rawColByNames(r, [keys[i]]);
+          if (!isBlank(raw) && String(raw).trim() !== '0' && String(raw).trim() !== '0%') return true;
+        }
+        return false;
+      }
+      function hasMaterialsActualSignal(r) {
+        var keys = [
+          'Materials Variance %', 'Materials Variance', 'Actual Materials',
+          'Materials Actual', 'Actual Materials Cost'
+        ];
+        for (var i = 0; i < keys.length; i++) {
+          var raw = rawColByNames(r, [keys[i]]);
+          if (!isBlank(raw) && String(raw).trim() !== '0' && String(raw).trim() !== '0%') return true;
+        }
+        return false;
+      }
+
+      var completedAcc = accuracyFiltered.filter(function(r) {
+        // enough actual cost data = positive Actual Cost (ideally labour+materials)
+        return hasFinalActualCost(r);
+      });
+
+      if (accBody) {
+        if (!completedAcc.length) {
+          // Exact required unavailable text - no 0% gauges
+          accBody.innerHTML =
+            '<p class="p3-accuracy-unavailable">Accuracy unavailable, requires completed jobs with final labour and material costs</p>' +
+            '<p class="p3-section-hint">Estimating_Accuracy has ' + accuracyFiltered.length +
+            ' row' + (accuracyFiltered.length === 1 ? '' : 's') +
+            ' for this selection, but none include final actual cost. Live job budget vs actual is tracked on P4.</p>';
+        } else {
+          // Build metrics table for completed only
+          var byEstAcc = {};
+          completedAcc.forEach(function(r) {
+            var name = String(col(r, 'Estimator', 'Estimator Name', 'estimator') || '').trim() || 'Unassigned';
+            if (!byEstAcc[name]) {
+              byEstAcc[name] = {
+                n: 0,
+                qcSum: 0, acSum: 0, qcN: 0, acN: 0,
+                labVarSum: 0, labVarN: 0,
+                matVarSum: 0, matVarN: 0,
+                qmSum: 0, qmN: 0, amSum: 0, amN: 0,
+                scoreSum: 0, scoreN: 0
+              };
+            }
+            var a = byEstAcc[name];
+            a.n++;
+            var qc = rawColByNames(r, ['Quoted Cost', 'quoted_cost']);
+            var ac = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']);
+            if (!isBlank(qc)) { a.qcSum += parseNum(qc); a.qcN++; }
+            if (!isBlank(ac)) { a.acSum += parseNum(ac); a.acN++; }
+            var lv = rawColByNames(r, ['Labour Variance %', 'Labour Variance']);
+            if (!isBlank(lv)) { a.labVarSum += parseNum(lv); a.labVarN++; }
+            var mv = rawColByNames(r, ['Materials Variance %', 'Materials Variance']);
+            if (!isBlank(mv)) { a.matVarSum += parseNum(mv); a.matVarN++; }
+            var qm = rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']);
+            if (!isBlank(qm)) { a.qmSum += parseNum(qm); a.qmN++; }
+            var am = rawColByNames(r, ['Actual Margin %', 'Actual Margin']);
+            if (!isBlank(am)) { a.amSum += parseNum(am); a.amN++; }
+            var sc = rawColByNames(r, ['Accuracy Score', 'accuracy_score', 'Score']);
+            if (!isBlank(sc)) { a.scoreSum += parseNum(sc); a.scoreN++; }
+          });
+
+          var estAccList = Object.keys(byEstAcc).map(function(k) {
+            var a = byEstAcc[k];
+            return {
+              name: k,
+              n: a.n,
+              estVsActual: (a.qcN && a.acN)
+                ? (a.acSum - a.qcSum)
+                : null,
+              labVar: a.labVarN ? a.labVarSum / a.labVarN : null,
+              matVar: a.matVarN ? a.matVarSum / a.matVarN : null,
+              quotedMargin: a.qmN ? a.qmSum / a.qmN : null,
+              actualMargin: a.amN ? a.amSum / a.amN : null,
+              score: a.scoreN ? a.scoreSum / a.scoreN : null
+            };
+          }).sort(function(a, b) { return b.n - a.n; });
+
+          var htmlAcc = '<p class="p3-section-hint">' + completedAcc.length +
+            ' completed job' + (completedAcc.length === 1 ? '' : 's') +
+            ' with final actual cost data.</p>';
+
+          // Summary metrics
+          var sumQc = 0, sumAc = 0, sumQm = 0, sumAm = 0, nQm = 0, nAm = 0;
+          completedAcc.forEach(function(r) {
+            sumQc += parseNum(rawColByNames(r, ['Quoted Cost', 'quoted_cost']));
+            sumAc += parseNum(rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']));
+            var qm = rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']);
+            var am = rawColByNames(r, ['Actual Margin %', 'Actual Margin']);
+            if (!isBlank(qm)) { sumQm += parseNum(qm); nQm++; }
+            if (!isBlank(am)) { sumAm += parseNum(am); nAm++; }
+          });
+          htmlAcc += '<div class="p3-acc-summary">' +
+            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Est vs Actual Cost</span>' +
+              '<span class="p3-acc-mval">' + formatCurrency(sumAc - sumQc) +
+              ' <span class="p3-acc-delta">(actual − quoted)</span></span></div>' +
+            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Quoted Margin</span>' +
+              '<span class="p3-acc-mval">' + (nQm ? formatPct(sumQm / nQm) : 'Pending') + '</span></div>' +
+            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Final Margin</span>' +
+              '<span class="p3-acc-mval">' + (nAm ? formatPct(sumAm / nAm) : 'Pending') + '</span></div>' +
+            '</div>';
+
+          // Rank only if >= 5 completed jobs per estimator
+          var rankable = estAccList.filter(function(e) { return e.n >= 5; });
+          if (rankable.length) {
+            rankable.sort(function(a, b) {
+              var as = a.score != null ? a.score : -999;
+              var bs = b.score != null ? b.score : -999;
+              return bs - as;
+            });
+            htmlAcc += '<div class="p3-subhead">Estimator ranks (≥ 5 completed jobs with data)</div>';
+            htmlAcc += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
+              '<th class="text-left">Estimator</th>' +
+              '<th class="text-right">Jobs</th>' +
+              '<th class="text-right">Cost Δ</th>' +
+              '<th class="text-right">Labour Var</th>' +
+              '<th class="text-right">Materials Var</th>' +
+              '<th class="text-right">Quoted vs Final Margin</th>' +
+              '<th class="text-right">Accuracy Score</th>' +
+              '</tr></thead><tbody>';
+            rankable.forEach(function(e) {
+              htmlAcc += '<tr>' +
+                '<td class="text-left">' + escapeP3(e.name) + '</td>' +
+                '<td class="text-right">' + e.n + '</td>' +
+                '<td class="text-right">' + (e.estVsActual !== null ? formatCurrency(e.estVsActual) : '—') + '</td>' +
+                '<td class="text-right">' + (e.labVar !== null ? formatPct(e.labVar) : '—') + '</td>' +
+                '<td class="text-right">' + (e.matVar !== null ? formatPct(e.matVar) : '—') + '</td>' +
+                '<td class="text-right">' +
+                  (e.quotedMargin !== null ? formatPct(e.quotedMargin) : '—') +
+                  ' → ' +
+                  (e.actualMargin !== null ? formatPct(e.actualMargin) : '—') +
+                '</td>' +
+                '<td class="text-right">' +
+                  (e.score !== null
+                    ? (e.score <= 1 ? formatPct(e.score * 100) : formatPct(e.score))
+                    : '—') +
+                '</td></tr>';
+            });
+            htmlAcc += '</tbody></table></div>';
+          } else {
+            htmlAcc += '<p class="p3-section-hint">Estimator ranks hidden until an estimator has at least 5 completed jobs with final cost data.</p>';
+          }
+
+          // Job-level detail table
+          htmlAcc += '<div class="p3-subhead">Completed jobs detail</div>';
+          var jobRows = completedAcc.map(function(r) {
+            return {
+              'Quote': col(r, 'GHL Quote ID', 'Quote ID', 'QuoteID') || '—',
+              'Estimator': col(r, 'Estimator', 'Estimator Name') || '—',
+              'Quoted Cost': parseNum(rawColByNames(r, ['Quoted Cost'])),
+              'Actual Cost': parseNum(rawColByNames(r, ['Actual Cost', 'Actual Costs'])),
+              'Labour Var %': rawColByNames(r, ['Labour Variance %', 'Labour Variance']),
+              'Materials Var %': rawColByNames(r, ['Materials Variance %', 'Materials Variance']),
+              'Quoted Margin %': rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']),
+              'Actual Margin %': rawColByNames(r, ['Actual Margin %', 'Actual Margin'])
+            };
+          });
+          htmlAcc += buildTable(jobRows, [
+            { label: 'Quote', key: 'Quote', align: 'left' },
+            { label: 'Estimator', key: 'Estimator', align: 'left' },
+            {
+              label: 'Quoted Cost', key: 'Quoted Cost', align: 'right',
+              format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
+            },
+            {
+              label: 'Actual Cost', key: 'Actual Cost', align: 'right',
+              format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
+            },
+            {
+              label: 'Labour Var', key: 'Labour Var %', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return formatPct(parseNum(v));
+              }
+            },
+            {
+              label: 'Materials Var', key: 'Materials Var %', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return formatPct(parseNum(v));
+              }
+            },
+            {
+              label: 'Quoted Margin', key: 'Quoted Margin %', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return formatPct(parseNum(v));
+              }
+            },
+            {
+              label: 'Final Margin', key: 'Actual Margin %', align: 'right',
+              format: function(v) {
+                if (v === '' || v === null || v === undefined) return '—';
+                return formatPct(parseNum(v));
+              }
+            }
+          ]);
+          accBody.innerHTML = htmlAcc;
+        }
+      }
+
+      // BB payload
+      var quotesHeaderMapped = models.slice(0, 200).map(function(m) {
+        return {
+          'Quote ID': m.id,
+          'Contact Name': m.client,
+          'Status': m.status,
+          'Stage': m.stageLabel,
+          'Quote Value ($)': m.value,
+          'Est Margin %': m.margin,
+          'Days to Decision': m.daysToDecision,
+          'Estimator Name': m.estimator,
+          'Overdue': m.isOverdue,
+          'Age Days': m.ageDays,
+          'Required Action': m.requiredAction
+        };
+      });
+
+      setBBPageData('P3', 'P3: Quoting & Estimating', {
+        quotes: quotesHeaderMapped,
+        openQuotes: openModels.length,
+        overdue: overdueList.length,
+        awaitingDecisionValue: awaitingVal,
+        avgTurnaroundDays: avgTurn,
+        turnaroundSampleN: turnN,
+        avgQuotedMargin: avgMargin,
+        workQueue: P3_WORK_STAGES.map(function(s) {
+          var b = stageBuckets[s.id];
+          return {
+            stage: s.label,
+            count: b.count,
+            value: b.value,
+            overdue: b.overdue
+          };
+        }),
+        accuracyCompletedN: completedAcc.length,
+        accuracyUnavailable: completedAcc.length === 0,
+        sourcesLive: {
+          quotes: quotesLive,
+          ghlQuotes: ghlLive,
+          estimatingAccuracyCompleted: completedAcc.length > 0,
+          dueDates: hasDueDates,
+          bookedHours: hasBookedHours,
+          estMargin: hasMarginVals
+        },
+        projectsNote: 'Live job budget vs actual lives on P4; Xero_Projects actuals incomplete without Xero_Bills',
+        marginTarget: marginTargetVal,
+        lastUpdated: formatDateTimeAU(loadedAt)
+      });
     }
 
 
