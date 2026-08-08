@@ -42,7 +42,9 @@ const CONFIG = {
     TARGETS:             'Targets',
     GHL_LEADS:           'GHL_Leads',
     GHL_PIPELINE:        'GHL_Pipeline',
-    GHL_QUOTES:          'GHL_Quotes',
+    // Sheet was GHL_Quotes; renamed to Quotes. Same physical tab as QUOTES below
+    // (P2 sales probe + P3 estimating share one sheet name after rename).
+    GHL_QUOTES:          'Quotes',
     QUOTES:              'Quotes',
     XERO_FINANCIALS:     'Xero_Financials',
     XERO_INVOICES:       'Xero_Invoices',
