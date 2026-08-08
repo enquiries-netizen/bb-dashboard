@@ -4482,10 +4482,37 @@ select {
   border-radius: 0;
 }
 
+/* Top horizontal scrollbar twin (synced with .p4-ph-scroll) */
+#page-p4.p4-test-palette .p4-ph-hscroll-top {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 12px;
+  margin: 0 0 0;
+  border: 1px solid var(--p4-border);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: var(--p4-card);
+  scrollbar-width: thin;
+}
+
+#page-p4.p4-test-palette .p4-ph-hscroll-top::-webkit-scrollbar {
+  height: 10px;
+}
+
+#page-p4.p4-test-palette .p4-ph-hscroll-top::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.35);
+  border-radius: 6px;
+}
+
+#page-p4.p4-test-palette .p4-ph-hscroll-spacer {
+  height: 1px;
+  pointer-events: none;
+}
+
 #page-p4.p4-test-palette .p4-ph-scroll {
   overflow-x: auto;
   border: 1px solid var(--p4-border);
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px;
   background: var(--p4-card);
 }
 
@@ -4498,16 +4525,21 @@ select {
   flex: 0 0 auto;
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: 5;
+  isolation: isolate;
   background: var(--p4-card);
   border-right: 1px solid var(--p4-border);
-  box-shadow: 2px 0 6px rgba(17, 24, 39, 0.04);
+  /* No soft box-shadow: with overflowed grid cells it painted as boxes behind text */
+  box-shadow: none;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 #page-p4.p4-test-palette .p4-ph-left-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1.4fr) minmax(90px, 1fr) 64px 64px 72px 88px;
-  gap: 6px;
+  /* minmax(0, fr) so fr tracks can shrink; fixed mins + gaps exceeded sticky width */
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.05fr) 56px 56px 64px 84px;
+  gap: 4px;
   align-items: center;
   min-height: 40px;
   padding: 6px 10px;
@@ -4516,6 +4548,13 @@ select {
   color: var(--p4-text);
   background: var(--p4-card);
   cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+  text-shadow: none;
+  filter: none;
 }
 
 #page-p4.p4-test-palette .p4-ph-left-row--head {
@@ -4528,12 +4567,26 @@ select {
   cursor: default;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   background: var(--p4-zebra);
 }
 
 #page-p4.p4-test-palette .p4-ph-left-row:hover:not(.p4-ph-left-row--head) {
   background: var(--p4-zebra);
+}
+
+#page-p4.p4-test-palette .p4-ph-c-project,
+#page-p4.p4-test-palette .p4-ph-c-client,
+#page-p4.p4-test-palette .p4-ph-c-num,
+#page-p4.p4-test-palette .p4-ph-c-status {
+  min-width: 0;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  filter: none;
 }
 
 #page-p4.p4-test-palette .p4-ph-c-project {
@@ -4555,9 +4608,15 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+#page-p4.p4-test-palette .p4-ph-c-status {
+  overflow: hidden;
+}
+
 #page-p4.p4-test-palette .p4-ph-timeline {
   flex: 0 0 auto;
   position: relative;
+  z-index: 1;
+  background: var(--p4-card);
 }
 
 #page-p4.p4-test-palette .p4-ph-timeline-head {

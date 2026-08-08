@@ -5499,6 +5499,9 @@
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--risk"></i>At risk progress</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--today"></i>Today</span>' +
           '</div>' +
+          '<div class="p4-ph-hscroll-top" aria-hidden="true">' +
+          '<div class="p4-ph-hscroll-spacer"></div>' +
+          '</div>' +
           '<div class="p4-ph-scroll">' +
           '<div class="p4-ph-inner" style="min-width:' + (LEFT_W + timelineW) + 'px">' +
           '<div class="p4-ph-sticky" style="width:' + LEFT_W + 'px">' +
@@ -5588,13 +5591,57 @@
           });
         });
 
-        // Scroll today into view
+        // Dual horizontal scrollbars (top spacer + bottom table), kept in sync
+        var scrollEl = el.querySelector('.p4-ph-scroll');
+        var topScrollEl = el.querySelector('.p4-ph-hscroll-top');
+        var topSpacer = el.querySelector('.p4-ph-hscroll-spacer');
+        var phScrollSyncing = false;
+
+        function p4PhRefreshTopScrollbar() {
+          if (!scrollEl || !topSpacer || !topScrollEl) return;
+          topSpacer.style.width = scrollEl.scrollWidth + 'px';
+          if (!phScrollSyncing && topScrollEl.scrollLeft !== scrollEl.scrollLeft) {
+            phScrollSyncing = true;
+            topScrollEl.scrollLeft = scrollEl.scrollLeft;
+            phScrollSyncing = false;
+          }
+        }
+
+        if (scrollEl && topScrollEl) {
+          scrollEl.addEventListener('scroll', function() {
+            if (phScrollSyncing) return;
+            phScrollSyncing = true;
+            topScrollEl.scrollLeft = scrollEl.scrollLeft;
+            phScrollSyncing = false;
+          });
+          topScrollEl.addEventListener('scroll', function() {
+            if (phScrollSyncing) return;
+            phScrollSyncing = true;
+            scrollEl.scrollLeft = topScrollEl.scrollLeft;
+            phScrollSyncing = false;
+          });
+          if (typeof ResizeObserver !== 'undefined') {
+            var phRo = new ResizeObserver(function() {
+              p4PhRefreshTopScrollbar();
+            });
+            phRo.observe(scrollEl);
+            var phInner = scrollEl.querySelector('.p4-ph-inner');
+            if (phInner) phRo.observe(phInner);
+          }
+        }
+
+        // Scroll today into view; size top spacer to match
         requestAnimationFrame(function() {
-          var scrollEl = el.querySelector('.p4-ph-scroll');
           if (!scrollEl) return;
+          p4PhRefreshTopScrollbar();
           var viewW = scrollEl.clientWidth;
           var targetLeft = LEFT_W + todayX - Math.max(120, viewW - LEFT_W) * 0.4;
           scrollEl.scrollLeft = Math.max(0, targetLeft);
+          if (topScrollEl) {
+            phScrollSyncing = true;
+            topScrollEl.scrollLeft = scrollEl.scrollLeft;
+            phScrollSyncing = false;
+          }
         });
       }
 
