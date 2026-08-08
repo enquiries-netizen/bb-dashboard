@@ -535,8 +535,45 @@
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
 
-          <div class="section-card">
-            <div class="section-title">Labour Cost by Job</div>
+          <div class="section-card p4-labour-section">
+            <div class="section-title-row">
+              <div class="section-title">Labour Cost by Job</div>
+              <div class="filter-group p4-labour-dept-filter">
+                <span class="filter-label">Department</span>
+                <select class="filter-select page-filter-select" id="p4-labour-dept-filter" aria-label="Filter labour by department">
+                  <option value="ALL">All Departments</option>
+                </select>
+              </div>
+            </div>
+            <p class="p4-labour-filter-cue">Brand · Month · Year filters apply above. Department filters this section only.</p>
+
+            <div class="p4-labour-overview">
+              <div class="p4-labour-kpis" aria-label="Labour cost summary">
+                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+                  <div class="kpi-label">Total Hours</div>
+                  <div class="kpi-value" id="kpi-p4-labour-hours">—</div>
+                  <div class="kpi-sub" id="kpi-p4-labour-hours-sub">Across all jobs</div>
+                </div>
+                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+                  <div class="kpi-label">Total Labour Cost</div>
+                  <div class="kpi-value" id="kpi-p4-labour-cost">—</div>
+                  <div class="kpi-sub" id="kpi-p4-labour-cost-sub">Across all jobs</div>
+                </div>
+                <div class="kpi-card card p1-kpi p1-kpi-primary-card">
+                  <div class="kpi-label">Average Cost Per Job</div>
+                  <div class="kpi-value" id="kpi-p4-labour-avg">—</div>
+                  <div class="kpi-sub" id="kpi-p4-labour-avg-sub">Total cost ÷ jobs</div>
+                </div>
+              </div>
+              <div class="chart-card card p4-labour-chart-card">
+                <div class="chart-title">Top 5 Most Expensive Jobs</div>
+                <p class="p4-labour-outlier-note" id="p4-labour-outlier-note" hidden></p>
+                <div class="p4-labour-chart-wrap">
+                  <canvas id="chart-p4-labour-top5"></canvas>
+                </div>
+              </div>
+            </div>
+
             <div id="p4-labour-table">Loading labour data...</div>
           </div>
         </section>
@@ -4376,6 +4413,9 @@
     // Tables:  Milestone Schedule (risk-first + Timeline column), Labour cost by job
     // Signal:  Needs More Hands — slipping jobs with flat/declining weekly hours
     // ═══════════════════════════════════════════════════════════════
+    var activeP4LabourDept = 'ALL';
+    var _p4LabourDeptBound = false;
+
     async function loadP4() {
       showLoading(true);
       removeError('p4');
@@ -4438,6 +4478,10 @@
     }
 
     function renderP4(schedule, labour, xeroProjects) {
+      window._p4ScheduleRows = schedule;
+      window._p4LabourRows = labour;
+      window._p4XeroProjects = xeroProjects;
+
       var today = new Date();
       today.setHours(0, 0, 0, 0);
       var brandCharcoal = '#262425';
@@ -4774,13 +4818,22 @@
         ['kpi-p4-active','kpi-p4-ontrack','kpi-p4-overdue','kpi-p4-labour'].forEach(function(id) {
           setKPI(id, id + '-sub', '—', 'Syncs every Friday 6pm via Buildpass Schedule task');
         });
+        ['kpi-p4-labour-hours', 'kpi-p4-labour-cost', 'kpi-p4-labour-avg'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', '');
+        });
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
         document.getElementById('p4-labour-table').innerHTML =
           '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
+        var olNote = document.getElementById('p4-labour-outlier-note');
+        if (olNote) { olNote.hidden = true; olNote.textContent = ''; }
         if (_charts['chart-p4-completion']) {
           _charts['chart-p4-completion'].destroy();
           delete _charts['chart-p4-completion'];
+        }
+        if (_charts['chart-p4-labour-top5']) {
+          _charts['chart-p4-labour-top5'].destroy();
+          delete _charts['chart-p4-labour-top5'];
         }
         return;
       }
@@ -5178,50 +5231,261 @@
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
       }
 
-      // ── Labour Cost by Job Table ───────────────────────────────
-      if (labourFiltered.length > 0) {
+      // ── Labour Cost by Job (summary KPIs + Top 5 chart + detail table) ──
+      function destroyP4LabourChart() {
+        if (_charts['chart-p4-labour-top5']) {
+          _charts['chart-p4-labour-top5'].destroy();
+          delete _charts['chart-p4-labour-top5'];
+        }
+      }
+
+      function clearP4LabourSectionEmpty(msg) {
+        destroyP4LabourChart();
+        ['kpi-p4-labour-hours', 'kpi-p4-labour-cost', 'kpi-p4-labour-avg'].forEach(function(id) {
+          setKPI(id, id + '-sub', '—', '');
+        });
+        var noteEl = document.getElementById('p4-labour-outlier-note');
+        if (noteEl) {
+          noteEl.hidden = true;
+          noteEl.textContent = '';
+        }
+        var tableElLab = document.getElementById('p4-labour-table');
+        if (tableElLab) tableElLab.innerHTML = '<p class="no-data-msg">' + msg + '</p>';
+      }
+
+      // Department filter options from labour rows already reduced by Brand/Month/Year
+      var labourDeptList = uniqueDeptListFromRows([labourFiltered]);
+      var labourDeptSelect = document.getElementById('p4-labour-dept-filter');
+      if (labourDeptSelect) {
+        var prevDept = activeP4LabourDept;
+        labourDeptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        labourDeptList.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          labourDeptSelect.appendChild(opt);
+        });
+        var prevDeptOk = prevDept && prevDept !== 'ALL' && labourDeptList.some(function(d) {
+          return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
+        });
+        if (prevDeptOk) {
+          var deptMatch = labourDeptList.filter(function(d) {
+            return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
+          })[0];
+          activeP4LabourDept = deptMatch || prevDept;
+          labourDeptSelect.value = activeP4LabourDept;
+        } else {
+          activeP4LabourDept = 'ALL';
+          labourDeptSelect.value = 'ALL';
+        }
+        if (!_p4LabourDeptBound) {
+          _p4LabourDeptBound = true;
+          labourDeptSelect.addEventListener('change', function() {
+            activeP4LabourDept = this.value || 'ALL';
+            if (window._p4ScheduleRows) {
+              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
+              if (typeof init3DTilt === 'function') init3DTilt();
+            } else {
+              loadP4();
+            }
+          });
+        }
+      }
+
+      var labourForSection = (labourFiltered || []).filter(function(r) {
+        return rowsMatchDept(r, activeP4LabourDept);
+      });
+
+      if (labourForSection.length > 0) {
         var labourByProject = {};
-        labourFiltered.forEach(function(r) {
+        labourForSection.forEach(function(r) {
           var project = p4LabourJobId(r);
           if (!project) return;
           if (!labourByProject[project]) {
             labourByProject[project] = {
-              project:  project,
-              brand:    col(r, 'Brand', 'brand') || '',
+              project: project,
+              brand: col(r, 'Brand', 'brand') || '',
               department: col(r, 'Department', 'department') || '',
               hours: 0,
-              cost:  0
+              cost: 0
             };
           }
-          var lHrs  = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+          var lHrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
           var lRate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
-          var lCost = (lHrs && lRate) ? lHrs * lRate : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
+          var lCost = (lHrs && lRate)
+            ? lHrs * lRate
+            : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
           labourByProject[project].hours += lHrs;
-          labourByProject[project].cost  += lCost;
+          labourByProject[project].cost += lCost;
+          // Keep a dept label when filter is All (prefer first non-empty)
+          var d = col(r, 'Department', 'department') || '';
+          if (d && !labourByProject[project].department) labourByProject[project].department = d;
+          var b = col(r, 'Brand', 'brand') || '';
+          if (b && !labourByProject[project].brand) labourByProject[project].brand = b;
         });
 
         Object.values(labourByProject).forEach(function(p) {
-          var rev = parseNum(col(xeroProjects.find(function(x){
-            return col(x,'Project ID','project_id') === p.project;
-          }) || {}, 'Revenue','revenue'));
-          p.revenue   = rev || 0;
+          var rev = parseNum(col(xeroProjects.find(function(x) {
+            return col(x, 'Project ID', 'project_id') === p.project;
+          }) || {}, 'Revenue', 'revenue'));
+          p.revenue = rev || 0;
           p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
         });
+
         var labourRows = Object.values(labourByProject)
           .sort(function(a, b) { return b.cost - a.cost; });
 
-        document.getElementById('p4-labour-table').innerHTML = buildTable(labourRows, [
-          { label: 'Project',  key: 'project', align: 'left' },
-          { label: 'Hours',    key: 'hours',    align: 'right', format: function(v) { return v ? parseFloat(v).toFixed(1) + ' hrs' : ''; } },
-          { label: 'Labour Cost', key: 'cost', align: 'right', format: function(v) { return v ? formatCurrency(v) : ''; } },
-          { label: 'Revenue',  key: 'revenue',  align: 'right', format: function(v) { return v ? formatCurrency(v) : ''; } },
-          { label: 'Labour %', key: 'labourPct', align: 'right', format: function(v) { return v ? v.toFixed(1) + '%' : ''; } },
-          { label: 'Brand',    key: 'brand', align: 'left' },
-          { label: 'Department', key: 'department', align: 'left' }
-        ]);
-      } else {
+        var totalHrs = labourRows.reduce(function(s, p) { return s + (p.hours || 0); }, 0);
+        var totalCostJobs = labourRows.reduce(function(s, p) { return s + (p.cost || 0); }, 0);
+        var jobCount = labourRows.length;
+        var avgCost = jobCount ? totalCostJobs / jobCount : 0;
+
+        setKPI(
+          'kpi-p4-labour-hours',
+          'kpi-p4-labour-hours-sub',
+          totalHrs ? (totalHrs >= 1000 ? totalHrs.toFixed(0) : totalHrs.toFixed(1)) : '0',
+          jobCount + ' job' + (jobCount !== 1 ? 's' : '')
+        );
+        setKPI(
+          'kpi-p4-labour-cost',
+          'kpi-p4-labour-cost-sub',
+          totalCostJobs ? formatCurrency(totalCostJobs) : '$0',
+          'Sum of labour cost'
+        );
+        setKPI(
+          'kpi-p4-labour-avg',
+          'kpi-p4-labour-avg-sub',
+          avgCost ? formatCurrency(avgCost) : '$0',
+          'Total cost ÷ ' + jobCount + ' job' + (jobCount !== 1 ? 's' : '')
+        );
+
+        var top5 = labourRows.slice(0, 5);
+        var top5Keys = {};
+        top5.forEach(function(p) { top5Keys[p.project] = true; });
+
+        var outlierNote = document.getElementById('p4-labour-outlier-note');
+        if (outlierNote) {
+          if (top5.length >= 2 && top5[1].cost > 0 && top5[0].cost > top5[1].cost) {
+            var pctAbove = Math.round(((top5[0].cost - top5[1].cost) / top5[1].cost) * 100);
+            // Flag when the leader is a clear outlier (≥40% above the next job)
+            if (pctAbove >= 40) {
+              var shortName = String(top5[0].project || 'Top job');
+              if (shortName.length > 28) shortName = shortName.slice(0, 26) + '…';
+              outlierNote.textContent =
+                shortName + ' is highest cost — ' + pctAbove + '% above the next job';
+              outlierNote.hidden = false;
+            } else {
+              outlierNote.hidden = true;
+              outlierNote.textContent = '';
+            }
+          } else {
+            outlierNote.hidden = true;
+            outlierNote.textContent = '';
+          }
+        }
+
+        destroyP4LabourChart();
+        if (top5.length > 0 && document.getElementById('chart-p4-labour-top5')) {
+          var isOutlier =
+            top5.length >= 2 &&
+            top5[1].cost > 0 &&
+            ((top5[0].cost - top5[1].cost) / top5[1].cost) * 100 >= 40;
+          var barColors = top5.map(function(p, i) {
+            if (i === 0 && isOutlier) return brandCharcoal;
+            if (i === 0) return 'rgba(38,36,37,0.72)';
+            if (i === 1) return 'rgba(38,36,37,0.5)';
+            return brandSoftGray;
+          });
+          makeChart('chart-p4-labour-top5', {
+            type: 'bar',
+            data: {
+              labels: top5.map(function(p) {
+                var lab = String(p.project || '—');
+                return lab.length > 36 ? lab.slice(0, 34) + '…' : lab;
+              }),
+              datasets: [{
+                data: top5.map(function(p) { return Math.round(p.cost * 100) / 100; }),
+                backgroundColor: barColors,
+                borderWidth: 0,
+                borderRadius: 4,
+                barThickness: 16,
+                maxBarThickness: 20
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              layout: { padding: { right: 12, left: 2, top: 4, bottom: 4 } },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(ctx) {
+                      return formatCurrency(ctx.raw);
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  ticks: {
+                    color: brandCharcoal,
+                    font: { size: 10, family: 'Montserrat' },
+                    callback: function(v) {
+                      return Math.abs(v) >= 1000
+                        ? '$' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k'
+                        : '$' + v;
+                    }
+                  },
+                  grid: { color: 'rgba(188,189,190,0.35)' },
+                  border: { color: brandSoftGray }
+                },
+                y: {
+                  ticks: {
+                    color: brandCharcoal,
+                    font: { size: 10, family: 'Montserrat' }
+                  },
+                  grid: { display: false },
+                  border: { color: brandSoftGray }
+                }
+              }
+            }
+          });
+        }
+
+        // Detail table — same columns; mark Top 5 rows with charcoal top-border
+        var th =
+          '<th class="text-left">Project</th>' +
+          '<th class="text-right">Hours</th>' +
+          '<th class="text-right">Labour Cost</th>' +
+          '<th class="text-right">Revenue</th>' +
+          '<th class="text-right">Labour %</th>' +
+          '<th class="text-left">Brand</th>' +
+          '<th class="text-left">Department</th>';
+        var trs = labourRows.map(function(p) {
+          var isTop = !!top5Keys[p.project];
+          return '<tr class="' + (isTop ? 'p4-labour-row-top5' : '') + '">' +
+            '<td class="text-left">' + (p.project || '—') + '</td>' +
+            '<td class="text-right">' + (p.hours ? parseFloat(p.hours).toFixed(1) + ' hrs' : '—') + '</td>' +
+            '<td class="text-right">' + (p.cost ? formatCurrency(p.cost) : '—') + '</td>' +
+            '<td class="text-right">' + (p.revenue ? formatCurrency(p.revenue) : '—') + '</td>' +
+            '<td class="text-right">' + (p.labourPct ? p.labourPct.toFixed(1) + '%' : '—') + '</td>' +
+            '<td class="text-left">' + (p.brand || '—') + '</td>' +
+            '<td class="text-left">' + (p.department || '—') + '</td>' +
+            '</tr>';
+        }).join('');
         document.getElementById('p4-labour-table').innerHTML =
-          '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
+          '<div class="table-wrap p4-labour-table-wrap">' +
+          '<table class="data-table p4-labour-table">' +
+          '<thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
+      } else {
+        clearP4LabourSectionEmpty(
+          labourFiltered.length > 0
+            ? 'No labour data for the selected department.'
+            : 'No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.'
+        );
       }
     }
 

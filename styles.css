@@ -877,6 +877,120 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+/* Labour Cost by Job — summary + Top 5 + detail table */
+.p4-labour-section .section-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 6px;
+}
+
+.p4-labour-section .section-title-row .section-title {
+  margin-bottom: 0;
+}
+
+.p4-labour-dept-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.p4-labour-filter-cue {
+  font-size: 11px;
+  color: var(--gray);
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+}
+
+.p4-labour-overview {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.85fr) minmax(280px, 1.35fr);
+  gap: 14px;
+  margin-bottom: 18px;
+  align-items: stretch;
+}
+
+.p4-labour-kpis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.p4-labour-kpis .kpi-card {
+  flex: 1;
+  margin: 0;
+}
+
+.p4-labour-chart-card {
+  padding: 12px 14px 10px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.p4-labour-chart-card .chart-title {
+  margin-bottom: 4px;
+}
+
+.p4-labour-outlier-note {
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  font-weight: 500;
+  padding: 4px 8px;
+  border: 1px solid var(--gray);
+  border-left: 3px solid var(--charcoal);
+  background: var(--white);
+}
+
+.p4-labour-outlier-note[hidden] {
+  display: none !important;
+}
+
+.p4-labour-chart-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  height: 200px;
+}
+
+/* Top 5 highlight — charcoal top-border attention marker (matches P5 KPI attention) */
+#p4-labour-table .p4-labour-table tr.p4-labour-row-top5 > td {
+  background: #F0F1F1;
+}
+
+#p4-labour-table .p4-labour-table tr.p4-labour-row-top5 > td:first-child {
+  border-top: 3px solid #262425;
+  box-shadow: none;
+}
+
+#p4-labour-table .p4-labour-table tr.p4-labour-row-top5 > td:not(:first-child) {
+  border-top: 3px solid #262425;
+}
+
+@media (max-width: 900px) {
+  .p4-labour-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .p4-labour-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .p4-labour-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    CARD BASE — includes 3D tilt via JS
