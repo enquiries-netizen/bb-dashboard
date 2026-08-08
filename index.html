@@ -446,40 +446,6 @@
             </div>
           </div>
 
-          <!-- Section 3: project-level health Gantt -->
-          <div class="section-card p4-health-section">
-            <div class="section-title">Project Health
-              <span class="p4-section-hint">One row per project · click a row for detail</span>
-            </div>
-            <div id="p4-health-gantt">Loading project health...</div>
-          </div>
-
-          <!-- Section 4: budget consumption scatter -->
-          <div class="section-card p4-scatter-section">
-            <div class="section-title">Budget consumption vs completion</div>
-            <p class="p4-chart-note">X = milestone progress · Y = known actuals as % of budget (partial until Total Actual from Xero_Bills). Bubble size = Total Budget. Colour by health status.</p>
-            <div class="p4-scatter-wrap">
-              <canvas id="chart-p4-scatter"></canvas>
-            </div>
-            <p class="no-data-msg" id="p4-scatter-empty" hidden>Not enough budget/progress data to plot for the current filters.</p>
-          </div>
-
-          <!-- Section 5: exception table + expandable full Job Costing -->
-          <div class="section-card p4-exception-section">
-            <div class="section-title-row">
-              <div class="section-title">Exceptions
-                <span class="p4-section-hint" id="p4-exception-hint">Top exceptions · At risk then Watch</span>
-              </div>
-              <button type="button" class="p4-view-all-btn" id="p4-view-all-btn">View all projects</button>
-            </div>
-            <div id="p4-exception-table">Loading exceptions...</div>
-            <div class="p4-full-costing" id="p4-full-costing" hidden>
-              <div class="p4-jco-table-title">Job Costing Overview</div>
-              <p class="p4-chart-note">Full drill-down with exact figures (Hours, Brand, Department included).</p>
-              <div id="p4-labour-table">Loading labour data...</div>
-            </div>
-          </div>
-
           <!-- Milestone Schedule: collapsible (logic preserved; detail also in project drawer) -->
           <div class="section-card p4-ms-section">
             <button type="button" class="p4-collapse-toggle is-open" id="p4-ms-collapse-btn" aria-expanded="true">
@@ -511,6 +477,40 @@
                 </div>
               </div>
               <div id="p4-schedule-table">Loading schedule data...</div>
+            </div>
+          </div>
+
+          <!-- Section 3: project-level health Gantt -->
+          <div class="section-card p4-health-section">
+            <div class="section-title">Project Health
+              <span class="p4-section-hint">One row per project · click a row for detail</span>
+            </div>
+            <div id="p4-health-gantt">Loading project health...</div>
+          </div>
+
+          <!-- Section 4: budget consumption scatter -->
+          <div class="section-card p4-scatter-section">
+            <div class="section-title">Budget consumption vs completion</div>
+            <p class="p4-chart-note">X = milestone progress · Y = known actuals as % of budget (partial until Total Actual from Xero_Bills). Bubble size = Total Budget. Colour by health status.</p>
+            <div class="p4-scatter-wrap">
+              <canvas id="chart-p4-scatter"></canvas>
+            </div>
+            <p class="no-data-msg" id="p4-scatter-empty" hidden>Not enough budget/progress data to plot for the current filters.</p>
+          </div>
+
+          <!-- Section 5: exception table + expandable full Job Costing -->
+          <div class="section-card p4-exception-section">
+            <div class="section-title-row">
+              <div class="section-title">Exceptions
+                <span class="p4-section-hint" id="p4-exception-hint">Top exceptions · At risk then Watch</span>
+              </div>
+              <button type="button" class="p4-view-all-btn" id="p4-view-all-btn">View all projects</button>
+            </div>
+            <div id="p4-exception-table">Loading exceptions...</div>
+            <div class="p4-full-costing" id="p4-full-costing" hidden>
+              <div class="p4-jco-table-title">Job Costing Overview</div>
+              <p class="p4-chart-note">Full drill-down with exact figures (Hours, Brand, Department included).</p>
+              <div id="p4-labour-table">Loading labour data...</div>
             </div>
           </div>
 
