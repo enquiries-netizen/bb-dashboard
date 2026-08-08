@@ -529,10 +529,9 @@
           </div>
 
           <div class="section-card">
-            <div class="section-title">Critical Milestones
+            <div class="section-title">Milestone Schedule
               <span class="p4-section-hint">Overdue and high-risk first</span>
             </div>
-            <div id="p4-schedule-gantt" aria-label="Critical milestones Gantt chart">Loading timeline...</div>
             <div id="p4-schedule-table">Loading schedule data...</div>
           </div>
 
@@ -4374,13 +4373,9 @@
     // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b)
     // KPIs:    Active Jobs, On Track, Overdue Milestones, Total Labour Cost
     // Chart:   Horizontal bar — % complete per job (sorted, 0% = Not Commenced)
-    // Tables:  Critical milestones (risk-first), Labour cost by job
-    // Gantt:   Timeline overview above critical milestones table
+    // Tables:  Milestone Schedule (risk-first + Timeline column), Labour cost by job
     // Signal:  Needs More Hands — slipping jobs with flat/declining weekly hours
     // ═══════════════════════════════════════════════════════════════
-    // Expanded = full milestone list; default = Overdue + In Progress only
-    var p4GanttShowAll = false;
-
     async function loadP4() {
       showLoading(true);
       removeError('p4');
@@ -4723,18 +4718,22 @@
 
       function formatStatusBadge(status, overdue) {
         var s = String(status || '').trim();
-        var lower = s.toLowerCase();
-        if (overdue || lower === 'overdue') {
-          return '<span class="p4-badge p4-badge--critical">OVERDUE</span>';
-        }
+        var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+        // Prefer explicit status labels so badge matches Timeline bar (not blanket late→OVERDUE)
         if (lower === 'complete' || lower === 'completed') {
           return '<span class="p4-badge p4-badge--neutral">Completed</span>';
+        }
+        if (lower === 'cancelled' || lower === 'canceled') {
+          return '<span class="p4-badge p4-badge--muted">Cancelled</span>';
         }
         if (lower === 'in progress') {
           return '<span class="p4-badge p4-badge--neutral">In Progress</span>';
         }
-        if (lower === 'not started' || lower === 'not-started') {
+        if (lower === 'not started') {
           return '<span class="p4-badge p4-badge--muted">Not Started</span>';
+        }
+        if (overdue || lower === 'overdue') {
+          return '<span class="p4-badge p4-badge--critical">OVERDUE</span>';
         }
         if (!s) return '';
         return '<span class="p4-badge p4-badge--muted">' + s + '</span>';
@@ -4911,28 +4910,37 @@
         });
       }
 
-      // ── Critical Milestones: Gantt overview + detail table ────
-      var ganttEl = document.getElementById('p4-schedule-gantt');
+      // ── Milestone Schedule table (risk-first + integrated Timeline) ────
       var tableEl = document.getElementById('p4-schedule-table');
 
-      /** Status bucket aligned with table badges / isOverdueNorm */
-      function p4GanttStatusKey(r) {
-        if (isOverdueNorm(r)) return 'overdue';
-        var lower = String(r.status || '').toLowerCase();
-        if (lower === 'complete' || lower === 'completed') return 'completed';
-        if (lower === 'cancelled' || lower === 'canceled') return 'cancelled';
-        if (lower === 'in progress' || lower === 'in-progress') return 'in-progress';
-        if (lower === 'not started' || lower === 'not-started') return 'not-started';
-        // Mid-progress with no clear status → treat as in progress (matches operational view)
-        if (r.pct !== null && r.pct !== undefined && r.pct > 0 && r.pct < 100) return 'in-progress';
-        if (!lower) return 'not-started';
-        return 'not-started';
-      }
+      /** Timeline bar status: map sheet/normalized Status, not isOverdueNorm.
+       *  (isOverdueNorm also flags late In Progress for risk KPIs — that must not
+       *  paint every late bar as Overdue + warning icon.) */
+      function p4TimelineStatusKey(r) {
+        var lower = String(r.status != null ? r.status : '').toLowerCase().trim()
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ');
 
-      /** Default Gantt filter: Overdue + In Progress (table’s risk focus) */
-      function p4GanttIsDefaultVisible(r) {
-        var key = p4GanttStatusKey(r);
-        return key === 'overdue' || key === 'in-progress';
+        if (lower === 'cancelled' || lower === 'canceled') return 'cancelled';
+        if (lower === 'complete' || lower === 'completed') return 'completed';
+        if (lower === 'overdue') return 'overdue';
+        if (lower === 'in progress') return 'in-progress';
+        if (lower === 'not started') return 'not-started';
+
+        // Fallback when Status is blank / free-text
+        var rawLower = String(r.statusRaw != null ? r.statusRaw : '').toLowerCase().trim()
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ');
+        if (rawLower === 'cancelled' || rawLower === 'canceled') return 'cancelled';
+        if (rawLower === 'complete' || rawLower === 'completed') return 'completed';
+        if (rawLower === 'overdue') return 'overdue';
+        if (rawLower === 'in progress') return 'in-progress';
+        if (rawLower === 'not started') return 'not-started';
+
+        if (r.pct !== null && r.pct !== undefined && r.pct >= 100) return 'completed';
+        if (r.pct !== null && r.pct !== undefined && r.pct > 0 && r.pct < 100) return 'in-progress';
+        if (isOverdueNorm(r)) return 'overdue';
+        return 'not-started';
       }
 
       function p4EscAttr(s) {
@@ -4941,244 +4949,6 @@
           .replace(/"/g, '&quot;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;');
-      }
-
-      function p4EscHtml(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
-
-      function renderP4Gantt(sortedSched) {
-        if (!ganttEl) return;
-
-        if (!sortedSched || !sortedSched.length) {
-          ganttEl.innerHTML = '';
-          return;
-        }
-
-        var totalCount = sortedSched.length;
-        var focusList = sortedSched.filter(p4GanttIsDefaultVisible);
-        var visible = p4GanttShowAll ? sortedSched : focusList;
-        var focusCount = focusList.length;
-
-        // Axis span from Planned Start → End of visible rows only
-        var rangeMin = Infinity;
-        var rangeMax = -Infinity;
-        visible.forEach(function(r) {
-          var s = r.startD && !isNaN(r.startD.getTime()) ? r.startD.getTime() : null;
-          var e = r.endD && !isNaN(r.endD.getTime()) ? r.endD.getTime() : null;
-          if (s !== null) {
-            if (s < rangeMin) rangeMin = s;
-            if (s > rangeMax) rangeMax = s;
-          }
-          if (e !== null) {
-            if (e < rangeMin) rangeMin = e;
-            if (e > rangeMax) rangeMax = e;
-          }
-        });
-
-        var hasRange = isFinite(rangeMin) && isFinite(rangeMax);
-        if (hasRange && rangeMax <= rangeMin) {
-          // Single-day / zero-width span → pad 1 day each side for scannability
-          rangeMin -= 86400000;
-          rangeMax += 86400000;
-        }
-        var rangeSpan = hasRange ? (rangeMax - rangeMin) : 1;
-        if (rangeSpan <= 0) rangeSpan = 1;
-
-        function pctAlong(t) {
-          if (!hasRange || t == null || isNaN(t)) return null;
-          var p = ((t - rangeMin) / rangeSpan) * 100;
-          if (p < 0) p = 0;
-          if (p > 100) p = 100;
-          return p;
-        }
-
-        // ~6 date ticks across the axis
-        var tickCount = 6;
-        var ticksHtml = '';
-        if (hasRange) {
-          for (var ti = 0; ti < tickCount; ti++) {
-            var tRatio = ti / (tickCount - 1);
-            var tMs = rangeMin + tRatio * rangeSpan;
-            var tDate = new Date(tMs);
-            var tickLeft = (tRatio * 100).toFixed(2);
-            ticksHtml +=
-              '<span class="p4-gantt-tick" style="left:' + tickLeft + '%">' +
-              '<span class="p4-gantt-tick-label">' +
-              tDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: '2-digit' }) +
-              '</span></span>';
-          }
-        }
-
-        // Group by project (order = first appearance in risk-first sort)
-        var projectOrder = [];
-        var byProject = {};
-        visible.forEach(function(r) {
-          var pName = r.project || '(No project)';
-          if (!byProject[pName]) {
-            byProject[pName] = [];
-            projectOrder.push(pName);
-          }
-          byProject[pName].push(r);
-        });
-
-        var metaText = p4GanttShowAll
-          ? 'Showing all ' + totalCount + ' milestones'
-          : 'Showing ' + focusCount + ' of ' + totalCount + ' (Overdue &amp; In Progress)';
-        var toggleLabel = p4GanttShowAll
-          ? 'Show Overdue &amp; In Progress only'
-          : 'Show all milestones';
-
-        var html =
-          '<div class="p4-gantt" role="region" aria-label="Critical milestones timeline">' +
-          '<div class="p4-gantt-toolbar">' +
-          '<span class="p4-gantt-meta">' + metaText + '</span>' +
-          '<button type="button" class="p4-gantt-toggle" id="p4-gantt-toggle">' + toggleLabel + '</button>' +
-          '</div>' +
-          '<div class="p4-gantt-legend" aria-hidden="true">' +
-          '<span class="p4-gantt-legend-item"><i class="p4-gantt-swatch p4-gantt-swatch--completed"></i>Completed</span>' +
-          '<span class="p4-gantt-legend-item"><i class="p4-gantt-swatch p4-gantt-swatch--in-progress"></i>In Progress</span>' +
-          '<span class="p4-gantt-legend-item"><i class="p4-gantt-swatch p4-gantt-swatch--overdue"></i>Overdue</span>' +
-          '<span class="p4-gantt-legend-item"><i class="p4-gantt-swatch p4-gantt-swatch--not-started"></i>Not Started</span>' +
-          '<span class="p4-gantt-legend-item"><i class="p4-gantt-swatch p4-gantt-swatch--cancelled"></i>Cancelled</span>' +
-          '</div>';
-
-        if (!visible.length) {
-          html +=
-            '<p class="p4-gantt-empty">No Overdue or In Progress milestones for the current filters. ' +
-            'Use Show all milestones to view the full schedule.</p></div>';
-          ganttEl.innerHTML = html;
-          var emptyToggle = document.getElementById('p4-gantt-toggle');
-          if (emptyToggle) {
-            emptyToggle.addEventListener('click', function() {
-              p4GanttShowAll = true;
-              renderP4Gantt(sortedSched);
-            });
-          }
-          return;
-        }
-
-        if (!hasRange) {
-          html +=
-            '<p class="p4-gantt-empty">Visible milestones have no valid Planned Start/End dates to plot.</p></div>';
-          ganttEl.innerHTML = html;
-          var noDateToggle = document.getElementById('p4-gantt-toggle');
-          if (noDateToggle) {
-            noDateToggle.addEventListener('click', function() {
-              p4GanttShowAll = !p4GanttShowAll;
-              renderP4Gantt(sortedSched);
-            });
-          }
-          return;
-        }
-
-        // Today marker (axis: optional label; rows: line only)
-        var todayPct = pctAlong(today.getTime());
-        var todayLineAxis = '';
-        var todayLineRow = '';
-        if (todayPct !== null) {
-          todayLineAxis =
-            '<div class="p4-gantt-today" style="left:' + todayPct.toFixed(2) + '%" title="Today"></div>';
-          todayLineRow =
-            '<div class="p4-gantt-today" style="left:' + todayPct.toFixed(2) + '%" aria-hidden="true"></div>';
-        }
-
-        html +=
-          '<div class="p4-gantt-scroll">' +
-          '<div class="p4-gantt-header">' +
-          '<div class="p4-gantt-label-col p4-gantt-label-col--head">Milestone</div>' +
-          '<div class="p4-gantt-timeline p4-gantt-timeline--axis">' +
-          ticksHtml + todayLineAxis +
-          '</div></div>';
-
-        var overdueWarnSvg =
-          '<svg class="p4-gantt-warn-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">' +
-          '<path fill="currentColor" d="M8 1.2 14.8 14H1.2L8 1.2zm0 3.3-.9 5h1.8l-.9-5zM8 12.2a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z"/>' +
-          '</svg>';
-
-        projectOrder.forEach(function(pName) {
-          var rows = byProject[pName];
-          html +=
-            '<div class="p4-gantt-group">' +
-            '<div class="p4-gantt-group-head">' +
-            '<div class="p4-gantt-label-col p4-gantt-group-title" title="' + p4EscAttr(pName) + '">' +
-            p4EscHtml(pName) +
-            '</div>' +
-            '<div class="p4-gantt-timeline p4-gantt-timeline--group"></div>' +
-            '</div>';
-
-          rows.forEach(function(r) {
-            var statusKey = p4GanttStatusKey(r);
-            var startOk = r.startD && !isNaN(r.startD.getTime());
-            var endOk = r.endD && !isNaN(r.endD.getTime());
-            var barHtml = '';
-
-            if (startOk || endOk) {
-              var t0 = startOk ? r.startD.getTime() : r.endD.getTime();
-              var t1 = endOk ? r.endD.getTime() : r.startD.getTime();
-              // Handle reversed Planned Start/End without inventing dates
-              var barMin = Math.min(t0, t1);
-              var barMax = Math.max(t0, t1);
-              var left = pctAlong(barMin);
-              var right = pctAlong(barMax);
-              if (left !== null && right !== null) {
-                var width = Math.max(right - left, 0.6); // min visible sliver
-                if (left + width > 100) width = 100 - left;
-                var pctDone = (r.pct !== null && r.pct !== undefined) ? Math.max(0, Math.min(100, r.pct)) : 0;
-                var startLabel = p4FmtDate(r.startD, r.startRaw) || '—';
-                var endLabel = p4FmtDate(r.endD, r.endRaw) || '—';
-                var title =
-                  (r.milestone || 'Milestone') +
-                  ' · ' + startLabel + ' → ' + endLabel +
-                  ' · ' + (r.status || statusKey) +
-                  (pctDone || pctDone === 0 ? ' · ' + Math.round(pctDone) + '%' : '');
-
-                barHtml =
-                  '<div class="p4-gantt-bar p4-gantt-bar--' + statusKey + '"' +
-                  ' style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%"' +
-                  ' title="' + p4EscAttr(title) + '">';
-
-                if (statusKey === 'in-progress') {
-                  barHtml +=
-                    '<span class="p4-gantt-bar-progress" style="width:' +
-                    Math.round(pctDone) + '%"></span>';
-                }
-                if (statusKey === 'overdue') {
-                  barHtml +=
-                    '<span class="p4-gantt-bar-marker" aria-hidden="true">' + overdueWarnSvg + '</span>';
-                }
-                barHtml += '</div>';
-              }
-            }
-
-            var mLabel = r.milestone || '—';
-            html +=
-              '<div class="p4-gantt-row' + (statusKey === 'overdue' ? ' p4-gantt-row--risk' : '') + '">' +
-              '<div class="p4-gantt-label-col" title="' + p4EscAttr(mLabel) + '">' +
-              '<span class="p4-gantt-row-name">' + p4EscHtml(mLabel) + '</span>' +
-              '</div>' +
-              '<div class="p4-gantt-timeline">' +
-              todayLineRow +
-              barHtml +
-              '</div></div>';
-          });
-
-          html += '</div>';
-        });
-
-        html += '</div></div>';
-        ganttEl.innerHTML = html;
-
-        var toggleBtn = document.getElementById('p4-gantt-toggle');
-        if (toggleBtn) {
-          toggleBtn.addEventListener('click', function() {
-            p4GanttShowAll = !p4GanttShowAll;
-            renderP4Gantt(sortedSched);
-          });
-        }
       }
 
       if (schedFiltered.length > 0) {
@@ -5198,8 +4968,105 @@
           return String(a.milestone || '').localeCompare(String(b.milestone || ''));
         });
 
-        // Gantt overview (same sorted / normalised rows as the table)
-        renderP4Gantt(sortedSched);
+        // Shared Timeline date axis across all rows (Planned Start → Planned End)
+        var rangeMin = Infinity;
+        var rangeMax = -Infinity;
+        sortedSched.forEach(function(r) {
+          var s = r.startD && !isNaN(r.startD.getTime()) ? r.startD.getTime() : null;
+          var e = r.endD && !isNaN(r.endD.getTime()) ? r.endD.getTime() : null;
+          if (s !== null) {
+            if (s < rangeMin) rangeMin = s;
+            if (s > rangeMax) rangeMax = s;
+          }
+          if (e !== null) {
+            if (e < rangeMin) rangeMin = e;
+            if (e > rangeMax) rangeMax = e;
+          }
+        });
+        var hasRange = isFinite(rangeMin) && isFinite(rangeMax);
+        if (hasRange && rangeMax <= rangeMin) {
+          rangeMin -= 86400000;
+          rangeMax += 86400000;
+        }
+        var rangeSpan = hasRange ? (rangeMax - rangeMin) : 1;
+        if (rangeSpan <= 0) rangeSpan = 1;
+
+        function p4TlPct(t) {
+          if (!hasRange || t == null || isNaN(t)) return null;
+          var p = ((t - rangeMin) / rangeSpan) * 100;
+          if (p < 0) p = 0;
+          if (p > 100) p = 100;
+          return p;
+        }
+
+        var axisTicksHtml = '';
+        if (hasRange) {
+          var tickCount = 5;
+          for (var ti = 0; ti < tickCount; ti++) {
+            var tRatio = ti / (tickCount - 1);
+            var tDate = new Date(rangeMin + tRatio * rangeSpan);
+            axisTicksHtml +=
+              '<span class="p4-tl-tick" style="left:' + (tRatio * 100).toFixed(2) + '%">' +
+              '<span class="p4-tl-tick-label">' +
+              tDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) +
+              '</span></span>';
+          }
+        }
+
+        var todayTlPct = hasRange ? p4TlPct(today.getTime()) : null;
+        var todayLineHtml = (todayTlPct !== null)
+          ? '<div class="p4-tl-today" style="left:' + todayTlPct.toFixed(2) + '%" title="Today" aria-hidden="true"></div>'
+          : '';
+
+        var overdueWarnSvg =
+          '<svg class="p4-tl-warn-icon" viewBox="0 0 16 16" width="10" height="10" aria-hidden="true">' +
+          '<path fill="currentColor" d="M8 1.2 14.8 14H1.2L8 1.2zm0 3.3-.9 5h1.8l-.9-5zM8 12.2a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z"/>' +
+          '</svg>';
+
+        function p4TimelineCellHtml(r) {
+          if (!hasRange) {
+            return '<span class="p4-tl-empty">—</span>';
+          }
+          var statusKey = p4TimelineStatusKey(r);
+          var startOk = r.startD && !isNaN(r.startD.getTime());
+          var endOk = r.endD && !isNaN(r.endD.getTime());
+          if (!startOk && !endOk) {
+            return todayLineHtml + '<span class="p4-tl-empty">—</span>';
+          }
+          var t0 = startOk ? r.startD.getTime() : r.endD.getTime();
+          var t1 = endOk ? r.endD.getTime() : r.startD.getTime();
+          var barMin = Math.min(t0, t1);
+          var barMax = Math.max(t0, t1);
+          var left = p4TlPct(barMin);
+          var right = p4TlPct(barMax);
+          if (left === null || right === null) {
+            return todayLineHtml + '<span class="p4-tl-empty">—</span>';
+          }
+          var width = Math.max(right - left, 0.8);
+          if (left + width > 100) width = 100 - left;
+          var pctDone = (r.pct !== null && r.pct !== undefined) ? Math.max(0, Math.min(100, r.pct)) : 0;
+          var startLabel = p4FmtDate(r.startD, r.startRaw) || '—';
+          var endLabel = p4FmtDate(r.endD, r.endRaw) || '—';
+          var title =
+            (r.milestone || 'Milestone') +
+            ' · ' + startLabel + ' → ' + endLabel +
+            ' · ' + (r.status || statusKey) +
+            ' · ' + Math.round(pctDone) + '%';
+
+          var bar =
+            '<div class="p4-tl-bar p4-tl-bar--' + statusKey + '"' +
+            ' data-status="' + statusKey + '"' +
+            ' style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%"' +
+            ' title="' + p4EscAttr(title) + '">';
+          if (statusKey === 'in-progress') {
+            bar += '<span class="p4-tl-bar-progress" style="width:' + Math.round(pctDone) + '%"></span>';
+          }
+          if (statusKey === 'overdue') {
+            bar += '<span class="p4-tl-bar-marker" aria-hidden="true">' + overdueWarnSvg + '</span>';
+          }
+          bar += '</div>';
+          return todayLineHtml + bar;
+        }
 
         // Actual Done only when at least one row has a real date (often empty: manual diaries)
         var showActualDone = sortedSched.some(function(r) {
@@ -5215,21 +5082,33 @@
           return '';
         }
 
-        var html = '<div class="p4-milestones-scroll" role="region" aria-label="Critical milestones table">' +
+        var html =
+          '<div class="p4-tl-legend" aria-hidden="true">' +
+          '<span class="p4-tl-legend-item"><i class="p4-tl-swatch p4-tl-swatch--completed"></i>Completed</span>' +
+          '<span class="p4-tl-legend-item"><i class="p4-tl-swatch p4-tl-swatch--in-progress"></i>In Progress</span>' +
+          '<span class="p4-tl-legend-item"><i class="p4-tl-swatch p4-tl-swatch--overdue"></i>Overdue</span>' +
+          '<span class="p4-tl-legend-item"><i class="p4-tl-swatch p4-tl-swatch--not-started"></i>Not Started</span>' +
+          '<span class="p4-tl-legend-item"><i class="p4-tl-swatch p4-tl-swatch--cancelled"></i>Cancelled</span>' +
+          '</div>' +
+          '<div class="p4-milestones-scroll" role="region" aria-label="Milestone Schedule">' +
           '<table class="data-table p4-milestone-table"><thead><tr>' +
-          '<th class="text-left">Project</th>' +
-          '<th class="text-left">Milestone</th>' +
-          '<th class="text-left">Brand / Dept</th>' +
-          '<th class="text-left">Planned Start</th>' +
-          '<th class="text-left">Planned End</th>' +
-          '<th class="text-left">Slippage</th>' +
-          '<th class="text-left">Staffing</th>';
+          '<th class="text-left p4-col-project p4-sticky p4-sticky-project">Project</th>' +
+          '<th class="text-left p4-col-milestone p4-sticky p4-sticky-milestone">Milestone</th>' +
+          '<th class="text-left p4-col-branddept">Brand / Dept</th>' +
+          '<th class="text-left p4-col-date">Planned Start</th>' +
+          '<th class="text-left p4-col-date">Planned End</th>' +
+          '<th class="text-left p4-col-slip p4-sticky p4-sticky-slip">Slippage</th>' +
+          '<th class="text-left p4-col-staffing">Staffing</th>';
         if (showActualDone) {
-          html += '<th class="text-left">Actual Done</th>';
+          html += '<th class="text-left p4-col-date">Actual Done</th>';
         }
         html +=
-          '<th class="text-left">Status</th>' +
-          '<th class="text-right">% Done</th>' +
+          '<th class="text-left p4-col-status p4-sticky p4-sticky-status">Status</th>' +
+          '<th class="text-right p4-col-pct">% Done</th>' +
+          '<th class="text-left p4-col-timeline">' +
+          '<span class="p4-tl-head-label">Timeline</span>' +
+          '<div class="p4-tl-axis" aria-hidden="true">' + axisTicksHtml + todayLineHtml + '</div>' +
+          '</th>' +
           '</tr></thead><tbody>';
 
         sortedSched.forEach(function(r) {
@@ -5274,27 +5153,27 @@
           }
 
           html += '<tr class="' + (overdueRow ? 'p4-row-risk' : '') + '">' +
-            '<td class="text-left p4-col-project">' + (r.project || '') + '</td>' +
-            '<td class="text-left p4-col-milestone">' + (r.milestone || '') + '</td>' +
+            '<td class="text-left p4-col-project p4-sticky p4-sticky-project">' + (r.project || '') + '</td>' +
+            '<td class="text-left p4-col-milestone p4-sticky p4-sticky-milestone">' + (r.milestone || '') + '</td>' +
             '<td class="text-left p4-col-branddept"' +
               (brandDeptTitle ? ' title="' + brandDeptTitle.replace(/"/g, '&quot;') + '"' : '') +
               '>' + brandDept + '</td>' +
             '<td class="text-left p4-col-date">' + dateNote + startFmt + '</td>' +
             '<td class="text-left p4-col-date">' + endFmt + '</td>' +
-            '<td class="text-left p4-col-slip">' + slippageStr + '</td>' +
+            '<td class="text-left p4-col-slip p4-sticky p4-sticky-slip">' + slippageStr + '</td>' +
             '<td class="text-left p4-col-staffing">' + handsCell + '</td>';
           if (showActualDone) {
             html += '<td class="text-left p4-col-date">' + actualEndFmt + '</td>';
           }
           html +=
-            '<td class="text-left p4-col-status">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
+            '<td class="text-left p4-col-status p4-sticky p4-sticky-status">' + formatStatusBadge(r.status, overdueRow) + '</td>' +
             '<td class="text-right p4-col-pct">' + pctFmt + '</td>' +
+            '<td class="p4-col-timeline"><div class="p4-tl-track">' + p4TimelineCellHtml(r) + '</div></td>' +
             '</tr>';
         });
         html += '</tbody></table></div>';
         tableEl.innerHTML = html;
       } else {
-        if (ganttEl) ganttEl.innerHTML = '';
         tableEl.innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
       }
