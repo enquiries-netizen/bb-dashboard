@@ -6303,26 +6303,10 @@
 
       var tlEl = document.getElementById('p8-timeline');
       if (tlEl) {
-        // Stack bars in non-overlapping rows (never use % wrap) so multi-item days stay readable.
-        var TL_BAR_H = 18;
-        var TL_BAR_GAP = 4;
-        var TL_PAD_Y = 6;
-        function p8AssignTrackRows(items) {
-          // rowEnds[r] = exclusive max end day index currently occupying row r
-          var rowEnds = [];
-          var sorted = items.slice().sort(function(a, b) {
-            if (a.start !== b.start) return a.start - b.start;
-            return (b.end - b.start) - (a.end - a.start);
-          });
-          sorted.forEach(function(it) {
-            var row = 0;
-            while (row < rowEnds.length && it.start <= rowEnds[row]) row++;
-            if (row === rowEnds.length) rowEnds.push(it.end);
-            else rowEnds[row] = Math.max(rowEnds[row], it.end);
-            it._row = row;
-          });
-          return rowEnds.length || 1;
-        }
+        // One vertical row per bar so multi-item days never share top position.
+        var TL_BAR_H = 20;
+        var TL_BAR_GAP = 5;
+        var TL_PAD_Y = 8;
 
         var th = '<div class="p8-tl-grid"><div class="p8-tl-corner"></div>';
         dayNames.forEach(function(dn, i) {
@@ -6331,9 +6315,25 @@
         });
         ['Projects', 'Quoting', 'Sales', 'Finance', 'Labour'].forEach(function(lane) {
           var items = lanes[lane] || [];
-          var nRows = p8AssignTrackRows(items);
-          var trackH = Math.max(58, TL_PAD_Y * 2 + nRows * TL_BAR_H + Math.max(0, nRows - 1) * TL_BAR_GAP);
-          th += '<div class="p8-tl-label" style="min-height:' + trackH + 'px">' + lane + '</div>';
+          items.forEach(function(it, ii) {
+            var s = Number(it.start);
+            var e = Number(it.end);
+            if (isNaN(s)) s = 0;
+            if (isNaN(e)) e = s;
+            s = Math.max(0, Math.min(4, s));
+            e = Math.max(0, Math.min(4, e));
+            if (e < s) e = s;
+            it.start = s;
+            it.end = e;
+            it._row = ii;
+          });
+          var nRows = Math.max(1, items.length);
+          var trackH = Math.max(
+            56,
+            TL_PAD_Y * 2 + nRows * TL_BAR_H + Math.max(0, nRows - 1) * TL_BAR_GAP
+          );
+          th += '<div class="p8-tl-label" style="min-height:' + trackH + 'px;height:' + trackH + 'px">' +
+            lane + '</div>';
           th += '<div class="p8-tl-track' + (todayIdx >= 0 ? ' has-today' : '') +
             '" style="height:' + trackH + 'px;min-height:' + trackH + 'px">';
           if (todayIdx >= 0) {
@@ -6344,15 +6344,15 @@
           } else {
             items.forEach(function(it) {
               var left = it.start * 20;
-              var width = Math.max(20, (it.end - it.start + 1) * 20);
-              var top = TL_PAD_Y + (it._row || 0) * (TL_BAR_H + TL_BAR_GAP);
+              var width = Math.max(19, (it.end - it.start + 1) * 20 - 0.75);
+              var top = TL_PAD_Y + it._row * (TL_BAR_H + TL_BAR_GAP);
               var cls = 'p8-tl-bar';
               if (it.overdue) cls += ' is-overdue';
               if (it.leave) cls += ' is-leave';
               if (it.milestone) cls += ' is-ms';
               th += '<div class="' + cls + '" style="left:' + left + '%;width:' + width +
                 '%;top:' + top + 'px;height:' + TL_BAR_H + 'px" title="' + p8Esc(it.label) + '">' +
-                (it.milestone ? '<span class="p8-tl-diamond"></span>' : '') +
+                (it.milestone ? '<span class="p8-tl-diamond" aria-hidden="true"></span>' : '') +
                 '<span class="p8-tl-bar-label">' + p8Esc(it.label) + '</span></div>';
             });
           }

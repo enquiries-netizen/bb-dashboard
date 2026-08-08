@@ -7629,7 +7629,7 @@ p.p8-section-hint {
 
 .p8-tl-track {
   position: relative;
-  min-height: 58px;
+  min-height: 56px;
   border-left: 1px solid var(--p8-border, #E2E4E8);
   border-bottom: 1px solid var(--p8-border, #E2E4E8);
   grid-column: span 5;
@@ -7665,22 +7665,25 @@ p.p8-section-hint {
   transform: translateY(-50%);
   font-size: 10px;
   color: var(--p8-neutral-data-gap, #9CA3AF);
+  z-index: 0;
 }
 
 .p8-tl-bar {
   position: absolute;
-  height: 18px;
-  border-radius: 2px;
+  height: 20px;
+  border-radius: 3px;
   background: rgba(17, 24, 39, 0.12);
   border: 1px solid rgba(17, 24, 39, 0.18);
-  z-index: 1;
+  z-index: 2;
   overflow: hidden;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  padding: 0 4px;
+  padding: 0 5px;
   box-sizing: border-box;
-  line-height: 1.2;
+  line-height: 1.15;
+  margin: 0;
+  max-width: 100%;
 }
 .p8-tl-bar.is-overdue {
   background: rgba(234, 88, 12, 0.18);
