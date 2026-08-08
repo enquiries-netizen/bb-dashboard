@@ -7576,7 +7576,7 @@ p.p8-section-hint {
   width: 100%;
 }
 
-.p8-timeline { min-height: 200px; }
+.p8-timeline { min-height: 120px; }
 
 .p8-tl-grid {
   display: grid;
@@ -7584,6 +7584,7 @@ p.p8-section-hint {
   gap: 0;
   border: 1px solid var(--p8-border, #E2E4E8);
   background: var(--p8-surface, #fff);
+  align-items: stretch;
 }
 
 .p8-tl-corner {
@@ -7623,6 +7624,7 @@ p.p8-section-hint {
   display: flex;
   align-items: flex-start;
   background: rgba(17, 24, 39, 0.02);
+  box-sizing: border-box;
 }
 
 .p8-tl-track {
@@ -7631,6 +7633,8 @@ p.p8-section-hint {
   border-left: 1px solid var(--p8-border, #E2E4E8);
   border-bottom: 1px solid var(--p8-border, #E2E4E8);
   grid-column: span 5;
+  overflow: visible;
+  box-sizing: border-box;
   background:
     linear-gradient(to right,
       transparent 0, transparent calc(20% - 1px),
@@ -7665,7 +7669,7 @@ p.p8-section-hint {
 
 .p8-tl-bar {
   position: absolute;
-  height: 16px;
+  height: 18px;
   border-radius: 2px;
   background: rgba(17, 24, 39, 0.12);
   border: 1px solid rgba(17, 24, 39, 0.18);
@@ -7676,6 +7680,7 @@ p.p8-section-hint {
   align-items: center;
   padding: 0 4px;
   box-sizing: border-box;
+  line-height: 1.2;
 }
 .p8-tl-bar.is-overdue {
   background: rgba(234, 88, 12, 0.18);
