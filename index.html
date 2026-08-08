@@ -13156,10 +13156,13 @@
           : 'Source not connected');
 
       var issueRateCard = document.getElementById('p11-kpi-issue-rate');
+      if (issueRateCard) {
+        issueRateCard.classList.remove('p11-kpi--watch', 'p11-kpi--accent');
+      }
       if (issueRate == null) {
         setKPI('kpi-p11-issue-rate', 'kpi-p11-issue-rate-sub',
-          _p11LoadMeta.diariesOk ? '—' : 'Unavailable',
-          entryCount ? 'Issues ÷ entries' : 'No diary entries');
+          _p11LoadMeta.diariesOk ? '-' : 'Unavailable',
+          entryCount ? 'Issues / entries' : 'No diary entries');
       } else {
         setKPI('kpi-p11-issue-rate', 'kpi-p11-issue-rate-sub',
           issueRate.toFixed(1) + '%',
