@@ -475,71 +475,62 @@ select {
   background: rgba(210, 212, 213, 0.35);
 }
 
-/* Milestone Schedule: dense table + Timeline bars; sticky urgency columns */
+/* Milestone Schedule: split table | wide Gantt (row-aligned, shared vertical scroll) */
 #p4-schedule-table {
   max-width: 100%;
   min-width: 0;
   overflow: visible;
 }
 
-#p4-schedule-table .p4-milestones-scroll {
-  display: block;
-  width: 100%;
+#p4-schedule-table .p4-ms {
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
-#p4-schedule-table .p4-milestone-table {
-  width: 100%;
-  min-width: 1120px;
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
+#p4-schedule-table .p4-ms-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+#p4-schedule-table .p4-ms-meta {
   font-size: 11px;
-  box-sizing: border-box;
+  color: #BCBDBE;
+  font-family: var(--font-body);
+  line-height: 1.35;
 }
 
-#p4-schedule-table .p4-milestone-table th,
-#p4-schedule-table .p4-milestone-table td {
-  padding: 4px 5px;
-  vertical-align: middle;
-  background: var(--white);
-  box-sizing: border-box;
-  line-height: 1.25;
-  border-bottom: 1px solid rgba(210, 212, 213, 0.45);
+#p4-schedule-table .p4-ms-toggle {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: #262425;
+  border: 1px solid #BCBDBE;
+  background: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.3;
+  cursor: pointer;
 }
 
-#p4-schedule-table .p4-milestone-table th {
-  font-size: 8.5px;
-  letter-spacing: 0.4px;
-  padding: 4px 5px;
-  white-space: nowrap;
+#p4-schedule-table .p4-ms-toggle:hover {
+  border-color: #262425;
+  background: rgba(210, 212, 213, 0.3);
 }
 
-#p4-schedule-table .p4-milestone-table thead th {
-  background: var(--white);
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  border-bottom: 1px solid var(--border-strong);
-}
-
-#p4-schedule-table .p4-milestone-table tr.p4-row-risk > td {
-  background: #F0F1F1;
-}
-
-/* Timeline status legend (monochrome) */
-#p4-schedule-table .p4-tl-legend {
+#p4-schedule-table .p4-ms-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
-  margin-bottom: 8px;
-  padding: 0 2px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(188, 189, 190, 0.4);
 }
 
-#p4-schedule-table .p4-tl-legend-item {
+#p4-schedule-table .p4-ms-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -549,7 +540,7 @@ select {
   white-space: nowrap;
 }
 
-#p4-schedule-table .p4-tl-swatch {
+#p4-schedule-table .p4-ms-swatch {
   display: inline-block;
   width: 14px;
   height: 8px;
@@ -558,164 +549,226 @@ select {
   flex-shrink: 0;
 }
 
-#p4-schedule-table .p4-tl-swatch--completed {
-  background: #262425;
-}
-
-#p4-schedule-table .p4-tl-swatch--in-progress {
+#p4-schedule-table .p4-ms-swatch--completed { background: #262425; }
+#p4-schedule-table .p4-ms-swatch--in-progress {
   background: #BCBDBE;
   border: 1px solid #BCBDBE;
 }
-
-#p4-schedule-table .p4-tl-swatch--overdue {
+#p4-schedule-table .p4-ms-swatch--overdue {
   background: #1a191a;
   border: 2px solid #262425;
   height: 10px;
 }
-
-#p4-schedule-table .p4-tl-swatch--not-started {
+#p4-schedule-table .p4-ms-swatch--not-started {
   background: rgba(210, 212, 213, 0.2);
   border: 1px solid #BCBDBE;
 }
-
-#p4-schedule-table .p4-tl-swatch--cancelled {
+#p4-schedule-table .p4-ms-swatch--cancelled {
   background: rgba(210, 212, 213, 0.3);
   border: 1px dashed #D2D4D5;
 }
 
-/* Sticky: Project, Milestone, Slippage, Status stay visible while Timeline scrolls */
-#p4-schedule-table .p4-sticky {
+#p4-schedule-table .p4-ms-empty {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #BCBDBE;
+  line-height: 1.4;
+}
+
+/* Shared vertical scroll — every row is table | gantt halves */
+#p4-schedule-table .p4-ms-body {
+  max-height: min(62vh, 560px);
+  overflow: auto;
+  border: 1px solid rgba(188, 189, 190, 0.4);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  -webkit-overflow-scrolling: touch;
+}
+
+#p4-schedule-table .p4-ms-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 38px;
+  border-bottom: 1px solid rgba(210, 212, 213, 0.45);
+  align-items: stretch;
+}
+
+#p4-schedule-table .p4-ms-row:last-child {
+  border-bottom: none;
+}
+
+#p4-schedule-table .p4-ms-row--head {
   position: sticky;
-  z-index: 3;
-  background: var(--white);
+  top: 0;
+  z-index: 4;
+  min-height: 42px;
+  background: #FFFFFF;
+  border-bottom: 1px solid rgba(188, 189, 190, 0.55);
 }
 
-#p4-schedule-table thead th.p4-sticky {
-  z-index: 6;
-  background: var(--white);
-}
-
-#p4-schedule-table tr.p4-row-risk > td.p4-sticky {
+#p4-schedule-table .p4-ms-row--risk .p4-ms-left-inner,
+#p4-schedule-table .p4-ms-row--risk .p4-ms-right {
   background: #F0F1F1;
 }
 
-#p4-schedule-table .p4-sticky-project {
-  left: 0;
-  width: 112px;
-  min-width: 112px;
-  max-width: 112px;
+#p4-schedule-table .p4-ms-left {
+  min-width: 0;
+  overflow-x: auto;
+  border-right: 1px solid rgba(188, 189, 190, 0.5);
+  background: #FFFFFF;
 }
 
-#p4-schedule-table .p4-sticky-milestone {
-  left: 112px;
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  border-right: 1px solid rgba(188, 189, 190, 0.55);
+#p4-schedule-table .p4-ms-left-inner {
+  display: grid;
+  /* Project | Milestone | Brand | Start | End | Slippage | Staff | [Actual] | Status | % */
+  grid-template-columns:
+    minmax(88px, 1.1fr)
+    minmax(96px, 1.2fr)
+    minmax(72px, 0.9fr)
+    minmax(72px, 0.7fr)
+    minmax(72px, 0.7fr)
+    minmax(78px, 0.75fr)
+    minmax(70px, 0.85fr)
+    minmax(72px, 0.75fr)
+    minmax(44px, 0.5fr);
+  gap: 0;
+  align-items: center;
+  min-width: 680px;
+  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 4px;
+  background: #FFFFFF;
 }
 
-#p4-schedule-table .p4-sticky-slip {
-  left: 232px;
-  width: 90px;
-  min-width: 90px;
-  max-width: 90px;
-  border-left: 1px solid rgba(188, 189, 190, 0.45);
+/* When Actual Done is present */
+#p4-schedule-table .p4-ms-left-inner--actual {
+  grid-template-columns:
+    minmax(88px, 1.1fr)
+    minmax(96px, 1.2fr)
+    minmax(72px, 0.9fr)
+    minmax(72px, 0.7fr)
+    minmax(72px, 0.7fr)
+    minmax(78px, 0.75fr)
+    minmax(70px, 0.85fr)
+    minmax(72px, 0.7fr)
+    minmax(72px, 0.75fr)
+    minmax(44px, 0.5fr);
+  min-width: 760px;
 }
 
-#p4-schedule-table .p4-sticky-status {
-  left: 322px;
-  width: 96px;
-  min-width: 96px;
-  max-width: 96px;
-  border-right: 1px solid rgba(38, 36, 37, 0.2);
-}
-
-#p4-schedule-table .p4-col-project {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-#p4-schedule-table .p4-col-milestone {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-#p4-schedule-table .p4-col-branddept {
-  width: 100px;
-  white-space: normal;
-  word-break: break-word;
-  color: var(--charcoal);
-  font-size: 10.5px;
-}
-
-#p4-schedule-table .p4-col-date {
-  width: 78px;
-  white-space: nowrap;
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-#p4-schedule-table .p4-col-slip {
-  white-space: nowrap;
-  font-size: 10.5px;
-}
-
-#p4-schedule-table .p4-col-staffing {
-  width: 100px;
-  white-space: nowrap;
-}
-
-#p4-schedule-table .p4-col-staffing .p4-badge {
-  max-width: 100%;
-}
-
-#p4-schedule-table .p4-col-status {
-  white-space: nowrap;
-}
-
-#p4-schedule-table .p4-col-pct {
-  width: 52px;
-  white-space: nowrap;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: 11px;
-}
-
-/* Integrated Gantt Timeline column */
-#p4-schedule-table .p4-col-timeline {
-  width: 260px;
-  min-width: 220px;
-  max-width: 320px;
-  padding: 4px 6px !important;
-  vertical-align: middle;
-}
-
-#p4-schedule-table thead th.p4-col-timeline {
-  vertical-align: bottom;
-  white-space: normal;
-  padding-bottom: 2px !important;
-}
-
-#p4-schedule-table .p4-tl-head-label {
-  display: block;
-  margin-bottom: 2px;
+#p4-schedule-table .p4-ms-left-inner--head {
   font-family: var(--font-heading);
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+  color: #BCBDBE;
 }
 
-#p4-schedule-table .p4-tl-axis {
+#p4-schedule-table .p4-ms-cell {
+  padding: 6px 5px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #262425;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#p4-schedule-table .p4-ms-left-inner--head .p4-ms-cell {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #BCBDBE;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Urgency columns emphasized */
+#p4-schedule-table .p4-ms-c-slip {
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+
+#p4-schedule-table .p4-ms-c-status {
+  white-space: nowrap;
+}
+
+#p4-schedule-table .p4-ms-c-project,
+#p4-schedule-table .p4-ms-c-milestone {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#p4-schedule-table .p4-ms-c-brand {
+  font-size: 10.5px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#p4-schedule-table .p4-ms-c-date {
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+#p4-schedule-table .p4-ms-c-pct {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#p4-schedule-table .p4-ms-c-staff .p4-badge {
+  font-size: 8.5px;
+  padding: 1px 5px;
+  max-width: 100%;
+}
+
+#p4-schedule-table .p4-ms .p4-badge {
+  font-size: 8.5px;
+  padding: 1px 5px;
+}
+
+/* Wide Gantt half */
+#p4-schedule-table .p4-ms-right {
+  min-width: 0;
   position: relative;
-  height: 16px;
-  margin-top: 2px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: stretch;
 }
 
-#p4-schedule-table .p4-tl-tick {
+#p4-schedule-table .p4-ms-axis,
+#p4-schedule-table .p4-ms-track {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 38px;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent calc(14.28% - 1px),
+      rgba(188, 189, 190, 0.18) calc(14.28% - 1px),
+      rgba(188, 189, 190, 0.18) 14.28%
+    );
+}
+
+#p4-schedule-table .p4-ms-axis {
+  min-height: 42px;
+  background: #FFFFFF;
+}
+
+#p4-schedule-table .p4-ms-tick {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -724,94 +777,79 @@ select {
   pointer-events: none;
 }
 
-#p4-schedule-table .p4-tl-tick:first-child {
-  transform: translateX(0);
-}
+#p4-schedule-table .p4-ms-tick:first-child { transform: translateX(0); }
+#p4-schedule-table .p4-ms-tick:last-child { transform: translateX(-100%); }
 
-#p4-schedule-table .p4-tl-tick:last-child {
-  transform: translateX(-100%);
-}
-
-#p4-schedule-table .p4-tl-tick-label {
+#p4-schedule-table .p4-ms-tick-label {
   position: absolute;
-  top: 0;
+  top: 10px;
   left: 0;
-  font-size: 8px;
-  font-weight: 400;
+  font-size: 9px;
   font-family: var(--font-body);
-  color: var(--gray);
+  color: #BCBDBE;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  letter-spacing: 0;
-  text-transform: none;
+  line-height: 1.2;
 }
 
-#p4-schedule-table .p4-tl-track {
-  position: relative;
-  height: 22px;
-  width: 100%;
-  min-width: 200px;
-  background:
-    repeating-linear-gradient(
-      to right,
-      transparent,
-      transparent calc(20% - 1px),
-      rgba(188, 189, 190, 0.2) calc(20% - 1px),
-      rgba(188, 189, 190, 0.2) 20%
-    );
-}
-
-#p4-schedule-table .p4-tl-today {
+#p4-schedule-table .p4-ms-today {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 0;
-  border-left: 1px dashed var(--charcoal);
-  opacity: 0.5;
+  border-left: 1px dashed #262425;
+  opacity: 0.7;
   z-index: 1;
   pointer-events: none;
 }
 
-#p4-schedule-table .p4-tl-empty {
-  display: block;
-  padding-top: 4px;
-  font-size: 10px;
-  color: var(--gray);
-  text-align: center;
+#p4-schedule-table .p4-ms-today-label {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #262425;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
-#p4-schedule-table .p4-tl-bar {
+#p4-schedule-table .p4-ms-track .p4-ms-today-label {
+  display: none;
+}
+
+#p4-schedule-table .p4-ms-bar {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  height: 12px;
+  height: 14px;
   box-sizing: border-box;
   z-index: 2;
-  min-width: 4px;
-  border-radius: 6px; /* soft radius, not a full pill */
+  min-width: 6px;
+  border-radius: 6px;
   background: transparent;
   border: none;
   overflow: visible;
 }
 
-/* Completed — solid Deep Charcoal, no icon */
-#p4-schedule-table .p4-tl-bar--completed,
-#p4-schedule-table .p4-tl-bar[data-status="completed"] {
+#p4-schedule-table .p4-ms-bar--completed,
+#p4-schedule-table .p4-ms-bar[data-status="completed"] {
   background: #262425;
   border: none;
-  opacity: 1;
   overflow: hidden;
 }
 
-/* In Progress — Soft Gray track; darker charcoal portion = % Done, no icon */
-#p4-schedule-table .p4-tl-bar--in-progress,
-#p4-schedule-table .p4-tl-bar[data-status="in-progress"] {
+#p4-schedule-table .p4-ms-bar--in-progress,
+#p4-schedule-table .p4-ms-bar[data-status="in-progress"] {
   background: #BCBDBE;
   border: 1px solid #BCBDBE;
   overflow: hidden;
 }
 
-#p4-schedule-table .p4-tl-bar-progress {
+#p4-schedule-table .p4-ms-bar-progress {
   display: block;
   height: 100%;
   background: #262425;
@@ -819,22 +857,21 @@ select {
   opacity: 0.72;
 }
 
-/* Overdue — bold black + warning marker (only this style shows the icon) */
-#p4-schedule-table .p4-tl-bar--overdue,
-#p4-schedule-table .p4-tl-bar[data-status="overdue"] {
+#p4-schedule-table .p4-ms-bar--overdue,
+#p4-schedule-table .p4-ms-bar[data-status="overdue"] {
   background: #1a191a;
   border: 2px solid #262425;
-  height: 14px;
+  height: 16px;
   overflow: visible;
 }
 
-#p4-schedule-table .p4-tl-bar-marker {
+#p4-schedule-table .p4-ms-bar-marker {
   position: absolute;
   right: -1px;
   top: 50%;
   transform: translate(55%, -50%);
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #FFFFFF;
   border: 1.5px solid #1a191a;
@@ -845,36 +882,42 @@ select {
   z-index: 3;
 }
 
-#p4-schedule-table .p4-tl-warn-icon {
+#p4-schedule-table .p4-ms-warn-icon {
   display: block;
 }
 
-/* Not Started — light grey outlined, minimal fill, no icon */
-#p4-schedule-table .p4-tl-bar--not-started,
-#p4-schedule-table .p4-tl-bar[data-status="not-started"] {
+#p4-schedule-table .p4-ms-bar--not-started,
+#p4-schedule-table .p4-ms-bar[data-status="not-started"] {
   background: rgba(210, 212, 213, 0.2);
   border: 1px solid #BCBDBE;
   overflow: hidden;
 }
 
-/* Cancelled — very light grey, dashed border, de-emphasized, no icon */
-#p4-schedule-table .p4-tl-bar--cancelled,
-#p4-schedule-table .p4-tl-bar[data-status="cancelled"] {
+#p4-schedule-table .p4-ms-bar--cancelled,
+#p4-schedule-table .p4-ms-bar[data-status="cancelled"] {
   background: rgba(210, 212, 213, 0.3);
   border: 1px dashed #D2D4D5;
   opacity: 0.7;
   overflow: hidden;
 }
 
-#p4-schedule-table .p4-milestone-table .p4-badge {
-  font-size: 8.5px;
-  padding: 1px 5px;
-}
+@media (max-width: 900px) {
+  #p4-schedule-table .p4-ms-row {
+    grid-template-columns: 1fr;
+  }
 
-#p4-schedule-table .data-table th.text-right,
-#p4-schedule-table .data-table td.text-right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  #p4-schedule-table .p4-ms-left {
+    border-right: none;
+    border-bottom: 1px solid rgba(210, 212, 213, 0.4);
+  }
+
+  #p4-schedule-table .p4-ms-right {
+    min-height: 36px;
+  }
+
+  #p4-schedule-table .p4-ms-row--head .p4-ms-right {
+    display: none;
+  }
 }
 
 /* Labour Cost by Job — summary + Top 5 + detail table */
