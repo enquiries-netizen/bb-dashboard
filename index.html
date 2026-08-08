@@ -12487,21 +12487,23 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // P6 - CAPACITY & LABOUR (forward-looking workforce planning)
-    // Sources: Capacity tab, Buildpass_Labour tab
-    // Live assignment/schedule for future weeks, Site Diaries allocation, and
-    // labour budgets are not confirmed live: surface Pending, never invent hours.
-    // Cost rule: Labour Cost Weekly($) is once per employee-week, never sum per shift row.
+// P6 - CAPACITY & LABOUR (dual-mode resource-planning workspace)
+    // Capacity Planning | Actuals & Timesheets. One selected ISO week drives all visuals.
+    // Sources: Capacity tab, Buildpass_Labour. Diaries / forward demand / budgets: Pending.
+    // Cost rule: Labour Cost Weekly($) once per employee-week, never sum per shift row.
+    // Status colours only for capacity state. Project bars use muted --p6-project-*.
     // ═══════════════════════════════════════════════════════════════
 
-    // confirm defaults with Lori/Ben
-    var P6_UTIL_UNDER_PCT = 50;     // underallocated / spare capacity band
-    var P6_UTIL_HEALTHY_LO = 50;    // healthy band lower
-    var P6_UTIL_HEALTHY_HI = 85;    // healthy band upper (to near-capacity)
-    var P6_UTIL_NEAR_PCT = 100;     // near capacity upper bound
+    var P6_UTIL_UNDER_PCT = 60;     // underallocated / spare capacity band
+    var P6_UTIL_HEALTHY_LO = 60;    // healthy band lower
+    var P6_UTIL_HEALTHY_HI = 85;    // healthy band upper
+    var P6_UTIL_WATCH_HI = 100;     // watch band upper (near capacity)
     var P6_STD_WEEK_HRS = 38;       // fallback only when Hours Available blank
     var P6_HEATMAP_WEEKS = 12;
+    var P6_HORIZON_WEEKS = 12;      // gantt horizon from selected week
+    var P6_DAILY_WEEKS = 4;         // weeks 1-4 of horizon shown daily
     var P6_UNUSUAL_DAY_HRS = 14;    // single-day hours after dedupe → Unusual Hours
+    var P6_PROJECT_COLORS = ['var(--p6-project-1, #9CA3AF)', 'var(--p6-project-2, #A8B0BD)', 'var(--p6-project-3, #8B94A3)'];
 
     function p6Esc(s) {
       return String(s == null ? '' : s)
@@ -12523,8 +12525,19 @@
       return String(s || '').replace(/\s+/g, ' ').trim();
     }
 
+    /** Standardise General Building & Maintenance spelling on P6 only. */
+    function p6CanonDept(s) {
+      var raw = canonicalDeptName(s) || String(s || '').trim();
+      if (!raw) return 'Unknown';
+      var key = normalizeDeptKey(raw).replace(/&/g, 'and');
+      if (key === 'general building and maintenance' || key.indexOf('general building') === 0) {
+        return 'General Building & Maintenance';
+      }
+      return raw.replace(/General Building and Maintenance/gi, 'General Building & Maintenance');
+    }
+
     function p6LabourWeekNum(r) {
-      return parseNum(col(r, 'Week Number', 'week number')) || 0;
+      return parseNum(col(r, 'Week Number', 'week number', 'Week', 'week')) || 0;
     }
 
     function p6LabourHoursRaw(r) {
@@ -12539,6 +12552,26 @@
       if (raw === '' || raw === null || raw === undefined) return null;
       var n = parseNum(raw);
       return isNaN(n) ? null : n;
+    }
+
+    function p6CrewFromRow(r, dept, name) {
+      var crew = String(col(r, 'Crew', 'crew', 'Crew Name', 'Team', 'team') || '').trim();
+      if (crew) return crew;
+      // No crew column live: stable alpha bucket under department (e.g. Roofing Crew A)
+      var base = (dept || 'Crew').replace(/\s+/g, ' ').trim();
+      var shortBase = base.length > 28 ? base.slice(0, 26) + '…' : base;
+      var nm = p6DisplayName(name || '');
+      var last = nm.split(' ').filter(Boolean).pop() || nm || 'Z';
+      var ch = last.charAt(0).toUpperCase();
+      var letter = (ch >= 'A' && ch <= 'M') ? 'A' : 'B';
+      return shortBase + ' Crew ' + letter;
+    }
+
+    function p6ProjectColorIndex(key) {
+      var s = String(key || '');
+      var h = 0;
+      for (var i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i);
+      return Math.abs(h) % 3;
     }
 
     /**
@@ -12568,7 +12601,7 @@
       return out;
     }
 
-    /** emp|week -> { hours, days:[], maxDayHrs, projects:{} } */
+    /** emp|week -> { hours, days, maxDayHrs, projects, leaveHrs } */
     function p6LabourAggByEmpWeek(labDeduped) {
       var map = {};
       (labDeduped || []).forEach(function(r) {
@@ -12577,7 +12610,7 @@
         var h = p6LabourHours(r);
         if (!emp || !w || h === null) return;
         var k = emp + '|' + w;
-        if (!map[k]) map[k] = { hours: 0, maxDayHrs: 0, dayHours: {}, projects: {}, rows: 0 };
+        if (!map[k]) map[k] = { hours: 0, maxDayHrs: 0, dayHours: {}, projects: {}, leaveHrs: 0, rows: 0 };
         map[k].hours += h;
         map[k].rows += 1;
         var date = String(col(r, 'Shift Date', 'shift date') || '').trim();
@@ -12590,14 +12623,23 @@
         if (h > map[k].maxDayHrs && !date) map[k].maxDayHrs = h;
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
-        var pkey = job || site || '(unassigned)';
+        var role = String(col(r, 'Role', 'role') || '').trim();
+        var roleLow = role.toLowerCase();
+        var isLeave = /leave|training|holiday|public holiday|rdo|sick|personal/.test(roleLow) ||
+          /leave|training|holiday/.test(site.toLowerCase());
+        if (isLeave) map[k].leaveHrs += h;
+        var pkey = job || site || (isLeave ? '(leave/training)' : '(unassigned)');
         if (!map[k].projects[pkey]) {
-          map[k].projects[pkey] = { job: job, site: site, hours: 0, role: String(col(r, 'Role', 'role') || '').trim() };
+          map[k].projects[pkey] = {
+            job: job, site: site, hours: 0, role: role, isLeave: isLeave,
+            colorIdx: p6ProjectColorIndex(pkey)
+          };
         }
         map[k].projects[pkey].hours += h;
       });
       Object.keys(map).forEach(function(k) {
         map[k].hours = p6Round1(map[k].hours);
+        map[k].leaveHrs = p6Round1(map[k].leaveHrs);
       });
       return map;
     }
@@ -12643,24 +12685,19 @@
       if (utilPct == null) return 'Data Incomplete';
       if (utilPct < P6_UTIL_UNDER_PCT) return 'Underallocated';
       if (utilPct < P6_UTIL_HEALTHY_HI) return 'Healthy';
-      if (utilPct <= P6_UTIL_NEAR_PCT) return 'Near Capacity';
+      if (utilPct <= P6_UTIL_WATCH_HI) return 'Near Capacity';
       return 'Overallocated';
     }
 
     /**
      * Timesheet status (distinct from planning status).
-     * Does not auto-flag moderate overtime as Timesheet Error.
-     * No overtime/approved field in sheets: use Overtime Recorded when logged > available.
+     * Does not auto-flag moderate overtime as Timesheet Error (e.g. 117% = overtime).
      */
     function p6TimesheetStatus(rec) {
       var logged = rec.logged;
       var avail = rec.available;
-      var weekEnded = rec.weekEnded;
       var unusual = rec.maxDayHrs >= P6_UNUSUAL_DAY_HRS;
-      if (logged == null || logged === 0) {
-        if (weekEnded) return 'Missing';
-        return 'Missing';
-      }
+      if (logged == null || logged === 0) return 'Missing';
       if (unusual) return 'Unusual Hours';
       if (avail != null && logged > avail + 0.05) return 'Overtime Recorded';
       return 'Complete';
@@ -12670,21 +12707,11 @@
       if (incomplete || utilPct == null || isNaN(utilPct)) return 'p6-hm--gap';
       if (utilPct < P6_UTIL_UNDER_PCT) return 'p6-hm--under';
       if (utilPct < P6_UTIL_HEALTHY_HI) return 'p6-hm--healthy';
-      if (utilPct <= P6_UTIL_NEAR_PCT) return 'p6-hm--watch';
+      if (utilPct <= P6_UTIL_WATCH_HI) return 'p6-hm--watch';
       return 'p6-hm--over';
     }
 
     function p6IsoWeekMonday(year, week) {
-      // ISO week: week 1 contains the first Thursday of the year
-      var simple = new Date(year, 0, 1 + (week - 1) * 7);
-      var dow = simple.getDay();
-      var ISOweekStart = simple;
-      if (dow <= 4) {
-        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-      } else {
-        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-      }
-      // Correct to true ISO Monday of that week number
       var jan4 = new Date(year, 0, 4);
       var jan4Day = jan4.getDay() || 7;
       var week1Mon = new Date(jan4);
@@ -12713,13 +12740,13 @@
       return sun;
     }
 
+    /** Elapsed available fraction for in-progress week (Mon–Sun calendar span). */
     function p6ElapsedAvailableFraction(year, week, now) {
       now = now || new Date();
       var mon = p6IsoWeekMonday(year, week);
       var sun = p6WeekEndDate(year, week);
       if (now < mon) return 0;
       if (now > sun) return 1;
-      // workdays mon-fri primary; use calendar days through weekend for simplicity
       var ms = now - mon;
       var total = sun - mon;
       if (total <= 0) return 1;
@@ -12736,84 +12763,113 @@
       return Math.round(n) + '%';
     }
 
+    function p6FmtTimestamp(d) {
+      d = d || new Date();
+      try {
+        return d.toLocaleString(undefined, {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return d.toISOString();
+      }
+    }
+
     /**
      * Build unified planning model for one selected week across all visuals.
+     * filters: { brand, dept, crew, project }
      */
-    function p6BuildModel(capRowsRaw, labRowsRaw, selectedWeek, selectedYear) {
+    function p6BuildModel(capRowsRaw, labRowsRaw, selectedWeek, selectedYear, filters) {
+      filters = filters || {};
+      var fBrand = filters.brand || 'ALL';
+      var fDept = filters.dept || 'ALL';
+      var fCrew = filters.crew || 'ALL';
+      var fProject = filters.project || 'ALL';
+
       var labDeduped = p6DedupLabourRows(labRowsRaw);
       var labAgg = p6LabourAggByEmpWeek(labDeduped);
-      var weeklyCost = p6WeeklyCostByEmpWeek(labRowsRaw); // costs from all rows, once per emp-week
+      var weeklyCost = p6WeeklyCostByEmpWeek(labRowsRaw);
       var now = new Date();
       var cur = p6CurrentIsoWeek(now);
       var year = selectedYear || cur.year;
 
-      // Collect capacity rows keyed emp|week
       var capByEmpWeek = {};
       var availByEmpLatest = {};
       var weekSet = {};
+      var brandSet = {};
+      var deptSet = {};
+      var crewSet = {};
+      var projectSet = {};
+
       (capRowsRaw || []).forEach(function(r) {
         var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
         var name = p6DisplayName(col(r, 'Employee Name', 'employee name'));
-        var w = parseInt(col(r, 'Week', 'week'), 10) || 0;
+        var w = parseInt(col(r, 'Week', 'week', 'Week Number', 'week number'), 10) || 0;
         if (!emp || !w) return;
         weekSet[w] = true;
         var avail = parseNum(col(r, 'Hours Available', 'hours available'));
         if (!avail || avail <= 0) avail = P6_STD_WEEK_HRS;
         var schedSheet = parseNum(col(r, 'Hours Scheduled', 'hours scheduled'));
         var loggedSheet = parseNum(col(r, 'Hours Logged', 'hours logged'));
-        var dept = canonicalDeptName(col(r, 'Department', 'department')) || 'Unknown';
+        var dept = p6CanonDept(col(r, 'Department', 'department'));
         var brand = String(col(r, 'Brand', 'brand') || '').trim();
         var status = String(col(r, 'Status', 'status') || '').trim();
+        var crew = p6CrewFromRow(r, dept, name);
         var k = emp + '|' + w;
         capByEmpWeek[k] = {
-          emp: emp,
-          name: name,
-          week: w,
-          available: avail,
+          emp: emp, name: name, week: w, available: avail,
           scheduledSheet: isNaN(schedSheet) ? null : schedSheet,
           loggedSheet: isNaN(loggedSheet) ? null : loggedSheet,
-          dept: dept,
-          brand: brand,
-          status: status
+          dept: dept, brand: brand, status: status, crew: crew
         };
-        // track latest availability per employee for carry into weeks without Capacity rows
         if (!availByEmpLatest[emp] || w > availByEmpLatest[emp].week) {
-          availByEmpLatest[emp] = { week: w, available: avail, dept: dept, name: name, brand: brand, status: status };
+          availByEmpLatest[emp] = {
+            week: w, available: avail, dept: dept, name: name, brand: brand, status: status, crew: crew
+          };
         }
+        if (brand) brandSet[brand] = true;
+        deptSet[dept] = true;
+        crewSet[crew] = true;
       });
 
-      // Labour week set
       Object.keys(labAgg).forEach(function(k) {
         var parts = k.split('|');
         var w = parseInt(parts[1], 10);
         if (w) weekSet[w] = true;
       });
+
       labDeduped.forEach(function(r) {
         var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
         if (!emp) return;
+        var name = p6DisplayName(col(r, 'Employee Name', 'employee name'));
+        var dept = p6CanonDept(col(r, 'Department', 'department'));
+        var brand = String(col(r, 'Brand', 'brand') || '').trim();
+        var crew = p6CrewFromRow(r, dept, name);
+        var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
+        var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
+        if (job) projectSet[job] = true;
+        else if (site) projectSet[site] = true;
+        if (brand) brandSet[brand] = true;
+        deptSet[dept] = true;
+        crewSet[crew] = true;
         if (!availByEmpLatest[emp]) {
           availByEmpLatest[emp] = {
-            week: 0,
-            available: null,
-            dept: canonicalDeptName(col(r, 'Department', 'department')) || 'Unknown',
-            name: p6DisplayName(col(r, 'Employee Name', 'employee name')),
-            brand: String(col(r, 'Brand', 'brand') || '').trim(),
-            status: 'Active'
+            week: 0, available: null, dept: dept, name: name, brand: brand, status: 'Active', crew: crew
           };
+        } else if (!availByEmpLatest[emp].crew) {
+          availByEmpLatest[emp].crew = crew;
         }
       });
 
       var allWeeks = Object.keys(weekSet).map(Number).sort(function(a, b) { return a - b; });
       if (!selectedWeek) {
-        // Prefer latest week present in labour or capacity (unified)
-        selectedWeek = allWeeks.length ? allWeeks[allWeeks.length - 1] : cur.week;
+        // Prefer current ISO week when present, else latest data week (same value for all visuals)
+        if (allWeeks.indexOf(cur.week) >= 0) selectedWeek = cur.week;
+        else selectedWeek = allWeeks.length ? allWeeks[allWeeks.length - 1] : cur.week;
       }
       selectedWeek = parseInt(selectedWeek, 10);
 
-      // True forward schedule is not live: Capacity Hours Scheduled equals inflated
-      // Hours Logged historically (sheet SUM of undeduped labour). Treated as:
-      // - past/present: corrected logged hours as best-effort historical allocation
-      // - future: Scheduled Pending
+      // Detect whether Capacity Hours Scheduled is a real schedule (vs clone of undeduped logged)
       var scheduleLive = false;
       var capSampleEq = 0;
       var capSampleN = 0;
@@ -12830,7 +12886,7 @@
       var weekInProgress = !weekEnded && p6IsoWeekMonday(year, selectedWeek) <= now;
       var elapsedFrac = p6ElapsedAvailableFraction(year, selectedWeek, now);
 
-      // Build people rows for selected week
+      // Roster for selected week
       var peopleKeys = {};
       Object.keys(capByEmpWeek).forEach(function(k) {
         if (capByEmpWeek[k].week === selectedWeek) peopleKeys[capByEmpWeek[k].emp] = true;
@@ -12839,7 +12895,6 @@
         var parts = k.split('|');
         if (parseInt(parts[1], 10) === selectedWeek) peopleKeys[parts[0]] = true;
       });
-      // If no capacity for selected week, use roster from latest capacity
       if (Object.keys(peopleKeys).length === 0) {
         Object.keys(availByEmpLatest).forEach(function(emp) { peopleKeys[emp] = true; });
       }
@@ -12849,66 +12904,73 @@
         var ck = emp + '|' + selectedWeek;
         var cap = capByEmpWeek[ck];
         var lab = labAgg[ck];
-        var meta = cap || availByEmpLatest[emp] || { name: emp, dept: 'Unknown', brand: '', available: null };
+        var meta = cap || availByEmpLatest[emp] || {
+          name: emp, dept: 'Unknown', brand: '', available: null, crew: 'Unassigned'
+        };
         var available = cap ? cap.available : (meta.available != null ? meta.available : null);
         var availableSource = cap ? 'capacity' : (meta.available != null ? 'carry-forward' : 'missing');
         var logged = lab ? lab.hours : null;
-        var productive = logged; // no productive split in sheet; proxy = logged daily hours
+        var productive = lab ? p6Round1(Math.max(0, lab.hours - (lab.leaveHrs || 0))) : null;
+        if (productive == null && logged != null) productive = logged;
+        var nonProductive = lab ? (lab.leaveHrs || 0) : null;
+
         var scheduled;
         var scheduledPending = false;
         if (scheduleLive && cap && cap.scheduledSheet != null) {
           scheduled = cap.scheduledSheet;
-        } else if (selectedWeek > cur.week || (selectedWeek === cur.week && false /* future days only */)) {
-          // Future whole weeks: true schedule not available
+        } else if (selectedWeek > cur.week) {
           scheduled = null;
           scheduledPending = true;
         } else {
-          // Historical: use corrected logged as best-effort allocation (Capacity Scheduled = undeduped Logged)
           scheduled = logged;
-          if (logged == null && cap && cap.scheduledSheet != null) {
-            // no labour rows; leave scheduled null rather than use inflated sheet
+          if (logged == null) {
             scheduled = null;
             scheduledPending = true;
           }
         }
 
         var maxDayHrs = lab ? lab.maxDayHrs : 0;
+        // Overtime = logged above full-week available (never auto "timesheet error")
         var overtimeHrs = (logged != null && available != null) ? Math.max(0, logged - available) : 0;
         var overallocHrs = (scheduled != null && available != null) ? Math.max(0, scheduled - available) : 0;
 
-        // Utilisation measures - for in-progress week compare actual to elapsed available
         var denomAvail = available;
         var elapsedAvail = null;
         if (weekInProgress && available != null) {
           elapsedAvail = available * elapsedFrac;
-          if (elapsedAvail < 0.5) elapsedAvail = available; // avoid div by ~0 early Monday
+          if (elapsedAvail < 0.5) elapsedAvail = available;
         }
         var schedUtil = (scheduled != null && denomAvail > 0) ? (scheduled / denomAvail) * 100 : null;
+        // In-progress week: actual util vs elapsed available this week so far
         var actualUtilDenom = (weekInProgress && elapsedAvail != null) ? elapsedAvail : denomAvail;
         var actualUtil = (logged != null && actualUtilDenom > 0) ? (logged / actualUtilDenom) * 100 : null;
-        // Forecast util for planning uses scheduled/available when schedule known; else actual
         var forecastUtil = schedUtil != null ? schedUtil : actualUtil;
 
         var planning = p6PlanningStatus(forecastUtil, scheduled != null && !scheduledPending, overallocHrs);
         if (overallocHrs > 0.05 && scheduled != null) planning = 'Overallocated';
+
+        var crewName = (cap && cap.crew) || meta.crew || p6CrewFromRow({}, meta.dept, meta.name);
 
         var rec = {
           emp: emp,
           name: meta.name || emp,
           dept: meta.dept || 'Unknown',
           brand: meta.brand || '',
+          crew: crewName,
           available: available,
           availableSource: availableSource,
           scheduled: scheduled,
           scheduledPending: scheduledPending,
           logged: logged,
           productive: productive,
+          nonProductive: nonProductive,
           overtimeHrs: overtimeHrs,
           overallocHrs: overallocHrs,
           unallocHrs: (available != null && scheduled != null) ? Math.max(0, available - scheduled) : null,
           schedUtil: schedUtil,
           actualUtil: actualUtil,
           forecastUtil: forecastUtil,
+          elapsedAvail: elapsedAvail,
           planningStatus: planning,
           maxDayHrs: maxDayHrs,
           costWeekly: weeklyCost[ck] != null ? weeklyCost[ck] : null,
@@ -12918,31 +12980,56 @@
           weekInProgress: weekInProgress
         };
         rec.timesheetStatus = p6TimesheetStatus(rec);
-        // Split: low util with complete timesheet = spare capacity; missing = missing timesheets
-        if (rec.timesheetStatus === 'Missing' && weekEnded) {
+
+        // Low logged ≠ spare until missing timesheets ruled out
+        if (rec.timesheetStatus === 'Missing') {
           rec.spareVsMissing = 'missing';
-        } else if (planning === 'Underallocated' && rec.timesheetStatus === 'Complete') {
+        } else if (planning === 'Underallocated' &&
+                   (rec.timesheetStatus === 'Complete' || rec.timesheetStatus === 'Overtime Recorded')) {
           rec.spareVsMissing = 'spare';
-        } else if (planning === 'Underallocated' && rec.timesheetStatus === 'Missing') {
-          rec.spareVsMissing = 'missing';
         } else {
           rec.spareVsMissing = null;
         }
+
+        // Apply filters
+        if (fBrand !== 'ALL' && normalizeDeptKey(rec.brand || 'x') !== normalizeDeptKey(fBrand) &&
+            String(rec.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) {
+          // brand match case-insensitive
+          if (String(rec.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
+        }
+        if (fDept !== 'ALL' && normalizeDeptKey(rec.dept).replace(/&/g, 'and') !==
+            normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
+        if (fCrew !== 'ALL' && rec.crew !== fCrew) return;
+        if (fProject !== 'ALL') {
+          var hasP = false;
+          Object.keys(rec.projects).forEach(function(pk) {
+            var pr = rec.projects[pk];
+            if (pk === fProject || pr.job === fProject || pr.site === fProject) hasP = true;
+          });
+          if (!hasP && selectedWeek <= cur.week) return;
+          // future weeks with no project assignment: hide under project filter
+          if (!hasP) return;
+        }
+
         people.push(rec);
       });
 
       people.sort(function(a, b) {
         var da = a.dept.localeCompare(b.dept);
         if (da) return da;
+        var ca = a.crew.localeCompare(b.crew);
+        if (ca) return ca;
         return a.name.localeCompare(b.name);
       });
 
-      // Crews = departments
-      var crews = {};
+      // Hierarchy: Department → Crew → Employee
+      var deptsTree = {};
       people.forEach(function(p) {
-        if (!crews[p.dept]) {
-          crews[p.dept] = {
+        if (!deptsTree[p.dept]) deptsTree[p.dept] = { dept: p.dept, crews: {} };
+        if (!deptsTree[p.dept].crews[p.crew]) {
+          deptsTree[p.dept].crews[p.crew] = {
             dept: p.dept,
+            crew: p.crew,
             members: [],
             available: 0,
             scheduled: 0,
@@ -12952,10 +13039,11 @@
             unallocHrs: 0,
             costWeekly: 0,
             scheduledPending: false,
-            hasAnySchedule: false
+            hasAnySchedule: false,
+            overPeople: 0
           };
         }
-        var c = crews[p.dept];
+        var c = deptsTree[p.dept].crews[p.crew];
         c.members.push(p);
         if (p.available != null) c.available += p.available;
         if (p.scheduled != null) {
@@ -12966,48 +13054,93 @@
         if (p.logged != null) c.logged += p.logged;
         if (p.productive != null) c.productive += p.productive;
         c.overallocHrs += p.overallocHrs || 0;
+        if (p.overallocHrs > 0.05) c.overPeople += 1;
         if (p.unallocHrs != null) c.unallocHrs += p.unallocHrs;
         if (p.costWeekly != null) c.costWeekly += p.costWeekly;
       });
 
-      Object.keys(crews).forEach(function(d) {
-        var c = crews[d];
-        c.available = p6Round1(c.available);
-        c.scheduled = p6Round1(c.scheduled);
-        c.logged = p6Round1(c.logged);
-        c.productive = p6Round1(c.productive);
-        c.overallocHrs = p6Round1(c.overallocHrs);
-        c.unallocHrs = p6Round1(c.unallocHrs);
-        c.forecastUtil = c.available > 0 && c.hasAnySchedule
-          ? (c.scheduled / c.available) * 100
-          : (c.available > 0 && c.logged ? (c.logged / c.available) * 100 : null);
-        c.planningStatus = p6PlanningStatus(c.forecastUtil, c.hasAnySchedule && !c.scheduledPending, c.overallocHrs);
+      // Legacy crews map (dept-level rolls) for heatmap helpers
+      var crews = {};
+      Object.keys(deptsTree).forEach(function(d) {
+        var roll = {
+          dept: d, members: [], available: 0, scheduled: 0, logged: 0, productive: 0,
+          overallocHrs: 0, unallocHrs: 0, costWeekly: 0, scheduledPending: false, hasAnySchedule: false
+        };
+        Object.keys(deptsTree[d].crews).forEach(function(ck) {
+          var c = deptsTree[d].crews[ck];
+          c.available = p6Round1(c.available);
+          c.scheduled = p6Round1(c.scheduled);
+          c.logged = p6Round1(c.logged);
+          c.productive = p6Round1(c.productive);
+          c.overallocHrs = p6Round1(c.overallocHrs);
+          c.unallocHrs = p6Round1(c.unallocHrs);
+          c.forecastUtil = c.available > 0 && c.hasAnySchedule
+            ? (c.scheduled / c.available) * 100
+            : (c.available > 0 && c.logged ? (c.logged / c.available) * 100 : null);
+          c.planningStatus = p6PlanningStatus(c.forecastUtil, c.hasAnySchedule && !c.scheduledPending, c.overallocHrs);
+          roll.members = roll.members.concat(c.members);
+          roll.available += c.available;
+          roll.scheduled += c.scheduled;
+          roll.logged += c.logged;
+          roll.productive += c.productive;
+          roll.overallocHrs += c.overallocHrs;
+          roll.unallocHrs += c.unallocHrs;
+          roll.costWeekly += c.costWeekly;
+          if (c.hasAnySchedule) roll.hasAnySchedule = true;
+          if (c.scheduledPending) roll.scheduledPending = true;
+        });
+        roll.available = p6Round1(roll.available);
+        roll.scheduled = p6Round1(roll.scheduled);
+        roll.logged = p6Round1(roll.logged);
+        roll.forecastUtil = roll.available > 0 && roll.hasAnySchedule
+          ? (roll.scheduled / roll.available) * 100
+          : (roll.available > 0 && roll.logged ? (roll.logged / roll.available) * 100 : null);
+        crews[d] = roll;
       });
 
-      // Department util series for heatmap (hours vs sum departmental capacity, not headcount*40)
-      var heatmapWeeks = allWeeks.slice(-P6_HEATMAP_WEEKS);
-      // also include selected week if not present
-      if (heatmapWeeks.indexOf(selectedWeek) < 0) {
-        heatmapWeeks = heatmapWeeks.concat([selectedWeek]).sort(function(a, b) { return a - b; });
+      // Heatmap: 12 weeks × departments; util = hours ÷ dept availability
+      var heatmapWeeks = [];
+      for (var hw = 0; hw < P6_HEATMAP_WEEKS; hw++) {
+        heatmapWeeks.push(selectedWeek - Math.floor(P6_HEATMAP_WEEKS / 2) + hw);
       }
-      var depts = {};
-      people.forEach(function(p) { depts[p.dept] = true; });
-      // pull depts from other weeks
+      // Prefer recent weeks when data clustered historically
+      if (allWeeks.length) {
+        var tail = allWeeks.slice(-P6_HEATMAP_WEEKS);
+        if (tail.indexOf(selectedWeek) >= 0 || selectedWeek <= allWeeks[allWeeks.length - 1] + 2) {
+          var setW = {};
+          tail.forEach(function(w) { setW[w] = true; });
+          setW[selectedWeek] = true;
+          // fill to 12 around selected
+          for (var fill = selectedWeek - 6; fill <= selectedWeek + 5; fill++) {
+            if (Object.keys(setW).length >= P6_HEATMAP_WEEKS) break;
+            setW[fill] = true;
+          }
+          heatmapWeeks = Object.keys(setW).map(Number).sort(function(a, b) { return a - b; }).slice(-P6_HEATMAP_WEEKS);
+          if (heatmapWeeks.indexOf(selectedWeek) < 0) {
+            heatmapWeeks = heatmapWeeks.concat([selectedWeek]).sort(function(a, b) { return a - b; });
+          }
+        }
+      }
+
+      var deptsAll = {};
+      people.forEach(function(p) { deptsAll[p.dept] = true; });
       Object.keys(capByEmpWeek).forEach(function(k) {
-        depts[capByEmpWeek[k].dept] = true;
+        deptsAll[capByEmpWeek[k].dept] = true;
       });
 
       var heatmap = { weeks: heatmapWeeks, rows: [] };
-      Object.keys(depts).sort().forEach(function(dept) {
+      Object.keys(deptsAll).sort().forEach(function(dept) {
+        if (fDept !== 'ALL' && normalizeDeptKey(dept).replace(/&/g, 'and') !==
+            normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
         var cells = heatmapWeeks.map(function(w) {
           var avail = 0;
           var logged = 0;
           var anyAvail = false;
           var anyLog = false;
-          // capacity members for that week+dept
           Object.keys(capByEmpWeek).forEach(function(k) {
             var c = capByEmpWeek[k];
             if (c.week !== w || c.dept !== dept) return;
+            if (fBrand !== 'ALL' && String(c.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
             avail += c.available || 0;
             anyAvail = true;
             var la = labAgg[c.emp + '|' + w];
@@ -13016,7 +13149,6 @@
               anyLog = true;
             }
           });
-          // labour-only people not on capacity for that week
           Object.keys(labAgg).forEach(function(k) {
             var parts = k.split('|');
             if (parseInt(parts[1], 10) !== w) return;
@@ -13024,6 +13156,7 @@
             if (capByEmpWeek[emp + '|' + w]) return;
             var meta = availByEmpLatest[emp];
             if (!meta || meta.dept !== dept) return;
+            if (fBrand !== 'ALL' && String(meta.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
             if (meta.available != null) {
               avail += meta.available;
               anyAvail = true;
@@ -13032,21 +13165,25 @@
             anyLog = true;
           });
           if (!anyAvail && !anyLog) return { week: w, util: null, incomplete: true };
-          if (!anyAvail) return { week: w, util: null, incomplete: true };
-          var util = avail > 0 ? (logged / avail) * 100 : null;
+          if (!anyAvail) return { week: w, util: null, incomplete: true, logged: p6Round1(logged) };
+          // In-progress selected week: actual vs elapsed available
+          var dens = avail;
+          if (w === selectedWeek && weekInProgress && dens > 0) {
+            dens = dens * Math.max(elapsedFrac, 0.1);
+          }
+          var util = dens > 0 ? (logged / dens) * 100 : null;
           return {
             week: w,
             util: util,
             logged: p6Round1(logged),
             available: p6Round1(avail),
-            incomplete: !anyLog && w <= cur.week
+            incomplete: !anyLog && w < cur.week
           };
         });
         heatmap.rows.push({ dept: dept, cells: cells });
       });
 
-      // Weekly series for planned vs actual chart (shared week axis)
-      // extend 4 weeks forward for forecast capacity if roster known
+      // Series for planned vs actual chart
       var seriesWeeks = allWeeks.slice();
       var lastW = seriesWeeks.length ? seriesWeeks[seriesWeeks.length - 1] : cur.week;
       for (var fw = 1; fw <= 4; fw++) {
@@ -13054,6 +13191,9 @@
         if (seriesWeeks.indexOf(nw) < 0) seriesWeeks.push(nw);
       }
       seriesWeeks = seriesWeeks.slice(-14);
+      if (seriesWeeks.indexOf(selectedWeek) < 0) {
+        seriesWeeks = seriesWeeks.concat([selectedWeek]).sort(function(a, b) { return a - b; });
+      }
 
       var series = seriesWeeks.map(function(w) {
         var avail = 0;
@@ -13067,15 +13207,21 @@
         Object.keys(capByEmpWeek).forEach(function(k) {
           var c = capByEmpWeek[k];
           if (c.week !== w) return;
+          if (fBrand !== 'ALL' && String(c.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
+          if (fDept !== 'ALL' && normalizeDeptKey(c.dept).replace(/&/g, 'and') !==
+              normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
           anyCap = true;
           avail += c.available || 0;
         });
 
         if (!anyCap) {
-          // carry-forward roster for forward capacity view only (available known, not inventing schedule)
           Object.keys(availByEmpLatest).forEach(function(emp) {
-            if (availByEmpLatest[emp].available != null) {
-              avail += availByEmpLatest[emp].available;
+            var m = availByEmpLatest[emp];
+            if (fBrand !== 'ALL' && String(m.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
+            if (fDept !== 'ALL' && normalizeDeptKey(m.dept).replace(/&/g, 'and') !==
+                normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
+            if (m.available != null) {
+              avail += m.available;
               anyCap = true;
             }
           });
@@ -13084,7 +13230,14 @@
         Object.keys(labAgg).forEach(function(k) {
           var parts = k.split('|');
           if (parseInt(parts[1], 10) !== w) return;
-          productive += labAgg[k].hours;
+          var emp = parts[0];
+          var meta = capByEmpWeek[emp + '|' + w] || availByEmpLatest[emp];
+          if (meta) {
+            if (fBrand !== 'ALL' && String(meta.brand || '').toLowerCase() !== String(fBrand).toLowerCase()) return;
+            if (fDept !== 'ALL' && normalizeDeptKey(meta.dept).replace(/&/g, 'and') !==
+                normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
+          }
+          productive += labAgg[k].hours - (labAgg[k].leaveHrs || 0);
           anyLab = true;
         });
 
@@ -13108,153 +13261,179 @@
           available: anyCap ? p6Round1(avail) : null,
           scheduled: scheduled != null ? p6Round1(scheduled) : null,
           productive: anyLab ? p6Round1(productive) : null,
-          forecastDemand: null, // no demand sheet
+          forecastDemand: null,
           tentative: null,
           scheduledPending: schedPending,
           forecastPending: true,
           isFuture: isFuture,
-          isTodayWeek: w === cur.week
+          isTodayWeek: w === cur.week,
+          isSelectedWeek: w === selectedWeek
         };
       });
 
-      // KPIs for selected week (sums of department-capacity-correct people)
-      var kpiAvail = 0;
-      var kpiSched = 0;
-      var kpiLogged = 0;
-      var kpiOver = 0;
-      var kpiUnalloc = 0;
-      var kpiCost = 0;
-      var hasSched = false;
-      var hasAvail = false;
-      var hasCost = false;
-      var schedPendingAny = false;
+      // KPIs for selected week
+      var kpiAvail = 0, kpiSched = 0, kpiLogged = 0, kpiProd = 0, kpiOver = 0, kpiUnalloc = 0, kpiCost = 0;
+      var hasSched = false, hasAvail = false, hasCost = false, schedPendingAny = false;
+      var overPeople = 0, completeTs = 0, missingTs = 0, otPeople = 0, unusualPeople = 0;
       people.forEach(function(p) {
         if (p.available != null) { kpiAvail += p.available; hasAvail = true; }
         if (p.scheduled != null) { kpiSched += p.scheduled; hasSched = true; }
         if (p.scheduledPending) schedPendingAny = true;
         if (p.logged != null) kpiLogged += p.logged;
+        if (p.productive != null) kpiProd += p.productive;
         kpiOver += p.overallocHrs || 0;
+        if (p.overallocHrs > 0.05) overPeople += 1;
         if (p.unallocHrs != null) kpiUnalloc += p.unallocHrs;
         if (p.costWeekly != null) { kpiCost += p.costWeekly; hasCost = true; }
+        if (p.timesheetStatus === 'Complete') completeTs += 1;
+        if (p.timesheetStatus === 'Missing') missingTs += 1;
+        if (p.timesheetStatus === 'Overtime Recorded') otPeople += 1;
+        if (p.timesheetStatus === 'Unusual Hours') unusualPeople += 1;
       });
       var kpiForecastUtil = hasAvail && hasSched && kpiAvail > 0
         ? (kpiSched / kpiAvail) * 100
-        : (hasAvail && kpiLogged && kpiAvail > 0 ? (kpiLogged / kpiAvail) * 100 : null);
+        : (hasAvail && kpiLogged && kpiAvail > 0
+          ? (kpiLogged / ((weekInProgress && elapsedFrac > 0 ? kpiAvail * Math.max(elapsedFrac, 0.1) : kpiAvail))) * 100
+          : null);
 
-      // Project demand view (best-effort from historical labour only)
+      // Projects for Project View
       var projects = {};
       labDeduped.forEach(function(r) {
         if (p6LabourWeekNum(r) !== selectedWeek) return;
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
         var key = job || site || '(unassigned)';
+        if (fProject !== 'ALL' && key !== fProject && job !== fProject && site !== fProject) return;
+        var en = p6DisplayName(col(r, 'Employee Name', 'employee name'));
+        var dept = p6CanonDept(col(r, 'Department', 'department'));
+        if (fDept !== 'ALL' && normalizeDeptKey(dept).replace(/&/g, 'and') !==
+            normalizeDeptKey(fDept).replace(/&/g, 'and')) return;
         if (!projects[key]) {
           projects[key] = {
-            key: key,
-            job: job,
-            client: site,
-            assignedHours: 0,
-            people: {},
-            requiredHours: null, // Pending - no demand source
-            requiredTrade: null,
-            gap: null,
-            milestoneRisk: null
+            key: key, job: job, client: site, assignedHours: 0, people: {}, depts: {},
+            requiredHours: null, gap: null, colorIdx: p6ProjectColorIndex(key)
           };
         }
         var h = p6LabourHours(r);
         if (h == null) return;
         projects[key].assignedHours += h;
-        var en = p6DisplayName(col(r, 'Employee Name', 'employee name'));
+        projects[key].depts[dept] = (projects[key].depts[dept] || 0) + h;
         var ek = p6NormEmpName(en);
-        if (!projects[key].people[ek]) projects[key].people[ek] = { name: en, hours: 0 };
+        if (!projects[key].people[ek]) projects[key].people[ek] = { name: en, hours: 0, dept: dept };
         projects[key].people[ek].hours += h;
       });
       Object.keys(projects).forEach(function(k) {
         projects[k].assignedHours = p6Round1(projects[k].assignedHours);
       });
 
-      // Action panel exceptions only
+      // Action panel: real flags only
       var actions = [];
       people.forEach(function(p) {
         if (p.overallocHrs > 0.05) {
           actions.push({
             kind: 'overallocation',
+            priority: 'P1',
             severity: 'risk',
-            title: p.name + ' overallocated',
-            detail: p6Round1(p.overallocHrs) + ' hrs over available (' +
-              p6FmtHours(p.scheduled) + ' scheduled vs ' + p6FmtHours(p.available) + ' available, Wk ' + selectedWeek + ').'
+            issue: p.name + ' overallocation',
+            impact: p6Round1(p.overallocHrs) + ' h over available on ' + p.crew,
+            action: 'Move work or extend crew for Week ' + selectedWeek
           });
-        } else if (p.timesheetStatus === 'Overtime Recorded') {
+        }
+        if (p.timesheetStatus === 'Overtime Recorded') {
           actions.push({
             kind: 'overtime',
+            priority: 'P2',
             severity: 'watch',
-            title: p.name + ' overtime recorded',
-            detail: p6FmtHours(p.logged) + ' logged vs ' + p6FmtHours(p.available) +
-              ' available (not auto-flagged as timesheet error).'
+            issue: p.name + ' overtime',
+            impact: p6FmtHours(p.logged) + ' logged vs ' + p6FmtHours(p.available) +
+              ' available (' + (p.actualUtil != null ? Math.round(p.actualUtil) + '%' : 'n/a') + ')',
+            action: 'Record overtime; not treated as timesheet error'
           });
         }
         if (p.spareVsMissing === 'spare') {
           actions.push({
             kind: 'spare',
+            priority: 'P3',
             severity: 'action',
-            title: p.name + ' spare capacity',
-            detail: 'Underallocated with complete timesheet: ' +
-              p6FmtHours(p.unallocHrs != null ? p.unallocHrs : (p.available != null && p.logged != null ? p.available - p.logged : null)) +
-              ' hrs free (avail ' + p6FmtHours(p.available) + ', logged ' + p6FmtHours(p.logged) + ').'
+            issue: p.name + ' spare capacity',
+            impact: p6FmtHours(p.unallocHrs != null ? p.unallocHrs :
+              (p.available != null && p.logged != null ? p.available - p.logged : null)) +
+              ' h free after complete timesheet',
+            action: 'Pull forward work or cover leave gaps'
           });
         }
         if (p.spareVsMissing === 'missing' || (p.timesheetStatus === 'Missing' && weekEnded)) {
           actions.push({
             kind: 'missing',
+            priority: 'P2',
             severity: 'gap',
-            title: p.name + ' missing timesheet',
-            detail: 'No logged hours for week ' + selectedWeek + ' (available capacity ' +
-              p6FmtHours(p.available) + '). Not treated as spare capacity.'
+            issue: p.name + ' missing timesheet',
+            impact: 'No logged hours for Week ' + selectedWeek +
+              (p.available != null ? ' (avail ' + p6FmtHours(p.available) + ' h)' : ''),
+            action: 'Chase timesheet before treating as spare capacity'
           });
         }
         if (p.timesheetStatus === 'Unusual Hours') {
           actions.push({
             kind: 'unusual',
+            priority: 'P2',
             severity: 'watch',
-            title: p.name + ' unusual day hours',
-            detail: 'Single-day total ' + p6Round1(p.maxDayHrs) + ' hrs after dedupe (review).'
+            issue: p.name + ' unusual day hours',
+            impact: 'Single-day total ' + p6Round1(p.maxDayHrs) + ' h after dedupe',
+            action: 'Review day entries with supervisor'
           });
         }
       });
-      // Cap noise
       actions.sort(function(a, b) {
         var ord = { risk: 0, watch: 1, action: 2, gap: 3 };
-        return (ord[a.severity] || 9) - (ord[b.severity] || 9);
+        var d = (ord[a.severity] || 9) - (ord[b.severity] || 9);
+        if (d) return d;
+        return String(a.priority).localeCompare(String(b.priority));
       });
-      actions = actions.slice(0, 12);
+      actions = actions.slice(0, 14);
 
-      if (!scheduleLive || true) {
-        // note only once as data quality, not fake unfilled demand counts
-      }
-
-      // Daily bars for Gantt from labour
+      // Daily bars for Gantt
       var dailyByEmp = {};
       labDeduped.forEach(function(r) {
         var emp = p6NormEmpName(col(r, 'Employee Name', 'employee name'));
         var d = String(col(r, 'Shift Date', 'shift date') || '').trim();
         var h = p6LabourHours(r);
         if (!emp || !d || h == null) return;
+        var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
+        var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
+        var role = String(col(r, 'Role', 'role') || '').trim();
+        var roleLow = role.toLowerCase();
+        var isLeave = /leave|training|holiday|public holiday|rdo|sick|personal/.test(roleLow) ||
+          /leave|training|holiday/.test(site.toLowerCase());
+        var pkey = job || site || (isLeave ? '(leave/training)' : '(unassigned)');
         if (!dailyByEmp[emp]) dailyByEmp[emp] = [];
         dailyByEmp[emp].push({
           date: d,
           dateObj: parseFlexibleDate(d),
           hours: h,
-          job: String(col(r, 'Xero Project J#', 'xero project j#') || '').trim(),
-          site: String(col(r, 'Site / Area', 'site / area') || '').trim(),
-          role: String(col(r, 'Role', 'role') || '').trim()
+          job: job,
+          site: site,
+          role: role,
+          isLeave: isLeave,
+          projectKey: pkey,
+          colorIdx: p6ProjectColorIndex(pkey),
+          tentative: false
         });
       });
+
+      var filterOptions = {
+        brands: Object.keys(brandSet).sort(),
+        depts: Object.keys(deptSet).sort(function(a, b) { return a.localeCompare(b); }),
+        crews: Object.keys(crewSet).sort(function(a, b) { return a.localeCompare(b); }),
+        projects: Object.keys(projectSet).sort(function(a, b) { return a.localeCompare(b); })
+      };
 
       return {
         selectedWeek: selectedWeek,
         year: year,
         allWeeks: allWeeks,
         people: people,
+        deptsTree: deptsTree,
         crews: crews,
         projects: projects,
         heatmap: heatmap,
@@ -13265,7 +13444,7 @@
         scheduleLive: scheduleLive,
         scheduleNote: scheduleLive
           ? 'Hours Scheduled from Capacity tab'
-          : 'Forward schedule not live. Historical allocation uses deduped logged hours (Capacity Hours Scheduled matched undeduped Hours Logged).',
+          : 'Forward schedule not live. Historical allocation uses deduped logged hours.',
         diariesLive: false,
         budgetsLive: false,
         weekEnded: weekEnded,
@@ -13273,15 +13452,26 @@
         elapsedFrac: elapsedFrac,
         currentWeek: cur.week,
         dailyByEmp: dailyByEmp,
+        filters: { brand: fBrand, dept: fDept, crew: fCrew, project: fProject },
+        filterOptions: filterOptions,
+        lastUpdated: p6FmtTimestamp(now),
         kpis: {
           available: hasAvail ? p6Round1(kpiAvail) : null,
           scheduled: hasSched ? p6Round1(kpiSched) : null,
           scheduledPending: !hasSched && schedPendingAny,
           forecastUtil: kpiForecastUtil,
           overallocated: p6Round1(kpiOver),
+          overPeople: overPeople,
           unallocated: hasSched ? p6Round1(kpiUnalloc) : null,
           labourCost: hasCost ? Math.round(kpiCost) : null,
-          labourCostPendingBudget: true
+          labourCostPendingBudget: true,
+          logged: p6Round1(kpiLogged),
+          productive: p6Round1(kpiProd),
+          completeTs: completeTs,
+          missingTs: missingTs,
+          otPeople: otPeople,
+          unusualPeople: unusualPeople,
+          headcount: people.length
         },
         weeklyCost: weeklyCost,
         capByEmpWeek: capByEmpWeek
@@ -13302,8 +13492,13 @@
         };
         window._p6SelectedWeek = null;
         window._p6ViewMode = 'people';
+        window._p6WorkspaceMode = 'planning';
         window._p6Expanded = {};
-        window._p6TimelineMode = 'daily';
+        window._p6Filters = { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
+        // Soft-align page brand filter with global brand if set
+        if (typeof activeBrand !== 'undefined' && activeBrand && activeBrand !== 'ALL') {
+          window._p6Filters.brand = activeBrand;
+        }
         document.getElementById('p6-content').innerHTML = renderP6();
         setTimeout(function() { p6MountCharts(); }, 80);
       } catch (err) {
@@ -13315,16 +13510,29 @@
       }
     }
 
+    /**
+     * Week-driven filter only (not Month/Year primary). Brand optional soft filter.
+     * Avoids Week 31 vs 32 mismatch from dashboard month clipping.
+     */
     function p6FilterLabour(rows) {
-      return filterByMonths(
-        filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
-        activeMonths
-      );
+      var out = rows || [];
+      if (typeof activeBrand !== 'undefined' && activeBrand && activeBrand !== 'ALL') {
+        // Prefer page filter when set
+        if (!window._p6Filters || window._p6Filters.brand === 'ALL') {
+          out = filterByBrand(out, activeBrand);
+        }
+      }
+      return out;
     }
 
-    /** Capacity has Week + Brand only (no reliable Year/Month). Brand filter only. */
     function p6FilterCapacity(rows) {
-      return filterByBrand(rows || [], activeBrand);
+      var out = rows || [];
+      if (typeof activeBrand !== 'undefined' && activeBrand && activeBrand !== 'ALL') {
+        if (!window._p6Filters || window._p6Filters.brand === 'ALL') {
+          out = filterByBrand(out, activeBrand);
+        }
+      }
+      return out;
     }
 
     function renderP6() {
@@ -13333,136 +13541,221 @@
       var capRows = p6FilterCapacity(raw.capacity);
       if (!capRows.length) capRows = raw.capacity || [];
       var labAll = labRows.length ? labRows : (raw.labour || []);
+      var filters = window._p6Filters || { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
 
-      // Pre-scan weeks for selector default BEFORE model if needed
-      var probe = p6BuildModel(capRows, labAll, window._p6SelectedWeek, null);
+      var probe = p6BuildModel(capRows, labAll, window._p6SelectedWeek, null, filters);
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
 
       return p6RenderShell(probe);
     }
 
-function p6RenderShell(model) {
+    function p6RenderShell(model) {
       var m = model;
       var k = m.kpis;
+      var mode = window._p6WorkspaceMode || 'planning';
+      var filters = m.filters || {};
+      var fo = m.filterOptions || { brands: [], depts: [], crews: [], projects: [] };
       var html = '';
+
       html += '<div class="page-header">';
       html += '<span class="page-badge">P6</span>';
       html += '<h1 class="page-title">Capacity &amp; Labour</h1>';
       html += '</div>';
 
-      html += '<p class="p6-updated">Planning week <strong>Week ' + m.selectedWeek + '</strong>';
-      if (m.weekInProgress) html += ' · in progress (actual util uses elapsed available so far)';
-      else if (m.weekEnded) html += ' · complete week';
-      html += ' · every chart and table below uses this same week selection.</p>';
+      // Dual-mode workspace toggle
+      html += '<div class="p6-mode-bar">';
+      html += '<div class="p6-toggle p6-mode-toggle" role="group" aria-label="Workspace mode">';
+      html += '<button type="button" class="p6-toggle-btn' + (mode !== 'actuals' ? ' is-active' : '') +
+        '" onclick="p6SetWorkspaceMode(\'planning\')">Capacity Planning</button>';
+      html += '<button type="button" class="p6-toggle-btn' + (mode === 'actuals' ? ' is-active' : '') +
+        '" onclick="p6SetWorkspaceMode(\'actuals\')">Actuals &amp; Timesheets</button>';
+      html += '</div>';
+      html += '<span class="p6-updated">Last updated ' + p6Esc(m.lastUpdated) + '</span>';
+      html += '</div>';
 
-      html += '<div class="p6-dq-banner">';
-      html += '<div><strong>Data sources:</strong> Capacity and Buildpass_Labour live';
-      html += ' (hours after same-day fingerprint dedupe). ';
-      html += m.scheduleNote + ' ';
-      html += 'Site Diaries allocation: <span class="p6-pending-inline">Pending</span>. ';
-      html += 'Labour budgets: <span class="p6-pending-inline">Pending</span>.</div>';
+      // Week horizon + filters (no primary Refresh; no Month/Year primary)
+      html += '<div class="p6-toolbar">';
       html += '<div class="p6-week-controls">';
-      html += '<label class="p6-filter-label">Week ';
+      html += '<label class="p6-filter-label">Planning week ';
       html += '<select id="p6-week-select" class="p6-select" onchange="p6OnWeekChange(this.value)">';
       var weeks = m.allWeeks.slice();
       if (weeks.indexOf(m.selectedWeek) < 0) weeks.push(m.selectedWeek);
+      // Extend horizon options for forward weeks
+      for (var ew = m.selectedWeek; ew < m.selectedWeek + P6_HORIZON_WEEKS; ew++) {
+        if (weeks.indexOf(ew) < 0) weeks.push(ew);
+      }
       weeks.sort(function(a, b) { return a - b; });
       weeks.forEach(function(w) {
         html += '<option value="' + w + '"' + (w === m.selectedWeek ? ' selected' : '') + '>Week ' + w + '</option>';
       });
       html += '</select></label>';
-      html += '<span class="p6-legend-mini" title="Planning: Underallocated (blue), Healthy (green), Near Capacity (watch), Overallocated (accent). Timesheet: Complete / Missing / Overtime Recorded / Unusual Hours. Orange only for overallocation risk.">';
-      html += '<span class="p6-leg-dot p6-leg--under"></span>Under ';
-      html += '<span class="p6-leg-dot p6-leg--healthy"></span>Healthy ';
-      html += '<span class="p6-leg-dot p6-leg--watch"></span>Near ';
-      html += '<span class="p6-leg-dot p6-leg--over"></span>Over ';
-      html += '<span class="p6-leg-dot p6-leg--gap"></span>Data gap';
-      html += '</span></div></div>';
+      if (m.weekInProgress) {
+        html += '<span class="p6-week-state">In progress · actuals vs elapsed available</span>';
+      } else if (m.weekEnded) {
+        html += '<span class="p6-week-state">Complete week</span>';
+      } else {
+        html += '<span class="p6-week-state">Future week · schedule Pending when not live</span>';
+      }
+      html += '</div>';
 
-      // KPI row (6)
+      html += '<div class="p6-filters">';
+      html += p6FilterSelect('Brand', 'brand', fo.brands, filters.brand);
+      html += p6FilterSelect('Department', 'dept', fo.depts, filters.dept);
+      html += p6FilterSelect('Crew', 'crew', fo.crews, filters.crew);
+      html += p6FilterSelect('Project', 'project', fo.projects, filters.project);
+      html += '</div>';
+
+      html += '<span class="p6-legend-mini" title="Capacity state colours. Project Gantt bars use muted greys (not status). Orange only for genuine overallocation.">';
+      html += '<span class="p6-leg-dot p6-leg--under"></span>&lt;' + P6_UTIL_UNDER_PCT + '% ';
+      html += '<span class="p6-leg-dot p6-leg--healthy"></span>' + P6_UTIL_HEALTHY_LO + '–' + P6_UTIL_HEALTHY_HI + '% ';
+      html += '<span class="p6-leg-dot p6-leg--watch"></span>' + P6_UTIL_HEALTHY_HI + '–' + P6_UTIL_WATCH_HI + '% ';
+      html += '<span class="p6-leg-dot p6-leg--over"></span>&gt;100% ';
+      html += '<span class="p6-leg-dot p6-leg--gap"></span>Data gap';
+      html += '</span></div>';
+
+      html += '<div class="p6-dq-banner">';
+      html += '<div><strong>Data:</strong> Capacity + Buildpass_Labour live (deduped). ';
+      html += p6Esc(m.scheduleNote) + ' ';
+      html += 'Site Diaries allocation: <span class="p6-pending-inline">Pending</span>. ';
+      html += 'Forecast project demand / labour budgets: <span class="p6-pending-inline">Pending</span>. ';
+      html += 'All panels share Week <strong>' + m.selectedWeek + '</strong>.</div></div>';
+
+      if (mode === 'actuals') {
+        html += p6RenderActualsMode(m);
+      } else {
+        html += p6RenderPlanningMode(m);
+      }
+
+      p6SetBB(m);
+      return html;
+    }
+
+    function p6FilterSelect(label, key, options, selected) {
+      var h = '<label class="p6-filter-label">' + p6Esc(label) + ' ';
+      h += '<select class="p6-select" onchange="p6OnFilterChange(\'' + key + '\', this.value)">';
+      h += '<option value="ALL"' + (selected === 'ALL' ? ' selected' : '') + '>All</option>';
+      (options || []).forEach(function(o) {
+        h += '<option value="' + p6Esc(o) + '"' + (selected === o ? ' selected' : '') + '>' + p6Esc(o) + '</option>';
+      });
+      h += '</select></label>';
+      return h;
+    }
+
+    function p6RenderPlanningMode(m) {
+      var k = m.kpis;
+      var html = '';
+
       html += '<div class="p6-kpi-row">';
       html += p6KpiCard('Available Capacity', k.available != null ? p6FmtHours(k.available) + ' h' : 'Pending',
-        'Contracted net leave / training / public holidays (Hours Available)', null);
+        'Hours Available net leave / training / holidays', null);
       html += p6KpiCard('Scheduled Hours',
         k.scheduled != null ? p6FmtHours(k.scheduled) + ' h' : 'Pending',
-        k.scheduledPending || k.scheduled == null
-          ? 'Forward schedule not live'
-          : 'Best-effort historical allocation (deduped)', null);
+        k.scheduledPending || k.scheduled == null ? 'Forward schedule not live' : 'Best-effort allocation (deduped)', null);
       html += p6KpiCard('Forecast Utilisation',
         k.forecastUtil != null ? p6FmtPct(k.forecastUtil) : 'Pending',
-        'Scheduled (or actual) ÷ available for Week ' + m.selectedWeek,
-        k.forecastUtil != null && k.forecastUtil > 100 ? 'risk' : (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null));
+        'Scheduled ÷ Available · Week ' + m.selectedWeek,
+        k.forecastUtil != null && k.forecastUtil > 100 ? 'risk' :
+          (k.forecastUtil != null && k.forecastUtil >= P6_UTIL_HEALTHY_HI ? 'watch' : null));
+      var overSub = (k.overPeople || 0) + ' people · ' + p6FmtHours(k.overallocated) + ' h excess';
       html += p6KpiCard('Overallocated Capacity',
-        p6FmtHours(k.overallocated) + ' h',
-        'max(0, Scheduled − Available)', k.overallocated > 0 ? 'risk' : null);
+        (k.overPeople || 0) > 0 ? (k.overPeople + ' · ' + p6FmtHours(k.overallocated) + ' h') : p6FmtHours(k.overallocated) + ' h',
+        overSub, k.overallocated > 0 ? 'risk' : null);
       html += p6KpiCard('Unallocated Capacity',
         k.unallocated != null ? p6FmtHours(k.unallocated) + ' h' : 'Pending',
         'max(0, Available − Scheduled)', null);
       html += p6KpiCard('Forecast Labour Cost',
         k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
-        'Employee-week cost once (not per shift). vs budgets: Pending',
-        'gap');
+        'Employee-week once. vs project labour budget: Pending', 'gap');
       html += '</div>';
 
-      // Main Gantt
-      html += '<div class="p6-section-card">';
+      // Main: ~70% Gantt | ~30% heatmap
+      html += '<div class="p6-main-grid">';
+      html += '<div class="p6-section-card p6-main-gantt">';
       html += '<div class="p6-section-head">';
       html += '<div><div class="p6-section-title">Crew Allocation Planner</div>';
-      html += '<p class="p6-section-hint">Crew = department (expand for people). Bars from logged assignments; future plan Pending when schedule not live.</p></div>';
+      html += '<p class="p6-section-hint">Department → Crew → Employee. Crews collapsed by default. Horizon: daily W1–4, weekly W5–12 from planning week. Solid = confirmed project (muted), outlined = tentative, hatch = leave, accent stripe = overallocation, dark overlay = actuals on past days.</p></div>';
       html += '<div class="p6-toggle" role="group" aria-label="Planner view">';
       html += '<button type="button" class="p6-toggle-btn' + (window._p6ViewMode !== 'project' ? ' is-active' : '') +
         '" onclick="p6SetViewMode(\'people\')">People View</button>';
       html += '<button type="button" class="p6-toggle-btn' + (window._p6ViewMode === 'project' ? ' is-active' : '') +
         '" onclick="p6SetViewMode(\'project\')">Project View</button>';
-      html += '</div>';
-      html += '<div class="p6-toggle p6-toggle--sm" role="group" aria-label="Timeline scale">';
-      html += '<button type="button" class="p6-toggle-btn' + (window._p6TimelineMode !== 'weekly' ? ' is-active' : '') +
-        '" onclick="p6SetTimelineMode(\'daily\')">Daily · 4 wks</button>';
-      html += '<button type="button" class="p6-toggle-btn' + (window._p6TimelineMode === 'weekly' ? ' is-active' : '') +
-        '" onclick="p6SetTimelineMode(\'weekly\')">Weekly · 8 wks</button>';
       html += '</div></div>';
       html += '<div id="p6-gantt">' + p6RenderGantt(m) + '</div>';
       html += '</div>';
 
-      // Heatmap + chart grid
-      html += '<div class="p6-mid-grid">';
-      html += '<div class="p6-section-card">';
-      html += '<div class="p6-section-title">Department utilisation heatmap</div>';
-      html += '<p class="p6-section-hint">Actual productive hours ÷ departmental available hours. Grey = data gap. Thresholds: under &lt;' +
-        P6_UTIL_UNDER_PCT + '%, healthy ' + P6_UTIL_HEALTHY_LO + '–' + P6_UTIL_HEALTHY_HI +
-        '%, near ≤' + P6_UTIL_NEAR_PCT + '%, over &gt;100% (confirm defaults with Lori/Ben).</p>';
+      html += '<div class="p6-section-card p6-main-heatmap">';
+      html += '<div class="p6-section-title">12-week department capacity</div>';
+      html += '<p class="p6-section-hint">Util % = hours ÷ departmental available capacity. Bands: &lt;' +
+        P6_UTIL_UNDER_PCT + '% under · ' + P6_UTIL_HEALTHY_LO + '–' + P6_UTIL_HEALTHY_HI +
+        '% healthy · ' + P6_UTIL_HEALTHY_HI + '–100% watch · &gt;100% over · grey data gap.</p>';
       html += p6RenderHeatmap(m);
-      html += '</div>';
-      html += '<div class="p6-section-card">';
-      html += '<div class="p6-section-title">Planned vs actual hours</div>';
-      html += '<p class="p6-section-hint">Available · Scheduled · Actual Productive · Forecast Demand (Pending). Today week marked.</p>';
-      html += '<div class="p6-chart-wrap"><canvas id="p6-hours-chart" height="160"></canvas></div>';
       html += '</div></div>';
 
-      // Actions
+      // Lower: chart | action panel
+      html += '<div class="p6-lower-grid">';
       html += '<div class="p6-section-card">';
-      html += '<div class="p6-section-title">Action panel</div>';
-      html += '<p class="p6-section-hint">Real exceptions only. Spare capacity and missing timesheets are separate.</p>';
-      html += p6RenderActions(m);
+      html += '<div class="p6-section-title">Planned vs Actual / Forecast labour</div>';
+      html += '<p class="p6-section-hint">Available Capacity · Scheduled Hours · Actual Productive · Forecast Project Demand · Tentative Pipeline. Today separates historical and future.</p>';
+      html += '<div class="p6-chart-wrap"><canvas id="p6-hours-chart" height="160"></canvas></div>';
       html += '</div>';
+      html += '<div class="p6-section-card">';
+      html += '<div class="p6-section-title">Capacity Exceptions</div>';
+      html += '<p class="p6-section-hint">Flags only: overallocation, labour gaps, spare (after timesheets complete), missing timesheets, leave conflicts.</p>';
+      html += p6RenderActions(m);
+      html += '</div></div>';
 
-      // Drill-downs
+      // Employee detail behind drill-down only
       html += '<details class="p6-drill">';
-      html += '<summary>Capacity detail (Week ' + m.selectedWeek + ')</summary>';
+      html += '<summary>Employee capacity detail (Week ' + m.selectedWeek + ')</summary>';
       html += p6BuildCapacityDetail(m);
       html += '</details>';
-      html += '<details class="p6-drill">';
-      html += '<summary>Labour cost detail (employee-week, once per person)</summary>';
+
+      return html;
+    }
+
+    function p6RenderActualsMode(m) {
+      var k = m.kpis;
+      var html = '';
+      html += '<div class="p6-kpi-row p6-kpi-row--actuals">';
+      html += p6KpiCard('Logged hours', p6FmtHours(k.logged) + ' h',
+        'vs available ' + (k.available != null ? p6FmtHours(k.available) + ' h' : 'Pending'), null);
+      html += p6KpiCard('Productive hours', p6FmtHours(k.productive) + ' h',
+        'Logged minus leave/training when flagged', null);
+      html += p6KpiCard('Timesheet complete',
+        k.headcount ? (k.completeTs + ' / ' + k.headcount) : 'Pending',
+        k.missingTs + ' missing', k.missingTs > 0 ? 'gap' : null);
+      html += p6KpiCard('Overtime',
+        String(k.otPeople || 0) + ' people',
+        'Logged above available (not timesheet error)', k.otPeople > 0 ? 'watch' : null);
+      html += p6KpiCard('Unusual timesheets',
+        String(k.unusualPeople || 0),
+        'Single day ≥ ' + P6_UNUSUAL_DAY_HRS + ' h after dedupe', k.unusualPeople > 0 ? 'watch' : null);
+      html += p6KpiCard('Labour cost (week)',
+        k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
+        'Once per employee-week. vs budget: Pending', 'gap');
+      html += '</div>';
+
+      html += '<div class="p6-section-card">';
+      html += '<div class="p6-section-title">Timesheet completeness · Week ' + m.selectedWeek + '</div>';
+      html += '<p class="p6-section-hint">Buildpass_Labour actuals after fingerprint dedupe. In-progress weeks compare actuals to elapsed available.</p>';
+      html += p6BuildCapacityDetail(m);
+      html += '</div>';
+
+      html += '<div class="p6-lower-grid">';
+      html += '<div class="p6-section-card">';
+      html += '<div class="p6-section-title">Labour cost by employee</div>';
       html += p6BuildLabourCostDetail(m);
-      html += '</details>';
-      html += '<details class="p6-drill">';
-      html += '<summary>Timesheet rows (deduped daily)</summary>';
+      html += '</div>';
+      html += '<div class="p6-section-card">';
+      html += '<div class="p6-section-title">Actuals exceptions</div>';
+      html += p6RenderActions(m, true);
+      html += '</div></div>';
+
+      html += '<details class="p6-drill" open>';
+      html += '<summary>Timesheet rows (deduped daily) · Week ' + m.selectedWeek + '</summary>';
       html += p6BuildLabourRowsDetail(m);
       html += '</details>';
-
-      // BB data
-      p6SetBB(m);
 
       return html;
     }
@@ -13479,7 +13772,6 @@ function p6RenderShell(model) {
     }
 
     function p6StatusChip(status, kind) {
-      // kind: planning | timesheet
       var cls = 'p6-chip';
       if (kind === 'planning') {
         if (status === 'Overallocated' || status === 'Allocation Conflict') cls += ' p6-chip--risk';
@@ -13493,177 +13785,256 @@ function p6RenderShell(model) {
         else if (status === 'Complete') cls += ' p6-chip--healthy';
         else cls += ' p6-chip--gap';
       }
-      return '<span class="' + cls + '" title="' + p6Esc(kind + ' status') + '">' + p6Esc(status) + '</span>';
+      return '<span class="' + cls + '">' + p6Esc(status) + '</span>';
+    }
+
+    function p6BuildHorizonCells(m) {
+      var year = m.year;
+      var cells = [];
+      var startWeek = m.selectedWeek;
+      // Daily columns for weeks 1-4 of horizon
+      for (var wi = 0; wi < P6_DAILY_WEEKS; wi++) {
+        var w = startWeek + wi;
+        var mon = p6IsoWeekMonday(year, w);
+        for (var di = 0; di < 7; di++) {
+          var d = new Date(mon);
+          d.setDate(mon.getDate() + di);
+          var isWe = d.getDay() === 0 || d.getDay() === 6;
+          cells.push({
+            type: 'day', week: w, date: d, isWeekend: isWe,
+            label: (d.getDate() < 10 ? '0' : '') + d.getDate()
+          });
+        }
+      }
+      // Weekly columns for weeks 5-12
+      for (var wj = P6_DAILY_WEEKS; wj < P6_HORIZON_WEEKS; wj++) {
+        var ww = startWeek + wj;
+        cells.push({
+          type: 'week', week: ww, monday: p6IsoWeekMonday(year, ww),
+          label: 'W' + ww, isWeekend: false
+        });
+      }
+      return cells;
     }
 
     function p6RenderGantt(m) {
       if (window._p6ViewMode === 'project') return p6RenderProjectGantt(m);
 
-      var timelineMode = window._p6TimelineMode || 'daily';
-      var year = m.year;
-      var days = [];
-      var labels = [];
+      var cells = p6BuildHorizonCells(m);
       var today = new Date();
       today.setHours(0, 0, 0, 0);
-      var rangeStart;
-      var cellCount;
-
-      if (timelineMode === 'weekly') {
-        cellCount = 8;
-        var startW = m.selectedWeek;
-        // center-ish: previous 3 + selected + 4 future if possible
-        startW = Math.max(1, m.selectedWeek - 3);
-        for (var wi = 0; wi < cellCount; wi++) {
-          var ww = startW + wi;
-          labels.push('W' + ww);
-          days.push({ type: 'week', week: ww, monday: p6IsoWeekMonday(year, ww) });
-        }
-      } else {
-        cellCount = 28;
-        rangeStart = p6IsoWeekMonday(year, m.selectedWeek);
-        for (var di = 0; di < cellCount; di++) {
-          var d = new Date(rangeStart);
-          d.setDate(rangeStart.getDate() + di);
-          var isWe = d.getDay() === 0 || d.getDay() === 6;
-          labels.push((d.getDate() < 10 ? '0' : '') + d.getDate());
-          days.push({ type: 'day', date: d, isWeekend: isWe });
-        }
-      }
-
-      // Today position
       var todayPct = null;
-      if (timelineMode === 'daily' && days.length) {
-        var t0 = days[0].date.getTime();
-        var t1 = days[days.length - 1].date.getTime() + 86400000;
-        if (today.getTime() >= t0 && today.getTime() <= t1) {
-          todayPct = ((today.getTime() - t0) / (t1 - t0)) * 100;
+      // Approximate today position across mixed day/week cells using linear index
+      for (var ti = 0; ti < cells.length; ti++) {
+        var c = cells[ti];
+        if (c.type === 'day' && c.date.getTime() === today.getTime()) {
+          todayPct = ((ti + 0.5) / cells.length) * 100;
+          break;
+        }
+        if (c.type === 'week') {
+          var mon = c.monday;
+          var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+          if (today >= mon && today <= sun) {
+            todayPct = ((ti + 0.5) / cells.length) * 100;
+            break;
+          }
         }
       }
 
       var h = '<div class="p6-gantt">';
       h += '<div class="p6-gantt-head">';
       h += '<div class="p6-gantt-fixed">';
-      h += '<span>Department</span><span>Crew / Employee</span><span class="num">Avail</span><span class="num">Sched</span><span class="num">Util</span>';
+      h += '<span></span><span>Dept / Crew / Person</span><span class="num">Avail</span><span class="num">Sched</span><span class="num">Util</span>';
       h += '</div>';
       h += '<div class="p6-gantt-timeline-head">';
-      labels.forEach(function(lab, i) {
-        var we = days[i] && days[i].isWeekend;
-        h += '<span class="p6-gantt-col' + (we ? ' is-weekend' : '') + '">' + lab + '</span>';
+      cells.forEach(function(cell) {
+        h += '<span class="p6-gantt-col' + (cell.isWeekend ? ' is-weekend' : '') +
+          (cell.type === 'week' ? ' is-week' : '') + '">' + cell.label + '</span>';
       });
       h += '</div></div>';
 
       h += '<div class="p6-gantt-body">';
-      var crewList = Object.keys(m.crews).sort().map(function(d) { return m.crews[d]; });
-      if (!crewList.length) {
+      var deptNames = Object.keys(m.deptsTree || {}).sort();
+      if (!deptNames.length) {
         h += '<p class="no-data-msg">No capacity or labour rows for Week ' + m.selectedWeek + '.</p>';
       }
-      crewList.forEach(function(crew) {
-        var expanded = !!window._p6Expanded[crew.dept];
-        var util = crew.forecastUtil;
-        h += '<div class="p6-gantt-row p6-gantt-row--crew' +
-          (crew.overallocHrs > 0 ? ' is-over' : '') + '">';
-        h += '<div class="p6-gantt-fixed">';
-        h += '<button type="button" class="p6-expand" data-dept="' + p6Esc(crew.dept) +
-          '" onclick="p6ToggleCrew(this.getAttribute(\'data-dept\'))" aria-expanded="' + expanded + '">' +
-          (expanded ? '-' : '+') + '</button>';
-        h += '<span class="p6-gantt-dept" title="' + p6Esc(crew.dept) + '">' + p6Esc(crew.dept) + '</span>';
-        h += '<span class="p6-gantt-name">' + crew.members.length + ' people</span>';
-        h += '<span class="num">' + p6FmtHours(crew.available) + '</span>';
-        h += '<span class="num">' + (crew.hasAnySchedule ? p6FmtHours(crew.scheduled) :
-          '<span class="p6-pending-inline">Pending</span>') + '</span>';
-        h += '<span class="num">' + (util != null ? p6FmtPct(util) : '-') + '</span>';
-        h += '</div>';
-        h += '<div class="p6-gantt-track">';
-        if (todayPct != null) {
-          h += '<span class="p6-gantt-today" style="left:' + todayPct + '%" title="Today"></span>';
-        }
-        // weekend bands
-        if (timelineMode === 'daily') {
-          days.forEach(function(day, i) {
-            if (!day.isWeekend) return;
-            var left = (i / days.length) * 100;
-            var w = (1 / days.length) * 100;
-            h += '<span class="p6-gantt-weekend" style="left:' + left + '%;width:' + w + '%"></span>';
-          });
-        }
-        // crew aggregate bar for selected week utilisation fill
-        var fill = util != null ? Math.min(100, util) : 0;
-        var barCls = 'p6-gantt-bar' + (crew.overallocHrs > 0 ? ' is-conflict' : '');
-        h += '<span class="' + barCls + '" style="left:0;width:' + Math.max(4, fill * 0.35) +
-          '%" title="Crew util ' + (util != null ? Math.round(util) + '%' : 'Pending') + '"></span>';
-        if (crew.overallocHrs > 0) {
-          h += '<span class="p6-gantt-bar p6-gantt-bar--hatch" style="left:' +
-            Math.max(4, Math.min(100, 35)) + '%;width:8%" title="Overallocated ' +
-            p6FmtHours(crew.overallocHrs) + ' hrs"></span>';
-        }
-        h += '</div></div>';
 
-        if (expanded) {
-          crew.members.forEach(function(p) {
-            h += p6GanttPersonRow(m, p, days, timelineMode, todayPct);
-          });
-        }
+      deptNames.forEach(function(dept) {
+        var tree = m.deptsTree[dept];
+        var crewNames = Object.keys(tree.crews).sort();
+        // Department band
+        h += '<div class="p6-gantt-row p6-gantt-row--dept">';
+        h += '<div class="p6-gantt-fixed">';
+        h += '<span></span><span class="p6-gantt-dept">' + p6Esc(dept) + '</span>';
+        h += '<span class="num"></span><span class="num"></span><span class="num"></span>';
+        h += '</div><div class="p6-gantt-track p6-gantt-track--dept"></div></div>';
+
+        crewNames.forEach(function(crewName) {
+          var crew = tree.crews[crewName];
+          var expKey = dept + '||' + crewName;
+          var expanded = !!window._p6Expanded[expKey];
+          var util = crew.forecastUtil;
+          h += '<div class="p6-gantt-row p6-gantt-row--crew' + (crew.overallocHrs > 0 ? ' is-over' : '') + '">';
+          h += '<div class="p6-gantt-fixed">';
+          h += '<button type="button" class="p6-expand" data-key="' + p6Esc(expKey) +
+            '" onclick="p6ToggleCrew(this.getAttribute(\'data-key\'))" aria-expanded="' + expanded + '">' +
+            (expanded ? '−' : '+') + '</button>';
+          h += '<span class="p6-gantt-name" title="' + p6Esc(crewName) + '">' + p6Esc(crewName) +
+            ' <span class="p6-muted">(' + crew.members.length + ')</span></span>';
+          h += '<span class="num">' + p6FmtHours(crew.available) + '</span>';
+          h += '<span class="num">' + (crew.hasAnySchedule ? p6FmtHours(crew.scheduled) :
+            '<span class="p6-pending-inline">Pending</span>') + '</span>';
+          h += '<span class="num">' + (util != null ? p6FmtPct(util) : '—') + '</span>';
+          h += '</div>';
+          h += p6GanttTrackMarkup(cells, todayPct, null, crew, m);
+          h += '</div>';
+
+          if (expanded) {
+            crew.members.forEach(function(p) {
+              h += p6GanttPersonRow(m, p, cells, todayPct);
+            });
+          }
+        });
       });
+
       h += '</div></div>';
       return h;
     }
 
-    function p6GanttPersonRow(m, p, days, timelineMode, todayPct) {
-      var h = '<div class="p6-gantt-row p6-gantt-row--person' +
-        (p.overallocHrs > 0 ? ' is-over' : '') + '">';
-      h += '<div class="p6-gantt-fixed p6-gantt-fixed--person">';
-      h += '<span class="p6-gantt-dept-muted"></span>';
-      h += '<span class="p6-gantt-name" title="' + p6Esc(p.name) + '">' + p6Esc(p.name) + '</span>';
-      h += '<span class="num">' + (p.available != null ? p6FmtHours(p.available) : '-') + '</span>';
-      h += '<span class="num">' + (p.scheduled != null ? p6FmtHours(p.scheduled) :
-        '<span class="p6-pending-inline">Pending</span>') + '</span>';
-      h += '<span class="num">' + (p.forecastUtil != null ? p6FmtPct(p.forecastUtil) : '-') + '</span>';
-      h += '</div>';
-      h += '<div class="p6-gantt-track">';
+    function p6GanttTrackMarkup(cells, todayPct, person, crew, m) {
+      var h = '<div class="p6-gantt-track">';
       if (todayPct != null) {
         h += '<span class="p6-gantt-today" style="left:' + todayPct + '%" title="Today"></span>';
       }
-      if (timelineMode === 'daily') {
-        days.forEach(function(day, i) {
-          if (day.isWeekend) {
-            var left = (i / days.length) * 100;
-            var ww = (1 / days.length) * 100;
-            h += '<span class="p6-gantt-weekend" style="left:' + left + '%;width:' + ww + '%"></span>';
-          }
-        });
-        // assignment bars from daily labour
-        var bars = m.dailyByEmp[p.emp] || [];
-        var t0 = days[0].date.getTime();
-        var span = days.length * 86400000;
-        bars.forEach(function(b) {
-          if (!b.dateObj || isNaN(b.dateObj.getTime())) return;
-          var bd = new Date(b.dateObj); bd.setHours(0, 0, 0, 0);
-          var left = ((bd.getTime() - t0) / span) * 100;
-          if (left < -5 || left > 100) return;
-          var width = (1 / days.length) * 100;
-          var over = p.available != null && b.hours > (p.available / 5) + 2;
-          var title = (b.job || '·') + ' · ' + (b.site || '') + ' · ' + b.hours + 'h · ' + (b.role || '');
-          h += '<span class="p6-gantt-seg' + (over ? ' is-conflict' : '') +
-            (bd.getTime() > Date.now() ? ' is-tentative' : '') +
-            '" style="left:' + Math.max(0, left) + '%;width:' + width +
-            '%" title="' + p6Esc(title) + '"></span>';
-        });
-        // unfilled labour warning (missing past days mid-week)
-        if (p.timesheetStatus === 'Missing') {
-          h += '<span class="p6-gantt-warn" title="Missing timesheet"></span>';
+      cells.forEach(function(cell, i) {
+        if (cell.isWeekend) {
+          var left = (i / cells.length) * 100;
+          var ww = (1 / cells.length) * 100;
+          h += '<span class="p6-gantt-weekend" style="left:' + left + '%;width:' + ww + '%"></span>';
         }
-      } else {
-        // weekly: one fill for selected-relative weeks using util
-        var util = p.forecastUtil;
+      });
+      if (person) {
+        h += p6PersonBars(person, cells, m);
+      } else if (crew) {
+        // Crew summary: muted aggregate bar for selected week region
+        var util = crew.forecastUtil;
         if (util != null) {
-          h += '<span class="p6-gantt-bar' + (p.overallocHrs > 0 ? ' is-conflict' : '') +
-            '" style="left:0;width:' + Math.min(100, Math.max(6, util * 0.4)) +
-            '%" title="' + p6FmtPct(util) + '"></span>';
-        } else {
-          h += '<span class="p6-pending-inline p6-gantt-pending">Pending</span>';
+          var fill = Math.min(100, util) * 0.28;
+          h += '<span class="p6-gantt-bar p6-gantt-bar--crew" style="left:0;width:' +
+            Math.max(4, fill) + '%" title="Crew util ' + Math.round(util) + '%"></span>';
+        }
+        if (crew.overallocHrs > 0) {
+          h += '<span class="p6-gantt-bar p6-gantt-bar--overstripe" style="left:30%;width:10%" title="Overallocated ' +
+            p6FmtHours(crew.overallocHrs) + ' h"></span>';
         }
       }
-      h += '</div></div>';
+      h += '</div>';
+      return h;
+    }
+
+    function p6PersonBars(p, cells, m) {
+      var h = '';
+      var n = cells.length;
+      var bars = (m.dailyByEmp && m.dailyByEmp[p.emp]) || [];
+      var now = Date.now();
+
+      // Map day cells for placement
+      bars.forEach(function(b) {
+        if (!b.dateObj || isNaN(b.dateObj.getTime())) return;
+        var bd = new Date(b.dateObj); bd.setHours(0, 0, 0, 0);
+        for (var i = 0; i < cells.length; i++) {
+          var cell = cells[i];
+          if (cell.type === 'day' && cell.date.getTime() === bd.getTime()) {
+            var left = (i / n) * 100;
+            var width = (1 / n) * 100;
+            var past = bd.getTime() < now - 86400000;
+            var cls = 'p6-gantt-seg';
+            var styleExtra = '';
+            if (b.isLeave) {
+              cls += ' p6-gantt-seg--leave';
+            } else if (b.tentative || bd.getTime() > now) {
+              cls += ' is-tentative';
+              styleExtra = 'border-color:' + P6_PROJECT_COLORS[b.colorIdx] + ';';
+            } else {
+              styleExtra = 'background:' + P6_PROJECT_COLORS[b.colorIdx] + ';';
+            }
+            if (p.overallocHrs > 0.05) cls += ' is-over-ext';
+            var title = (b.job || '·') + ' · ' + (b.site || '') + ' · ' + b.hours + 'h' +
+              (b.isLeave ? ' · leave/training' : '');
+            h += '<span class="' + cls + '" style="left:' + left + '%;width:' + width + '%;' + styleExtra +
+              '" title="' + p6Esc(title) + '">';
+            if (past && !b.isLeave) {
+              h += '<span class="p6-gantt-seg-actual" style="width:' +
+                Math.min(100, (b.hours / 10) * 100) + '%"></span>';
+            }
+            h += '</span>';
+            return;
+          }
+          if (cell.type === 'week') {
+            var mon = cell.monday;
+            var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+            if (bd >= mon && bd <= sun) {
+              // accumulate into weekly bucket label only once per week via projects
+              return;
+            }
+          }
+        }
+      });
+
+      // Weekly cells: stack project hours for horizon weeks 5-12
+      cells.forEach(function(cell, i) {
+        if (cell.type !== 'week') return;
+        var weekHrs = 0;
+        var hasLeave = false;
+        bars.forEach(function(b) {
+          if (!b.dateObj || isNaN(b.dateObj.getTime())) return;
+          var bd = new Date(b.dateObj);
+          var mon = cell.monday;
+          var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+          if (bd >= mon && bd <= sun) {
+            weekHrs += b.hours;
+            if (b.isLeave) hasLeave = true;
+          }
+        });
+        // Fallback: if this week is selected week use p.logged
+        if (cell.week === m.selectedWeek && weekHrs === 0 && p.logged != null) weekHrs = p.logged;
+        if (weekHrs <= 0 && cell.week === m.selectedWeek && p.scheduledPending) {
+          h += '<span class="p6-pending-inline p6-gantt-pending" style="left:' +
+            ((i / n) * 100) + '%">Pending</span>';
+          return;
+        }
+        if (weekHrs <= 0) return;
+        var leftW = (i / n) * 100;
+        var widthW = (1 / n) * 100 * Math.min(1, weekHrs / 40);
+        var clsW = 'p6-gantt-seg' + (hasLeave ? ' p6-gantt-seg--leave' : '');
+        if (p.overallocHrs > 0.05 && cell.week === m.selectedWeek) clsW += ' is-over-ext';
+        h += '<span class="' + clsW + '" style="left:' + leftW + '%;width:' + Math.max(widthW, 1.2) +
+          '%;background:' + P6_PROJECT_COLORS[0] + '" title="' + p6FmtHours(weekHrs) + ' h"></span>';
+      });
+
+      if (p.overallocHrs > 0.05) {
+        h += '<span class="p6-gantt-bar p6-gantt-bar--overstripe" style="right:4%;width:6%" title="Overallocated ' +
+          p6FmtHours(p.overallocHrs) + ' h"></span>';
+      }
+      if (p.timesheetStatus === 'Missing') {
+        h += '<span class="p6-gantt-warn" title="Missing timesheet"></span>';
+      }
+      return h;
+    }
+
+    function p6GanttPersonRow(m, p, cells, todayPct) {
+      var h = '<div class="p6-gantt-row p6-gantt-row--person' +
+        (p.overallocHrs > 0 ? ' is-over' : '') + '">';
+      h += '<div class="p6-gantt-fixed p6-gantt-fixed--person">';
+      h += '<span></span>';
+      h += '<span class="p6-gantt-name" title="' + p6Esc(p.name) + '">' + p6Esc(p.name) + '</span>';
+      h += '<span class="num">' + (p.available != null ? p6FmtHours(p.available) : '—') + '</span>';
+      h += '<span class="num">' + (p.scheduled != null ? p6FmtHours(p.scheduled) :
+        '<span class="p6-pending-inline">Pending</span>') + '</span>';
+      h += '<span class="num">' + (p.forecastUtil != null ? p6FmtPct(p.forecastUtil) : '—') + '</span>';
+      h += '</div>';
+      h += p6GanttTrackMarkup(cells, todayPct, p, null, m);
+      h += '</div>';
       return h;
     }
 
@@ -13672,8 +14043,8 @@ function p6RenderShell(model) {
         return m.projects[b].assignedHours - m.projects[a].assignedHours;
       });
       var h = '<div class="p6-project-view">';
-      h += '<p class="p6-section-hint">Required trade/hours and milestone risk: <span class="p6-pending-inline">Pending</span> (no forward demand sheet). Assigned hours from Buildpass_Labour for Week ' +
-        m.selectedWeek + ' only.</p>';
+      h += '<p class="p6-section-hint">Required hours and unfilled demand: <span class="p6-pending-inline">Pending</span> (no forward demand sheet). Assigned hours from Buildpass_Labour for Week ' +
+        m.selectedWeek + '. Departments required shown from actual labour tags.</p>';
       if (!keys.length) {
         h += '<p class="no-data-msg">No project labour rows for Week ' + m.selectedWeek + '.</p>';
         h += '</div>';
@@ -13681,21 +14052,23 @@ function p6RenderShell(model) {
       }
       h += '<div class="table-wrap"><table class="data-table p6-project-table"><thead><tr>';
       h += '<th>Project</th><th>Client / Site</th><th class="text-right">Required</th>';
-      h += '<th class="text-right">Assigned</th><th class="text-right">Gap</th>';
-      h += '<th>People</th><th>Milestone risk</th></tr></thead><tbody>';
+      h += '<th class="text-right">Assigned</th><th class="text-right">Unfilled</th>';
+      h += '<th>Depts required</th><th>People</th></tr></thead><tbody>';
       keys.forEach(function(k) {
         var p = m.projects[k];
         var names = Object.keys(p.people).map(function(ek) {
           return p.people[ek].name + ' (' + p6Round1(p.people[ek].hours) + 'h)';
         }).join(', ');
+        var depts = Object.keys(p.depts || {}).join(', ') || '—';
         h += '<tr>';
-        h += '<td>' + p6Esc(p.job || k) + '</td>';
-        h += '<td>' + p6Esc(p.client || '-') + '</td>';
+        h += '<td><span class="p6-proj-swatch" style="background:' + P6_PROJECT_COLORS[p.colorIdx || 0] +
+          '"></span> ' + p6Esc(p.job || k) + '</td>';
+        h += '<td>' + p6Esc(p.client || '—') + '</td>';
         h += '<td class="text-right"><span class="p6-pending-inline">Pending</span></td>';
         h += '<td class="text-right">' + p6FmtHours(p.assignedHours) + '</td>';
         h += '<td class="text-right"><span class="p6-pending-inline">Pending</span></td>';
+        h += '<td>' + p6Esc(depts) + '</td>';
         h += '<td>' + p6Esc(names) + '</td>';
-        h += '<td><span class="p6-pending-inline">Pending</span></td>';
         h += '</tr>';
       });
       h += '</tbody></table></div></div>';
@@ -13718,7 +14091,7 @@ function p6RenderShell(model) {
           var incomplete = !c || c.incomplete || c.util == null;
           var cls = p6UtilColorClass(c && c.util, incomplete);
           var sel = c && c.week === m.selectedWeek ? ' is-selected' : '';
-          var label = incomplete ? '-' : Math.round(c.util) + '%';
+          var label = incomplete ? '—' : Math.round(c.util) + '%';
           var title = incomplete
             ? 'Data gap'
             : ('W' + c.week + ': ' + Math.round(c.util) + '% (' + c.logged + 'h / ' + c.available + 'h available)');
@@ -13730,26 +14103,37 @@ function p6RenderShell(model) {
       return h;
     }
 
-    function p6RenderActions(m) {
-      if (!m.actions.length) {
-        return '<p class="p6-actions-empty">No planning exceptions for Week ' + m.selectedWeek +
+    function p6RenderActions(m, actualsOnly) {
+      var list = m.actions || [];
+      if (actualsOnly) {
+        list = list.filter(function(a) {
+          return a.kind === 'missing' || a.kind === 'unusual' || a.kind === 'overtime';
+        });
+      }
+      if (!list.length) {
+        return '<p class="p6-actions-empty">No exceptions for Week ' + m.selectedWeek +
           ' after dedupe. Unfilled project demand stays Pending until a demand source is wired.</p>';
       }
-      var h = '<ul class="p6-actions">';
-      m.actions.forEach(function(a) {
-        h += '<li class="p6-action p6-action--' + p6Esc(a.severity) + '">';
-        h += '<div class="p6-action-title">' + p6Esc(a.title) + '</div>';
-        h += '<div class="p6-action-detail">' + p6Esc(a.detail) + '</div>';
-        h += '</li>';
+      var h = '<div class="table-wrap"><table class="data-table p6-actions-table"><thead><tr>';
+      h += '<th>Priority</th><th>Capacity Issue</th><th>Impact</th><th>Action</th></tr></thead><tbody>';
+      list.forEach(function(a) {
+        h += '<tr class="p6-action-row p6-action-row--' + p6Esc(a.severity) + '">';
+        h += '<td><span class="p6-chip p6-chip--' +
+          (a.severity === 'risk' ? 'risk' : a.severity === 'watch' ? 'watch' :
+            a.severity === 'action' ? 'action' : 'gap') + '">' + p6Esc(a.priority) + '</span></td>';
+        h += '<td>' + p6Esc(a.issue) + '</td>';
+        h += '<td>' + p6Esc(a.impact) + '</td>';
+        h += '<td>' + p6Esc(a.action) + '</td>';
+        h += '</tr>';
       });
-      h += '</ul>';
+      h += '</tbody></table></div>';
       return h;
     }
 
     function p6BuildCapacityDetail(m) {
       if (!m.people.length) return '<p class="no-data-msg">No people for this week.</p>';
       var t = '<div class="table-wrap"><table class="data-table p6-capacity-table"><thead><tr>';
-      t += '<th>Employee</th><th>Dept</th><th class="text-right">Available</th>';
+      t += '<th>Employee</th><th>Dept</th><th>Crew</th><th class="text-right">Available</th>';
       t += '<th class="text-right">Scheduled</th><th class="text-right">Logged</th>';
       t += '<th class="text-right">Productive</th><th class="text-right">Overtime</th>';
       t += '<th class="text-right">Util %</th><th>Planning</th><th>Timesheet</th>';
@@ -13758,13 +14142,15 @@ function p6RenderShell(model) {
         t += '<tr>';
         t += '<td>' + p6Esc(p.name) + '</td>';
         t += '<td>' + p6Esc(p.dept) + '</td>';
-        t += '<td class="text-right">' + (p.available != null ? p6FmtHours(p.available) : '-') + '</td>';
+        t += '<td>' + p6Esc(p.crew) + '</td>';
+        t += '<td class="text-right">' + (p.available != null ? p6FmtHours(p.available) : '—') + '</td>';
         t += '<td class="text-right">' + (p.scheduled != null ? p6FmtHours(p.scheduled) :
           '<span class="p6-pending">Pending</span>') + '</td>';
-        t += '<td class="text-right">' + (p.logged != null ? p6FmtHours(p.logged) : '-') + '</td>';
-        t += '<td class="text-right">' + (p.productive != null ? p6FmtHours(p.productive) : '-') + '</td>';
+        t += '<td class="text-right">' + (p.logged != null ? p6FmtHours(p.logged) : '—') + '</td>';
+        t += '<td class="text-right">' + (p.productive != null ? p6FmtHours(p.productive) : '—') + '</td>';
         t += '<td class="text-right">' + p6FmtHours(p.overtimeHrs) + '</td>';
-        t += '<td class="text-right">' + (p.forecastUtil != null ? p6FmtPct(p.forecastUtil) : '-') + '</td>';
+        var utilShow = m.weekInProgress && p.actualUtil != null ? p.actualUtil : p.forecastUtil;
+        t += '<td class="text-right">' + (utilShow != null ? p6FmtPct(utilShow) : '—') + '</td>';
         t += '<td>' + p6StatusChip(p.planningStatus, 'planning') + '</td>';
         t += '<td>' + p6StatusChip(p.timesheetStatus, 'timesheet') + '</td>';
         t += '</tr>';
@@ -13792,7 +14178,7 @@ function p6RenderShell(model) {
         } else if (p.logged == null) {
           t += '<td class="text-right"><span class="p6-pending">Pending Timesheet</span></td>';
         } else {
-          t += '<td class="text-right">-</td>';
+          t += '<td class="text-right">—</td>';
         }
         t += '<td class="p6-muted">Not summed per shift row</td>';
         t += '</tr>';
@@ -13814,16 +14200,16 @@ function p6RenderShell(model) {
       rows.forEach(function(r) {
         var hrs = p6LabourHours(r);
         t += '<tr>';
-        t += '<td>' + p6Esc(col(r, 'Employee Name', 'employee name') || '-') + '</td>';
-        t += '<td>' + p6Esc(col(r, 'Xero Project J#') || '-') + '</td>';
-        t += '<td>' + p6Esc(col(r, 'Site / Area') || '-') + '</td>';
-        t += '<td>' + p6Esc(col(r, 'Shift Date', 'shift date') || '-') + '</td>';
-        t += '<td class="text-right">' + (hrs === null ? '-' : hrs) + '</td>';
+        t += '<td>' + p6Esc(col(r, 'Employee Name', 'employee name') || '—') + '</td>';
+        t += '<td>' + p6Esc(col(r, 'Xero Project J#') || '—') + '</td>';
+        t += '<td>' + p6Esc(col(r, 'Site / Area') || '—') + '</td>';
+        t += '<td>' + p6Esc(col(r, 'Shift Date', 'shift date') || '—') + '</td>';
+        t += '<td class="text-right">' + (hrs === null ? '—' : hrs) + '</td>';
         t += '</tr>';
       });
       t += '</tbody></table></div>';
       t += '<p class="p6-section-hint">Raw rows ' + m.labRowsRawCount +
-        ' → deduped ' + (m.labDeduped || []).length + ' (all weeks in selection).</p>';
+        ' → deduped ' + (m.labDeduped || []).length + ' (all weeks loaded).</p>';
       return t;
     }
 
@@ -13837,10 +14223,12 @@ function p6RenderShell(model) {
 
       setBBPageData('P6', 'P6: Capacity & Labour', {
         selectedWeek: m.selectedWeek,
+        workspaceMode: window._p6WorkspaceMode || 'planning',
         scheduleLive: m.scheduleLive,
         scheduleNote: m.scheduleNote,
         diariesLive: false,
         budgetsLive: false,
+        lastUpdated: m.lastUpdated,
         kpis: m.kpis,
         capacitySummary: {
           latestWeek: m.selectedWeek,
@@ -13888,6 +14276,7 @@ function p6RenderShell(model) {
           return {
             name: p.name,
             dept: p.dept,
+            crew: p.crew,
             available: p.available,
             scheduled: p.scheduled,
             logged: p.logged,
@@ -13913,36 +14302,43 @@ function p6RenderShell(model) {
       p6Remount();
     }
 
+    function p6OnFilterChange(key, val) {
+      window._p6Filters = window._p6Filters || { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
+      window._p6Filters[key] = val || 'ALL';
+      p6Remount();
+    }
+
     function p6SetViewMode(mode) {
       window._p6ViewMode = mode === 'project' ? 'project' : 'people';
       p6Remount();
     }
 
-    function p6SetTimelineMode(mode) {
-      window._p6TimelineMode = mode === 'weekly' ? 'weekly' : 'daily';
+    function p6SetWorkspaceMode(mode) {
+      window._p6WorkspaceMode = mode === 'actuals' ? 'actuals' : 'planning';
       p6Remount();
     }
 
-    function p6ToggleCrew(dept) {
+    function p6ToggleCrew(key) {
       window._p6Expanded = window._p6Expanded || {};
-      window._p6Expanded[dept] = !window._p6Expanded[dept];
+      window._p6Expanded[key] = !window._p6Expanded[key];
       p6Remount();
     }
 
     function p6MountCharts() {
       var m = window._p6Model;
       if (!m || !document.getElementById('p6-hours-chart')) return;
+      if ((window._p6WorkspaceMode || 'planning') === 'actuals') return;
 
       var labels = m.series.map(function(s) { return 'W' + s.week; });
       var avail = m.series.map(function(s) { return s.available; });
       var sched = m.series.map(function(s) { return s.scheduled; });
       var prod = m.series.map(function(s) { return s.productive; });
-      // Forecast demand pending → null series
       var forecast = m.series.map(function() { return null; });
+      var tentative = m.series.map(function() { return null; });
 
       var todayIdx = -1;
       m.series.forEach(function(s, i) {
-        if (s.isTodayWeek) todayIdx = i;
+        if (s.isTodayWeek || s.week === m.currentWeek) todayIdx = i;
       });
 
       var p6Colors = {
@@ -13961,7 +14357,7 @@ function p6RenderShell(model) {
           labels: labels,
           datasets: [
             {
-              label: 'Available',
+              label: 'Available Capacity',
               data: avail,
               borderColor: p6Colors.muted,
               backgroundColor: 'transparent',
@@ -13970,7 +14366,7 @@ function p6RenderShell(model) {
               pointRadius: 2
             },
             {
-              label: 'Scheduled',
+              label: 'Scheduled Hours',
               data: sched,
               borderColor: p6Colors.action,
               backgroundColor: 'transparent',
@@ -13980,21 +14376,28 @@ function p6RenderShell(model) {
               pointRadius: 2
             },
             {
-              label: 'Actual Productive',
+              label: 'Actual Productive Hours',
               data: prod,
               borderColor: p6Colors.healthy,
               backgroundColor: 'rgba(75,122,90,0.12)',
               borderWidth: 2,
               fill: false,
               tension: 0,
-              stepped: false,
               pointRadius: 3
             },
             {
-              label: 'Forecast Demand (Pending)',
+              label: 'Forecast Project Demand (Pending)',
               data: forecast,
               borderColor: p6Colors.gap,
               borderDash: [4, 4],
+              borderWidth: 1,
+              pointRadius: 0
+            },
+            {
+              label: 'Tentative Pipeline Demand (Pending)',
+              data: tentative,
+              borderColor: p6Colors.watch,
+              borderDash: [2, 3],
               borderWidth: 1,
               pointRadius: 0
             }
