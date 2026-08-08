@@ -6501,7 +6501,7 @@
               '</div></div>';
           });
           ch += '</div>';
-          ch += '<p class="p2-section-hint">Full dual-axis campaign analysis lives on P10 Marketing.</p>';
+          ch += '<p class="p2-section-hint">Full profitable-demand campaign analysis lives on P10 Marketing.</p>';
           campEl.innerHTML = ch;
         }
       }
@@ -10556,16 +10556,7 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P10 — MARKETING PERFORMANCE
-    // Source: Marketing_Paid tab (Make.com Scenario 13 ✅)
-    // KPIs:   Total Spend, Total Leads, CPL, ROAS (+ sparklines)
-    // Charts: Ad Spend by Campaign (ranked bars), Leads vs Spend trend,
-    //         Spend by Department (ranked bars)
-    //         Platform breakdown kept in code; badge until 2+ platforms
-    // Tables: Funnel Health (CTR vs Conv Rate + concern flags),
-    //         Campaign Performance (ROAS-first sort, No Leads Matched Yet)
-    // ═══════════════════════════════════════════════════════════════
-    // P10 — MARKETING (profitable demand dashboard)
+    // P10 - MARKETING (profitable demand dashboard)
     // Primary: Marketing_Paid. Soft/optional: Weekly Summary(Marketing),
     // Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity.
     // Never invent metrics. Pending / Not available when unconfirmed.
@@ -11036,7 +11027,7 @@
       var cpql = (!qlPending && qualifiedLeads > 0) ? totalSpend / qualifiedLeads : null;
       var confWins = p10Confidence(totalWins);
 
-      // Marketing ROI = (Attributed GP − Spend) / Spend. Contract value is NOT ROI.
+      // Marketing ROI = (Attributed GP - Spend) / Spend. Contract value is NOT ROI.
       var mktRoi = null;
       var mktRoiPending = true;
       if (gpKnown && totalSpend > 0) {
@@ -11204,7 +11195,7 @@
       if (!mktRoiPending && mktRoi != null) {
         setKPI('kpi-mkt-roi', 'kpi-mkt-roi-sub',
           p10Pct(mktRoi * 100, 0),
-          '(Attributed GP ' + p10Money(gpSum, 0) + ' − Spend) ÷ Spend · ' + confWins.label);
+          '(Attributed GP ' + p10Money(gpSum, 0) + ' - Spend) / Spend | ' + confWins.label);
       } else {
         setKPI('kpi-mkt-roi', 'kpi-mkt-roi-sub', 'Pending',
           'Needs attributed gross profit after costs. Contract value is not Marketing ROI.');
@@ -12693,7 +12684,7 @@
         varMain = String(varCount);
         var bits = [];
         if (varHasRecorded) bits.push(formatCurrency(varRecordedTotal) + ' recorded value');
-        if (varZeroUnconfirmed) bits.push(varZeroUnconfirmed + ' value$ unconfirmed');
+        if (varZeroUnconfirmed) bits.push(varZeroUnconfirmed + ' unconfirmed value' + (varZeroUnconfirmed === 1 ? '' : 's'));
         if (!varHasRecorded && !varZeroUnconfirmed) bits.push('value Not recorded');
         if (varZeroUnconfirmed) bits.push('Commercial value requires confirmation');
         varSub = bits.join(' · ');
