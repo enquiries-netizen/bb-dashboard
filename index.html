@@ -496,113 +496,138 @@
             <h1 class="page-title">Job Performance</h1>
           </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Active Jobs</div>
-              <div class="kpi-value" id="kpi-p4-active">—</div>
-              <div class="kpi-sub" id="kpi-p4-active-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">On Track</div>
-              <div class="kpi-value" id="kpi-p4-ontrack">—</div>
-              <div class="kpi-sub" id="kpi-p4-ontrack-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Overdue Milestones</div>
-              <div class="kpi-value" id="kpi-p4-overdue">—</div>
-              <div class="kpi-sub" id="kpi-p4-overdue-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Labour Cost</div>
-              <div class="kpi-value" id="kpi-p4-labour">—</div>
-              <div class="kpi-sub" id="kpi-p4-labour-sub">Loading...</div>
-            </div>
-          </div>
-
-          <div class="chart-row">
-            <div class="chart-card card p4-chart-card">
-              <div class="chart-title">Job Progress</div>
-              <p class="p4-chart-note">Sorted highest % complete first. Jobs at 0% grouped under Not Commenced (no Gantt — actual dates still incomplete in Buildpass).</p>
-              <div class="p4-chart-wrap">
-                <canvas id="chart-p4-completion"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <div class="section-card">
-            <div class="section-title">Milestone Schedule
-              <span class="p4-section-hint">Overdue and high-risk first</span>
-            </div>
-            <!-- Milestone Schedule split-view KPIs (live; updated by renderP4MilestoneSchedule) -->
-            <div class="p4-ms-kpi-row" id="p4-ms-kpi-row" hidden>
-              <div class="p4-ms-kpi-card">
-                <div class="p4-ms-kpi-label">Overdue Milestones</div>
-                <div class="p4-ms-kpi-main">
-                  <span class="p4-ms-kpi-value" id="p4-ms-kpi-overdue">0 / 0</span>
-                  <span class="p4-ms-kpi-badge p4-ms-kpi-badge--warn" id="p4-ms-kpi-overdue-badge" hidden>Overdue</span>
-                </div>
-              </div>
-              <div class="p4-ms-kpi-card">
-                <div class="p4-ms-kpi-label">Max Slippage</div>
-                <div class="p4-ms-kpi-main">
-                  <span class="p4-ms-kpi-value p4-ms-kpi-value--accent" id="p4-ms-kpi-slip">0 Days</span>
-                </div>
-              </div>
-              <div class="p4-ms-kpi-card">
-                <div class="p4-ms-kpi-label">Resource Bottleneck</div>
-                <div class="p4-ms-kpi-main">
-                  <span class="p4-ms-kpi-value" id="p4-ms-kpi-hands">0</span>
-                  <span class="p4-ms-kpi-hands-label" id="p4-ms-kpi-hands-label">Needs More Hands</span>
-                </div>
-              </div>
-            </div>
-            <div id="p4-schedule-table">Loading schedule data...</div>
-          </div>
-
-          <div class="section-card p4-labour-section">
-            <div class="section-title-row">
-              <div class="section-title">Job Costing</div>
-              <div class="filter-group p4-labour-dept-filter">
+          <!-- Section 1: page filters (Brand/Month/Year/Refresh remain global in header) -->
+          <div class="p4-controls" id="p4-controls">
+            <p class="p4-filter-cue" id="p4-filter-cue">Brand · Month · Year filters apply above</p>
+            <div class="p4-controls-row">
+              <div class="filter-group">
                 <span class="filter-label">Department</span>
-                <select class="filter-select page-filter-select" id="p4-labour-dept-filter" aria-label="Filter labour by department">
+                <select class="filter-select page-filter-select" id="p4-dept-filter" aria-label="Filter by department">
                   <option value="ALL">All Departments</option>
                 </select>
               </div>
-            </div>
-            <p class="p4-labour-filter-cue">Brand · Month · Year filters apply above. Department filters this section only.</p>
-
-            <!-- Job Costing KPIs: Total Labour Cost, Total Revenue, Avg Margin (live from table rows) -->
-            <div class="p4-jco-kpis" aria-label="Job costing summary">
-              <div class="p4-jco-kpi-card">
-                <div class="p4-jco-kpi-label">Total Labour Cost</div>
-                <div class="p4-jco-kpi-value" id="kpi-p4-labour-cost">-</div>
-                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-cost-sub">Loading...</div>
-              </div>
-              <div class="p4-jco-kpi-card">
-                <div class="p4-jco-kpi-label">Total Revenue</div>
-                <div class="p4-jco-kpi-value" id="kpi-p4-labour-revenue">-</div>
-                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-revenue-sub">Loading...</div>
-              </div>
-              <div class="p4-jco-kpi-card">
-                <div class="p4-jco-kpi-label">Avg Margin</div>
-                <div class="p4-jco-kpi-value" id="kpi-p4-labour-margin">-</div>
-                <div class="p4-jco-kpi-sub" id="kpi-p4-labour-margin-sub">Loading...</div>
+              <div class="filter-group">
+                <span class="filter-label">Status</span>
+                <select class="filter-select page-filter-select" id="p4-status-filter" aria-label="Filter by health status">
+                  <option value="ALL">All statuses</option>
+                  <option value="on-track">On track</option>
+                  <option value="watch">Watch</option>
+                  <option value="at-risk">At risk</option>
+                </select>
               </div>
             </div>
+          </div>
 
-            <div class="chart-card card p4-labour-chart-card">
-              <div class="chart-title">Top 5 Most Expensive Jobs</div>
-              <p class="p4-labour-outlier-note" id="p4-labour-outlier-note" hidden></p>
-              <div class="p4-labour-chart-wrap">
-                <canvas id="chart-p4-labour-top5"></canvas>
-              </div>
+          <!-- Section 2: decision KPIs -->
+          <div class="kpi-grid p4-kpi-grid" aria-label="Job performance KPIs">
+            <div class="kpi-card card p4-kpi-card">
+              <div class="kpi-label">Active Projects</div>
+              <div class="kpi-value" id="kpi-p4-active">-</div>
+              <div class="kpi-sub" id="kpi-p4-active-sub">Loading...</div>
             </div>
+            <div class="kpi-card card p4-kpi-card">
+              <div class="kpi-label">Contract Value</div>
+              <div class="kpi-value" id="kpi-p4-contract">-</div>
+              <div class="kpi-sub" id="kpi-p4-contract-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card p4-kpi-card">
+              <div class="kpi-label">Forecast Gross Margin</div>
+              <div class="kpi-value" id="kpi-p4-fgm">-</div>
+              <div class="kpi-sub" id="kpi-p4-fgm-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card p4-kpi-card">
+              <div class="kpi-label">Labour Variance</div>
+              <div class="kpi-value" id="kpi-p4-labvar">-</div>
+              <div class="kpi-sub" id="kpi-p4-labvar-sub">Loading...</div>
+            </div>
+            <div class="kpi-card card p4-kpi-card p4-kpi-card--risk">
+              <div class="kpi-label">Projects at Risk</div>
+              <div class="kpi-value" id="kpi-p4-atrisk">-</div>
+              <div class="kpi-sub" id="kpi-p4-atrisk-sub">Loading...</div>
+            </div>
+          </div>
 
-            <div class="p4-jco-table-card">
+          <!-- Section 3: project-level health Gantt -->
+          <div class="section-card p4-health-section">
+            <div class="section-title">Project Health
+              <span class="p4-section-hint">One row per project · click a row for detail</span>
+            </div>
+            <div id="p4-health-gantt">Loading project health...</div>
+          </div>
+
+          <!-- Section 4: budget consumption scatter -->
+          <div class="section-card p4-scatter-section">
+            <div class="section-title">Budget consumption vs completion</div>
+            <p class="p4-chart-note">X = milestone progress · Y = known actuals as % of budget (partial until Total Actual from Xero_Bills). Bubble size = Total Budget. Colour by health status.</p>
+            <div class="p4-scatter-wrap">
+              <canvas id="chart-p4-scatter"></canvas>
+            </div>
+            <p class="no-data-msg" id="p4-scatter-empty" hidden>Not enough budget/progress data to plot for the current filters.</p>
+          </div>
+
+          <!-- Section 5: exception table + expandable full Job Costing -->
+          <div class="section-card p4-exception-section">
+            <div class="section-title-row">
+              <div class="section-title">Exceptions
+                <span class="p4-section-hint" id="p4-exception-hint">Top exceptions · At risk then Watch</span>
+              </div>
+              <button type="button" class="p4-view-all-btn" id="p4-view-all-btn">View all projects</button>
+            </div>
+            <div id="p4-exception-table">Loading exceptions...</div>
+            <div class="p4-full-costing" id="p4-full-costing" hidden>
               <div class="p4-jco-table-title">Job Costing Overview</div>
+              <p class="p4-chart-note">Full drill-down with exact figures (Hours, Brand, Department included).</p>
               <div id="p4-labour-table">Loading labour data...</div>
             </div>
           </div>
+
+          <!-- Milestone Schedule: collapsible (logic preserved; detail also in project drawer) -->
+          <div class="section-card p4-ms-section">
+            <button type="button" class="p4-collapse-toggle" id="p4-ms-collapse-btn" aria-expanded="false">
+              <span class="p4-collapse-label">Milestone Schedule</span>
+              <span class="p4-section-hint">Overdue and high-risk first · expand for Gantt</span>
+              <span class="p4-collapse-chevron" aria-hidden="true">▼</span>
+            </button>
+            <div class="p4-collapse-body" id="p4-ms-collapse-body" hidden>
+              <div class="p4-ms-kpi-row" id="p4-ms-kpi-row" hidden>
+                <div class="p4-ms-kpi-card">
+                  <div class="p4-ms-kpi-label">Overdue Milestones</div>
+                  <div class="p4-ms-kpi-main">
+                    <span class="p4-ms-kpi-value" id="p4-ms-kpi-overdue">0 / 0</span>
+                    <span class="p4-ms-kpi-badge p4-ms-kpi-badge--warn" id="p4-ms-kpi-overdue-badge" hidden>Overdue</span>
+                  </div>
+                </div>
+                <div class="p4-ms-kpi-card">
+                  <div class="p4-ms-kpi-label">Max Slippage</div>
+                  <div class="p4-ms-kpi-main">
+                    <span class="p4-ms-kpi-value p4-ms-kpi-value--accent" id="p4-ms-kpi-slip">0 Days</span>
+                  </div>
+                </div>
+                <div class="p4-ms-kpi-card">
+                  <div class="p4-ms-kpi-label">Resource Bottleneck</div>
+                  <div class="p4-ms-kpi-main">
+                    <span class="p4-ms-kpi-value" id="p4-ms-kpi-hands">0</span>
+                    <span class="p4-ms-kpi-hands-label" id="p4-ms-kpi-hands-label">Needs More Hands</span>
+                  </div>
+                </div>
+              </div>
+              <div id="p4-schedule-table">Loading schedule data...</div>
+            </div>
+          </div>
+
+          <!-- Project detail slide-out drawer -->
+          <div class="p4-ms-drawer-backdrop" id="p4-proj-drawer-backdrop" hidden></div>
+          <aside class="p4-ms-drawer p4-proj-drawer" id="p4-proj-drawer" hidden aria-label="Project details">
+            <div class="p4-ms-drawer-head">
+              <div>
+                <div class="p4-ms-drawer-kicker">Project detail</div>
+                <h3 class="p4-ms-drawer-title" id="p4-proj-drawer-title">-</h3>
+                <p class="p4-ms-drawer-sub" id="p4-proj-drawer-sub"></p>
+              </div>
+              <button type="button" class="p4-ms-drawer-close" id="p4-proj-drawer-close" aria-label="Close">x</button>
+            </div>
+            <div id="p4-proj-drawer-body"></div>
+          </aside>
         </section>
 
         <!-- ─── P5: Profitability ─────────────────────────── -->
@@ -1038,7 +1063,7 @@
       P1: 'Executive Snapshot. Layout: (1) Group 1 primary KPI row: Revenue Target (MTD), Gross Margin Target, Jobs Won Target, Lead Target. Each has both an actual value and a target so progress percentage is real. Revenue Target uses a top-border marker as the single most emphasized card. (2) Group 2 quieter row labeled "Not yet tracked": Quotes Target and Active Jobs Target, missing a target and/or actual so cannot show meaningful progress yet. (3) Below both groups: Monthly Revenue Targets chart. Answer only from live page data (targets, financials, leads).',
       P2: 'Sales & Pipeline (restructured). Layout: (1) KPI band as a 3x2 grid: Volume row = Leads, Quotes, Wins; Efficiency row = Win Rate, Total Spend, Cost Per Lead. Each KPI card has the current value, a trend sparkline, a directional delta vs last week, and a short source note (e.g. From GHL leads / Paid ad spend). (2) Pipeline Funnel: horizontal stepped bars Lead (solid black) → Quoted (dark grey / Soft Gray) → Won (light grey / Brilliant Silver); each bar shows count and conversion % from the prior stage (Quoted from Lead, Won from Quote). If Quote-to-Won exceeds 100%, that is a known out-of-cohort quirk (wins in this period did not all originate from quotes in the same period), footnoted on the page, explain it calmly if asked, do not treat it as a calculation error. (3) Lead Source Performance: channel breakdown of where leads originate (e.g. Facebook Ads, Website booking, Word of Mouth, Others), with counts. (4) Campaign Performance: full-width dual Y-axis chart, Ad Spend as black columns (left axis) vs Cost Per Lead as grey line with open circular nodes (right axis) per campaign. Use this structure when answering (e.g. why is Win Rate low, what is driving Cost Per Lead up, explain the funnel) from live page data only. For full week-over-week Sales comparison across periods, send the user to P8.',
       P3: 'Quoting & Estimating. Layout: (1) Quoting Funnel by Status is a horizontal status pipeline of connected boxes (Draft, Sent, Accepted, In Progress, Awaiting Approval, etc.), not a classic drop-off funnel shape, because these statuses are not a strict sequential reduction. (2) Quotes by Status Share is a 100% stacked horizontal bar (not a donut). (3) Quotes by Estimator is dual-axis: quote volume as bars, Avg Days to Decision as a solid black line, plus a target line for days to decision pulled live from the Targets tab. (4) Quoting Funnel Detail table: text columns left-aligned, numbers right-aligned. Also covers budget vs actual per quote and estimating accuracy where data is loaded. Answer only from live page data.',
-      P4: 'Job Performance. Layout: (1) Page KPIs: Active Jobs, On Track, Overdue Milestones, Total Labour Cost. (2) Job Progress chart: horizontal bars sorted highest % complete first; jobs at 0% are grouped under Not Commenced. (3) Milestone Schedule is one split-view section: left table columns Project, Milestone, Brand/Dept, Planned Start, Planned End, Slippage, Staffing, Status, % Done (Slippage and Status stay highly visible); right half is a wide monochrome Gantt with a Today reference line so slippage is a visual gap between bar end and Today, not only a number. Bars encode Completed / In Progress / Overdue / Not Started / Cancelled (monochrome). Status shown is normalised from sheet status plus % Done and Planned End rules (e.g. past Planned End when unfinished can surface as Overdue; Not Started with impossible 100% % Done is corrected), not treated as a raw unchecked import alone. Default Gantt/table focus is Overdue and In Progress with a Showing X of Y label and a Show all milestones toggle. Risk sort is overdue and high-risk first. Needs More Hands / Understaffed staffing badges use recent weekly labour trend vs overdue milestones. (4) Labour Cost by Job: three section KPI cards (Total Hours, Total Labour Cost, Average Cost Per Job), a Top 5 Most Expensive Jobs horizontal bar chart (outlier callout when the leader is much higher than #2), then the full detail table below with Project, Hours, Labour Cost, Revenue, Labour %, Brand, Department. That section has its own Department filter local to Labour Cost by Job only; Brand Month Year filters remain global. Known data gap: Revenue and Labour % are often blank because Xero_Projects revenue is not fully populated yet: say so plainly if asked, do not invent reasons or numbers. (5) No separate "Critical Milestones" page section: the filtered overdue/in-progress focus and Show all toggle live inside Milestone Schedule.',
+      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (monthly focus, not weekly). Layout: (1) KPI row of five cards: Revenue, Gross Margin, Net Profit, Net Margin, and Accounts Receivable (renamed from Outstanding Invoices). AR is a balance shown as At [date], not a period P&L flow, and has a top-border attention marker. (2) Brand-level charts: Revenue vs Target and Net Profit vs Target use solid actual bars with a target reference line and direct variance labels (not dual competing bar series). Immaterial variances under about $500 are omitted or shown as roughly zero. (3) Overhead Variance is a months-by-brand variance matrix table with small inline micro-bars, not a dual grey chart. (4) Reporting periods use explicit date ranges (e.g. 1 Apr - 31 Jul 2026), never ambiguous shorthand. Monthly only: say so if asked for weekly P5. Planned later, not built yet: a second KPI band for working capital/cash style metrics and a risk/exceptions intervention table; both wait on fuller Xero data. If asked for those or for cash/WC on P5, say they are not available yet on this page, do not invent figures. Answer only from live P5 page data.',
       P6: 'Capacity & Labour. Layout: (1) Utilisation shape encoding (monochrome, not traffic colours): solid black circle At Capacity/Overworked (over 100%), half-filled circle High (75-100%), open circle Healthy (50-75%), light grey circle or down marker Low (under 50%). Utilisation over roughly 120% is flagged as a data/timesheet check (likely a timesheet data error, not trusted real hours), not treated as normal overwork. (2) Team Utilisation is a bullet-style chart with a 100% capacity reference line; hours beyond 100% render as a distinct overtime segment. (3) Total Team Hours Trend uses a stepped line (weekly hours are discrete), not a smooth curve. (4) Labour Detail shows Pending Timesheet instead of a calculated cost when hours are blank/missing. (5) Department hiring callout (separate banner, not per person) only when a department average utilisation stays above 100% for 3 or more consecutive weeks; hidden entirely if none qualify. Also has a lightweight this-week hours pulse with a short trend, not full week-over-week comparison. For week-over-week Capacity hours, send the user to P8. Answer only from live page data (capacitySummary, labour rows, departmentHiringSignals).',
       P7: 'Client Satisfaction: reviews and ratings',
@@ -4530,17 +4555,24 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P4 — JOB PERFORMANCE
-    // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b)
-    // KPIs:    Active Jobs, On Track, Overdue Milestones, Total Labour Cost
-    // Chart:   Horizontal bar — % complete per job (sorted, 0% = Not Commenced)
-    // Tables:  Milestone Schedule (risk-first + Timeline column), Labour cost by job
-    // Signal:  Needs More Hands — slipping jobs with flat/declining weekly hours
+    // P4 - JOB PERFORMANCE (decision dashboard)
+    // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b),
+    //          Xero_Projects (Job # match). Live data only.
+    // Layout:  Filters · 5 KPIs · Project Health Gantt · scatter ·
+    //          exception table (+ View all Job Costing) · collapsible milestones
     // ═══════════════════════════════════════════════════════════════
-    var activeP4LabourDept = 'ALL';
-    var _p4LabourDeptBound = false;
+    var activeP4Dept = 'ALL';
+    var activeP4Status = 'ALL';
+    var _p4DeptBound = false;
+    var _p4StatusBound = false;
+    var _p4ViewAllBound = false;
+    var _p4MsCollapseBound = false;
     /** Milestone Schedule Gantt: false = Overdue + In Progress only */
     var p4ScheduleShowAll = false;
+    /** Exception table: false = top 5 exceptions only */
+    var p4ShowAllProjects = false;
+    /** Cached rollups for drawer clicks after re-render */
+    window._p4ProjectRollups = window._p4ProjectRollups || [];
 
     async function loadP4() {
       showLoading(true);
@@ -4562,29 +4594,25 @@
     }
 
     /**
-     * % Complete from the sheet — NEVER invent 100% for blanks.
+     * % Complete from the sheet - NEVER invent 100% for blanks.
      * parseNum('') returns 0; that is fine for averages but blank vs 0
      * must stay distinct for display / validation.
-     * Returns { raw, hasValue, value } where value is 0–100 or null.
+     * Returns { raw, hasValue, value } where value is 0-100 or null.
      */
     function p4ReadPctComplete(row) {
       var raw = rawColByNames(row, [
         '% Complete', '% Done', 'percent_complete', 'Percent Complete', 'Progress'
       ]);
       var s = String(raw == null ? '' : raw).trim();
-      if (!s || s === '—' || s === '-' || s.toLowerCase() === 'n/a' ||
+      if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' ||
           s.toLowerCase() === 'na' || s.toLowerCase() === 'null') {
         return { raw: raw, hasValue: false, value: null };
       }
       var n = parseFloat(String(s).replace(/%/g, '').replace(/,/g, '').trim());
       if (isNaN(n)) return { raw: raw, hasValue: false, value: null };
-      // Buildpass / Sheets sometimes store progress as 0–1 fraction (e.g. 1 = complete).
-      // Only treat as fraction when 0 < n <= 1 AND the cell has no % sign AND it is a
-      // pure numeric form (avoids misreading genuine 1% as 100%).
       var hadPctSign = String(s).indexOf('%') !== -1;
       if (!hadPctSign && n > 0 && n <= 1) {
-        // "1" or "1.0" / "0.5" from progress fields → percent scale
-        n = Math.round(n * 1000) / 10; // 1 → 100, 0.5 → 50
+        n = Math.round(n * 1000) / 10;
         if (n > 100) n = 100;
       }
       if (n < 0) n = 0;
@@ -4603,6 +4631,79 @@
       return s || '';
     }
 
+    /** Compact currency for decision view: $4.8m / $189k / $12. */
+    function p4FormatMoneyAbbrev(n) {
+      if (n === null || n === undefined || isNaN(n)) return '-';
+      var sign = n < 0 ? '-' : '';
+      var abs = Math.abs(n);
+      if (abs >= 1000000) {
+        return sign + '$' + (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+      }
+      if (abs >= 1000) {
+        var k = abs / 1000;
+        return sign + '$' + (k >= 100 ? String(Math.round(k)) : k.toFixed(1).replace(/\.0$/, '')) + 'k';
+      }
+      return sign + '$' + Math.round(abs).toLocaleString('en-AU');
+    }
+
+    function p4MoneyPresent(raw) {
+      if (raw === '' || raw === null || raw === undefined) return false;
+      var s = String(raw).trim();
+      if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'na') return false;
+      return true;
+    }
+
+    /**
+     * Project health status from live Milestone Schedule + staffing only.
+     * At risk (any):
+     *   - staffing === Needs More Hands
+     *   - max positive slippage >= 21 days
+     *   - overdue milestone count >= 2
+     *   - planned span known, time elapsed >= 75% AND avg progress < 40%
+     * Watch (if not At risk, any):
+     *   - staffing === Understaffed, Being Addressed
+     *   - max positive slippage >= 7 days
+     *   - overdue milestone count === 1
+     *   - planned span known, time elapsed >= 50% AND progress lag vs time > 20pts
+     * On track: active, neither of the above
+     * Completed / Cancelled: terminal (excluded from Active / risk KPIs)
+     */
+    function p4ClassifyProjectHealth(proj) {
+      if (proj.isCancelled) return 'cancelled';
+      if (proj.isCompleted) return 'completed';
+      var maxSlip = proj.maxSlipDays || 0;
+      var overdueN = proj.overdueCount || 0;
+      var hands = proj.handsSignal || '';
+      var progress = proj.progressAvg != null ? proj.progressAvg : null;
+      var timeFrac = proj.timeElapsedFrac;
+
+      if (hands === 'Needs More Hands' || maxSlip >= 21 || overdueN >= 2 ||
+          (timeFrac != null && timeFrac >= 0.75 && progress != null && progress < 40)) {
+        return 'at-risk';
+      }
+      if (hands === 'Understaffed, Being Addressed' || maxSlip >= 7 || overdueN === 1 ||
+          (timeFrac != null && timeFrac >= 0.5 && progress != null &&
+           (timeFrac * 100 - progress) > 20)) {
+        return 'watch';
+      }
+      return 'on-track';
+    }
+
+    function p4HealthLabel(key) {
+      if (key === 'at-risk') return 'At risk';
+      if (key === 'watch') return 'Watch';
+      if (key === 'on-track') return 'On track';
+      if (key === 'completed') return 'Completed';
+      if (key === 'cancelled') return 'Cancelled';
+      return key || '-';
+    }
+
+    function p4IsKeyMilestoneName(name) {
+      var s = String(name || '').toLowerCase();
+      if (!s) return false;
+      return /commenc|start on site|possession|handover|practical completion|pc\b|roof|lock[- ]?up|slab/.test(s);
+    }
+
     function renderP4(schedule, labour, xeroProjects) {
       window._p4ScheduleRows = schedule;
       window._p4LabourRows = labour;
@@ -4610,6 +4711,7 @@
 
       var today = new Date();
       today.setHours(0, 0, 0, 0);
+      var MS_DAY = 86400000;
 
       // P4 chart tokens: test palette when .p4-test-palette is on #page-p4 only
       var p4PaletteEl = document.getElementById('page-p4');
@@ -4617,10 +4719,10 @@
       var brandCharcoal = p4UseTestPalette ? '#111827' : '#262425';
       var brandSoftGray = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
       var brandSilver = p4UseTestPalette ? '#E5E7EB' : '#D2D4D5';
-      var brandWhite = p4UseTestPalette ? '#E5E7EB' : '#FFFFFF';
       var brandAccent = p4UseTestPalette ? '#EA580C' : brandCharcoal;
+      var brandAmber = '#F59E0B';
+      var brandMuted = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
 
-      // ── Filter by Brand / Month / Year ────────────────────────
       function applyP4Filters(rows) {
         return filterByMonths(
           filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
@@ -4629,8 +4731,10 @@
       }
       var schedRaw = applyP4Filters(schedule);
       var labourFiltered = applyP4Filters(labour);
+      // Xero_Projects is a snapshot - brand filter only (same as P5)
+      var xeroFiltered = filterByBrand(xeroProjects || [], activeBrand);
 
-      // Normalise each schedule row once (pct, status rules, date sanity)
+      // Normalise each schedule row once
       var schedFiltered = schedRaw.map(function(r) {
         var startRaw = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date', 'Planned Start');
         var endRaw = col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date', 'Planned End');
@@ -4638,17 +4742,7 @@
         var endD = p4ParseScheduleDate(endRaw);
         var dateFlag = null;
         if (startD && endD && startD.getTime() > endD.getTime()) {
-          // Reversed window: try MDY reinterpret if original strings look swapped
-          var swapTryStart = null;
-          var swapTryEnd = null;
-          var ss = String(startRaw || '').trim().split(/[\/\-\.]/);
-          var es = String(endRaw || '').trim().split(/[\/\-\.]/);
-          if (ss.length === 3 && es.length === 3) {
-            // If both look like D/M/Y, force AU already failed (start > end): flag only, do not invent
-            dateFlag = 'Start after End';
-          } else {
-            dateFlag = 'Start after End';
-          }
+          dateFlag = 'Start after End';
         }
 
         var pctInfo = p4ReadPctComplete(r);
@@ -4657,16 +4751,11 @@
         var statusLower = statusRaw.toLowerCase();
         var pct = pctInfo.hasValue ? pctInfo.value : null;
 
-        // Root-cause fix for Not Started + 100%: blank/missing never becomes 100.
-        // When status is explicitly Not Started and sheet % is missing → treat as 0.
-        // When status is Not Started but sheet says 100, the STATUS is preferred
-        // (do not relabel Completed from a likely bad 100%); clear the impossible % to 0.
         if (statusLower === 'not started' || statusLower === 'not-started') {
           if (pct === null) {
             pct = 0;
             pctInfo = { raw: pctInfo.raw, hasValue: false, value: 0, inferred: true };
           } else if (pct >= 100) {
-            // Impossible combo: bad % field, trust "Not Started" (not the reverse)
             pct = 0;
             pctInfo = {
               raw: pctInfo.raw,
@@ -4678,7 +4767,6 @@
           }
         }
 
-        // Only after % is trustworthy: if still explicit 100 → Completed
         if (pct !== null && pct >= 100 &&
             statusLower !== 'cancelled' && statusLower !== 'canceled') {
           if (!(statusLower === 'not started' || statusLower === 'not-started')) {
@@ -4688,7 +4776,6 @@
           }
         }
 
-        // Not Started (or similar unfinished) past planned end → Overdue; % must stay < 100
         var isPastEnd = endD && !isNaN(endD.getTime()) && endD < today;
         var unfinished = statusLower !== 'complete' && statusLower !== 'completed' &&
           statusLower !== 'cancelled' && statusLower !== 'canceled';
@@ -4739,10 +4826,6 @@
         return row.endD < today;
       }
 
-      function p4JobPrefix(val) {
-        return jobNumberPrefix(val);
-      }
-
       function p4LabourJobId(row) {
         return String(col(row,
           'Xero Project J#', 'Xero Project ID', 'xero_project_id',
@@ -4758,9 +4841,10 @@
         return findXeroProjectByJob(xeroProjects || [], jobRef);
       }
 
-      var projects = [];
+      // ── Needs More Hands (overdue projects) ─
+      var projectsFromSched = [];
       schedFiltered.forEach(function(r) {
-        if (r.project && projects.indexOf(r.project) === -1) projects.push(r.project);
+        if (r.project && projectsFromSched.indexOf(r.project) === -1) projectsFromSched.push(r.project);
       });
 
       var overdueItems = schedFiltered.filter(isOverdueNorm);
@@ -4768,11 +4852,7 @@
       overdueItems.forEach(function(r) {
         if (r.project && overdueProjects.indexOf(r.project) === -1) overdueProjects.push(r.project);
       });
-      var onTrackCount = projects.filter(function(p) {
-        return overdueProjects.indexOf(p) === -1;
-      }).length;
 
-      // ── Needs More Hands ─
       var labourWeeksMap = {};
       labourFiltered.forEach(function(r) {
         var w = parseNum(col(r, 'Week Number', 'week number', 'Week', 'week'));
@@ -4861,40 +4941,9 @@
         };
       });
 
-      var handsIconSvg =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
-        'stroke="' + brandCharcoal + '" stroke-width="1.75" stroke-linecap="round" ' +
-        'stroke-linejoin="round" aria-hidden="true">' +
-        '<circle cx="9" cy="7" r="2.5"/>' +
-        '<circle cx="16" cy="8" r="2"/>' +
-        '<path d="M3.5 19v-1.5a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4V19"/>' +
-        '<path d="M15 13.5a3 3 0 0 1 3-2.5h.5a3 3 0 0 1 3 3V19"/>' +
-        '</svg>';
-
-      function formatHandsBadge(label, opts) {
-        opts = opts || {};
-        var compact = !!opts.compact;
-        if (!label) return '';
-        if (label === 'Needs More Hands') {
-          // Milestone Schedule uses a short label so the badge isn't truncated mid-word
-          var needsText = compact ? 'Needs Hands' : 'Needs More Hands';
-          return '<span class="p4-badge p4-badge--critical" title="Needs More Hands">' +
-            (compact ? '' : handsIconSvg + ' ') + needsText + '</span>';
-        }
-        if (label === 'Understaffed, Being Addressed') {
-          // Short inline label everywhere; full wording on hover title
-          return '<span class="p4-badge p4-badge--neutral" title="Understaffed, Being Addressed">Understaffed</span>';
-        }
-        if (compact && label === 'Not enough data yet') {
-          return '<span class="p4-badge p4-badge--muted" title="Not enough data yet">No data yet</span>';
-        }
-        return '<span class="p4-badge p4-badge--muted" title="' + String(label).replace(/"/g, '&quot;') + '">' + label + '</span>';
-      }
-
       function formatStatusBadge(status, overdue) {
         var s = String(status || '').trim();
         var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
-        // Prefer explicit status labels so badge matches Timeline bar (not blanket late→OVERDUE)
         if (lower === 'complete' || lower === 'completed') {
           return '<span class="p4-badge p4-badge--completed">Completed</span>';
         }
@@ -4914,156 +4963,695 @@
         return '<span class="p4-badge p4-badge--muted">' + s + '</span>';
       }
 
+      function formatHealthBadge(healthKey) {
+        var label = p4HealthLabel(healthKey);
+        if (healthKey === 'at-risk') {
+          return '<span class="p4-health-pill p4-health-pill--risk"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        if (healthKey === 'watch') {
+          return '<span class="p4-health-pill p4-health-pill--watch"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        if (healthKey === 'on-track') {
+          return '<span class="p4-health-pill p4-health-pill--ok"><i class="p4-health-dot"></i>' + label + '</span>';
+        }
+        return '<span class="p4-health-pill p4-health-pill--muted"><i class="p4-health-dot"></i>' + label + '</span>';
+      }
+
+      // ── Aggregate labour by project ─
+      var labourByProject = {};
+      labourFiltered.forEach(function(r) {
+        var project = p4LabourJobId(r);
+        if (!project) return;
+        if (!labourByProject[project]) {
+          labourByProject[project] = {
+            project: project,
+            brand: col(r, 'Brand', 'brand') || '',
+            department: col(r, 'Department', 'department') || '',
+            hours: 0,
+            cost: 0
+          };
+        }
+        var lHrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
+        var lRate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
+        var lCost = (lHrs && lRate)
+          ? lHrs * lRate
+          : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
+        labourByProject[project].hours += lHrs;
+        labourByProject[project].cost += lCost;
+        var d = col(r, 'Department', 'department') || '';
+        if (d && !labourByProject[project].department) labourByProject[project].department = d;
+        var b = col(r, 'Brand', 'brand') || '';
+        if (b && !labourByProject[project].brand) labourByProject[project].brand = b;
+      });
+
+      // ── Build shared project rollup universe ─
+      var rollupMap = {};
+      function ensureRollup(name) {
+        var key = String(name || '').trim();
+        if (!key) return null;
+        if (!rollupMap[key]) {
+          rollupMap[key] = {
+            project: key,
+            clientName: '',
+            brand: '',
+            department: '',
+            milestones: [],
+            progressVals: [],
+            progressAvg: null,
+            plannedProgress: null,
+            maxSlipDays: 0,
+            overdueCount: 0,
+            minStart: null,
+            maxEnd: null,
+            endDate: null,
+            timeElapsedFrac: null,
+            handsSignal: '',
+            labourHours: 0,
+            labourCost: 0,
+            totalBudget: null,
+            totalBudgetRaw: '',
+            revenue: null,
+            revenueRaw: '',
+            actualLabour: null,
+            actualLabourRaw: '',
+            actualVariations: null,
+            actualVariationsRaw: '',
+            actualSoFar: null,
+            totalActualComplete: false,
+            forecastMargin: null,
+            forecastMarginPending: true,
+            forecastCost: null,
+            forecastCostPending: true,
+            labourVariancePending: true,
+            labourCostAsPctBudget: null,
+            budgetConsumedPct: null,
+            isCompleted: false,
+            isCancelled: false,
+            isActive: true,
+            health: 'on-track',
+            keyMilestones: []
+          };
+        }
+        return rollupMap[key];
+      }
+
+      schedFiltered.forEach(function(r) {
+        var p = ensureRollup(r.project);
+        if (!p) return;
+        p.milestones.push(r);
+        if (r.pct !== null && r.pct !== undefined) p.progressVals.push(r.pct);
+        if (r.brand && !p.brand) p.brand = r.brand;
+        if (r.department && !p.department) p.department = r.department;
+        if (isOverdueNorm(r)) p.overdueCount++;
+        var slip = null;
+        if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
+          var sd = parseInt(r.slippageRaw, 10);
+          if (!isNaN(sd)) slip = sd;
+        }
+        if (slip === null && isOverdueNorm(r) && r.endD) {
+          slip = Math.round((today - r.endD) / MS_DAY);
+        }
+        if (slip != null && slip > p.maxSlipDays) p.maxSlipDays = slip;
+        if (r.startD && (!p.minStart || r.startD < p.minStart)) p.minStart = r.startD;
+        if (r.endD && (!p.maxEnd || r.endD > p.maxEnd)) p.maxEnd = r.endD;
+        if (p4IsKeyMilestoneName(r.milestone) && r.endD) {
+          p.keyMilestones.push({ name: r.milestone, date: r.endD, pct: r.pct });
+        }
+      });
+
+      Object.keys(labourByProject).forEach(function(labKey) {
+        var lab = labourByProject[labKey];
+        // Prefer match to existing schedule project name
+        var matched = null;
+        Object.keys(rollupMap).forEach(function(rk) {
+          if (matched) return;
+          if (p4JobsMatch(rk, labKey)) matched = rollupMap[rk];
+        });
+        var p = matched || ensureRollup(lab.project);
+        if (!p) return;
+        p.labourHours += lab.hours || 0;
+        p.labourCost += lab.cost || 0;
+        if (lab.brand && !p.brand) p.brand = lab.brand;
+        if (lab.department && !p.department) p.department = lab.department;
+      });
+
+      // Attach Xero fields
+      (xeroFiltered || []).forEach(function(xRow) {
+        var keys = xeroProjectJobKeys(xRow);
+        if (!keys.length) return;
+        var matched = null;
+        Object.keys(rollupMap).forEach(function(rk) {
+          if (matched) return;
+          for (var i = 0; i < keys.length; i++) {
+            if (p4JobsMatch(rk, keys[i])) { matched = rollupMap[rk]; break; }
+          }
+        });
+        if (!matched) {
+          // Include active Xero jobs even without schedule/labour rows
+          var name = keys[0];
+          matched = ensureRollup(
+            col(xRow, 'Project Name', 'project_name', 'Project') || name
+          );
+        }
+        if (!matched) return;
+        var live = readXeroProjectLive(xRow);
+        if (live.clientName) matched.clientName = live.clientName;
+        if (live.brand && !matched.brand) matched.brand = live.brand;
+        if (live.department && !matched.department) matched.department = live.department;
+        if (p4MoneyPresent(live.totalBudgetRaw)) {
+          matched.totalBudgetRaw = live.totalBudgetRaw;
+          matched.totalBudget = parseNum(live.totalBudgetRaw);
+        }
+        if (p4MoneyPresent(live.revenueRaw)) {
+          matched.revenueRaw = live.revenueRaw;
+          matched.revenue = parseNum(live.revenueRaw);
+        }
+        if (p4MoneyPresent(live.actualLabourRaw)) {
+          matched.actualLabourRaw = live.actualLabourRaw;
+          matched.actualLabour = parseNum(live.actualLabourRaw);
+        }
+        if (p4MoneyPresent(live.actualVariationsRaw)) {
+          matched.actualVariationsRaw = live.actualVariationsRaw;
+          matched.actualVariations = parseNum(live.actualVariationsRaw);
+        }
+        var expected = parseFlexibleDate(live.expectedCompletionRaw);
+        if (expected && !matched.maxEnd) matched.maxEnd = expected;
+        var created = parseFlexibleDate(live.dateCreatedRaw);
+        if (created && !matched.minStart) matched.minStart = created;
+      });
+
+      // Finalise each rollup
+      var allRollups = Object.keys(rollupMap).map(function(k) { return rollupMap[k]; });
+      allRollups.forEach(function(p) {
+        if (p.progressVals.length) {
+          p.progressAvg = Math.round(
+            p.progressVals.reduce(function(s, n) { return s + n; }, 0) / p.progressVals.length
+          );
+        }
+        p.endDate = p.maxEnd;
+        p.handsSignal = handsByProject[p.project] || '';
+        // Staffing lookup may use job# mismatch - try lab match keys
+        if (!p.handsSignal) {
+          overdueProjects.forEach(function(op) {
+            if (!p.handsSignal && p4JobsMatch(op, p.project)) p.handsSignal = handsByProject[op] || '';
+          });
+        }
+
+        // Terminal states from milestones
+        if (p.milestones.length) {
+          var allCancelled = p.milestones.every(function(m) {
+            var s = String(m.status || '').toLowerCase();
+            return s === 'cancelled' || s === 'canceled';
+          });
+          var allDone = p.milestones.every(function(m) {
+            var s = String(m.status || '').toLowerCase();
+            return s === 'complete' || s === 'completed' || s === 'cancelled' || s === 'canceled';
+          });
+          var anyOpen = p.milestones.some(function(m) {
+            var s = String(m.status || '').toLowerCase();
+            return s !== 'complete' && s !== 'completed' && s !== 'cancelled' && s !== 'canceled';
+          });
+          p.isCancelled = allCancelled;
+          p.isCompleted = !p.isCancelled && allDone && !anyOpen;
+          if (!p.isCompleted && p.progressAvg != null && p.progressAvg >= 100 && !anyOpen) {
+            p.isCompleted = true;
+          }
+        }
+
+        // Time elapsed vs planned span
+        if (p.minStart && p.maxEnd && !isNaN(p.minStart.getTime()) && !isNaN(p.maxEnd.getTime())) {
+          var span = p.maxEnd - p.minStart;
+          if (span > 0) {
+            var elapsed = today - p.minStart;
+            p.timeElapsedFrac = Math.max(0, Math.min(1.5, elapsed / span));
+            p.plannedProgress = Math.round(Math.max(0, Math.min(100, (elapsed / span) * 100)));
+          }
+        }
+
+        // Partial actual so far = labour + variations when present (Total Actual still incomplete)
+        var soFar = 0;
+        var hasPartial = false;
+        if (p.actualLabour != null) { soFar += p.actualLabour; hasPartial = true; }
+        if (p.actualVariations != null) { soFar += p.actualVariations; hasPartial = true; }
+        // Prefer timesheet labour cost when Xero actual-labour blank but Buildpass labour exists
+        if (!hasPartial && p.labourCost > 0) {
+          soFar = p.labourCost;
+          hasPartial = true;
+        }
+        p.actualSoFar = hasPartial ? soFar : null;
+        // Total Actual (full) awaits Xero_Bills -> forecast margin/cost Pending
+        p.totalActualComplete = false;
+        p.forecastMarginPending = true;
+        p.forecastCostPending = true;
+        p.forecastMargin = null;
+        p.forecastCost = null;
+        p.labourVariancePending = true; // no budgeted labour field in live sheets
+
+        if (p.totalBudget != null && p.totalBudget > 0 && p.actualSoFar != null) {
+          p.budgetConsumedPct = (p.actualSoFar / p.totalBudget) * 100;
+        }
+        if (p.totalBudget != null && p.totalBudget > 0 && p.labourCost > 0) {
+          p.labourCostAsPctBudget = (p.labourCost / p.totalBudget) * 100;
+        }
+
+        p.isActive = !p.isCompleted && !p.isCancelled;
+        p.health = p4ClassifyProjectHealth(p);
+      });
+
+      // ── Department + Status filters ─
+      var deptSourceRows = [];
+      allRollups.forEach(function(p) {
+        if (p.department) deptSourceRows.push({ Department: p.department });
+      });
+      labourFiltered.forEach(function(r) { deptSourceRows.push(r); });
+      schedFiltered.forEach(function(r) { deptSourceRows.push(r); });
+      var deptList = uniqueDeptListFromRows([deptSourceRows]);
+
+      var deptSelect = document.getElementById('p4-dept-filter');
+      if (deptSelect) {
+        var prevDept = activeP4Dept;
+        deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
+        deptList.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          deptSelect.appendChild(opt);
+        });
+        var prevDeptOk = prevDept && prevDept !== 'ALL' && deptList.some(function(d) {
+          return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
+        });
+        if (prevDeptOk) {
+          var deptMatch = deptList.filter(function(d) {
+            return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
+          })[0];
+          activeP4Dept = deptMatch || prevDept;
+          deptSelect.value = activeP4Dept;
+        } else {
+          activeP4Dept = 'ALL';
+          deptSelect.value = 'ALL';
+        }
+        if (!_p4DeptBound) {
+          _p4DeptBound = true;
+          deptSelect.addEventListener('change', function() {
+            activeP4Dept = this.value || 'ALL';
+            if (window._p4ScheduleRows) {
+              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
+              if (typeof init3DTilt === 'function') init3DTilt();
+            } else {
+              loadP4();
+            }
+          });
+        }
+      }
+
+      var statusSelect = document.getElementById('p4-status-filter');
+      if (statusSelect) {
+        statusSelect.value = activeP4Status || 'ALL';
+        if (!_p4StatusBound) {
+          _p4StatusBound = true;
+          statusSelect.addEventListener('change', function() {
+            activeP4Status = this.value || 'ALL';
+            if (window._p4ScheduleRows) {
+              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
+              if (typeof init3DTilt === 'function') init3DTilt();
+            } else {
+              loadP4();
+            }
+          });
+        }
+      }
+
+      function matchesDept(p) {
+        if (!activeP4Dept || activeP4Dept === 'ALL') return true;
+        return normalizeDeptKey(p.department || '') === normalizeDeptKey(activeP4Dept);
+      }
+
+      function matchesStatus(p) {
+        if (!activeP4Status || activeP4Status === 'ALL') return true;
+        return p.health === activeP4Status;
+      }
+
+      var filteredRollups = allRollups.filter(function(p) {
+        return matchesDept(p) && matchesStatus(p);
+      });
+      // Default sort: at-risk, watch, on-track, then name
+      var healthRank = { 'at-risk': 0, 'watch': 1, 'on-track': 2, completed: 3, cancelled: 4 };
+      filteredRollups.sort(function(a, b) {
+        var ra = healthRank[a.health] != null ? healthRank[a.health] : 9;
+        var rb = healthRank[b.health] != null ? healthRank[b.health] : 9;
+        if (ra !== rb) return ra - rb;
+        return String(a.project).localeCompare(String(b.project));
+      });
+
+      window._p4ProjectRollups = filteredRollups;
+
       setBBPageData('P4', 'P4: Job Performance', {
+        projects: filteredRollups.slice(0, 200).map(function(p) {
+          return {
+            project: p.project,
+            client: p.clientName,
+            health: p.health,
+            progress: p.progressAvg,
+            maxSlipDays: p.maxSlipDays,
+            overdueCount: p.overdueCount,
+            totalBudget: p.totalBudget,
+            labourCost: p.labourCost,
+            handsSignal: p.handsSignal
+          };
+        }),
         schedules: schedFiltered.slice(0, 300).map(function(r) {
           return {
             project: r.project,
             milestone: r.milestone,
             status: r.status,
-            statusRaw: r.statusRaw,
             pct: r.pct,
-            pctInfo: r.pctInfo,
-            plannedStart: p4FmtDate(r.startD, r.startRaw),
-            plannedEnd: p4FmtDate(r.endD, r.endRaw),
-            dateFlag: r.dateFlag,
             overdue: isOverdueNorm(r)
           };
         }),
-        labour: labourFiltered.slice(0, 300),
         handsSignals: handsByProject,
-        handsDetail: handsDetail,
-        overdueProjects: overdueProjects,
-        overdueMilestoneCount: overdueItems.length,
-        recentLabourWeeks: recentLabourWeeks,
-        pctRule: 'Blank % Complete is never treated as 100%. Not Started + 100% corrects the % field down (does not force Completed).'
+        healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
+        pendingNote: 'Forecast Gross Margin and Total Actual await Xero_Bills. Labour Variance awaits budgeted labour field.'
       });
 
-      var totalLabour = labourFiltered.reduce(function(s, r) {
-        var hrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
-        var rate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
-        var cost = (hrs && rate) ? hrs * rate : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'cost', 'Amount', 'amount'));
-        return s + cost;
-      }, 0);
+      var activeList = filteredRollups.filter(function(p) { return p.isActive; });
+      var noData = filteredRollups.length === 0 && schedFiltered.length === 0 && labourFiltered.length === 0;
 
-      if (schedFiltered.length === 0 && labourFiltered.length === 0) {
-        ['kpi-p4-active','kpi-p4-ontrack','kpi-p4-overdue','kpi-p4-labour'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', 'Syncs every Friday 6pm via Buildpass Schedule task');
+      function destroyP4Charts() {
+        ['chart-p4-scatter', 'chart-p4-completion', 'chart-p4-labour-top5'].forEach(function(id) {
+          if (_charts[id]) {
+            _charts[id].destroy();
+            delete _charts[id];
+          }
         });
-        ['kpi-p4-labour-cost', 'kpi-p4-labour-revenue', 'kpi-p4-labour-margin'].forEach(function(id) {
-          setKPI(id, id + '-sub', '-', '');
-        });
+      }
+
+      if (noData) {
+        setKPI('kpi-p4-active', 'kpi-p4-active-sub', '-', 'Syncs every Friday 6pm via Buildpass Schedule task');
+        setKPI('kpi-p4-contract', 'kpi-p4-contract-sub', '-', '');
+        setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub', 'Pending', 'Awaiting Xero_Bills');
+        setKPI('kpi-p4-labvar', 'kpi-p4-labvar-sub', 'Pending', 'Budgeted labour source TBD');
+        setKPI('kpi-p4-atrisk', 'kpi-p4-atrisk-sub', '-', '');
+        document.getElementById('p4-health-gantt').innerHTML =
+          '<p class="no-data-msg">No project data yet for the current filters.</p>';
+        document.getElementById('p4-exception-table').innerHTML =
+          '<p class="no-data-msg">No exceptions to show.</p>';
+        document.getElementById('p4-labour-table').innerHTML =
+          '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
         document.getElementById('p4-schedule-table').innerHTML =
           '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
         var msKpiEarly = document.getElementById('p4-ms-kpi-row');
         if (msKpiEarly) msKpiEarly.hidden = true;
-        document.getElementById('p4-labour-table').innerHTML =
-          '<p class="no-data-msg">No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.</p>';
-        var olNote = document.getElementById('p4-labour-outlier-note');
-        if (olNote) { olNote.hidden = true; olNote.textContent = ''; }
-        if (_charts['chart-p4-completion']) {
-          _charts['chart-p4-completion'].destroy();
-          delete _charts['chart-p4-completion'];
-        }
-        if (_charts['chart-p4-labour-top5']) {
-          _charts['chart-p4-labour-top5'].destroy();
-          delete _charts['chart-p4-labour-top5'];
-        }
+        var scatEmpty = document.getElementById('p4-scatter-empty');
+        if (scatEmpty) scatEmpty.hidden = false;
+        destroyP4Charts();
         return;
       }
 
-      setKPI('kpi-p4-active',
-             'kpi-p4-active-sub',
-             projects.length || '—',
-             'Jobs with schedule data');
-      setKPI('kpi-p4-ontrack',
-             'kpi-p4-ontrack-sub',
-             schedFiltered.length > 0 ? onTrackCount : '—',
-             onTrackCount === projects.length ? 'All jobs on track' : 'No overdue milestones');
-      setKPI('kpi-p4-overdue',
-             'kpi-p4-overdue-sub',
-             overdueItems.length > 0 ? overdueItems.length : (schedFiltered.length > 0 ? '0' : '—'),
-             overdueItems.length > 0
-               ? overdueItems.length + ' milestone' + (overdueItems.length !== 1 ? 's' : '') + ' past due date'
-               : 'All milestones on track');
-      setKPI('kpi-p4-labour',
-             'kpi-p4-labour-sub',
-             totalLabour ? formatCurrency(totalLabour) : '—',
-             'Total labour cost (all jobs)');
-
-      // ── Job Progress chart: desc % then Not Commenced group ─
-      function getJobBarColor(pct) {
-        if (pct <= 0) return brandSilver;
-        var t = pct / 100;
-        if (p4UseTestPalette) {
-          // Canvas-space: muted → accent as completion rises
-          var a = 0.25 + t * 0.75;
-          return 'rgba(234,88,12,' + a.toFixed(2) + ')';
+      // ── Section 2 KPIs ─
+      var activeCount = activeList.length;
+      var contractSum = 0;
+      var contractN = 0;
+      activeList.forEach(function(p) {
+        if (p.totalBudget != null && !isNaN(p.totalBudget)) {
+          contractSum += p.totalBudget;
+          contractN++;
         }
-        // blend silver → charcoal as complete increases
-        return 'rgba(38,36,37,' + (0.22 + t * 0.78).toFixed(2) + ')';
-      }
-
-      var projectCompletion = projects.map(function(p) {
-        var items = schedFiltered.filter(function(r) { return r.project === p; });
-        var vals = items.map(function(r) {
-          return r.pct !== null && r.pct !== undefined ? r.pct : null;
-        }).filter(function(v) { return v !== null; });
-        var avg = vals.length
-          ? Math.round(vals.reduce(function(s, n) { return s + n; }, 0) / vals.length)
-          : 0;
-        return {
-          project: p,
-          avg: avg,
-          overdue: overdueProjects.indexOf(p) !== -1,
-          unstarted: avg <= 0
-        };
       });
+      var riskCount = activeList.filter(function(p) { return p.health === 'at-risk'; }).length;
 
-      var activeJobs = projectCompletion.filter(function(p) { return !p.unstarted; })
-        .sort(function(a, b) { return b.avg - a.avg; }); // highest complete first
-      var unstartedJobs = projectCompletion.filter(function(p) { return p.unstarted; })
-        .sort(function(a, b) { return String(a.project).localeCompare(String(b.project)); });
-      var orderedJobs = activeJobs.concat(unstartedJobs);
+      setKPI('kpi-p4-active', 'kpi-p4-active-sub',
+        String(activeCount),
+        'Not Completed or Cancelled');
+      setKPI('kpi-p4-contract', 'kpi-p4-contract-sub',
+        contractN ? p4FormatMoneyAbbrev(contractSum) : '-',
+        contractN ? ('Sum of Total Budget · ' + contractN + ' job' + (contractN !== 1 ? 's' : '')) : 'No Total Budget on matched jobs');
+      // Forecast GM: Total Actual incomplete -> always Pending at portfolio level
+      setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub',
+        'Pending',
+        'Awaiting Xero_Bills (Total Actual incomplete)');
+      setKPI('kpi-p4-labvar', 'kpi-p4-labvar-sub',
+        'Pending',
+        'Budgeted labour source TBD');
+      setKPI('kpi-p4-atrisk', 'kpi-p4-atrisk-sub',
+        String(riskCount),
+        riskCount ? 'Needs attention now' : 'No at-risk projects in view');
 
-      if (_charts['chart-p4-completion']) {
-        _charts['chart-p4-completion'].destroy();
-        delete _charts['chart-p4-completion'];
+      // ── helpers for tables ─
+      function p4EscAttr(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+      function p4EscHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
       }
 
-      var wrap = document.querySelector('#page-p4 .p4-chart-wrap');
-      if (wrap && orderedJobs.length) {
-        wrap.style.height = Math.max(200, orderedJobs.length * 28 + 40) + 'px';
-      }
+      // ── Section 3: Project Health Gantt ─
+      function renderProjectHealthGantt(list) {
+        var el = document.getElementById('p4-health-gantt');
+        if (!el) return;
+        var activeRows = list.filter(function(p) { return p.isActive; });
+        if (!activeRows.length) {
+          el.innerHTML = '<p class="no-data-msg">No active projects for the current filters.</p>';
+          return;
+        }
 
-      if (orderedJobs.length > 0) {
-        var chartLabels = orderedJobs.map(function(p) {
-          var name = p.project.length > 32 ? p.project.substring(0, 32) + '…' : p.project;
-          if (p.unstarted) return name + ' · Not Commenced';
-          return name;
+        var LEFT_W = 520;
+        var PX = 8;
+        var rangeMin = Infinity;
+        var rangeMax = -Infinity;
+        var todayMs = today.getTime();
+
+        function extend(t) {
+          if (t == null || isNaN(t)) return;
+          if (t < rangeMin) rangeMin = t;
+          if (t > rangeMax) rangeMax = t;
+        }
+        activeRows.forEach(function(p) {
+          if (p.minStart) extend(p.minStart.getTime());
+          if (p.maxEnd) extend(p.maxEnd.getTime());
+          (p.keyMilestones || []).forEach(function(km) {
+            if (km.date) extend(km.date.getTime());
+          });
         });
-        makeChart('chart-p4-completion', {
-          type: 'bar',
+        extend(todayMs);
+        if (!isFinite(rangeMin) || !isFinite(rangeMax)) {
+          rangeMin = todayMs - MS_DAY * 30;
+          rangeMax = todayMs + MS_DAY * 90;
+        }
+        if (rangeMax <= rangeMin) {
+          rangeMin -= MS_DAY * 14;
+          rangeMax += MS_DAY * 14;
+        }
+        // pad
+        rangeMin -= MS_DAY * 7;
+        rangeMax += MS_DAY * 14;
+        var rangeDays = Math.max(1, Math.round((rangeMax - rangeMin) / MS_DAY) + 1);
+        var timelineW = Math.max(420, rangeDays * PX);
+
+        function xOf(ms) {
+          return ((ms - rangeMin) / MS_DAY) * PX;
+        }
+
+        // Month headers
+        var monthsHtml = '';
+        var mCursor = new Date(rangeMin);
+        mCursor = new Date(mCursor.getFullYear(), mCursor.getMonth(), 1).getTime();
+        while (mCursor <= rangeMax) {
+          var mDate = new Date(mCursor);
+          var mNext = new Date(mDate.getFullYear(), mDate.getMonth() + 1, 1).getTime();
+          var mLeft = xOf(Math.max(mCursor, rangeMin));
+          var mRight = xOf(Math.min(mNext - MS_DAY, rangeMax));
+          if (mRight > mLeft) {
+            var mLabel = mDate.toLocaleDateString('en-AU', { month: 'short', year: '2-digit' });
+            monthsHtml +=
+              '<div class="p4-ph-month" style="left:' + mLeft.toFixed(1) + 'px;width:' +
+              (mRight - mLeft).toFixed(1) + 'px"><span>' + mLabel + '</span></div>';
+          }
+          mCursor = mNext;
+        }
+
+        var todayX = xOf(todayMs);
+        var todayLine =
+          '<div class="p4-ph-today" style="left:' + todayX.toFixed(1) + 'px" title="Today">' +
+          '<span class="p4-ph-today-label">Today</span></div>';
+
+        function marginCell(p) {
+          if (p.forecastMarginPending) return '<span class="p4-jco-null">Pending</span>';
+          if (p.forecastMargin == null) return '<span class="p4-jco-null">-</span>';
+          return p.forecastMargin.toFixed(1) + '%';
+        }
+        function labVarCell(p) {
+          if (p.labourVariancePending) return '<span class="p4-jco-null">Pending</span>';
+          return '-';
+        }
+
+        var html =
+          '<div class="p4-ph" role="region" aria-label="Project Health Gantt">' +
+          '<div class="p4-ph-legend" aria-hidden="true">' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--planned"></i>Planned</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--progress"></i>Progress</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--risk"></i>At risk progress</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--today"></i>Today</span>' +
+          '</div>' +
+          '<div class="p4-ph-scroll">' +
+          '<div class="p4-ph-inner" style="min-width:' + (LEFT_W + timelineW) + 'px">' +
+          '<div class="p4-ph-sticky" style="width:' + LEFT_W + 'px">' +
+          '<div class="p4-ph-left-row p4-ph-left-row--head">' +
+          '<div class="p4-ph-c-project">Project</div>' +
+          '<div class="p4-ph-c-client">Client</div>' +
+          '<div class="p4-ph-c-num">Progress</div>' +
+          '<div class="p4-ph-c-num">Margin</div>' +
+          '<div class="p4-ph-c-num">Labour Var</div>' +
+          '<div class="p4-ph-c-status">Status</div>' +
+          '</div>';
+
+        activeRows.forEach(function(p, idx) {
+          var riskCls = p.health === 'at-risk' ? ' p4-ph-left-row--risk' : '';
+          html +=
+            '<div class="p4-ph-left-row p4-ph-row-hit' + riskCls + '" data-proj-idx="' + idx + '" role="button" tabindex="0">' +
+            '<div class="p4-ph-c-project" title="' + p4EscAttr(p.project) + '">' + p4EscHtml(p.project) + '</div>' +
+            '<div class="p4-ph-c-client" title="' + p4EscAttr(p.clientName || '') + '">' + p4EscHtml(p.clientName || '-') + '</div>' +
+            '<div class="p4-ph-c-num">' + (p.progressAvg != null ? p.progressAvg + '%' : '-') + '</div>' +
+            '<div class="p4-ph-c-num">' + marginCell(p) + '</div>' +
+            '<div class="p4-ph-c-num">' + labVarCell(p) + '</div>' +
+            '<div class="p4-ph-c-status">' + formatHealthBadge(p.health) + '</div>' +
+            '</div>';
+        });
+
+        html +=
+          '</div>' +
+          '<div class="p4-ph-timeline" style="width:' + timelineW + 'px">' +
+          '<div class="p4-ph-timeline-head" style="width:' + timelineW + 'px">' +
+          '<div class="p4-ph-months">' + monthsHtml + '</div>' + todayLine +
+          '</div>';
+
+        activeRows.forEach(function(p, idx) {
+          var bars = '';
+          var t0 = p.minStart ? p.minStart.getTime() : null;
+          var t1 = p.maxEnd ? p.maxEnd.getTime() : null;
+          if (t0 != null && t1 != null) {
+            var x0 = xOf(t0);
+            var x1 = xOf(t1);
+            var L = Math.min(x0, x1);
+            var R = Math.max(x0, x1);
+            var wPlan = Math.max(R - L, 4);
+            bars +=
+              '<div class="p4-ph-bar p4-ph-bar--planned" style="left:' + L.toFixed(1) +
+              'px;width:' + wPlan.toFixed(1) + 'px" title="Planned window"></div>';
+            // Progress fill: portion of planned span by progressAvg
+            var prog = p.progressAvg != null ? Math.max(0, Math.min(100, p.progressAvg)) : 0;
+            var wProg = Math.max((wPlan * prog) / 100, prog > 0 ? 3 : 0);
+            var barCls = p.health === 'at-risk' ? 'p4-ph-bar--progress-risk' : 'p4-ph-bar--progress';
+            if (wProg > 0) {
+              bars +=
+                '<div class="p4-ph-bar ' + barCls + '" style="left:' + L.toFixed(1) +
+                'px;width:' + wProg.toFixed(1) + 'px" title="Progress ' + prog + '%"></div>';
+            }
+          } else {
+            bars = '<span class="p4-ph-nodates">No planned dates</span>';
+          }
+          (p.keyMilestones || []).forEach(function(km) {
+            if (!km.date) return;
+            var mx = xOf(km.date.getTime());
+            bars +=
+              '<div class="p4-ph-marker" style="left:' + mx.toFixed(1) +
+              'px" title="' + p4EscAttr(km.name) + '"></div>';
+          });
+          var riskCls = p.health === 'at-risk' ? ' p4-ph-lane--risk' : '';
+          html +=
+            '<div class="p4-ph-lane p4-ph-row-hit' + riskCls + '" data-proj-idx="' + idx +
+            '" role="button" tabindex="0" style="width:' + timelineW + 'px">' +
+            '<div class="p4-ph-lane-today" style="left:' + todayX.toFixed(1) + 'px"></div>' +
+            bars + '</div>';
+        });
+
+        html += '</div></div></div></div>';
+        el.innerHTML = html;
+
+        el.querySelectorAll('.p4-ph-row-hit').forEach(function(node) {
+          node.addEventListener('click', function() {
+            var idx = parseInt(node.getAttribute('data-proj-idx'), 10);
+            if (!isNaN(idx) && activeRows[idx]) openProjectDrawer(activeRows[idx]);
+          });
+          node.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              var idx = parseInt(node.getAttribute('data-proj-idx'), 10);
+              if (!isNaN(idx) && activeRows[idx]) openProjectDrawer(activeRows[idx]);
+            }
+          });
+        });
+
+        // Scroll today into view
+        requestAnimationFrame(function() {
+          var scrollEl = el.querySelector('.p4-ph-scroll');
+          if (!scrollEl) return;
+          var viewW = scrollEl.clientWidth;
+          var targetLeft = LEFT_W + todayX - Math.max(120, viewW - LEFT_W) * 0.4;
+          scrollEl.scrollLeft = Math.max(0, targetLeft);
+        });
+      }
+
+      // ── Section 4: scatter ─
+      function renderScatter(list) {
+        destroyP4Charts();
+        var emptyEl = document.getElementById('p4-scatter-empty');
+        var canvas = document.getElementById('chart-p4-scatter');
+        if (!canvas) return;
+
+        var points = [];
+        list.filter(function(p) { return p.isActive; }).forEach(function(p) {
+          if (p.progressAvg == null) return;
+          if (p.budgetConsumedPct == null || p.totalBudget == null || p.totalBudget <= 0) return;
+          var r = Math.max(4, Math.min(28, Math.sqrt(p.totalBudget) / 120));
+          var color = brandMuted;
+          if (p.health === 'at-risk') color = brandAccent;
+          else if (p.health === 'watch') color = brandAmber;
+          points.push({
+            x: p.progressAvg,
+            y: Math.min(200, p.budgetConsumedPct),
+            r: r,
+            project: p.project,
+            health: p.health,
+            bg: color
+          });
+        });
+
+        if (!points.length) {
+          if (emptyEl) emptyEl.hidden = false;
+          if (canvas) canvas.style.display = 'none';
+          return;
+        }
+        if (emptyEl) emptyEl.hidden = true;
+        canvas.style.display = '';
+
+        makeChart('chart-p4-scatter', {
+          type: 'bubble',
           data: {
-            labels: chartLabels,
             datasets: [{
-              label: '% Complete',
-              data: orderedJobs.map(function(p) {
-                // Keep 0-bar visible as thin silver "Not Commenced" marker via min visual handled in tooltip
-                return p.avg;
+              label: 'Projects',
+              data: points,
+              backgroundColor: points.map(function(pt) {
+                return pt.health === 'at-risk'
+                  ? 'rgba(234,88,12,0.55)'
+                  : pt.health === 'watch'
+                    ? 'rgba(245,158,11,0.5)'
+                    : 'rgba(107,114,128,0.4)';
               }),
-              backgroundColor: orderedJobs.map(function(p) {
-                return p.unstarted ? brandSilver : getJobBarColor(p.avg);
+              borderColor: points.map(function(pt) {
+                return pt.health === 'at-risk' ? brandAccent
+                  : pt.health === 'watch' ? brandAmber : brandMuted;
               }),
-              borderColor: orderedJobs.map(function(p) {
-                return p.unstarted ? brandSoftGray : brandAccent;
-              }),
-              borderWidth: orderedJobs.map(function(p) { return p.unstarted ? 1 : 0; }),
-              borderRadius: 0,
-              barThickness: 14
+              borderWidth: 1
             }]
           },
           options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -5071,39 +5659,360 @@
               tooltip: {
                 callbacks: {
                   label: function(ctx) {
-                    var job = orderedJobs[ctx.dataIndex];
-                    if (job && job.unstarted) return 'Not Commenced (0%)';
-                    return ctx.raw + '% complete';
+                    var pt = points[ctx.dataIndex];
+                    return (pt.project || '') + ': ' + Math.round(pt.x) + '% done, ' +
+                      Math.round(pt.y) + '% budget consumed (partial)';
                   }
                 }
               }
             },
             scales: {
               x: {
-                beginAtZero: true,
+                title: { display: true, text: 'Completion %', color: brandMuted },
+                min: 0,
                 max: 100,
-                ticks: {
-                  color: brandCharcoal,
-                  callback: function(v) { return v + '%'; },
-                  font: { size: 10 }
-                },
-                grid: { color: p4UseTestPalette ? 'rgba(107,114,128,0.35)' : 'rgba(188,189,190,0.28)', lineWidth: 0.75 },
-                border: { color: brandSoftGray }
+                ticks: { color: brandCharcoal, callback: function(v) { return v + '%'; } },
+                grid: { color: 'rgba(107,114,128,0.2)' }
               },
               y: {
-                ticks: { color: brandCharcoal, font: { size: 10, family: 'Montserrat' } },
-                grid: { display: false },
-                border: { color: brandSoftGray }
+                title: { display: true, text: 'Budget consumed % (partial)', color: brandMuted },
+                min: 0,
+                ticks: { color: brandCharcoal, callback: function(v) { return v + '%'; } },
+                grid: { color: 'rgba(107,114,128,0.2)' }
               }
             }
           }
         });
       }
 
-      // ── Milestone Schedule: split-view Gantt (Project | Milestone | Slip + timeline)
+      // ── Progress bar cell with target marker ─
+      function p4ProgressBarCell(p) {
+        if (p.progressAvg == null) return '<span class="p4-jco-null">-</span>';
+        var pct = Math.max(0, Math.min(100, p.progressAvg));
+        var fillClass = 'p4-prog-fill--ok';
+        if (p.health === 'at-risk') fillClass = 'p4-prog-fill--risk';
+        else if (p.health === 'watch') fillClass = 'p4-prog-fill--watch';
+        var marker = '';
+        if (p.plannedProgress != null) {
+          var m = Math.max(0, Math.min(100, p.plannedProgress));
+          marker = '<span class="p4-prog-target" style="left:' + m + '%" title="Planned ~' + m + '%"></span>';
+        }
+        return '<div class="p4-prog">' +
+          '<span class="p4-prog-label">' + pct + '%</span>' +
+          '<span class="p4-prog-track">' +
+          '<span class="p4-prog-fill ' + fillClass + '" style="width:' + pct + '%"></span>' +
+          marker +
+          '</span></div>';
+      }
+
+      // ── Section 5: exception table ─
+      function renderExceptionTable(list) {
+        var el = document.getElementById('p4-exception-table');
+        var hint = document.getElementById('p4-exception-hint');
+        if (!el) return;
+
+        var exceptions = list.filter(function(p) {
+          return p.isActive && (p.health === 'at-risk' || p.health === 'watch');
+        });
+        // Fallback: if no exceptions, show top active by risk order
+        var source = exceptions.length ? exceptions : list.filter(function(p) { return p.isActive; });
+        var shown = p4ShowAllProjects ? source : source.slice(0, 5);
+
+        if (hint) {
+          hint.textContent = p4ShowAllProjects
+            ? ('Showing ' + shown.length + ' project' + (shown.length !== 1 ? 's' : ''))
+            : ('Top ' + Math.min(5, source.length) + ' exceptions · At risk then Watch');
+        }
+
+        var viewBtn = document.getElementById('p4-view-all-btn');
+        if (viewBtn) {
+          viewBtn.textContent = p4ShowAllProjects ? 'Show top exceptions' : 'View all projects';
+        }
+
+        if (!shown.length) {
+          el.innerHTML = '<p class="no-data-msg">No projects match the current filters.</p>';
+          return;
+        }
+
+        var th =
+          '<th class="p4-jco-th p4-jco-th--left p4-ex-sticky p4-ex-sticky--a">Project</th>' +
+          '<th class="p4-jco-th p4-jco-th--left p4-ex-sticky p4-ex-sticky--b">Client</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Progress</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">End date</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Budget</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Forecast cost</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Forecast margin</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Labour variance</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Status</th>';
+
+        var trs = shown.map(function(p, idx) {
+          var endTxt = p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-';
+          var budgetTxt = p.totalBudget != null ? p4FormatMoneyAbbrev(p.totalBudget) : '-';
+          return '<tr class="p4-ex-row" data-ex-idx="' + idx + '" role="button" tabindex="0">' +
+            '<td class="p4-jco-td p4-jco-td--project p4-ex-sticky p4-ex-sticky--a">' + p4EscHtml(p.project) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left p4-ex-sticky p4-ex-sticky--b">' + p4EscHtml(p.clientName || '-') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4ProgressBarCell(p) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + endTxt + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + (budgetTxt === '-' ? '<span class="p4-jco-null">-</span>' : budgetTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
+            '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
+            '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + formatHealthBadge(p.health) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        el.innerHTML =
+          '<div class="table-wrap p4-ex-table-wrap">' +
+          '<table class="data-table p4-jco-table p4-ex-table">' +
+          '<thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
+
+        el.querySelectorAll('.p4-ex-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var idx = parseInt(row.getAttribute('data-ex-idx'), 10);
+            if (!isNaN(idx) && shown[idx]) openProjectDrawer(shown[idx]);
+          });
+          row.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              var idx = parseInt(row.getAttribute('data-ex-idx'), 10);
+              if (!isNaN(idx) && shown[idx]) openProjectDrawer(shown[idx]);
+            }
+          });
+        });
+      }
+
+      // ── Full Job Costing Overview (exact figures) ─
+      function renderFullJobCosting(list) {
+        var el = document.getElementById('p4-labour-table');
+        if (!el) return;
+        var rows = list.slice().sort(function(a, b) {
+          return (b.labourCost || 0) - (a.labourCost || 0);
+        });
+        if (!rows.length) {
+          el.innerHTML = '<p class="no-data-msg">No project rows for the current filters.</p>';
+          return;
+        }
+
+        function p4JcoCell(text, isEmpty) {
+          if (isEmpty) return '<span class="p4-jco-null">-</span>';
+          return text;
+        }
+        function p4JcoMoneyCell(raw) {
+          var formatted = formatLiveMoneyOrDash(raw);
+          return p4JcoCell(formatted, formatted === '-');
+        }
+        function p4JcoPill(text, kind) {
+          var t = String(text || '').trim();
+          if (!t) return '<span class="p4-jco-null">-</span>';
+          var cls = kind === 'brand' ? 'p4-jco-pill p4-jco-pill--action' : 'p4-jco-pill p4-jco-pill--neutral';
+          return '<span class="' + cls + '">' + p4EscHtml(t) + '</span>';
+        }
+        function labourPctBudgetCell(p) {
+          if (p.labourCostAsPctBudget == null) return '<span class="p4-jco-null">-</span>';
+          var pct = p.labourCostAsPctBudget;
+          var label = pct.toFixed(1) + '%';
+          var barW = Math.min(100, Math.max(0, pct));
+          return '<div class="p4-jco-pct">' +
+            '<span class="p4-jco-pct-label">' + label + '</span>' +
+            '<span class="p4-jco-pct-track" aria-hidden="true">' +
+            '<span class="p4-jco-pct-fill" style="width:' + barW.toFixed(1) + '%"></span>' +
+            '</span></div>';
+        }
+
+        var th =
+          '<th class="p4-jco-th p4-jco-th--left">Project</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Client Name</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Hours</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Labour Cost</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual-Labour</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual-Variations</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Total Budget</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Revenue</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Labour cost as % of budget</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Brand</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Department</th>' +
+          '<th class="p4-jco-th p4-jco-th--left">Status</th>';
+
+        var trs = rows.map(function(p) {
+          var hrsTxt = p.labourHours ? parseFloat(p.labourHours).toFixed(1) : '';
+          var costTxt = p.labourCost ? formatCurrency(p.labourCost) : '';
+          var revTxt = p.revenue != null ? formatCurrency(p.revenue) : '';
+          return '<tr class="p4-ex-row" data-project="' + p4EscAttr(p.project) + '">' +
+            '<td class="p4-jco-td p4-jco-td--project">' + p4JcoCell(p4EscHtml(p.project || '-'), !p.project) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoCell(p4EscHtml(p.clientName || '-'), !p.clientName) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, !hrsTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(costTxt, !costTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualLabourRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualVariationsRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.totalBudgetRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(revTxt || '-', !revTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num p4-jco-td--pct">' + labourPctBudgetCell(p) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.brand, 'brand') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.department, 'dept') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--left">' + formatHealthBadge(p.health) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        el.innerHTML =
+          '<div class="table-wrap p4-labour-table-wrap p4-jco-table-wrap">' +
+          '<table class="data-table p4-labour-table p4-jco-table">' +
+          '<thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
+
+        el.querySelectorAll('tr.p4-ex-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var name = row.getAttribute('data-project');
+            var found = list.filter(function(p) { return p.project === name; })[0];
+            if (found) openProjectDrawer(found);
+          });
+        });
+      }
+
+      // ── Project drawer ─
+      function openProjectDrawer(p) {
+        var drawer = document.getElementById('p4-proj-drawer');
+        var backdrop = document.getElementById('p4-proj-drawer-backdrop');
+        var body = document.getElementById('p4-proj-drawer-body');
+        if (!drawer || !body) return;
+
+        document.getElementById('p4-proj-drawer-title').textContent = p.project || '-';
+        document.getElementById('p4-proj-drawer-sub').textContent =
+          (p.clientName || '-') + (p.brand || p.department
+            ? ' · ' + [p.brand, p.department].filter(Boolean).join(' / ')
+            : '');
+
+        function moneyOrDash(raw, num) {
+          if (num != null && !isNaN(num)) return formatCurrency(num);
+          return formatLiveMoneyOrDash(raw);
+        }
+
+        // Bars: Budget known; Committed N/A; Actual partial; Forecast pending
+        var budget = p.totalBudget;
+        var actual = p.actualSoFar;
+        var maxBar = Math.max(budget || 0, actual || 0, 1);
+        function barRow(label, valueTxt, widthPct, pending) {
+          return '<div class="p4-draw-bar-row">' +
+            '<div class="p4-draw-bar-meta"><span>' + label + '</span><strong>' + valueTxt + '</strong></div>' +
+            (pending
+              ? '<div class="p4-draw-bar-track p4-draw-bar-track--pending"><span class="p4-draw-bar-pending">Pending</span></div>'
+              : '<div class="p4-draw-bar-track"><span class="p4-draw-bar-fill" style="width:' + widthPct + '%"></span></div>') +
+            '</div>';
+        }
+
+        var barsHtml =
+          '<div class="p4-draw-bars">' +
+          barRow('Budget', budget != null ? formatCurrency(budget) : '-',
+            budget != null ? Math.min(100, (budget / maxBar) * 100) : 0, budget == null) +
+          barRow('Committed', 'Pending', 0, true) +
+          barRow('Actual (partial)', actual != null ? formatCurrency(actual) : 'Pending',
+            actual != null ? Math.min(100, (actual / maxBar) * 100) : 0, actual == null) +
+          barRow('Forecast', 'Awaiting Xero_Bills', 0, true) +
+          '</div>';
+
+        var infoHtml =
+          '<dl class="p4-ms-drawer-dl">' +
+          '<div><dt>Status</dt><dd>' + formatHealthBadge(p.health) + '</dd></div>' +
+          '<div><dt>Progress</dt><dd>' + (p.progressAvg != null ? p.progressAvg + '%' : '-') + '</dd></div>' +
+          '<div><dt>End date</dt><dd>' + (p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-') + '</dd></div>' +
+          '<div><dt>Hours</dt><dd>' + (p.labourHours ? p.labourHours.toFixed(1) : '-') + '</dd></div>' +
+          '<div><dt>Labour cost</dt><dd>' + (p.labourCost ? formatCurrency(p.labourCost) : '-') + '</dd></div>' +
+          '<div><dt>Labour cost as % of budget</dt><dd>' +
+          (p.labourCostAsPctBudget != null ? p.labourCostAsPctBudget.toFixed(1) + '%' : '-') + '</dd></div>' +
+          '<div><dt>Labour variance</dt><dd>Pending <span class="p4-draw-note">(Budgeted labour source TBD)</span></dd></div>' +
+          '<div><dt>Forecast margin</dt><dd>Pending <span class="p4-draw-note">(Awaiting Xero_Bills)</span></dd></div>' +
+          '<div><dt>Staffing</dt><dd>' + p4EscHtml(p.handsSignal || '-') + '</dd></div>' +
+          '<div><dt>Brand</dt><dd>' + p4EscHtml(p.brand || '-') + '</dd></div>' +
+          '<div><dt>Department</dt><dd>' + p4EscHtml(p.department || '-') + '</dd></div>' +
+          '</dl>';
+
+        // Milestone mini-list for this project
+        var msRows = (p.milestones || []).slice().sort(function(a, b) {
+          var ea = a.endD ? a.endD.getTime() : Infinity;
+          var eb = b.endD ? b.endD.getTime() : Infinity;
+          return ea - eb;
+        });
+        var msHtml = '<div class="p4-draw-ms"><div class="p4-draw-ms-title">Milestones</div>';
+        if (!msRows.length) {
+          msHtml += '<p class="p4-draw-note">No milestone schedule rows for this project.</p>';
+        } else {
+          msHtml += '<ul class="p4-draw-ms-list">';
+          msRows.forEach(function(m) {
+            var slip = '';
+            if (isOverdueNorm(m)) {
+              var days = m.endD ? Math.round((today - m.endD) / MS_DAY) : null;
+              slip = days != null && days > 0 ? ' · +' + days + 'd' : ' · Overdue';
+            }
+            msHtml +=
+              '<li class="' + (isOverdueNorm(m) ? 'is-overdue' : '') + '">' +
+              '<span class="p4-draw-ms-name">' + p4EscHtml(m.milestone || 'Milestone') + '</span>' +
+              '<span class="p4-draw-ms-meta">' +
+              (m.endD ? m.endD.toLocaleDateString('en-AU') : '-') +
+              ' · ' + (m.pct != null ? Math.round(m.pct) + '%' : '-') +
+              slip +
+              '</span></li>';
+          });
+          msHtml += '</ul>';
+        }
+        msHtml += '</div>';
+
+        body.innerHTML = barsHtml + infoHtml + msHtml;
+        drawer.hidden = false;
+        if (backdrop) backdrop.hidden = false;
+      }
+
+      function closeProjectDrawer() {
+        var drawer = document.getElementById('p4-proj-drawer');
+        var backdrop = document.getElementById('p4-proj-drawer-backdrop');
+        if (drawer) drawer.hidden = true;
+        if (backdrop) backdrop.hidden = true;
+      }
+
+      var closeBtn = document.getElementById('p4-proj-drawer-close');
+      var backdropEl = document.getElementById('p4-proj-drawer-backdrop');
+      if (closeBtn && !closeBtn._p4Bound) {
+        closeBtn._p4Bound = true;
+        closeBtn.addEventListener('click', closeProjectDrawer);
+      }
+      if (backdropEl && !backdropEl._p4Bound) {
+        backdropEl._p4Bound = true;
+        backdropEl.addEventListener('click', closeProjectDrawer);
+      }
+
+      var viewAllBtn = document.getElementById('p4-view-all-btn');
+      if (viewAllBtn && !_p4ViewAllBound) {
+        _p4ViewAllBound = true;
+        viewAllBtn.addEventListener('click', function() {
+          p4ShowAllProjects = !p4ShowAllProjects;
+          var full = document.getElementById('p4-full-costing');
+          if (full) full.hidden = !p4ShowAllProjects;
+          if (window._p4ScheduleRows) {
+            renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
+            if (typeof init3DTilt === 'function') init3DTilt();
+          }
+        });
+      }
+      var fullEl = document.getElementById('p4-full-costing');
+      if (fullEl) fullEl.hidden = !p4ShowAllProjects;
+
+      var msCollapseBtn = document.getElementById('p4-ms-collapse-btn');
+      var msCollapseBody = document.getElementById('p4-ms-collapse-body');
+      if (msCollapseBtn && !_p4MsCollapseBound) {
+        _p4MsCollapseBound = true;
+        msCollapseBtn.addEventListener('click', function() {
+          var open = msCollapseBody && !msCollapseBody.hidden;
+          if (msCollapseBody) msCollapseBody.hidden = open;
+          msCollapseBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          msCollapseBtn.classList.toggle('is-open', !open);
+        });
+      }
+
+      renderProjectHealthGantt(filteredRollups);
+      renderScatter(filteredRollups);
+      renderExceptionTable(filteredRollups);
+      renderFullJobCosting(filteredRollups);
+
+      // ── Milestone Schedule (collapsible; existing Gantt logic preserved) ─
       var tableEl = document.getElementById('p4-schedule-table');
-      var MS_DAY = 86400000;
-      var P4_MS_LEFT_W = 320; // 3 sticky cols only
+      var P4_MS_LEFT_W = 320;
       var P4_MS_PX_PER_DAY = 10;
 
       function p4TimelineStatusKey(r) {
@@ -5115,7 +6024,6 @@
         if (lower === 'overdue') return 'overdue';
         if (lower === 'in progress') return 'in-progress';
         if (lower === 'not started') return 'not-started';
-
         var rawLower = String(r.statusRaw != null ? r.statusRaw : '').toLowerCase().trim()
           .replace(/[_-]+/g, ' ')
           .replace(/\s+/g, ' ');
@@ -5124,7 +6032,6 @@
         if (rawLower === 'overdue') return 'overdue';
         if (rawLower === 'in progress') return 'in-progress';
         if (rawLower === 'not started') return 'not-started';
-
         if (r.pct !== null && r.pct !== undefined && r.pct >= 100) return 'completed';
         if (r.pct !== null && r.pct !== undefined && r.pct > 0 && r.pct < 100) return 'in-progress';
         if (isOverdueNorm(r)) return 'overdue';
@@ -5136,51 +6043,24 @@
         return key === 'overdue' || key === 'in-progress';
       }
 
-      function p4EscAttr(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;')
-          .replace(/"/g, '&quot;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
-
-      function p4EscHtml(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
-
-      function p4BrandDeptLine(r) {
-        var brand = String(r.brand || '').trim();
-        var dept = String(r.department || '').trim();
-        if (brand && dept) return brand + ' / ' + dept;
-        if (dept) return dept;
-        if (brand) return brand;
-        return '';
-      }
-
       function p4StartOfDay(d) {
         var x = new Date(d.getTime());
         x.setHours(0, 0, 0, 0);
         return x.getTime();
       }
-
       function p4StartOfMonth(ms) {
         var d = new Date(ms);
         return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
       }
-
       function p4StartOfWeekMon(ms) {
         var d = new Date(ms);
         d.setHours(0, 0, 0, 0);
-        var day = d.getDay(); // 0 Sun
+        var day = d.getDay();
         var diff = day === 0 ? -6 : 1 - day;
         d.setDate(d.getDate() + diff);
         return d.getTime();
       }
 
-      /** Slippage days as signed number (null if unknown). Positive = late. */
       function p4SlippageDays(r) {
         if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
           var d = parseInt(r.slippageRaw, 10);
@@ -5193,7 +6073,6 @@
         return null;
       }
 
-      /** Compact left-col slip display: +91d / 0d / early. */
       function p4SlippageCell(r) {
         var days = p4SlippageDays(r);
         if (days === null) {
@@ -5229,6 +6108,15 @@
         return s || '-';
       }
 
+      function p4BrandDeptLine(r) {
+        var brand = String(r.brand || '').trim();
+        var dept = String(r.department || '').trim();
+        if (brand && dept) return brand + ' / ' + dept;
+        if (dept) return dept;
+        if (brand) return brand;
+        return '';
+      }
+
       function updateP4MsKpis(sortedSched) {
         var kpiRow = document.getElementById('p4-ms-kpi-row');
         var overdueEl = document.getElementById('p4-ms-kpi-overdue');
@@ -5236,14 +6124,11 @@
         var slipEl = document.getElementById('p4-ms-kpi-slip');
         var handsEl = document.getElementById('p4-ms-kpi-hands');
         if (!kpiRow || !overdueEl) return;
-
         if (!sortedSched || !sortedSched.length) {
           kpiRow.hidden = true;
           return;
         }
         kpiRow.hidden = false;
-
-        // Universe = full filtered schedule set (same Y as "Showing X of Y")
         var total = sortedSched.length;
         var overdueCount = 0;
         var maxSlip = 0;
@@ -5255,7 +6140,6 @@
           var handsLabel = handsByProject[r.project] || '';
           if (p4StaffingIsBottleneck(handsLabel)) handsCount++;
         });
-
         overdueEl.textContent = overdueCount + ' / ' + total;
         if (badgeEl) badgeEl.hidden = overdueCount <= 0;
         if (slipEl) {
@@ -5265,10 +6149,19 @@
         if (handsEl) handsEl.textContent = String(handsCount);
       }
 
+      // Filter milestones by department/status via project rollup
+      var allowedProjects = {};
+      filteredRollups.forEach(function(p) { allowedProjects[p.project] = true; });
+      var schedForMs = schedFiltered.filter(function(r) {
+        if (activeP4Dept !== 'ALL' || activeP4Status !== 'ALL') {
+          return !!allowedProjects[r.project];
+        }
+        return true;
+      });
+
       function renderP4MilestoneSchedule(sortedSched) {
         if (!tableEl) return;
         updateP4MsKpis(sortedSched);
-
         if (!sortedSched || !sortedSched.length) {
           tableEl.innerHTML =
             '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
@@ -5281,7 +6174,6 @@
         var focusCount = focusList.length;
         var todayMs = p4StartOfDay(today);
 
-        // Extent from currently visible rows + today (must keep bars on-screen)
         var rangeMin = Infinity;
         var rangeMax = -Infinity;
         function extendRange(t) {
@@ -5295,7 +6187,6 @@
           if (r.endD && !isNaN(r.endD.getTime())) extendRange(p4StartOfDay(r.endD));
           var ad = p4ParseScheduleDate(r.actualEndRaw);
           if (ad) extendRange(p4StartOfDay(ad));
-          // Delay bars run planned-end to today for overdue / late in-progress
           if ((stKey === 'overdue' || stKey === 'in-progress') && r.endD && !isNaN(r.endD.getTime())) {
             if (p4StartOfDay(r.endD) < todayMs) extendRange(todayMs);
           }
@@ -5308,7 +6199,6 @@
           rangeMax += MS_DAY * 7;
         }
         if (hasRange) {
-          // Light pad only - do NOT snap back a full previous month
           rangeMin = p4StartOfWeekMon(rangeMin - MS_DAY * 3);
           var endD = new Date(rangeMax + MS_DAY * 10);
           endD.setHours(0, 0, 0, 0);
@@ -5322,7 +6212,6 @@
           return ((ms - rangeMin) / MS_DAY) * P4_MS_PX_PER_DAY;
         }
 
-        // Month / week headers
         var monthsHtml = '';
         var weeksHtml = '';
         var weekLinesHtml = '';
@@ -5340,7 +6229,6 @@
             }
             mCursor = mNext;
           }
-
           var wCursor = p4StartOfWeekMon(rangeMin);
           while (wCursor <= rangeMax + MS_DAY * 7) {
             var wLeft = xOf(wCursor);
@@ -5402,33 +6290,29 @@
           var startLabel = p4FmtDate(r.startD, r.startRaw) || '-';
           var endLabel = p4FmtDate(r.endD, r.endRaw) || '-';
           var plannedTitle = 'Planned ' + startLabel + ' to ' + endLabel;
-
-          var html = '';
-          // Planned window: thin faded muted reference bar
-          html += barSlice(x0, x1, 'p4-ms-bar--planned', plannedTitle);
-
+          var htmlB = '';
+          htmlB += barSlice(x0, x1, 'p4-ms-bar--planned', plannedTitle);
           if (statusKey === 'completed') {
-            html += barSlice(x0, x1, 'p4-ms-bar--completed', 'Completed');
+            htmlB += barSlice(x0, x1, 'p4-ms-bar--completed', 'Completed');
             if (actualMs !== null && actualMs > tEnd) {
-              html += barSlice(x1, xOf(actualMs), 'p4-ms-bar--slip', 'Delay to actual end');
+              htmlB += barSlice(x1, xOf(actualMs), 'p4-ms-bar--slip', 'Delay to actual end');
             }
           } else if (statusKey === 'in-progress') {
-            html += barSlice(x0, x1, 'p4-ms-bar--in-progress', 'In Progress');
+            htmlB += barSlice(x0, x1, 'p4-ms-bar--in-progress', 'In Progress');
             if (todayMs > tEnd) {
-              html += barSlice(x1, xOf(todayMs), 'p4-ms-bar--slip', 'Delay past planned end');
+              htmlB += barSlice(x1, xOf(todayMs), 'p4-ms-bar--slip', 'Delay past planned end');
             }
           } else if (statusKey === 'overdue') {
-            // Dual: planned (faded) + solid accent delay planned-end to today
             var slipTo = todayMs;
             if (actualMs !== null && actualMs > tEnd) slipTo = Math.max(slipTo, actualMs);
             if (slipTo < tEnd) slipTo = tEnd;
-            html += barSlice(x1, xOf(slipTo), 'p4-ms-bar--slip', 'Overdue / delay past planned end');
+            htmlB += barSlice(x1, xOf(slipTo), 'p4-ms-bar--slip', 'Overdue / delay past planned end');
           } else if (statusKey === 'not-started') {
-            html += barSlice(x0, x1, 'p4-ms-bar--not-started', 'Not Started');
+            htmlB += barSlice(x0, x1, 'p4-ms-bar--not-started', 'Not Started');
           } else if (statusKey === 'cancelled') {
-            html += barSlice(x0, x1, 'p4-ms-bar--cancelled', 'Cancelled');
+            htmlB += barSlice(x0, x1, 'p4-ms-bar--cancelled', 'Cancelled');
           }
-          return html;
+          return htmlB;
         }
 
         function rowLeftCells(r, isHead) {
@@ -5487,7 +6371,6 @@
         var toggleLabel = p4ScheduleShowAll
           ? 'Show Overdue &amp; In Progress only'
           : 'Show all milestones';
-        // Active filter: default risk-first view (not show-all)
         var toggleActiveClass = !p4ScheduleShowAll ? ' is-active' : '';
 
         var html =
@@ -5524,7 +6407,6 @@
         html +=
           '<div class="p4-ms-scroll">' +
           '<div class="p4-ms-inner" style="min-width:' + (P4_MS_LEFT_W + timelineW) + 'px">' +
-          // Sticky left: Project | Milestone | Slippage
           '<div class="p4-ms-sticky-left" style="width:' + P4_MS_LEFT_W + 'px">' +
           '<div class="p4-ms-left-row p4-ms-left-row--head">' +
           '<div class="p4-ms-left-grid">' + rowLeftCells(null, true) + '</div></div>';
@@ -5538,7 +6420,6 @@
 
         html +=
           '</div>' +
-          // Timeline Gantt
           '<div class="p4-ms-timeline" style="width:' + timelineW + 'px">' +
           '<div class="p4-ms-timeline-head">' +
           '<div class="p4-ms-months" style="width:' + timelineW + 'px">' + monthsHtml + '</div>' +
@@ -5562,7 +6443,6 @@
 
         html +=
           '</div></div></div>' +
-          // Slide-out drawer
           '<div class="p4-ms-drawer-backdrop" id="p4-ms-drawer-backdrop" hidden></div>' +
           '<aside class="p4-ms-drawer" id="p4-ms-drawer" hidden aria-label="Milestone details">' +
           '<div class="p4-ms-drawer-head">' +
@@ -5604,9 +6484,9 @@
 
         var drawer = document.getElementById('p4-ms-drawer');
         var backdrop = document.getElementById('p4-ms-drawer-backdrop');
-        var closeBtn = document.getElementById('p4-ms-drawer-close');
+        var closeMsBtn = document.getElementById('p4-ms-drawer-close');
 
-        function closeDrawer() {
+        function closeMsDrawer() {
           if (drawer) drawer.hidden = true;
           if (backdrop) backdrop.hidden = true;
           document.querySelectorAll('#p4-schedule-table .p4-ms-row-hit.is-active').forEach(function(el) {
@@ -5614,33 +6494,31 @@
           });
         }
 
-        function openDrawer(idx) {
+        function openMsDrawer(idx) {
           var r = visible[idx];
           if (!r || !drawer) return;
-          var p = drawerPayload(r);
-          // Title = full project name; sub = milestone
-          document.getElementById('p4-ms-drawer-title').textContent = p.project;
-          document.getElementById('p4-ms-drawer-sub').textContent = p.milestone;
-          var statusDd = document.getElementById('p4-ms-d-status');
-          statusDd.innerHTML = p.statusBadgeHtml || p4EscHtml(p.status);
+          var payload = drawerPayload(r);
+          document.getElementById('p4-ms-drawer-title').textContent = payload.project;
+          document.getElementById('p4-ms-drawer-sub').textContent = payload.milestone;
+          document.getElementById('p4-ms-d-status').innerHTML = payload.statusBadgeHtml || p4EscHtml(payload.status);
           var staffDd = document.getElementById('p4-ms-d-staff');
-          staffDd.textContent = p.staffing;
-          if (p.staffingFull && p.staffingFull !== p.staffing) {
-            staffDd.setAttribute('title', p.staffingFull);
+          staffDd.textContent = payload.staffing;
+          if (payload.staffingFull && payload.staffingFull !== payload.staffing) {
+            staffDd.setAttribute('title', payload.staffingFull);
           } else {
             staffDd.removeAttribute('title');
           }
-          document.getElementById('p4-ms-d-pct').textContent = p.pct;
-          document.getElementById('p4-ms-d-ps').textContent = p.plannedStart;
-          document.getElementById('p4-ms-d-pe').textContent = p.plannedEnd;
-          document.getElementById('p4-ms-d-bd').textContent = p.brandDept;
-          document.getElementById('p4-ms-d-client').textContent = p.clientName;
-          document.getElementById('p4-ms-d-created').textContent = p.dateCreated;
-          document.getElementById('p4-ms-d-expected').textContent = p.expectedCompletion;
-          document.getElementById('p4-ms-d-budget').textContent = p.totalBudget;
-          document.getElementById('p4-ms-d-actlab').textContent = p.actualLabour;
-          document.getElementById('p4-ms-d-actvar').textContent = p.actualVariations;
-          document.getElementById('p4-ms-d-rev').textContent = p.revenue;
+          document.getElementById('p4-ms-d-pct').textContent = payload.pct;
+          document.getElementById('p4-ms-d-ps').textContent = payload.plannedStart;
+          document.getElementById('p4-ms-d-pe').textContent = payload.plannedEnd;
+          document.getElementById('p4-ms-d-bd').textContent = payload.brandDept;
+          document.getElementById('p4-ms-d-client').textContent = payload.clientName;
+          document.getElementById('p4-ms-d-created').textContent = payload.dateCreated;
+          document.getElementById('p4-ms-d-expected').textContent = payload.expectedCompletion;
+          document.getElementById('p4-ms-d-budget').textContent = payload.totalBudget;
+          document.getElementById('p4-ms-d-actlab').textContent = payload.actualLabour;
+          document.getElementById('p4-ms-d-actvar').textContent = payload.actualVariations;
+          document.getElementById('p4-ms-d-rev').textContent = payload.revenue;
           document.getElementById('p4-ms-d-totalact').textContent = xeroProjectsPendingLabel();
           document.getElementById('p4-ms-d-gp').textContent = xeroProjectsPendingLabel();
           drawer.hidden = false;
@@ -5650,25 +6528,24 @@
           });
         }
 
-        if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-        if (backdrop) backdrop.addEventListener('click', closeDrawer);
+        if (closeMsBtn) closeMsBtn.addEventListener('click', closeMsDrawer);
+        if (backdrop) backdrop.addEventListener('click', closeMsDrawer);
 
         tableEl.querySelectorAll('.p4-ms-row-hit').forEach(function(el) {
           el.addEventListener('click', function(e) {
             if (e.target.closest('button')) return;
             var idx = parseInt(el.getAttribute('data-ms-idx'), 10);
-            if (!isNaN(idx)) openDrawer(idx);
+            if (!isNaN(idx)) openMsDrawer(idx);
           });
           el.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               var idx = parseInt(el.getAttribute('data-ms-idx'), 10);
-              if (!isNaN(idx)) openDrawer(idx);
+              if (!isNaN(idx)) openMsDrawer(idx);
             }
           });
         });
 
-        // Scroll timeline so Today is on-screen
         function scrollTimelineIntoView() {
           var scrollEl = tableEl.querySelector('.p4-ms-scroll');
           if (!scrollEl || !hasRange) return;
@@ -5689,8 +6566,8 @@
         });
       }
 
-      if (schedFiltered.length > 0) {
-        var sortedSched = schedFiltered.slice().sort(function(a, b) {
+      if (schedForMs.length > 0) {
+        var sortedSched = schedForMs.slice().sort(function(a, b) {
           var oa = isOverdueNorm(a) ? 0 : 1;
           var ob = isOverdueNorm(b) ? 0 : 1;
           if (oa !== ob) return oa - ob;
@@ -5708,338 +6585,10 @@
       } else {
         var msKpiEmpty = document.getElementById('p4-ms-kpi-row');
         if (msKpiEmpty) msKpiEmpty.hidden = true;
-        tableEl.innerHTML =
-          '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
-      }
-
-      // ── Job Costing (KPIs + Top 5 chart + Job Costing Overview table) ──
-      function destroyP4LabourChart() {
-        if (_charts['chart-p4-labour-top5']) {
-          _charts['chart-p4-labour-top5'].destroy();
-          delete _charts['chart-p4-labour-top5'];
+        if (tableEl) {
+          tableEl.innerHTML =
+            '<p class="no-data-msg">No schedule data yet: data syncs every Friday at 6pm via the Buildpass Schedule task.</p>';
         }
-      }
-
-      function clearP4LabourSectionEmpty(msg) {
-        destroyP4LabourChart();
-        ['kpi-p4-labour-cost', 'kpi-p4-labour-revenue', 'kpi-p4-labour-margin'].forEach(function(id) {
-          setKPI(id, id + '-sub', '-', '');
-        });
-        var noteEl = document.getElementById('p4-labour-outlier-note');
-        if (noteEl) {
-          noteEl.hidden = true;
-          noteEl.textContent = '';
-        }
-        var tableElLab = document.getElementById('p4-labour-table');
-        if (tableElLab) tableElLab.innerHTML = '<p class="no-data-msg">' + msg + '</p>';
-      }
-
-      function p4JcoCell(text, isEmpty) {
-        if (isEmpty) return '<span class="p4-jco-null">-</span>';
-        return text;
-      }
-
-      function p4JcoMoneyCell(raw) {
-        var formatted = formatLiveMoneyOrDash(raw);
-        return p4JcoCell(formatted, formatted === '-');
-      }
-
-      function p4JcoPill(text, kind) {
-        var t = String(text || '').trim();
-        if (!t) return '<span class="p4-jco-null">-</span>';
-        var cls = kind === 'brand' ? 'p4-jco-pill p4-jco-pill--action' : 'p4-jco-pill p4-jco-pill--neutral';
-        return '<span class="' + cls + '">' + t + '</span>';
-      }
-
-      function p4JcoLabourPctCell(pct) {
-        if (!pct || !(pct > 0)) return '<span class="p4-jco-null">-</span>';
-        var label = pct.toFixed(1) + '%';
-        var barW = Math.min(100, Math.max(0, pct));
-        return '<div class="p4-jco-pct">' +
-          '<span class="p4-jco-pct-label">' + label + '</span>' +
-          '<span class="p4-jco-pct-track" aria-hidden="true">' +
-          '<span class="p4-jco-pct-fill" style="width:' + barW.toFixed(1) + '%"></span>' +
-          '</span></div>';
-      }
-
-      // Department filter options from labour rows already reduced by Brand/Month/Year
-      var labourDeptList = uniqueDeptListFromRows([labourFiltered]);
-      var labourDeptSelect = document.getElementById('p4-labour-dept-filter');
-      if (labourDeptSelect) {
-        var prevDept = activeP4LabourDept;
-        labourDeptSelect.innerHTML = '<option value="ALL">All Departments</option>';
-        labourDeptList.forEach(function(d) {
-          var opt = document.createElement('option');
-          opt.value = d;
-          opt.textContent = d;
-          labourDeptSelect.appendChild(opt);
-        });
-        var prevDeptOk = prevDept && prevDept !== 'ALL' && labourDeptList.some(function(d) {
-          return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
-        });
-        if (prevDeptOk) {
-          var deptMatch = labourDeptList.filter(function(d) {
-            return normalizeDeptKey(d) === normalizeDeptKey(prevDept);
-          })[0];
-          activeP4LabourDept = deptMatch || prevDept;
-          labourDeptSelect.value = activeP4LabourDept;
-        } else {
-          activeP4LabourDept = 'ALL';
-          labourDeptSelect.value = 'ALL';
-        }
-        if (!_p4LabourDeptBound) {
-          _p4LabourDeptBound = true;
-          labourDeptSelect.addEventListener('change', function() {
-            activeP4LabourDept = this.value || 'ALL';
-            if (window._p4ScheduleRows) {
-              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
-              if (typeof init3DTilt === 'function') init3DTilt();
-            } else {
-              loadP4();
-            }
-          });
-        }
-      }
-
-      var labourForSection = (labourFiltered || []).filter(function(r) {
-        return rowsMatchDept(r, activeP4LabourDept);
-      });
-
-      if (labourForSection.length > 0) {
-        var labourByProject = {};
-        labourForSection.forEach(function(r) {
-          var project = p4LabourJobId(r);
-          if (!project) return;
-          if (!labourByProject[project]) {
-            labourByProject[project] = {
-              project: project,
-              brand: col(r, 'Brand', 'brand') || '',
-              department: col(r, 'Department', 'department') || '',
-              hours: 0,
-              cost: 0
-            };
-          }
-          var lHrs = parseNum(col(r, 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'));
-          var lRate = parseNum(col(r, 'Hourly Rate ($)', 'Hourly Rate', 'Rate', 'hourly_rate', 'rate'));
-          var lCost = (lHrs && lRate)
-            ? lHrs * lRate
-            : parseNum(col(r, 'Labour Cost Monthly($)', 'Labour Cost Weekly($)', 'Labour Cost', 'Cost', 'Total Cost', 'Amount', 'cost', 'amount'));
-          labourByProject[project].hours += lHrs;
-          labourByProject[project].cost += lCost;
-          // Keep a dept label when filter is All (prefer first non-empty)
-          var d = col(r, 'Department', 'department') || '';
-          if (d && !labourByProject[project].department) labourByProject[project].department = d;
-          var b = col(r, 'Brand', 'brand') || '';
-          if (b && !labourByProject[project].brand) labourByProject[project].brand = b;
-        });
-
-        Object.values(labourByProject).forEach(function(p) {
-          var xRow = p4FindXeroProject(p.project);
-          var live = readXeroProjectLive(xRow);
-          var rev = parseNum(live.revenueRaw);
-          p.revenue = rev || 0;
-          p.revenueRawPresent = live.revenueRaw !== '' && live.revenueRaw != null &&
-            String(live.revenueRaw).trim() !== '';
-          p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
-          p.clientName = live.clientName || '';
-          p.totalBudget = live.totalBudgetRaw;
-          p.actualLabour = live.actualLabourRaw;
-          p.actualVariations = live.actualVariationsRaw;
-          if (live.brand && !p.brand) p.brand = live.brand;
-          if (live.department && !p.department) p.department = live.department;
-        });
-
-        var labourRows = Object.values(labourByProject)
-          .sort(function(a, b) { return b.cost - a.cost; });
-
-        var totalHrs = labourRows.reduce(function(s, p) { return s + (p.hours || 0); }, 0);
-        var totalCostJobs = labourRows.reduce(function(s, p) { return s + (p.cost || 0); }, 0);
-        var jobCount = labourRows.length;
-        // Revenue + cost universe for margin: only jobs with live Xero revenue
-        var totalRevenueJobs = 0;
-        var costOnRevenueJobs = 0;
-        var jobsWithRevenue = 0;
-        labourRows.forEach(function(p) {
-          if (p.revenueRawPresent && p.revenue > 0) {
-            totalRevenueJobs += p.revenue;
-            costOnRevenueJobs += (p.cost || 0);
-            jobsWithRevenue += 1;
-          }
-        });
-        // Weighted margin % = (Revenue - Labour Cost) / Revenue on the same job set
-        var avgMarginPct = null;
-        if (totalRevenueJobs > 0) {
-          avgMarginPct = ((totalRevenueJobs - costOnRevenueJobs) / totalRevenueJobs) * 100;
-        }
-
-        setKPI(
-          'kpi-p4-labour-cost',
-          'kpi-p4-labour-cost-sub',
-          totalCostJobs ? formatCurrency(totalCostJobs) : '$0',
-          jobCount + ' job' + (jobCount !== 1 ? 's' : '') +
-            (totalHrs ? ' · ' + (totalHrs >= 1000 ? totalHrs.toFixed(0) : totalHrs.toFixed(1)) + ' hrs' : '')
-        );
-        setKPI(
-          'kpi-p4-labour-revenue',
-          'kpi-p4-labour-revenue-sub',
-          jobsWithRevenue ? formatCurrency(totalRevenueJobs) : '-',
-          jobsWithRevenue
-            ? jobsWithRevenue + ' job' + (jobsWithRevenue !== 1 ? 's' : '') + ' with revenue'
-            : 'Not yet matched from Xero'
-        );
-        setKPI(
-          'kpi-p4-labour-margin',
-          'kpi-p4-labour-margin-sub',
-          avgMarginPct !== null ? avgMarginPct.toFixed(1) + '%' : '-',
-          avgMarginPct !== null
-            ? '(Revenue - Labour) ÷ Revenue'
-            : 'Needs revenue on job rows'
-        );
-
-        var top5 = labourRows.slice(0, 5);
-        var top5Keys = {};
-        top5.forEach(function(p) { top5Keys[p.project] = true; });
-
-        var outlierNote = document.getElementById('p4-labour-outlier-note');
-        if (outlierNote) {
-          if (top5.length >= 2 && top5[1].cost > 0 && top5[0].cost > top5[1].cost) {
-            var pctAbove = Math.round(((top5[0].cost - top5[1].cost) / top5[1].cost) * 100);
-            // Flag when the leader is a clear outlier (≥40% above the next job)
-            if (pctAbove >= 40) {
-              var shortName = String(top5[0].project || 'Top job');
-              if (shortName.length > 28) shortName = shortName.slice(0, 26) + '…';
-              outlierNote.textContent =
-                shortName + ' is highest cost - ' + pctAbove + '% above the next job';
-              outlierNote.hidden = false;
-            } else {
-              outlierNote.hidden = true;
-              outlierNote.textContent = '';
-            }
-          } else {
-            outlierNote.hidden = true;
-            outlierNote.textContent = '';
-          }
-        }
-
-        destroyP4LabourChart();
-        if (top5.length > 0 && document.getElementById('chart-p4-labour-top5')) {
-          var isOutlier =
-            top5.length >= 2 &&
-            top5[1].cost > 0 &&
-            ((top5[0].cost - top5[1].cost) / top5[1].cost) * 100 >= 40;
-          var barColors = top5.map(function(p, i) {
-            if (p4UseTestPalette) {
-              if (i === 0 && isOutlier) return brandAccent;
-              if (i === 0) return 'rgba(234,88,12,0.85)';
-              if (i === 1) return 'rgba(234,88,12,0.5)';
-              return brandSoftGray;
-            }
-            if (i === 0 && isOutlier) return brandCharcoal;
-            if (i === 0) return 'rgba(38,36,37,0.72)';
-            if (i === 1) return 'rgba(38,36,37,0.5)';
-            return brandSoftGray;
-          });
-          makeChart('chart-p4-labour-top5', {
-            type: 'bar',
-            data: {
-              labels: top5.map(function(p) {
-                var lab = String(p.project || '-');
-                return lab.length > 36 ? lab.slice(0, 34) + '…' : lab;
-              }),
-              datasets: [{
-                data: top5.map(function(p) { return Math.round(p.cost * 100) / 100; }),
-                backgroundColor: barColors,
-                borderWidth: 0,
-                borderRadius: 4,
-                barThickness: 16,
-                maxBarThickness: 20
-              }]
-            },
-            options: {
-              indexAxis: 'y',
-              responsive: true,
-              maintainAspectRatio: false,
-              layout: { padding: { right: 12, left: 2, top: 4, bottom: 4 } },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: function(ctx) {
-                      return formatCurrency(ctx.raw);
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  beginAtZero: true,
-                  ticks: {
-                    color: brandCharcoal,
-                    font: { size: 10, family: 'Montserrat' },
-                    callback: function(v) {
-                      return Math.abs(v) >= 1000
-                        ? '$' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k'
-                        : '$' + v;
-                    }
-                  },
-                  grid: { color: p4UseTestPalette ? 'rgba(107,114,128,0.35)' : 'rgba(188,189,190,0.35)' },
-                  border: { color: brandSoftGray }
-                },
-                y: {
-                  ticks: {
-                    color: brandCharcoal,
-                    font: { size: 10, family: 'Montserrat' }
-                  },
-                  grid: { display: false },
-                  border: { color: brandSoftGray }
-                }
-              }
-            }
-          });
-        }
-
-        // Job Costing Overview table - live Buildpass_Labour + Xero_Projects (Job # match)
-        var th =
-          '<th class="p4-jco-th p4-jco-th--left">Project</th>' +
-          '<th class="p4-jco-th p4-jco-th--left">Client Name</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Hours</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Labour Cost</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Actual-Labour</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Actual-Variations</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Total Budget</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Revenue</th>' +
-          '<th class="p4-jco-th p4-jco-th--num">Labour %</th>' +
-          '<th class="p4-jco-th p4-jco-th--left">Brand</th>' +
-          '<th class="p4-jco-th p4-jco-th--left">Department</th>';
-        var trs = labourRows.map(function(p) {
-          var isTop = !!top5Keys[p.project];
-          var hrsTxt = p.hours ? parseFloat(p.hours).toFixed(1) : '';
-          var costTxt = p.cost ? formatCurrency(p.cost) : '';
-          var revTxt = p.revenueRawPresent && p.revenue ? formatCurrency(p.revenue) : '';
-          return '<tr class="' + (isTop ? 'p4-labour-row-top5' : '') + '">' +
-            '<td class="p4-jco-td p4-jco-td--project">' + p4JcoCell(p.project || '-', !p.project) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoCell(p.clientName || '-', !p.clientName) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, !hrsTxt) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(costTxt, !costTxt) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualLabour) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualVariations) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.totalBudget) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(revTxt || '-', !revTxt) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num p4-jco-td--pct">' + p4JcoLabourPctCell(p.labourPct) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.brand, 'brand') + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.department, 'dept') + '</td>' +
-            '</tr>';
-        }).join('');
-        document.getElementById('p4-labour-table').innerHTML =
-          '<div class="table-wrap p4-labour-table-wrap p4-jco-table-wrap">' +
-          '<table class="data-table p4-labour-table p4-jco-table">' +
-          '<thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table></div>';
-      } else {
-        clearP4LabourSectionEmpty(
-          labourFiltered.length > 0
-            ? 'No labour data for the selected department.'
-            : 'No labour data yet: run Make.com Scenario 9b to populate the Buildpass_Labour tab.'
-        );
       }
     }
 
