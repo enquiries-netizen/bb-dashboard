@@ -1239,7 +1239,7 @@
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: left ~70% Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12; muted project bars, tentative outlined, leave hatched, overallocation accent stripe, actual overlay); right ~30% 12-week department capacity heatmap (util vs dept availability; bands <60 under / 60-85 healthy / 85-100 watch / >100 over / grey gap); lower Planned vs Actual/Forecast chart + Capacity Exceptions action table (Priority, Issue, Impact, Action). Employee detail tables behind drill-down only on planning. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction: reviews and ratings',
-      P8: 'Weekly Overview: the week-over-week comparison hub. Full this-week vs last-week for Sales (leads, won), Capacity (hours logged), and Marketing (spend, leads), all on one page. Use P8 when asked for week-over-week on P2/P6/P10.',
+      P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
       P10: 'Marketing: ad spend, leads, CPL, ROAS, campaign performance. Has a lightweight "this week" pulse (spend / leads) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Marketing, send the user to P8.',
       P11: 'Quality & Variations: defects/rework, variations log, site diary issues'
@@ -1370,6 +1370,29 @@
           if (accepted > 0) {
             push(accepted + ' accepted quote' + (accepted === 1 ? '' : 's') +
               ' in the current Quotes selection (' + data.quotes.length + ' total).');
+          }
+        }
+
+        if (pageKey === 'P8') {
+          if (Array.isArray(data.attention) && data.attention.length) {
+            var high = data.attention.filter(function(a) { return a && a.priority === 'High'; });
+            if (high.length) {
+              push(high.length + ' high-priority management attention item' +
+                (high.length === 1 ? '' : 's') +
+                (high[0].issue ? ': ' + high[0].issue : '') + '.');
+            }
+          }
+          if (data.weekOverWeek && data.weekOverWeek.sales) {
+            var s8 = data.weekOverWeek.sales;
+            if (s8.leadsThis != null && s8.leadsLast != null && s8.leadsLast !== s8.leadsThis) {
+              var ld = s8.leadsThis - s8.leadsLast;
+              push('Leads ' + (ld > 0 ? 'up +' : 'down ') + ld +
+                ' this week vs previous (' + s8.leadsThis + ' vs ' + s8.leadsLast + ').');
+            } else if (s8.wonThis != null && s8.wonLast != null && s8.wonThis !== s8.wonLast) {
+              var wd = s8.wonThis - s8.wonLast;
+              push('Jobs won ' + (wd > 0 ? 'up +' : 'down ') + wd +
+                ' this week vs previous (' + s8.wonThis + ' vs ' + s8.wonLast + ').');
+            }
           }
         }
       } catch (err) {
@@ -3394,288 +3417,1628 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P8 — WEEKLY OVERVIEW
-    // Source: Weekly_Summary tab (AppScript ✅) + Targets tab
-    // KPIs:   Latest week — Leads, Revenue, Quotes, Jobs Won
-    // Chart:  12-week leads + revenue combo bar/line
-    // Table:  Last 12 weeks, newest first
+    // P8 — WEEKLY OVERVIEW (management meeting dashboard)
+    // One ISO-week reporting period for the whole page (Week Ending).
+    // Roll-ups from GHL, Quotes, Weekly_Summary, Labour, Capacity,
+    // schedule, Xero, variations — never invent numbers.
     // ═══════════════════════════════════════════════════════════════
-    async function loadP8() {
-      showLoading(true);
+    var _p8Cache = null;
+    var _p8SelectedWeekKey = null;
+    var _p8SheetMeta = {};
+    var _p8AutoRefreshTimer = null;
+    var P8_NA = 'Not available';
+    var P8_NOT_POSTED = 'Not yet posted';
+    var P8_N_A = 'Not applicable';
+
+    function p8FetchSheet(tabName) {
+      return fetchSheet(tabName).then(function(data) {
+        return { ok: true, data: data || [], tab: tabName, status: 200, loadedAt: new Date() };
+      }).catch(function(err) {
+        var msg = err && err.message ? String(err.message) : String(err || '');
+        var m = msg.match(/Sheets API error\s+(\d+)/i);
+        var status = m ? parseInt(m[1], 10) : null;
+        console.warn('[P8] Sheet load failed:', tabName, status != null ? ('HTTP ' + status) : msg);
+        return { ok: false, data: [], tab: tabName, status: status, error: err, loadedAt: new Date() };
+      });
+    }
+
+    function p8Esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function p8Round1(n) {
+      return Math.round((Number(n) || 0) * 10) / 10;
+    }
+
+    function p8IsoParts(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      var dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      var weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      var y = date.getUTCFullYear();
+      var key = y + '-W' + (weekNo < 10 ? '0' : '') + weekNo;
+      return { year: y, week: weekNo, key: key };
+    }
+
+    function p8ParseWeekKey(key) {
+      var m = String(key || '').match(/^(\d{4})-W(\d{1,2})$/i);
+      if (!m) return null;
+      return { year: parseInt(m[1], 10), week: parseInt(m[2], 10), key: m[1] + '-W' + (parseInt(m[2], 10) < 10 ? '0' : '') + parseInt(m[2], 10) };
+    }
+
+    function p8WeekMonday(year, week) {
+      if (typeof p6IsoWeekMonday === 'function') return p6IsoWeekMonday(year, week);
+      var jan4 = new Date(year, 0, 4);
+      var jan4Day = jan4.getDay() || 7;
+      var week1Mon = new Date(jan4);
+      week1Mon.setDate(jan4.getDate() - jan4Day + 1);
+      var mon = new Date(week1Mon);
+      mon.setDate(week1Mon.getDate() + (week - 1) * 7);
+      mon.setHours(0, 0, 0, 0);
+      return mon;
+    }
+
+    function p8WeekSunday(year, week) {
+      var mon = p8WeekMonday(year, week);
+      var sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      sun.setHours(23, 59, 59, 999);
+      return sun;
+    }
+
+    function p8FmtDayMonth(d) {
+      if (!d || isNaN(d.getTime())) return '';
+      return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'long' });
+    }
+
+    function p8FmtDayMonthYear(d) {
+      if (!d || isNaN(d.getTime())) return '';
+      return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'long', year: 'numeric' });
+    }
+
+    function p8PeriodLabel(parts) {
+      if (!parts) return 'Period not set';
+      var mon = p8WeekMonday(parts.year, parts.week);
+      var sun = p8WeekSunday(parts.year, parts.week);
+      var range = mon.getMonth() === sun.getMonth()
+        ? mon.getDate() + '-' + p8FmtDayMonthYear(sun)
+        : p8FmtDayMonth(mon) + '-' + p8FmtDayMonthYear(sun);
+      return 'Week ending ' + p8FmtDayMonthYear(sun) + ' · ' + range;
+    }
+
+    function p8DateInRange(d, mon, sun) {
+      if (!d || isNaN(d.getTime())) return false;
+      var t = d.getTime();
+      return t >= mon.getTime() && t <= sun.getTime();
+    }
+
+    function p8MoneyKnown(raw) {
+      if (raw === '' || raw === null || raw === undefined) return false;
+      var s = String(raw).trim();
+      if (!s || s === '-' || s === '—' || s.toLowerCase() === 'n/a') return false;
+      return true;
+    }
+
+    function p8FmtMoney(n) {
+      if (n == null || isNaN(n)) return P8_NA;
+      return formatCurrency(n);
+    }
+
+    function p8FmtMoneyCompact(n) {
+      if (n == null || isNaN(n)) return P8_NA;
+      var abs = Math.abs(n);
+      var sign = n < 0 ? '-' : '';
+      if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+      if (abs >= 10000) return sign + '$' + Math.round(abs / 1000) + 'k';
+      if (abs >= 1000) return sign + '$' + (abs / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return p8FmtMoney(n);
+    }
+
+    function p8FmtNum(n, digits) {
+      if (n == null || isNaN(n)) return P8_NA;
+      if (digits === 0) return String(Math.round(n));
+      var d = digits == null ? 1 : digits;
+      var v = Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
+      return String(v);
+    }
+
+    function p8AbsChange(curr, prev, unit) {
+      if (curr == null || prev == null || isNaN(curr) || isNaN(prev)) return P8_NA;
+      var d = curr - prev;
+      var sign = d > 0 ? '+' : '';
+      var body = (typeof unit === 'string' && unit.indexOf('$') === 0)
+        ? p8FmtMoneyCompact(d)
+        : (sign + p8FmtNum(d, unit === 'hrs' || unit === 'h' ? 1 : 0) + (unit && unit.indexOf('$') !== 0 ? (unit ? ' ' + unit : '') : ''));
+      if (typeof unit === 'string' && unit.indexOf('$') === 0) {
+        if (d > 0 && body.charAt(0) !== '+' && body.charAt(0) !== '-') body = '+' + body;
+        return body;
+      }
+      return body;
+    }
+
+    function p8Avg4(arr) {
+      var nums = (arr || []).filter(function(v) { return v != null && !isNaN(v); });
+      if (!nums.length) return null;
+      var s = 0;
+      nums.forEach(function(v) { s += v; });
+      return s / nums.length;
+    }
+
+    function p8StatusPack(actual, target, higherIsBetter) {
+      if (actual == null || isNaN(actual)) {
+        return { key: 'gap', label: P8_NA, cls: 'p8-st--gap' };
+      }
+      if (target == null || isNaN(target) || target === 0) {
+        return { key: 'neutral', label: 'No target', cls: 'p8-st--neutral' };
+      }
+      var ratio = higherIsBetter === false ? (target / actual) : (actual / target);
+      if (!isFinite(ratio)) return { key: 'gap', label: P8_NA, cls: 'p8-st--gap' };
+      if (ratio >= 1) return { key: 'healthy', label: 'Favourable', cls: 'p8-st--healthy' };
+      if (ratio >= 0.9) return { key: 'watch', label: 'Watch', cls: 'p8-st--watch' };
+      return { key: 'risk', label: 'At Risk', cls: 'p8-st--risk' };
+    }
+
+    function p8DealValue(r) {
+      var raw = rawColByNames(r, ['Value ($)', 'Value', 'value', 'Deal Value', 'Opportunity Value', 'Contract Value']);
+      if (!p8MoneyKnown(raw)) return null;
+      var n = parseNum(raw);
+      if (isNaN(n) || n <= 1.01) return null;
+      return n;
+    }
+
+    function p8QuoteValue(r) {
+      var raw = rawColByNames(r, ['Quote Value ($)', 'Quote Value', 'quote_value', 'Value ($)', 'Value']);
+      if (!p8MoneyKnown(raw)) return null;
+      var n = parseNum(raw);
+      if (isNaN(n)) return null;
+      return n;
+    }
+
+    function p8IsWon(r) {
+      var st = String(col(r, 'Status', 'status') || '').trim().toLowerCase();
+      var stage = String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim().toLowerCase();
+      return st === 'won' || stage === 'won' || stage.indexOf('won') === 0;
+    }
+
+    function p8LeadDate(r) {
+      return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') ||
+        (typeof getRowDateStr === 'function' ? getRowDateStr(r) : '');
+    }
+
+    function p8WonDate(r) {
+      return col(r, 'Close Date', 'Won Date', 'Date Won', 'Expected Close Date', 'Date Created', 'Last Activity Date', 'Date') ||
+        (typeof getRowDateStr === 'function' ? getRowDateStr(r) : '');
+    }
+
+    function p8IsQualified(r) {
+      var stage = String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage', 'Status', 'status') || '').toLowerCase();
+      if (!stage) return false;
+      if (stage.indexOf('new lead') !== -1 || stage === 'new' || stage.indexOf('initial') !== -1) return false;
+      if (stage.indexOf('lost') !== -1) return false;
+      return (
+        stage.indexOf('qualif') !== -1 ||
+        stage.indexOf('contacted') !== -1 ||
+        stage.indexOf('site') !== -1 ||
+        stage.indexOf('quote') !== -1 ||
+        stage.indexOf('follow') !== -1 ||
+        stage.indexOf('negotiat') !== -1 ||
+        stage === 'won' ||
+        stage.indexOf('catalogue') !== -1
+      );
+    }
+
+    function p8IsLeaveRow(r) {
+      var role = String(col(r, 'Role', 'role') || '').toLowerCase();
+      var site = String(col(r, 'Site / Area', 'site / area') || '').toLowerCase();
+      return /leave|training|holiday|public holiday|rdo|sick|personal/.test(role) ||
+        /leave|training|holiday/.test(site);
+    }
+
+    function p8SummaryWeekKey(r) {
+      var we = col(r, 'Week Ending', 'Week End', 'week_ending', 'Week Ended');
+      if (we) {
+        var k1 = weekKeyFromDateStr(we);
+        if (k1) return k1;
+      }
+      var ws = col(r, 'Week Start', 'week_start', 'Period Start', 'Start of Week');
+      if (ws) {
+        var k2 = weekKeyFromDateStr(ws);
+        if (k2) return k2;
+      }
+      var w = col(r, 'Week', 'week', 'Period', 'Week Label');
+      if (w) {
+        var k3 = weekKeyFromDateStr(w);
+        if (k3) return k3;
+        var m = String(w).match(/(20\d{2})\s*[-/]?\s*W?\s*(\d{1,2})/i) || String(w).match(/W(?:eek)?\s*(\d{1,2})\s*[,/ ]+\s*(20\d{2})/i);
+        if (m) {
+          var y = parseInt(m[1].length === 4 ? m[1] : m[2], 10);
+          var wn = parseInt(m[1].length === 4 ? m[2] : m[1], 10);
+          if (y && wn) return y + '-W' + (wn < 10 ? '0' : '') + wn;
+        }
+      }
+      var wnOnly = parseNum(col(r, 'Week Number', 'week number', 'ISO Week'));
+      var yOnly = parseNum(col(r, 'Year', 'year')) || new Date().getFullYear();
+      if (wnOnly) return yOnly + '-W' + (wnOnly < 10 ? '0' : '') + wnOnly;
+      return null;
+    }
+
+    function p8PrevWeekKey(key) {
+      var p = p8ParseWeekKey(key);
+      if (!p) return null;
+      var mon = p8WeekMonday(p.year, p.week);
+      mon.setDate(mon.getDate() - 7);
+      var prev = p8IsoParts(mon);
+      return prev ? prev.key : null;
+    }
+
+    function p8LastNKeys(endKey, n) {
+      var out = [];
+      var cur = endKey;
+      for (var i = 0; i < n; i++) {
+        if (!cur) break;
+        out.unshift(cur);
+        cur = p8PrevWeekKey(cur);
+      }
+      return out;
+    }
+
+    async function loadP8(opts) {
+      opts = opts || {};
+      var silent = !!opts.silent;
+      if (!silent) showLoading(true);
       removeError('p8');
       try {
-        // Weekly_Summary for existing KPIs/chart; live sources for WoW hub;
-        // Weekly Summary(Marketing) optional (may be empty / missing).
-        var marketingWeekly = [];
-        try {
-          marketingWeekly = await fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING);
-        } catch (mktErr) {
-          console.warn('P8: Weekly Summary(Marketing) unavailable:', mktErr.message || mktErr);
-          marketingWeekly = [];
-        }
-        var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
-          fetchSheet(CONFIG.TABS.TARGETS),
-          fetchSheet(CONFIG.TABS.GHL_LEADS),
-          fetchSheet(CONFIG.TABS.GHL_PIPELINE),
-          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
+        var settled = await Promise.all([
+          p8FetchSheet(CONFIG.TABS.WEEKLY_SUMMARY),
+          p8FetchSheet(CONFIG.TABS.TARGETS),
+          p8FetchSheet(CONFIG.TABS.GHL_LEADS),
+          p8FetchSheet(CONFIG.TABS.GHL_PIPELINE),
+          p8FetchSheet(CONFIG.TABS.GHL_QUOTES),
+          p8FetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
+          p8FetchSheet(CONFIG.TABS.CAPACITY),
+          p8FetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
+          p8FetchSheet(CONFIG.TABS.XERO_FINANCIALS),
+          p8FetchSheet(CONFIG.TABS.XERO_INVOICES),
+          p8FetchSheet(CONFIG.TABS.VARIATIONS_LOG),
+          p8FetchSheet(CONFIG.TABS.DEFECTS_REWORK),
+          p8FetchSheet(CONFIG.TABS.CASHFLOW_FORECAST),
+          p8FetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING)
         ]);
-        renderP8(results[0], results[1], results[2], results[3], results[4], marketingWeekly);
+        _p8SheetMeta = {
+          weekly: settled[0], targets: settled[1], leads: settled[2], pipeline: settled[3],
+          quotes: settled[4], labour: settled[5], capacity: settled[6], schedule: settled[7],
+          financials: settled[8], invoices: settled[9], variations: settled[10],
+          defects: settled[11], cashflow: settled[12], marketing: settled[13]
+        };
+        _p8Cache = {
+          weekly: settled[0].data,
+          targets: settled[1].data,
+          leads: settled[2].data,
+          pipeline: settled[3].data,
+          quotes: settled[4].data,
+          labour: settled[5].data,
+          capacity: settled[6].data,
+          schedule: settled[7].data,
+          financials: settled[8].data,
+          invoices: settled[9].data,
+          variations: settled[10].data,
+          defects: settled[11].data,
+          cashflow: settled[12].data,
+          marketing: settled[13].data,
+          loadedAt: new Date()
+        };
+        renderP8();
+        if (!_p8AutoRefreshTimer) {
+          _p8AutoRefreshTimer = setInterval(function() {
+            var active = document.querySelector('.nav-item.active');
+            if (active && active.dataset.page === 'p8') loadP8({ silent: true });
+          }, 10 * 60 * 1000);
+        }
       } catch (err) {
         console.error('P8 load error:', err);
-        showError('p8', 'Could not load Weekly Overview data.');
+        if (!silent) showError('p8', 'Could not load Weekly Overview data.');
       } finally {
-        showLoading(false);
+        if (!silent) showLoading(false);
         init3DTilt();
       }
     }
 
-    function renderP8(weekly, targets, ghlLeads, ghlPipeline, labour, mktWeekly) {
-      function applyFilters(rows) {
-        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+    function renderP8() {
+      if (!_p8Cache) return;
+      var brand = typeof activeBrand !== 'undefined' ? activeBrand : 'ALL';
+      function brandRows(rows) {
+        return filterByBrand(rows || [], brand);
       }
 
-      var branded  = filterByBrand(weekly, activeBrand);
-      var filtered = filterByMonths(branded, activeMonths);
+      var weekly = brandRows(_p8Cache.weekly);
+      var targets = brandRows(_p8Cache.targets);
+      var leads = brandRows(_p8Cache.leads);
+      var pipeline = brandRows(_p8Cache.pipeline);
+      var quotes = brandRows(_p8Cache.quotes);
+      var labourRaw = brandRows(_p8Cache.labour);
+      var capacity = brandRows(_p8Cache.capacity);
+      var schedule = brandRows(_p8Cache.schedule);
+      var financials = brandRows(_p8Cache.financials);
+      var invoices = brandRows(_p8Cache.invoices);
+      var variations = brandRows(_p8Cache.variations);
+      var defects = brandRows(_p8Cache.defects);
+      var labour = typeof p6DedupLabourRows === 'function' ? p6DedupLabourRows(labourRaw) : labourRaw;
 
-      var leadsF = applyFilters(ghlLeads || []);
-      var pipeF  = applyFilters(ghlPipeline || []);
-      var labF   = applyFilters(labour || []);
-      var mktF   = applyFilters(mktWeekly || []);
-
-      // ── Sales WoW from GHL ─────────────────────────────────
-      function leadEventDate(r) {
-        return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') ||
-               getRowDateStr(r);
+      // ── Discover ISO weeks from live dated events (single calendar) ──
+      var weekSet = {};
+      function noteDate(ds) {
+        var d = parseFlexibleDate(ds);
+        var p = p8IsoParts(d);
+        if (p) weekSet[p.key] = true;
       }
-      function wonEventDate(r) {
-        return col(r, 'Close Date', 'Expected Close Date', 'Date Created', 'Last Activity Date', 'Date') ||
-               getRowDateStr(r);
-      }
-      function isRowWon(r) {
-        var st = String(col(r, 'Status', 'status') || '').trim().toLowerCase();
-        var stage = String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim().toLowerCase();
-        return st === 'won' || stage === 'won';
-      }
-
-      var leadsByWeek = {};
-      leadsF.forEach(function(r) {
-        var k = weekKeyFromDateStr(leadEventDate(r));
-        if (!k) return;
-        leadsByWeek[k] = (leadsByWeek[k] || 0) + 1;
+      leads.forEach(function(r) { noteDate(p8LeadDate(r)); });
+      pipeline.forEach(function(r) { noteDate(p8WonDate(r)); });
+      quotes.forEach(function(r) {
+        noteDate(col(r, 'Date Sent', 'Date Quoted', 'Date', 'Created Date', 'Date Created'));
       });
-      var wonByWeek = {};
-      // Prefer pipeline for wins; fall back to leads Status=Won
-      var winSource = pipeF.length ? pipeF : leadsF;
-      winSource.forEach(function(r) {
-        if (!isRowWon(r)) return;
-        var k = weekKeyFromDateStr(wonEventDate(r));
-        if (!k) return;
-        wonByWeek[k] = (wonByWeek[k] || 0) + 1;
+      weekly.forEach(function(r) {
+        var k = p8SummaryWeekKey(r);
+        if (k) weekSet[k] = true;
       });
-      var leadKeys = sortWeekKeys(Object.keys(leadsByWeek));
-      var wonKeys = sortWeekKeys(Object.keys(wonByWeek));
-      var salesKeys = sortWeekKeys(leadKeys.concat(wonKeys).filter(function(k, i, a) {
-        return a.indexOf(k) === i;
-      }));
-      var salesThis = salesKeys.length ? salesKeys[salesKeys.length - 1] : null;
-      var salesLast = salesKeys.length > 1 ? salesKeys[salesKeys.length - 2] : null;
-      var salesLeadsThis = salesThis ? (leadsByWeek[salesThis] || 0) : 0;
-      var salesLeadsLast = salesLast ? (leadsByWeek[salesLast] || 0) : 0;
-      var salesWonThis = salesThis ? (wonByWeek[salesThis] || 0) : 0;
-      var salesWonLast = salesLast ? (wonByWeek[salesLast] || 0) : 0;
-
-      if (salesThis) {
-        renderWowGrid('p8-wow-sales', [
-          { label: 'Leads', thisWeek: salesLeadsThis, lastWeek: salesLeadsLast, format: 'number' },
-          { label: 'Jobs Won', thisWeek: salesWonThis, lastWeek: salesWonLast, format: 'number' }
-        ]);
-      } else {
-        renderWowGrid('p8-wow-sales', null, 'Data not available for Sales week comparison.');
-      }
-
-      // ── Capacity WoW from Buildpass_Labour (deduped weekly hours) ─
-      var labDedupP8 = typeof p6DedupLabourRows === 'function' ? p6DedupLabourRows(labF) : labF;
-      var hoursByWeekNum = {};
-      labDedupP8.forEach(function(r) {
-        var w = typeof p6LabourWeekNum === 'function'
-          ? p6LabourWeekNum(r)
-          : parseNum(col(r, 'Week Number', 'week number'));
-        if (!w) return;
-        var h = typeof p6LabourHours === 'function'
-          ? p6LabourHours(r)
-          : parseNum(col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours'));
-        if (h === null || h === undefined || isNaN(h)) return;
-        hoursByWeekNum[w] = (hoursByWeekNum[w] || 0) + h;
-      });
-      var labWeeks = Object.keys(hoursByWeekNum).map(Number).sort(function(a, b) { return a - b; });
-      var capThisW = labWeeks.length ? labWeeks[labWeeks.length - 1] : null;
-      var capLastW = labWeeks.length > 1 ? labWeeks[labWeeks.length - 2] : null;
-      var capHrsThis = capThisW != null ? Math.round((hoursByWeekNum[capThisW] || 0) * 10) / 10 : 0;
-      var capHrsLast = capLastW != null ? Math.round((hoursByWeekNum[capLastW] || 0) * 10) / 10 : 0;
-      if (capThisW != null) {
-        renderWowGrid('p8-wow-capacity', [
-          {
-            label: 'Hours logged (Wk ' + capThisW + ')',
-            thisWeek: capHrsThis,
-            lastWeek: capHrsLast,
-            format: 'number'
+      labour.forEach(function(r) {
+        var sd = col(r, 'Shift Date', 'shift date', 'Date', 'date');
+        if (sd) noteDate(sd);
+        else {
+          var wn = typeof p6LabourWeekNum === 'function' ? p6LabourWeekNum(r) : parseNum(col(r, 'Week Number', 'week number'));
+          if (wn) {
+            var y = (typeof p6CurrentIsoWeek === 'function' ? p6CurrentIsoWeek().year : new Date().getFullYear());
+            weekSet[y + '-W' + (wn < 10 ? '0' : '') + wn] = true;
           }
-        ]);
-      } else {
-        renderWowGrid('p8-wow-capacity', null, 'Data not available for Capacity week comparison.');
-      }
-
-      // ── Marketing WoW from Weekly Summary(Marketing) ───────
-      function mktWeekKey(r) {
-        var ws = col(r, 'Week Start', 'week_start', 'Week', 'week', 'Week Ending', 'Period');
-        if (ws) {
-          var asDate = weekKeyFromDateStr(ws);
-          if (asDate) return asDate;
-          return String(ws).trim();
         }
-        var wn = parseNum(col(r, 'Week Number', 'week number'));
-        if (wn) return 'W' + wn;
-        return '';
-      }
-      function mktSpendOf(r) {
-        return parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend ($)', 'Spend', 'Total Spend'));
-      }
-      function mktLeadsOf(r) {
-        return parseNum(col(r, 'Leads Generated', 'Leads', 'Total Leads', 'leads'));
-      }
-      var mktSpendByWeek = {};
-      var mktLeadsByWeek = {};
-      mktF.forEach(function(r) {
-        var k = mktWeekKey(r);
-        if (!k) return;
-        mktSpendByWeek[k] = (mktSpendByWeek[k] || 0) + mktSpendOf(r);
-        mktLeadsByWeek[k] = (mktLeadsByWeek[k] || 0) + mktLeadsOf(r);
       });
-      var mktKeys = sortWeekKeys(Object.keys(mktSpendByWeek).concat(Object.keys(mktLeadsByWeek)).filter(function(k, i, a) {
-        return a.indexOf(k) === i;
-      }));
-      var mktThis = mktKeys.length ? mktKeys[mktKeys.length - 1] : null;
-      var mktLast = mktKeys.length > 1 ? mktKeys[mktKeys.length - 2] : null;
-      if (mktThis) {
-        renderWowGrid('p8-wow-marketing', [
-          {
-            label: 'Ad Spend',
-            thisWeek: mktSpendByWeek[mktThis] || 0,
-            lastWeek: mktLast ? (mktSpendByWeek[mktLast] || 0) : 0,
-            format: 'currency'
-          },
-          {
-            label: 'Leads',
-            thisWeek: mktLeadsByWeek[mktThis] || 0,
-            lastWeek: mktLast ? (mktLeadsByWeek[mktLast] || 0) : 0,
-            format: 'number'
-          }
-        ]);
-      } else {
-        renderWowGrid('p8-wow-marketing', null, 'Data not available for Marketing week comparison.');
+      capacity.forEach(function(r) {
+        var wn = parseInt(col(r, 'Week', 'week', 'Week Number', 'week number'), 10) || 0;
+        if (wn) {
+          var y = (typeof p6CurrentIsoWeek === 'function' ? p6CurrentIsoWeek().year : new Date().getFullYear());
+          weekSet[y + '-W' + (wn < 10 ? '0' : '') + wn] = true;
+        }
+      });
+      schedule.forEach(function(r) {
+        noteDate(col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'Planned End'));
+        noteDate(col(r, 'Planned Start Date', 'Start Date', 'startDate', 'Planned Start'));
+      });
+
+      var cur = typeof p6CurrentIsoWeek === 'function'
+        ? p6CurrentIsoWeek()
+        : (function() {
+            var p = p8IsoParts(new Date());
+            return p || { year: new Date().getFullYear(), week: 1 };
+          })();
+      var curKey = cur.year + '-W' + (cur.week < 10 ? '0' : '') + cur.week;
+      weekSet[curKey] = true;
+
+      var weekKeys = sortWeekKeys(Object.keys(weekSet));
+      // Prefer most recent complete week default when current week has little data
+      if (!_p8SelectedWeekKey || weekKeys.indexOf(_p8SelectedWeekKey) < 0) {
+        _p8SelectedWeekKey = weekKeys.length ? weekKeys[weekKeys.length - 1] : curKey;
       }
 
+      var sel = p8ParseWeekKey(_p8SelectedWeekKey);
+      if (!sel) {
+        sel = { year: cur.year, week: cur.week, key: curKey };
+        _p8SelectedWeekKey = sel.key;
+      }
+      var mon = p8WeekMonday(sel.year, sel.week);
+      var sun = p8WeekSunday(sel.year, sel.week);
+      var prevKey = p8PrevWeekKey(sel.key);
+      var prevParts = p8ParseWeekKey(prevKey);
+      var prevMon = prevParts ? p8WeekMonday(prevParts.year, prevParts.week) : null;
+      var prevSun = prevParts ? p8WeekSunday(prevParts.year, prevParts.week) : null;
+      var trendKeys = p8LastNKeys(sel.key, 8);
+      var now = new Date();
+      var weekEnded = sun < now;
+      var weekInProgress = !weekEnded && mon <= now;
+
+      // Header
+      var periodEl = document.getElementById('p8-period-label');
+      if (periodEl) periodEl.textContent = p8PeriodLabel(sel);
+      var cmpEl = document.getElementById('p8-compare-cue');
+      if (cmpEl) {
+        cmpEl.textContent = prevParts
+          ? 'Compared to previous week ending ' + p8FmtDayMonthYear(p8WeekSunday(prevParts.year, prevParts.week))
+          : 'No previous week in range';
+      }
+      var updEl = document.getElementById('p8-last-updated');
+      if (updEl) {
+        var loadedAt = _p8Cache.loadedAt || now;
+        updEl.textContent = 'Last updated ' + loadedAt.toLocaleString('en-AU', {
+          day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) + ' · auto-refresh every 10 min while open';
+      }
+
+      // Week ending select (show Sundays)
+      var selEl = document.getElementById('p8-week-ending');
+      if (selEl) {
+        var optsHtml = weekKeys.slice().reverse().map(function(k) {
+          var p = p8ParseWeekKey(k);
+          if (!p) return '';
+          var end = p8WeekSunday(p.year, p.week);
+          var label = p8FmtDayMonthYear(end) + ' (W' + p.week + ')';
+          return '<option value="' + p8Esc(k) + '"' + (k === sel.key ? ' selected' : '') + '>' +
+            p8Esc(label) + '</option>';
+        }).join('');
+        selEl.innerHTML = optsHtml || '<option value="">No weeks</option>';
+        selEl.onchange = function() {
+          _p8SelectedWeekKey = this.value;
+          renderP8();
+        };
+      }
+
+      // ── Per-week metric builders ────────────────────────────
+      function metricsForWeek(weekKey) {
+        var p = p8ParseWeekKey(weekKey);
+        if (!p) {
+          return {
+            leads: 0, qualified: 0, quotes: 0, quoteValue: null, wins: 0, winValue: null,
+            revenue: null, gp: null, productHrs: null, plannedHrs: null, availableHrs: null,
+            msDue: 0, msOnTime: 0, msComplete: 0, msDelayed: 0, msUpcoming: 0,
+            summaryPresent: false
+          };
+        }
+        var wMon = p8WeekMonday(p.year, p.week);
+        var wSun = p8WeekSunday(p.year, p.week);
+
+        var leadsN = 0, qualN = 0;
+        leads.forEach(function(r) {
+          var d = parseFlexibleDate(p8LeadDate(r));
+          if (!p8DateInRange(d, wMon, wSun)) return;
+          leadsN++;
+          if (p8IsQualified(r)) qualN++;
+        });
+
+        var quotesN = 0, quoteVal = 0, quoteValKnown = false;
+        quotes.forEach(function(r) {
+          var d = parseFlexibleDate(col(r, 'Date Sent', 'Date Quoted', 'Date', 'Created Date', 'Date Created'));
+          if (!p8DateInRange(d, wMon, wSun)) return;
+          quotesN++;
+          var v = p8QuoteValue(r);
+          if (v != null) { quoteVal += v; quoteValKnown = true; }
+        });
+
+        var winsN = 0, winVal = 0, winValKnown = false;
+        var winSrc = pipeline.length ? pipeline : leads;
+        winSrc.forEach(function(r) {
+          if (!p8IsWon(r)) return;
+          var d = parseFlexibleDate(p8WonDate(r));
+          if (!p8DateInRange(d, wMon, wSun)) return;
+          winsN++;
+          var v = p8DealValue(r);
+          if (v != null) { winVal += v; winValKnown = true; }
+        });
+
+        // Weekly_Summary for revenue / GP when keyed to this week
+        var rev = null, gp = null, summaryPresent = false;
+        var sumLeads = null, sumQuotes = null, sumJobs = null;
+        weekly.forEach(function(r) {
+          var k = p8SummaryWeekKey(r);
+          if (k !== weekKey) return;
+          summaryPresent = true;
+          var rRaw = rawColByNames(r, ['Revenue ($)', 'Revenue', 'Total Revenue ($)']);
+          if (p8MoneyKnown(rRaw)) rev = (rev || 0) + parseNum(rRaw);
+          var gRaw = rawColByNames(r, ['Gross Profit ($)', 'Gross Profit', 'GP ($)']);
+          if (p8MoneyKnown(gRaw)) gp = (gp || 0) + parseNum(gRaw);
+          var lRaw = rawColByNames(r, ['Leads (week)', 'Leads', 'Total Leads']);
+          if (p8MoneyKnown(lRaw) || String(lRaw) === '0') sumLeads = (sumLeads || 0) + parseNum(lRaw);
+          var qRaw = rawColByNames(r, ['Quotes Sent', 'Quotes']);
+          if (p8MoneyKnown(qRaw) || String(qRaw) === '0') sumQuotes = (sumQuotes || 0) + parseNum(qRaw);
+          var jRaw = rawColByNames(r, ['Jobs Won', 'Wins']);
+          if (p8MoneyKnown(jRaw) || String(jRaw) === '0') sumJobs = (sumJobs || 0) + parseNum(jRaw);
+        });
+
+        // Prefer live GHL/Quotes when loaded; fall back to Weekly_Summary counts when live empty and summary has them
+        var leadsLive = (_p8SheetMeta.leads && _p8SheetMeta.leads.ok);
+        var quotesLive = (_p8SheetMeta.quotes && _p8SheetMeta.quotes.ok);
+        var pipeLive = (_p8SheetMeta.pipeline && _p8SheetMeta.pipeline.ok);
+        if ((!leadsLive || (leadsN === 0 && sumLeads != null)) && sumLeads != null && !leadsLive) {
+          leadsN = sumLeads;
+        }
+        if ((!quotesLive || (quotesN === 0 && sumQuotes != null)) && sumQuotes != null && !quotesLive) {
+          quotesN = sumQuotes;
+        }
+        if ((!pipeLive || (winsN === 0 && sumJobs != null)) && sumJobs != null && !pipeLive) {
+          winsN = sumJobs;
+        }
+
+        // Labour: prefer shift dates in range; else week-number match for this ISO week
+        var productHrs = 0, leaveHrs = 0, labAny = false;
+        labour.forEach(function(r) {
+          var h = typeof p6LabourHours === 'function'
+            ? p6LabourHours(r)
+            : (function() {
+                var raw = col(r, 'Hours (daily)', 'Hours', 'hours', 'Total Hours');
+                if (raw === '' || raw == null) return null;
+                return parseNum(raw);
+              })();
+          if (h === null || h === undefined || isNaN(h)) return;
+          var sd = parseFlexibleDate(col(r, 'Shift Date', 'shift date', 'Date', 'date'));
+          var inWeek = false;
+          if (sd) {
+            inWeek = p8DateInRange(sd, wMon, wSun);
+          } else {
+            var wn = typeof p6LabourWeekNum === 'function'
+              ? p6LabourWeekNum(r)
+              : parseNum(col(r, 'Week Number', 'week number'));
+            inWeek = wn === p.week;
+          }
+          if (!inWeek) return;
+          labAny = true;
+          if (p8IsLeaveRow(r)) leaveHrs += h;
+          else productHrs += h;
+        });
+
+        var planned = 0, available = 0, capAny = false;
+        capacity.forEach(function(r) {
+          var wn = parseInt(col(r, 'Week', 'week', 'Week Number', 'week number'), 10) || 0;
+          if (wn !== p.week) return;
+          capAny = true;
+          var avail = parseNum(col(r, 'Hours Available', 'hours available'));
+          var sched = parseNum(col(r, 'Hours Scheduled', 'hours scheduled'));
+          if (!isNaN(avail) && avail > 0) available += avail;
+          else available += 38;
+          if (!isNaN(sched) && sched > 0) planned += sched;
+        });
+
+        // Milestones due in week
+        var msDue = 0, msOnTime = 0, msComplete = 0, msDelayed = 0, msUpcoming = 0;
+        schedule.forEach(function(r) {
+          var endD = parseFlexibleDate(col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'Planned End'));
+          var startD = parseFlexibleDate(col(r, 'Planned Start Date', 'Start Date', 'startDate', 'Planned Start'));
+          var status = String(col(r, 'Status', 'status') || '').toLowerCase();
+          var done = status === 'complete' || status === 'completed';
+          var cancelled = status === 'cancelled' || status === 'canceled';
+          if (cancelled) return;
+
+          if (endD && p8DateInRange(endD, wMon, wSun)) {
+            msDue++;
+            if (done) {
+              msComplete++;
+              msOnTime++;
+            } else if (endD < now && !done) {
+              msDelayed++;
+            }
+          } else if (startD && p8DateInRange(startD, wMon, wSun) && !done) {
+            msUpcoming++;
+          } else if (endD && endD > wSun && endD <= new Date(wSun.getTime() + 14 * 86400000) && !done) {
+            // ignore
+          }
+          // Delayed milestones still open that were due earlier but surface in trends as delayed when end in past and status open — counted when end in week only to avoid double count
+        });
+
+        return {
+          leads: leadsN,
+          qualified: qualN,
+          quotes: quotesN,
+          quoteValue: quoteValKnown ? quoteVal : (quotesN === 0 ? 0 : null),
+          wins: winsN,
+          winValue: winValKnown ? winVal : (winsN === 0 ? 0 : null),
+          revenue: rev,
+          gp: gp,
+          productHrs: labAny ? p8Round1(productHrs) : null,
+          leaveHrs: labAny ? p8Round1(leaveHrs) : null,
+          plannedHrs: capAny ? p8Round1(planned) : null,
+          availableHrs: capAny ? p8Round1(available) : null,
+          msDue: msDue,
+          msOnTime: msOnTime,
+          msComplete: msComplete,
+          msDelayed: msDelayed,
+          msUpcoming: msUpcoming,
+          summaryPresent: summaryPresent
+        };
+      }
+
+      var thisM = metricsForWeek(sel.key);
+      var prevM = prevKey ? metricsForWeek(prevKey) : null;
+      var trendMet = trendKeys.map(function(k) { return { key: k, m: metricsForWeek(k) }; });
+
+      // Weekly revenue target = monthly target for that month / weeks in month
+      function weeklyRevTargetFor(parts) {
+        if (!parts || !targets.length) return null;
+        var monDate = p8WeekMonday(parts.year, parts.week);
+        var monthIdx = monDate.getMonth();
+        var monthAbbr = monDate.toLocaleString('en-AU', { month: 'short' }).substring(0, 3).toLowerCase();
+        var year = String(parts.year);
+        var hits = targets.filter(function(r) {
+          var y = String(col(r, 'Year', 'year') || '').trim();
+          if (y && y !== year) return false;
+          var m = String(col(r, 'Month', 'month') || '').trim().substring(0, 3).toLowerCase();
+          if (m && m !== monthAbbr) return false;
+          if (!m && !y) return false;
+          return true;
+        });
+        if (!hits.length) return null;
+        var sum = 0, any = false;
+        hits.forEach(function(r) {
+          var v = parseNum(col(r, 'Revenue Target ($)', 'Revenue Target', 'Sales Target ($)', 'Sales Target'));
+          if (v > 0) { sum += v; any = true; }
+        });
+        if (!any) return null;
+        var dim = new Date(parts.year, monthIdx + 1, 0).getDate();
+        var weeksInMonth = dim / 7;
+        return sum / weeksInMonth;
+      }
+
+      var revTarget = weeklyRevTargetFor(sel);
+      var revActual = thisM.revenue;
+      // Xero monthly GM for the month covering selected week (not true weekly)
+      var gmMonth = null;
+      var gmAny = false;
+      if (financials.length) {
+        var monthAbbr2 = mon.toLocaleString('en-AU', { month: 'short' }).substring(0, 3).toLowerCase();
+        var yStr = String(sel.year);
+        financials.forEach(function(r) {
+          var y = String(col(r, 'Year', 'year') || '').trim();
+          var m = String(col(r, 'Month', 'month') || '').trim().substring(0, 3).toLowerCase();
+          if (y && y !== yStr) return;
+          if (m && m !== monthAbbr2) return;
+          var gmRaw = rawColByNames(r, ['Gross Margin %', 'Gross Margin', 'GP%']);
+          if (p8MoneyKnown(gmRaw)) {
+            gmMonth = (gmMonth == null ? 0 : gmMonth) + parseNum(gmRaw);
+            gmAny = true;
+          }
+        });
+      }
+
+      // Cash collected this week (paid invoices by paid date when present)
+      var cashCollected = null;
+      var cashAny = false;
+      invoices.forEach(function(r) {
+        var paidDate = parseFlexibleDate(col(r, 'Fully Paid Date', 'Paid Date', 'Date Paid', 'Payment Date'));
+        if (!paidDate) return;
+        if (!p8DateInRange(paidDate, mon, sun)) return;
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase();
+        if (st && st !== 'PAID' && st.indexOf('PAID') === -1) return;
+        var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total', 'Amount Due'));
+        cashCollected = (cashCollected || 0) + amt;
+        cashAny = true;
+      });
+
+      // Overdue AR (open invoices past due — point in time, not weekly flow)
+      var overdueAr = 0;
+      var arAny = false;
+      invoices.forEach(function(r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return;
+        var due = parseFlexibleDate(col(r, 'Due Date', 'due date'));
+        var daysRaw = col(r, 'Days Overdue', 'days overdue', 'Days');
+        var overdue = false;
+        if (daysRaw !== '' && daysRaw != null) overdue = parseNum(daysRaw) > 0;
+        else if (due && due < now) overdue = true;
+        if (!overdue) return;
+        var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total', 'Amount Due'));
+        overdueAr += amt;
+        arAny = true;
+      });
+      if (!arAny && _p8Cache.cashflow && _p8Cache.cashflow.length) {
+        // leave as unavailable unless invoices failed open values
+      }
+
+      // Variations awaiting approval
+      var varsAwait = null;
+      if (_p8SheetMeta.variations && _p8SheetMeta.variations.ok) {
+        varsAwait = 0;
+        variations.forEach(function(r) {
+          var st = String(col(r, 'Status', 'status', 'Approval Status', 'Variation Status') || '').toLowerCase();
+          if (!st) return;
+          if (/await|pending|submitted|review|approval/.test(st) && !/approved|rejected|declined|void/.test(st)) {
+            varsAwait++;
+          }
+        });
+      }
+
+      // Safety / quality incidents this week
+      var safetyN = null;
+      if (_p8SheetMeta.defects && _p8SheetMeta.defects.ok) {
+        safetyN = 0;
+        defects.forEach(function(r) {
+          var d = parseFlexibleDate(col(r, 'Date', 'date', 'Raised Date', 'Created Date', 'Date Raised'));
+          if (d && !p8DateInRange(d, mon, sun)) return;
+          if (!d) return;
+          safetyN++;
+        });
+      }
+
+      // Customer issues: not tracked as a dedicated weekly metric currently
+      var custIssues = null;
+
+      // 4-week averages
+      var last4 = trendMet.slice(-4);
+      function avgField(fn) {
+        return p8Avg4(last4.map(function(t) { return fn(t.m); }));
+      }
+      var avgLeads = avgField(function(m) { return m.leads; });
+      var avgQual = avgField(function(m) { return m.qualified; });
+      var avgQuotes = avgField(function(m) { return m.quotes; });
+      var avgWins = avgField(function(m) { return m.wins; });
+      var avgRev = avgField(function(m) { return m.revenue; });
+      var avgProduct = avgField(function(m) { return m.productHrs; });
+      var avgMsOnTime = avgField(function(m) { return m.msOnTime; });
+
+      var leadsLive = !!( _p8SheetMeta.leads && _p8SheetMeta.leads.ok);
+      var pipeLive = !!( _p8SheetMeta.pipeline && _p8SheetMeta.pipeline.ok);
+      var quotesLive = !!( _p8SheetMeta.quotes && _p8SheetMeta.quotes.ok);
+      var labourLive = !!( _p8SheetMeta.labour && _p8SheetMeta.labour.ok);
+      var capLive = !!( _p8SheetMeta.capacity && _p8SheetMeta.capacity.ok);
+      var schedLive = !!( _p8SheetMeta.schedule && _p8SheetMeta.schedule.ok);
+      var finLive = !!( _p8SheetMeta.financials && _p8SheetMeta.financials.ok);
+      var invLive = !!( _p8SheetMeta.invoices && _p8SheetMeta.invoices.ok);
+      var weeklyLive = !!( _p8SheetMeta.weekly && _p8SheetMeta.weekly.ok);
+
+      // Revenue display: Not yet posted if incomplete week and no summary row
+      function revDisplay(m) {
+        if (m.revenue != null) return m.revenue;
+        if (!weeklyLive) return null;
+        if (weekInProgress && !m.summaryPresent) return undefined; // signal not posted
+        return null;
+      }
+      var revThis = revDisplay(thisM);
+      var revPrev = prevM ? revDisplay(prevM) : null;
+
+      // Jobs target: not set in targets sheet currently → no numeric target
+      var jobsTarget = null;
+      var leadsTarget = null;
+      var quotesTarget = null;
+      var labourTarget = thisM.plannedHrs;
+      var deliveryTarget = thisM.msDue > 0 ? thisM.msDue : null;
+
+      // ── KPI cards ──
+      function setKpiCard(valId, metaId, cardEl, pack) {
+        var vEl = document.getElementById(valId);
+        var mEl = document.getElementById(metaId);
+        if (vEl) vEl.textContent = pack.value;
+        if (mEl) mEl.innerHTML = pack.metaHtml;
+        if (cardEl) {
+          cardEl.classList.remove('p8-kpi--risk', 'p8-kpi--watch', 'p8-kpi--healthy', 'p8-kpi--gap');
+          if (pack.statusKey === 'risk') cardEl.classList.add('p8-kpi--risk');
+          else if (pack.statusKey === 'watch') cardEl.classList.add('p8-kpi--watch');
+          else if (pack.statusKey === 'healthy') cardEl.classList.add('p8-kpi--healthy');
+          else if (pack.statusKey === 'gap') cardEl.classList.add('p8-kpi--gap');
+        }
+      }
+
+      function metaLines(lines) {
+        return lines.map(function(l) {
+          return '<div class="p8-kpi-line">' + l + '</div>';
+        }).join('');
+      }
+
+      // 1 Revenue
+      var revSt = revThis === undefined
+        ? { key: 'gap', label: P8_NOT_POSTED }
+        : p8StatusPack(revThis, revTarget, true);
+      var revCard = document.querySelector('#page-p8 [data-kpi="revenue"]');
+      setKpiCard('p8-kpi-rev', 'p8-kpi-rev-meta', revCard, {
+        value: revThis === undefined ? P8_NOT_POSTED : (revThis == null ? P8_NA : p8FmtMoneyCompact(revThis)),
+        statusKey: revSt.key,
+        metaHtml: metaLines([
+          'Target ' + (revTarget != null ? p8FmtMoneyCompact(revTarget) + ' (weekly from monthly)' : P8_NA),
+          'Variance ' + (revThis != null && revTarget != null ? p8AbsChange(revThis, revTarget, '$') : (revThis === undefined ? P8_NOT_POSTED : P8_NA)),
+          'Prev ' + (revPrev === undefined ? P8_NOT_POSTED : (revPrev == null ? P8_NA : p8FmtMoneyCompact(revPrev))) +
+            ' · 4wk avg ' + (avgRev != null ? p8FmtMoneyCompact(avgRev) : P8_NA),
+          '<span class="p8-st ' + (revSt.cls || ('p8-st--' + revSt.key)) + '">' + p8Esc(revSt.label) + '</span>'
+        ])
+      });
+
+      // 2 Leads + Qualified
+      var qualRate = thisM.leads > 0 ? Math.round((thisM.qualified / thisM.leads) * 100) : null;
+      var leadSt = !leadsLive
+        ? { key: 'gap', label: P8_NA, cls: 'p8-st--gap' }
+        : p8StatusPack(thisM.leads, leadsTarget != null ? leadsTarget : (avgLeads != null ? avgLeads : null), true);
+      var leadCard = document.querySelector('#page-p8 [data-kpi="leads"]');
+      setKpiCard('p8-kpi-leads', 'p8-kpi-leads-meta', leadCard, {
+        value: !leadsLive ? P8_NA : (thisM.leads + ' / ' + thisM.qualified),
+        statusKey: leadSt.key,
+        metaHtml: metaLines([
+          'Qual rate ' + (qualRate != null ? qualRate + '%' : P8_NA) +
+            ' · Target ' + (leadsTarget != null ? String(leadsTarget) : P8_NA),
+          'Variance ' + (leadsLive && prevM ? p8AbsChange(thisM.leads, prevM.leads, 'leads') : P8_NA),
+          'Prev ' + (prevM && leadsLive ? String(prevM.leads) + ' / ' + String(prevM.qualified) : P8_NA) +
+            ' · 4wk avg ' + (avgLeads != null ? p8FmtNum(avgLeads, 1) : P8_NA),
+          '<span class="p8-st ' + (leadSt.cls || '') + '">' + p8Esc(leadSt.label) + '</span>'
+        ])
+      });
+
+      // 3 Quotes Sent
+      var qSt = !quotesLive
+        ? { key: 'gap', label: P8_NA, cls: 'p8-st--gap' }
+        : p8StatusPack(thisM.quotes, quotesTarget != null ? quotesTarget : avgQuotes, true);
+      var qCard = document.querySelector('#page-p8 [data-kpi="quotes"]');
+      var qValLabel = thisM.quoteValue != null ? p8FmtMoneyCompact(thisM.quoteValue) : P8_NA;
+      setKpiCard('p8-kpi-quotes', 'p8-kpi-quotes-meta', qCard, {
+        value: !quotesLive ? P8_NA : (thisM.quotes + ' · ' + qValLabel),
+        statusKey: qSt.key,
+        metaHtml: metaLines([
+          'Target ' + (quotesTarget != null ? String(quotesTarget) : P8_NA),
+          'Variance ' + (quotesLive && prevM ? p8AbsChange(thisM.quotes, prevM.quotes, 'quotes') : P8_NA),
+          'Prev ' + (prevM && quotesLive
+            ? prevM.quotes + (prevM.quoteValue != null ? ' · ' + p8FmtMoneyCompact(prevM.quoteValue) : '')
+            : P8_NA) +
+            ' · 4wk avg ' + (avgQuotes != null ? p8FmtNum(avgQuotes, 1) : P8_NA),
+          '<span class="p8-st ' + (qSt.cls || '') + '">' + p8Esc(qSt.label) + '</span>'
+        ])
+      });
+
+      // 4 Jobs Won
+      var wSt = !pipeLive && !leadsLive
+        ? { key: 'gap', label: P8_NA, cls: 'p8-st--gap' }
+        : p8StatusPack(thisM.wins, jobsTarget != null ? jobsTarget : avgWins, true);
+      var wCard = document.querySelector('#page-p8 [data-kpi="wins"]');
+      var wValLabel = thisM.winValue != null ? p8FmtMoneyCompact(thisM.winValue) : P8_NA;
+      setKpiCard('p8-kpi-wins', 'p8-kpi-wins-meta', wCard, {
+        value: (!pipeLive && !leadsLive) ? P8_NA : (thisM.wins + ' · ' + wValLabel),
+        statusKey: wSt.key,
+        metaHtml: metaLines([
+          'Target ' + (jobsTarget != null ? String(jobsTarget) : P8_NA),
+          'Variance ' + (prevM && (pipeLive || leadsLive) ? p8AbsChange(thisM.wins, prevM.wins, 'jobs') : P8_NA),
+          'Prev ' + (prevM
+            ? prevM.wins + (prevM.winValue != null ? ' · ' + p8FmtMoneyCompact(prevM.winValue) : '')
+            : P8_NA) +
+            ' · 4wk avg ' + (avgWins != null ? p8FmtNum(avgWins, 1) : P8_NA),
+          '<span class="p8-st ' + (wSt.cls || '') + '">' + p8Esc(wSt.label) + '</span>'
+        ])
+      });
+
+      // 5 Productive Labour
+      var labSt = thisM.productHrs == null
+        ? { key: 'gap', label: P8_NA, cls: 'p8-st--gap' }
+        : p8StatusPack(thisM.productHrs, labourTarget, true);
+      var labCard = document.querySelector('#page-p8 [data-kpi="labour"]');
+      setKpiCard('p8-kpi-labour', 'p8-kpi-labour-meta', labCard, {
+        value: thisM.productHrs == null ? P8_NA : (p8FmtNum(thisM.productHrs, 1) + 'h'),
+        statusKey: labSt.key,
+        metaHtml: metaLines([
+          'Planned ' + (thisM.plannedHrs != null ? p8FmtNum(thisM.plannedHrs, 1) + 'h' : P8_NA),
+          'Variance ' + (thisM.productHrs != null && thisM.plannedHrs != null
+            ? p8AbsChange(thisM.productHrs, thisM.plannedHrs, 'hrs')
+            : (thisM.productHrs != null && prevM && prevM.productHrs != null
+              ? p8AbsChange(thisM.productHrs, prevM.productHrs, 'hrs')
+              : P8_NA)),
+          'Prev ' + (prevM && prevM.productHrs != null ? p8FmtNum(prevM.productHrs, 1) + 'h' : P8_NA) +
+            ' · 4wk avg ' + (avgProduct != null ? p8FmtNum(avgProduct, 1) + 'h' : P8_NA),
+          '<span class="p8-st ' + (labSt.cls || '') + '">' + p8Esc(labSt.label) + '</span>'
+        ])
+      });
+
+      // 6 Project Delivery
+      var delivLabel = !schedLive
+        ? P8_NA
+        : (thisM.msOnTime + ' on time / ' + thisM.msDue + ' due');
+      var delivSt = !schedLive
+        ? { key: 'gap', label: P8_NA, cls: 'p8-st--gap' }
+        : (thisM.msDue === 0
+          ? { key: 'neutral', label: 'No milestones due', cls: 'p8-st--neutral' }
+          : p8StatusPack(thisM.msOnTime, thisM.msDue, true));
+      var delCard = document.querySelector('#page-p8 [data-kpi="delivery"]');
+      setKpiCard('p8-kpi-delivery', 'p8-kpi-delivery-meta', delCard, {
+        value: delivLabel,
+        statusKey: delivSt.key === 'risk' || thisM.msDelayed > 0 ? (thisM.msDelayed > 0 ? 'risk' : delivSt.key) : delivSt.key,
+        metaHtml: metaLines([
+          'Target ' + (deliveryTarget != null ? deliveryTarget + ' due on time' : P8_NA),
+          'Delayed ' + (schedLive ? String(thisM.msDelayed) : P8_NA),
+          'Prev on time ' + (prevM && schedLive ? prevM.msOnTime + ' / ' + prevM.msDue : P8_NA) +
+            ' · 4wk avg ' + (avgMsOnTime != null ? p8FmtNum(avgMsOnTime, 1) : P8_NA),
+          '<span class="p8-st ' + (thisM.msDelayed > 0 ? 'p8-st--risk' : (delivSt.cls || '')) + '">' +
+            p8Esc(thisM.msDelayed > 0 ? 'At Risk' : delivSt.label) + '</span>'
+        ])
+      });
+      if (delCard && thisM.msDelayed > 0) {
+        delCard.classList.add('p8-kpi--risk');
+      }
+
+      // Secondary strip
+      function setSec(id, text, risk) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.classList.toggle('p8-sec--risk', !!risk);
+      }
+      setSec('p8-sec-gm', gmAny && gmMonth != null ? (p8FmtNum(gmMonth, 1) + '% (month)') : P8_NA, false);
+      setSec('p8-sec-cash', cashAny && cashCollected != null ? p8FmtMoneyCompact(cashCollected) : P8_NA, false);
+      setSec('p8-sec-ar', invLive && arAny ? p8FmtMoneyCompact(overdueAr) : (invLive ? '0' : P8_NA), invLive && overdueAr > 0);
+      setSec('p8-sec-vars', varsAwait != null ? String(varsAwait) : P8_NA, varsAwait != null && varsAwait > 0);
+      setSec('p8-sec-safety', safetyN != null ? String(safetyN) : P8_NA, safetyN != null && safetyN > 0);
+      setSec('p8-sec-cust', custIssues != null ? String(custIssues) : P8_NA, false);
+
+      // ── Scorecard ──
+      var scoreRows = [
+        {
+          area: 'Sales', kpi: 'Leads', page: 'p2',
+          thisWeek: leadsLive ? String(thisM.leads) : P8_NA,
+          target: leadsTarget != null ? String(leadsTarget) : P8_NA,
+          lastWeek: prevM && leadsLive ? String(prevM.leads) : P8_NA,
+          avg4: avgLeads != null ? p8FmtNum(avgLeads, 1) : P8_NA,
+          st: leadSt
+        },
+        {
+          area: 'Sales', kpi: 'Qualified Leads', page: 'p2',
+          thisWeek: leadsLive ? String(thisM.qualified) : P8_NA,
+          target: P8_NA,
+          lastWeek: prevM && leadsLive ? String(prevM.qualified) : P8_NA,
+          avg4: avgQual != null ? p8FmtNum(avgQual, 1) : P8_NA,
+          st: leadSt
+        },
+        {
+          area: 'Sales', kpi: 'Jobs Won', page: 'p2',
+          thisWeek: (pipeLive || leadsLive)
+            ? (thisM.wins + (thisM.winValue != null ? ' · ' + p8FmtMoneyCompact(thisM.winValue) : ''))
+            : P8_NA,
+          target: jobsTarget != null ? String(jobsTarget) : P8_NA,
+          lastWeek: prevM ? String(prevM.wins) : P8_NA,
+          avg4: avgWins != null ? p8FmtNum(avgWins, 1) : P8_NA,
+          st: wSt
+        },
+        {
+          area: 'Quoting', kpi: 'Quotes Sent', page: 'p3',
+          thisWeek: quotesLive
+            ? (thisM.quotes + (thisM.quoteValue != null ? ' · ' + p8FmtMoneyCompact(thisM.quoteValue) : ''))
+            : P8_NA,
+          target: quotesTarget != null ? String(quotesTarget) : P8_NA,
+          lastWeek: prevM && quotesLive ? String(prevM.quotes) : P8_NA,
+          avg4: avgQuotes != null ? p8FmtNum(avgQuotes, 1) : P8_NA,
+          st: qSt
+        },
+        {
+          area: 'Finance', kpi: 'Revenue', page: 'p5',
+          thisWeek: revThis === undefined ? P8_NOT_POSTED : (revThis == null ? P8_NA : p8FmtMoneyCompact(revThis)),
+          target: revTarget != null ? p8FmtMoneyCompact(revTarget) : P8_NA,
+          lastWeek: revPrev === undefined ? P8_NOT_POSTED : (revPrev == null ? P8_NA : p8FmtMoneyCompact(revPrev)),
+          avg4: avgRev != null ? p8FmtMoneyCompact(avgRev) : P8_NA,
+          st: revSt
+        },
+        {
+          area: 'Projects', kpi: 'Milestones on time', page: 'p4',
+          thisWeek: schedLive ? (thisM.msOnTime + ' / ' + thisM.msDue) : P8_NA,
+          target: deliveryTarget != null ? String(deliveryTarget) : P8_NA,
+          lastWeek: prevM && schedLive ? (prevM.msOnTime + ' / ' + prevM.msDue) : P8_NA,
+          avg4: avgMsOnTime != null ? p8FmtNum(avgMsOnTime, 1) : P8_NA,
+          st: delivSt
+        },
+        {
+          area: 'Labour', kpi: 'Productive hours', page: 'p6',
+          thisWeek: thisM.productHrs != null ? p8FmtNum(thisM.productHrs, 1) + 'h' : P8_NA,
+          target: thisM.plannedHrs != null ? p8FmtNum(thisM.plannedHrs, 1) + 'h' : P8_NA,
+          lastWeek: prevM && prevM.productHrs != null ? p8FmtNum(prevM.productHrs, 1) + 'h' : P8_NA,
+          avg4: avgProduct != null ? p8FmtNum(avgProduct, 1) + 'h' : P8_NA,
+          st: labSt
+        }
+      ];
+
+      var scEl = document.getElementById('p8-scorecard');
+      if (scEl) {
+        var scHtml = '<table class="data-table p8-table"><thead><tr>' +
+          '<th>Area</th><th>KPI</th><th>This Week</th><th>Target</th><th>Last Week</th><th>4-Week Average</th><th>Status</th>' +
+          '</tr></thead><tbody>';
+        scoreRows.forEach(function(row) {
+          var cls = row.st.cls || ('p8-st--' + (row.st.key || 'gap'));
+          scHtml += '<tr class="p8-score-row" data-nav="' + p8Esc(row.page) + '" tabindex="0" role="link">' +
+            '<td>' + p8Esc(row.area) + '</td>' +
+            '<td>' + p8Esc(row.kpi) + '</td>' +
+            '<td>' + p8Esc(row.thisWeek) + '</td>' +
+            '<td>' + p8Esc(row.target) + '</td>' +
+            '<td>' + p8Esc(row.lastWeek) + '</td>' +
+            '<td>' + p8Esc(row.avg4) + '</td>' +
+            '<td><span class="p8-st ' + cls + '">' + p8Esc(row.st.label) + '</span></td>' +
+            '</tr>';
+        });
+        scHtml += '</tbody></table>';
+        scEl.innerHTML = scHtml;
+        scEl.querySelectorAll('.p8-score-row').forEach(function(tr) {
+          function go() {
+            var pg = tr.getAttribute('data-nav');
+            if (pg && typeof showPage === 'function') showPage(pg);
+          }
+          tr.addEventListener('click', go);
+          tr.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+          });
+        });
+      }
+
+      // ── Management Attention (real exceptions only) ──
+      var attention = [];
+      function pushAtt(priority, issue, impact, owner, due) {
+        attention.push({
+          priority: priority,
+          issue: issue,
+          impact: impact,
+          owner: owner || 'Unassigned',
+          due: due || P8_NA
+        });
+      }
+
+      // Labour overallocation from capacity util
+      if (capLive && labourLive) {
+        var overPeople = 0;
+        var overHrs = 0;
+        var byEmp = {};
+        capacity.forEach(function(r) {
+          var wn = parseInt(col(r, 'Week', 'week', 'Week Number'), 10) || 0;
+          if (wn !== sel.week) return;
+          var emp = String(col(r, 'Employee Name', 'employee name') || '').trim();
+          if (!emp) return;
+          var avail = parseNum(col(r, 'Hours Available', 'hours available')) || 38;
+          if (!byEmp[emp]) byEmp[emp] = { avail: avail, logged: 0 };
+          byEmp[emp].avail = avail;
+        });
+        labour.forEach(function(r) {
+          var emp = String(col(r, 'Employee Name', 'employee name') || '').trim();
+          if (!emp) return;
+          var h = typeof p6LabourHours === 'function' ? p6LabourHours(r) : parseNum(col(r, 'Hours (daily)', 'Hours'));
+          if (h == null || isNaN(h)) return;
+          var sd = parseFlexibleDate(col(r, 'Shift Date', 'shift date', 'Date'));
+          var inW = sd ? p8DateInRange(sd, mon, sun)
+            : ((typeof p6LabourWeekNum === 'function' ? p6LabourWeekNum(r) : parseNum(col(r, 'Week Number'))) === sel.week);
+          if (!inW) return;
+          if (!byEmp[emp]) byEmp[emp] = { avail: 38, logged: 0 };
+          byEmp[emp].logged += h;
+        });
+        Object.keys(byEmp).forEach(function(emp) {
+          var e = byEmp[emp];
+          if (e.logged > e.avail + 0.05) {
+            overPeople++;
+            overHrs += (e.logged - e.avail);
+          }
+        });
+        if (overPeople > 0) {
+          pushAtt('High', overPeople + ' overallocated worker' + (overPeople === 1 ? '' : 's') +
+            ' (W' + sel.week + ')',
+            p8FmtNum(overHrs, 1) + 'h excess vs available', 'Ops / PMs', p8FmtDayMonthYear(sun));
+        }
+      }
+
+      // Missing timesheets: people with capacity this week but no labour hours
+      if (capLive && labourLive) {
+        var missingTs = 0;
+        var seenEmp = {};
+        capacity.forEach(function(r) {
+          var wn = parseInt(col(r, 'Week', 'week', 'Week Number'), 10) || 0;
+          if (wn !== sel.week) return;
+          var emp = String(col(r, 'Employee Name', 'employee name') || '').trim().toLowerCase();
+          if (emp) seenEmp[emp] = true;
+        });
+        var loggedEmp = {};
+        labour.forEach(function(r) {
+          var emp = String(col(r, 'Employee Name', 'employee name') || '').trim().toLowerCase();
+          var h = typeof p6LabourHours === 'function' ? p6LabourHours(r) : parseNum(col(r, 'Hours (daily)', 'Hours'));
+          if (!emp || h == null) return;
+          var sd = parseFlexibleDate(col(r, 'Shift Date', 'shift date', 'Date'));
+          var inW = sd ? p8DateInRange(sd, mon, sun)
+            : ((typeof p6LabourWeekNum === 'function' ? p6LabourWeekNum(r) : parseNum(col(r, 'Week Number'))) === sel.week);
+          if (inW && h > 0) loggedEmp[emp] = true;
+        });
+        Object.keys(seenEmp).forEach(function(e) {
+          if (!loggedEmp[e]) missingTs++;
+        });
+        if (missingTs > 0 && weekEnded) {
+          pushAtt('Medium', missingTs + ' missing timesheet' + (missingTs === 1 ? '' : 's'),
+            'Hours incomplete for W' + sel.week, 'Supervisors', p8FmtDayMonthYear(sun));
+        }
+      }
+
+      // Quotes awaiting / overdue from open quotes past due
+      if (quotesLive) {
+        var quotesOver = 0;
+        var quotesAwaitVal = 0;
+        var quotesAwaitN = 0;
+        quotes.forEach(function(r) {
+          var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+          if (/accept|won|lost|declin|reject|cancel|complete|closed/.test(st)) return;
+          var due = parseFlexibleDate(col(r, 'Due Date', 'due date', 'Target Send Date', 'Submission Date'));
+          if (due && due < now) quotesOver++;
+          if (/sent|await|decision|quoted|client/.test(st) || !st) {
+            quotesAwaitN++;
+            var v = p8QuoteValue(r);
+            if (v != null) quotesAwaitVal += v;
+          }
+        });
+        if (quotesOver > 0) {
+          pushAtt('High', quotesOver + ' overdue quote' + (quotesOver === 1 ? '' : 's'),
+            'Client response / estimating lag', 'Estimating', 'Overdue');
+        } else if (quotesAwaitN > 0 && quotesAwaitVal > 0) {
+          pushAtt('Medium', quotesAwaitN + ' quote' + (quotesAwaitN === 1 ? '' : 's') + ' awaiting decision',
+            p8FmtMoneyCompact(quotesAwaitVal) + ' outstanding', 'Sales', P8_NA);
+        }
+      }
+
+      // Milestone delays
+      if (schedLive && thisM.msDelayed > 0) {
+        pushAtt('High', thisM.msDelayed + ' delayed milestone' + (thisM.msDelayed === 1 ? '' : 's') +
+          ' due this week',
+          'Delivery risk on live jobs', 'Project Managers', p8FmtDayMonthYear(sun));
+      }
+
+      // AR overdue
+      if (invLive && overdueAr > 0) {
+        pushAtt('High', 'Overdue AR ' + p8FmtMoneyCompact(overdueAr),
+          'Cash collection risk', 'Finance', 'Open');
+      }
+
+      // Variations awaiting
+      if (varsAwait != null && varsAwait > 0) {
+        pushAtt('Medium', varsAwait + ' variation' + (varsAwait === 1 ? '' : 's') + ' awaiting approval',
+          'Scope / margin exposure', 'Project Managers', P8_NA);
+      }
+
+      // Revenue At Risk status
+      if (revSt.key === 'risk' && revThis != null && revTarget != null) {
+        pushAtt('High', 'Weekly revenue behind target',
+          p8AbsChange(revThis, revTarget, '$') + ' vs weekly target', 'Leadership', p8FmtDayMonthYear(sun));
+      }
+
+      attention.sort(function(a, b) {
+        var rank = { High: 0, Medium: 1, Low: 2 };
+        return (rank[a.priority] || 9) - (rank[b.priority] || 9);
+      });
+      attention = attention.slice(0, 12);
+
+      var attEl = document.getElementById('p8-attention');
+      if (attEl) {
+        if (!attention.length) {
+          attEl.innerHTML = '<p class="p8-empty">No management attention items from live exceptions this week.</p>';
+        } else {
+          var ah = '<table class="data-table p8-table"><thead><tr>' +
+            '<th>Priority</th><th>Issue</th><th>Business Impact</th><th>Owner</th><th>Due</th>' +
+            '</tr></thead><tbody>';
+          attention.forEach(function(a) {
+            var pCls = a.priority === 'High' ? 'p8-pri--high' : (a.priority === 'Medium' ? 'p8-pri--med' : 'p8-pri--low');
+            ah += '<tr>' +
+              '<td><span class="p8-pri ' + pCls + '">' + p8Esc(a.priority) + '</span></td>' +
+              '<td>' + p8Esc(a.issue) + '</td>' +
+              '<td>' + p8Esc(a.impact) + '</td>' +
+              '<td>' + p8Esc(a.owner) + '</td>' +
+              '<td>' + p8Esc(a.due) + '</td></tr>';
+          });
+          ah += '</tbody></table>';
+          attEl.innerHTML = ah;
+        }
+      }
+
+      // ── Trends (8 weeks, single axis each) ──
+      var tLabels = trendKeys.map(function(k) {
+        var p = p8ParseWeekKey(k);
+        return p ? ('W' + p.week) : k;
+      });
+      function seriesAvgLine(vals) {
+        var avg = p8Avg4(vals.slice(-4));
+        return vals.map(function() { return avg; });
+      }
+      var chartColors = {
+        text: '#111827', muted: '#6B7280', border: '#E2E4E8',
+        a: '#111827', b: '#6B7280', c: '#9CA3AF', d: '#2563EB', avg: '#F59E0B'
+      };
+      function p8LineChart(id, datasets, yCallback) {
+        var has = datasets.some(function(ds) {
+          return (ds.data || []).some(function(v) { return v != null && !isNaN(v); });
+        });
+        if (!has) {
+          makeChart(id, {
+            type: 'line',
+            data: { labels: tLabels, datasets: [] },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: true, labels: { boxWidth: 10, font: { size: 10 }, color: chartColors.muted } },
+                title: { display: true, text: 'No series data for these weeks', color: chartColors.muted, font: { size: 11, weight: '400' } }
+              },
+              scales: {
+                x: { ticks: { color: chartColors.muted, font: { size: 10 } }, grid: { color: chartColors.border } },
+                y: { beginAtZero: true, ticks: { color: chartColors.muted, font: { size: 10 } }, grid: { color: chartColors.border } }
+              }
+            }
+          });
+          return;
+        }
+        makeChart(id, {
+          type: 'line',
+          data: { labels: tLabels, datasets: datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: true, labels: { boxWidth: 10, font: { size: 10 }, color: chartColors.muted } }
+            },
+            scales: {
+              x: { ticks: { color: chartColors.muted, font: { size: 10 } }, grid: { display: false } },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  color: chartColors.muted,
+                  font: { size: 10 },
+                  callback: yCallback || function(v) { return v; }
+                },
+                grid: { color: 'rgba(226,228,232,0.8)' }
+              }
+            }
+          }
+        });
+      }
+
+      var leadSeries = trendMet.map(function(t) { return t.m.leads; });
+      var qualSeries = trendMet.map(function(t) { return t.m.qualified; });
+      var quoteSeries = trendMet.map(function(t) { return t.m.quotes; });
+      var winSeries = trendMet.map(function(t) { return t.m.wins; });
+      p8LineChart('chart-p8-funnel', [
+        { label: 'Leads', data: leadSeries, borderColor: chartColors.a, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: 'Qualified', data: qualSeries, borderColor: chartColors.d, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: 'Quotes', data: quoteSeries, borderColor: chartColors.b, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: 'Wins', data: winSeries, borderColor: chartColors.c, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: '4wk avg leads', data: seriesAvgLine(leadSeries), borderColor: chartColors.avg, borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, backgroundColor: 'transparent' }
+      ]);
+
+      var revSeries = trendMet.map(function(t) { return t.m.revenue; });
+      var gpSeries = trendMet.map(function(t) { return t.m.gp; });
+      var tgtSeries = trendKeys.map(function(k) {
+        var p = p8ParseWeekKey(k);
+        return weeklyRevTargetFor(p);
+      });
+      p8LineChart('chart-p8-financial', [
+        { label: 'Revenue', data: revSeries, borderColor: chartColors.a, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2, spanGaps: true },
+        { label: 'GP', data: gpSeries, borderColor: chartColors.d, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2, spanGaps: true },
+        { label: 'Weekly target', data: tgtSeries, borderColor: chartColors.b, borderDash: [5, 4], pointRadius: 0, borderWidth: 1.5, backgroundColor: 'transparent', spanGaps: true },
+        { label: '4wk avg rev', data: seriesAvgLine(revSeries.filter(function(v) { return v != null; }).length ? revSeries : [0]), borderColor: chartColors.avg, borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, backgroundColor: 'transparent', spanGaps: true }
+      ], function(v) {
+        if (Math.abs(v) >= 1000) return '$' + Math.round(v / 1000) + 'k';
+        return '$' + v;
+      });
+
+      var doneSeries = trendMet.map(function(t) { return t.m.msComplete; });
+      var delaySeries = trendMet.map(function(t) { return t.m.msDelayed; });
+      var upSeries = trendMet.map(function(t) { return t.m.msUpcoming; });
+      p8LineChart('chart-p8-delivery', [
+        { label: 'Completed', data: doneSeries, borderColor: chartColors.a, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: 'Delayed', data: delaySeries, borderColor: '#EA580C', backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: 'Upcoming', data: upSeries, borderColor: chartColors.b, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2 },
+        { label: '4wk avg complete', data: seriesAvgLine(doneSeries), borderColor: chartColors.avg, borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, backgroundColor: 'transparent' }
+      ]);
+
+      var availSeries = trendMet.map(function(t) { return t.m.availableHrs; });
+      var schedSeries = trendMet.map(function(t) { return t.m.plannedHrs; });
+      var prodSeries = trendMet.map(function(t) { return t.m.productHrs; });
+      p8LineChart('chart-p8-workforce', [
+        { label: 'Available', data: availSeries, borderColor: chartColors.b, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2, spanGaps: true },
+        { label: 'Scheduled', data: schedSeries, borderColor: chartColors.d, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2, spanGaps: true },
+        { label: 'Productive', data: prodSeries, borderColor: chartColors.a, backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2, spanGaps: true },
+        { label: '4wk avg productive', data: seriesAvgLine(prodSeries), borderColor: chartColors.avg, borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, backgroundColor: 'transparent', spanGaps: true }
+      ]);
+
+      // ── Seven-day commitments (Mon-Fri) ──
+      var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      var days = [];
+      for (var di = 0; di < 5; di++) {
+        var dd = new Date(mon);
+        dd.setDate(mon.getDate() + di);
+        dd.setHours(0, 0, 0, 0);
+        days.push(dd);
+      }
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var todayIdx = -1;
+      days.forEach(function(d, i) {
+        if (d.getTime() === today.getTime()) todayIdx = i;
+      });
+
+      function dayIdxFor(d) {
+        if (!d) return -1;
+        var t = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        for (var i = 0; i < days.length; i++) {
+          if (days[i].getTime() === t) return i;
+        }
+        return -1;
+      }
+
+      var lanes = {
+        Projects: [],
+        Quoting: [],
+        Sales: [],
+        Finance: [],
+        Labour: []
+      };
+
+      // Projects: milestones spanning / ending this week
+      schedule.forEach(function(r) {
+        var startD = parseFlexibleDate(col(r, 'Planned Start Date', 'Start Date', 'startDate', 'Planned Start'));
+        var endD = parseFlexibleDate(col(r, 'Planned End Date', 'Planned End date', 'End Date', 'Planned End'));
+        if (!startD && !endD) return;
+        var sIdx = startD ? dayIdxFor(startD) : 0;
+        var eIdx = endD ? dayIdxFor(endD) : 4;
+        // Clip multi-day bars that overlap Fri window
+        var winStart = days[0].getTime();
+        var winEnd = days[4].getTime();
+        var rs = startD ? startD.getTime() : winStart;
+        var re = endD ? endD.getTime() : winEnd;
+        if (re < winStart || rs > winEnd) return;
+        var clipS = Math.max(0, Math.floor((Math.max(rs, winStart) - winStart) / 86400000));
+        var clipE = Math.min(4, Math.floor((Math.min(re, winEnd) - winStart) / 86400000));
+        var status = String(col(r, 'Status', 'status') || '').toLowerCase();
+        var overdue = endD && endD < today && status !== 'complete' && status !== 'completed';
+        var name = col(r, 'Project Name', 'project_name') || col(r, 'Phase Name', 'Phase/Milestone Name', 'Task Name') || 'Project';
+        lanes.Projects.push({
+          start: clipS, end: clipE,
+          label: String(name).slice(0, 28),
+          overdue: overdue,
+          milestone: true,
+          leave: false
+        });
+      });
+      // Cap project bars for readability
+      lanes.Projects = lanes.Projects.slice(0, 8);
+
+      // Quoting: open quotes with due this week
+      quotes.forEach(function(r) {
+        var due = parseFlexibleDate(col(r, 'Due Date', 'due date', 'Target Send Date', 'Submission Date'));
+        if (!due) return;
+        var idx = dayIdxFor(due);
+        if (idx < 0) return;
+        var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+        if (/accept|won|lost|declin|reject|cancel|complete|closed/.test(st)) return;
+        var overdue = due < today;
+        var id = col(r, 'Quote ID', 'Quote #', 'Contact Name', 'Client') || 'Quote';
+        lanes.Quoting.push({
+          start: idx, end: idx, label: String(id).slice(0, 24),
+          overdue: overdue, milestone: true, leave: false
+        });
+      });
+      lanes.Quoting = lanes.Quoting.slice(0, 6);
+
+      // Sales: expected close this week open deals
+      pipeline.forEach(function(r) {
+        if (p8IsWon(r)) return;
+        var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+        if (st === 'lost' || st === 'closed') return;
+        var d = parseFlexibleDate(col(r, 'Expected Close Date', 'Close Date', 'expected_close'));
+        if (!d) return;
+        var idx = dayIdxFor(d);
+        if (idx < 0) return;
+        var name = col(r, 'Contact Name', 'Opportunity', 'Name') || 'Deal';
+        lanes.Sales.push({
+          start: idx, end: idx, label: String(name).slice(0, 24),
+          overdue: d < today, milestone: true, leave: false
+        });
+      });
+      lanes.Sales = lanes.Sales.slice(0, 6);
+
+      // Finance: invoices due this week
+      invoices.forEach(function(r) {
+        var due = parseFlexibleDate(col(r, 'Due Date', 'due date'));
+        if (!due) return;
+        var idx = dayIdxFor(due);
+        if (idx < 0) return;
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED') return;
+        var inv = col(r, 'Invoice Number', 'Invoice #', 'Contact', 'Customer') || 'Invoice';
+        lanes.Finance.push({
+          start: idx, end: idx, label: String(inv).slice(0, 24),
+          overdue: due < today, milestone: false, leave: false
+        });
+      });
+      lanes.Finance = lanes.Finance.slice(0, 6);
+
+      // Labour leave days
+      labour.forEach(function(r) {
+        if (!p8IsLeaveRow(r)) return;
+        var sd = parseFlexibleDate(col(r, 'Shift Date', 'shift date', 'Date'));
+        if (!sd) return;
+        var idx = dayIdxFor(sd);
+        if (idx < 0) return;
+        var emp = col(r, 'Employee Name', 'employee name') || 'Leave';
+        lanes.Labour.push({
+          start: idx, end: idx, label: String(emp).slice(0, 24),
+          overdue: false, milestone: false, leave: true
+        });
+      });
+      lanes.Labour = lanes.Labour.slice(0, 8);
+
+      var tlEl = document.getElementById('p8-timeline');
+      if (tlEl) {
+        var th = '<div class="p8-tl-grid"><div class="p8-tl-corner"></div>';
+        dayNames.forEach(function(dn, i) {
+          th += '<div class="p8-tl-day' + (i === todayIdx ? ' is-today' : '') + '">' +
+            dn + '<span class="p8-tl-date">' + days[i].getDate() + '</span></div>';
+        });
+        ['Projects', 'Quoting', 'Sales', 'Finance', 'Labour'].forEach(function(lane) {
+          th += '<div class="p8-tl-label">' + lane + '</div>';
+          th += '<div class="p8-tl-track' + (todayIdx >= 0 ? ' has-today' : '') + '">';
+          if (todayIdx >= 0) {
+            th += '<div class="p8-tl-today-col" style="left:' + (todayIdx * 20) + '%"></div>';
+          }
+          var items = lanes[lane] || [];
+          if (!items.length) {
+            th += '<span class="p8-tl-empty">No items</span>';
+          } else {
+            items.forEach(function(it, ii) {
+              var left = it.start * 20;
+              var width = Math.max(20, (it.end - it.start + 1) * 20);
+              var cls = 'p8-tl-bar';
+              if (it.overdue) cls += ' is-overdue';
+              if (it.leave) cls += ' is-leave';
+              if (it.milestone) cls += ' is-ms';
+              th += '<div class="' + cls + '" style="left:' + left + '%;width:' + width +
+                '%;top:' + (4 + (ii % 3) * 18) + 'px" title="' + p8Esc(it.label) + '">' +
+                (it.milestone ? '<span class="p8-tl-diamond"></span>' : '') +
+                '<span class="p8-tl-bar-label">' + p8Esc(it.label) + '</span></div>';
+            });
+          }
+          th += '</div>';
+        });
+        th += '</div>';
+        tlEl.innerHTML = th;
+      }
+
+      // ── Wins / Risks / Decisions (max 3 real each) ──
+      var wins = [];
+      var risks = [];
+      var decisions = [];
+      if ((pipeLive || leadsLive) && thisM.wins > 0) {
+        wins.push(thisM.wins + ' job' + (thisM.wins === 1 ? '' : 's') + ' won' +
+          (thisM.winValue != null ? ' · ' + p8FmtMoneyCompact(thisM.winValue) : ''));
+      }
+      if (quotesLive && thisM.quotes > 0) {
+        wins.push(thisM.quotes + ' quote' + (thisM.quotes === 1 ? '' : 's') + ' sent' +
+          (thisM.quoteValue != null ? ' · ' + p8FmtMoneyCompact(thisM.quoteValue) : ''));
+      }
+      if (schedLive && thisM.msComplete > 0) {
+        wins.push(thisM.msComplete + ' milestone' + (thisM.msComplete === 1 ? '' : 's') + ' completed this week');
+      }
+      if (leadsLive && thisM.leads > 0 && prevM && thisM.leads > prevM.leads) {
+        wins.push('Leads up ' + p8AbsChange(thisM.leads, prevM.leads, 'leads') + ' vs previous week');
+      }
+
+      attention.filter(function(a) { return a.priority === 'High'; }).slice(0, 3).forEach(function(a) {
+        risks.push(a.issue);
+      });
+      if (thisM.msDelayed > 0 && risks.indexOf(attention[0] && attention[0].issue) === -1) {
+        // already may be in risks
+      }
+      if (revSt.key === 'risk' && revThis != null) {
+        var rmsg = 'Revenue behind weekly target';
+        if (risks.indexOf(rmsg) === -1) risks.push(rmsg);
+      }
+
+      if (varsAwait != null && varsAwait > 0) {
+        decisions.push('Approve or progress ' + varsAwait + ' variation' + (varsAwait === 1 ? '' : 's'));
+      }
+      if (quotesLive) {
+        var aq = 0;
+        quotes.forEach(function(r) {
+          var st = String(col(r, 'Status', 'status') || '').toLowerCase();
+          if (/sent|await|decision|quoted/.test(st)) aq++;
+        });
+        if (aq > 0) decisions.push('Chase ' + aq + ' quote' + (aq === 1 ? '' : 's') + ' awaiting client decision');
+      }
+      if (invLive && overdueAr > 0) {
+        decisions.push('Prioritise collection on overdue AR ' + p8FmtMoneyCompact(overdueAr));
+      }
+
+      function fillWrd(id, items, emptyLabel) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var list = (items || []).filter(Boolean).slice(0, 3);
+        if (!list.length) {
+          el.innerHTML = '<li class="p8-wrd-empty">' + p8Esc(emptyLabel) + '</li>';
+          return;
+        }
+        el.innerHTML = list.map(function(t) { return '<li>' + p8Esc(t) + '</li>'; }).join('');
+      }
+      fillWrd('p8-wins-list', wins, 'None this week');
+      fillWrd('p8-risks-list', risks, 'None flagged');
+      fillWrd('p8-decisions-list', decisions, 'None pending');
+
+      // ── Data freshness ──
+      function srcStatus(meta, liveRows, label) {
+        if (!meta || !meta.ok) return { source: label, status: P8_NA, updated: meta && meta.loadedAt ? meta.loadedAt : null };
+        if (!liveRows || !liveRows.length) return { source: label, status: P8_NOT_POSTED, updated: meta.loadedAt };
+        return { source: label, status: 'Live', updated: meta.loadedAt };
+      }
+      var mktMeta = _p8SheetMeta.marketing;
+      var mktRows = brandRows(_p8Cache.marketing || []);
+      var freshness = [
+        srcStatus(_p8SheetMeta.leads, leads, 'Sales / CRM (GHL)'),
+        srcStatus(_p8SheetMeta.financials, financials, 'Xero Financials'),
+        srcStatus(_p8SheetMeta.invoices, invoices, 'Xero Invoices'),
+        srcStatus(_p8SheetMeta.labour, labour, 'Labour (Buildpass)'),
+        srcStatus(_p8SheetMeta.capacity, capacity, 'Capacity'),
+        srcStatus(mktMeta, mktRows, 'Marketing')
+      ];
+      // Marketing without dual empty panel: only status row
+      if (mktMeta && mktMeta.ok && !mktRows.length) {
+        freshness[freshness.length - 1].status = P8_NOT_POSTED;
+      }
+
+      var liveBits = [];
+      freshness.forEach(function(f) {
+        if (f.status === 'Live') liveBits.push(f.source.split(' ')[0]);
+      });
+      var frSum = document.getElementById('p8-freshness-summary');
+      if (frSum) {
+        frSum.textContent = liveBits.length
+          ? 'Live: ' + liveBits.join(', ') + (freshness.some(function(f) { return f.status !== 'Live'; })
+            ? ' · some sources incomplete'
+            : '')
+          : 'Sources loading or unavailable';
+      }
+
+      var frEl = document.getElementById('p8-freshness-table');
+      if (frEl) {
+        var fh = '<table class="data-table p8-table"><thead><tr><th>Source</th><th>Status</th><th>Updated</th></tr></thead><tbody>';
+        freshness.forEach(function(f) {
+          var stCls = f.status === 'Live' ? 'p8-st--healthy' : 'p8-st--gap';
+          var upd = f.updated
+            ? f.updated.toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+            : P8_NA;
+          fh += '<tr><td>' + p8Esc(f.source) + '</td><td><span class="p8-st ' + stCls + '">' +
+            p8Esc(f.status) + '</span></td><td>' + p8Esc(upd) + '</td></tr>';
+        });
+        fh += '</tbody></table>';
+        frEl.innerHTML = fh;
+      }
+
+      // BB payload
       setBBPageData('P8', 'P8: Weekly Overview', {
-        weekly: filtered,
-        targets: targets,
+        period: p8PeriodLabel(sel),
+        weekKey: sel.key,
+        weekEnding: p8FmtDayMonthYear(sun),
+        range: { mon: mon.toISOString(), sun: sun.toISOString() },
+        kpis: {
+          revenue: { actual: revThis === undefined ? P8_NOT_POSTED : revThis, target: revTarget, prev: revPrev, avg4: avgRev, status: revSt.label },
+          leads: { count: leadsLive ? thisM.leads : null, qualified: leadsLive ? thisM.qualified : null, prev: prevM ? prevM.leads : null, avg4: avgLeads },
+          quotes: { count: quotesLive ? thisM.quotes : null, value: thisM.quoteValue, prev: prevM ? prevM.quotes : null, avg4: avgQuotes },
+          jobsWon: { count: thisM.wins, value: thisM.winValue, prev: prevM ? prevM.wins : null, avg4: avgWins },
+          productiveLabour: { actual: thisM.productHrs, planned: thisM.plannedHrs, prev: prevM ? prevM.productHrs : null, avg4: avgProduct },
+          delivery: { onTime: thisM.msOnTime, due: thisM.msDue, delayed: thisM.msDelayed }
+        },
+        secondary: {
+          grossMarginMonth: gmAny ? gmMonth : null,
+          cashCollected: cashAny ? cashCollected : null,
+          overdueAr: invLive ? overdueAr : null,
+          variationsAwaiting: varsAwait,
+          safetyIncidents: safetyN,
+          customerIssues: custIssues
+        },
+        attention: attention,
+        wins: wins.slice(0, 3),
+        risks: risks.slice(0, 3),
+        decisions: decisions.slice(0, 3),
         weekOverWeek: {
           sales: {
-            thisWeekKey: salesThis,
-            lastWeekKey: salesLast,
-            leadsThis: salesLeadsThis,
-            leadsLast: salesLeadsLast,
-            wonThis: salesWonThis,
-            wonLast: salesWonLast
+            thisWeekKey: sel.key,
+            lastWeekKey: prevKey,
+            leadsThis: thisM.leads,
+            leadsLast: prevM ? prevM.leads : null,
+            wonThis: thisM.wins,
+            wonLast: prevM ? prevM.wins : null
           },
           capacity: {
-            thisWeek: capThisW,
-            lastWeek: capLastW,
-            hoursThis: capHrsThis,
-            hoursLast: capHrsLast
-          },
-          marketing: {
-            thisWeekKey: mktThis,
-            lastWeekKey: mktLast,
-            spendThis: mktThis ? (mktSpendByWeek[mktThis] || 0) : 0,
-            spendLast: mktLast ? (mktSpendByWeek[mktLast] || 0) : 0,
-            leadsThis: mktThis ? (mktLeadsByWeek[mktThis] || 0) : 0,
-            leadsLast: mktLast ? (mktLeadsByWeek[mktLast] || 0) : 0
+            thisWeek: sel.week,
+            hoursThis: thisM.productHrs,
+            hoursLast: prevM ? prevM.productHrs : null
           }
-        }
-      });
-
-      if (filtered.length === 0) {
-        ['kpi-week-leads','kpi-week-revenue','kpi-week-quotes','kpi-week-jobs'].forEach(function(id) {
-          setKPI(id, id + '-sub', '—', 'No data for selection');
-        });
-        document.getElementById('p8-weekly-table').innerHTML =
-          '<p class="no-data-msg">No weekly summary data for selected filters.</p>';
-        // Still keep WoW sections (they use other tabs)
-        return;
-      }
-
-      // Latest week = last row
-      var latest    = filtered[filtered.length - 1];
-      var weekLabel = latest['Week'] || 'Latest Week';
-
-      // Exact column names from Weekly_Summary tab
-      var weekLeads  = parseNum(latest['Leads (week)']);
-      var weekRev    = parseNum(latest['Revenue ($)']);
-      var weekQuotes = parseNum(latest['Quotes Sent']);
-      var weekJobs   = parseNum(latest['Jobs Won']);
-
-      setKPI('kpi-week-leads',   'kpi-week-leads-sub',   weekLeads  || '—',                       weekLabel);
-      setKPI('kpi-week-revenue', 'kpi-week-revenue-sub', weekRev ? formatCurrency(weekRev) : '—', weekLabel);
-      setKPI('kpi-week-quotes',  'kpi-week-quotes-sub',  weekQuotes || '—',                       weekLabel);
-      setKPI('kpi-week-jobs',    'kpi-week-jobs-sub',    weekJobs   || '—',                       weekLabel);
-
-      // 12-week combo chart: leads (bars) + revenue (line)
-      var last12      = filtered.slice(-12);
-      var chartLabels = last12.map(function(r) { return r['Week'] || ''; });
-      var leadsData   = last12.map(function(r) { return parseNum(r['Leads (week)']); });
-      var revenueData = last12.map(function(r) { return parseNum(r['Revenue ($)']); });
-
-      makeChart('chart-p8-leads', {
-        type: 'bar',
-        data: {
-          labels:   chartLabels,
-          datasets: [
-            {
-              label:           'Leads',
-              data:            leadsData,
-              backgroundColor: 'rgba(38, 36, 37, 0.80)',
-              borderWidth:     0,
-              borderRadius:    4,
-              yAxisID:         'y'
-            },
-            {
-              label:           'Revenue ($)',
-              data:            revenueData,
-              type:            'line',
-              borderColor:     '#888',
-              backgroundColor: 'transparent',
-              tension:         0.3,
-              pointRadius:     3,
-              yAxisID:         'y1'
-            }
-          ]
         },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: {
-            y:  { beginAtZero: true, position: 'left',  title: { display: true, text: 'Leads' } },
-            y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false },
-                  ticks: { callback: function(v) { return '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v); } } }
-          }
+        freshness: freshness.map(function(f) {
+          return { source: f.source, status: f.status };
+        }),
+        sourcesLive: {
+          salesCrm: leadsLive || pipeLive,
+          quotes: quotesLive,
+          labour: labourLive,
+          capacity: capLive,
+          schedule: schedLive,
+          xeroFinancials: finLive,
+          xeroInvoices: invLive,
+          weeklySummary: weeklyLive
         }
       });
-
-      // Table: last 12 weeks, newest first
-      document.getElementById('p8-weekly-table').innerHTML = buildAutoTable(
-        filtered.slice(-12).reverse()
-      );
     }
 
 
