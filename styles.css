@@ -632,16 +632,17 @@ select {
 
 #p4-schedule-table .p4-ms-left-grid {
   display: grid;
+  /* Project | Milestone | Brand | Start | End | Slip | Staff | Status | % */
   grid-template-columns:
-    minmax(90px, 1.15fr)
-    minmax(100px, 1.25fr)
-    minmax(70px, 0.9fr)
-    minmax(72px, 0.75fr)
-    minmax(72px, 0.75fr)
-    minmax(78px, 0.8fr)
-    minmax(86px, 0.95fr)
-    minmax(74px, 0.8fr)
-    minmax(44px, 0.5fr);
+    minmax(148px, 1.65fr)
+    minmax(100px, 1.15fr)
+    minmax(52px, 0.55fr)
+    minmax(68px, 0.72fr)
+    minmax(68px, 0.72fr)
+    minmax(74px, 0.78fr)
+    minmax(92px, 0.95fr)
+    minmax(72px, 0.78fr)
+    minmax(44px, 0.48fr);
   gap: 0;
   align-items: center;
   height: 100%;
@@ -676,8 +677,17 @@ select {
   font-size: 8.5px;
   font-weight: 700;
   color: #BCBDBE;
-  white-space: nowrap;
-  overflow: visible;
+  white-space: normal;
+  overflow: hidden;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+}
+
+#p4-schedule-table .p4-ms-th-stack {
+  display: block;
+  white-space: normal;
+  line-height: 1.15;
+  text-transform: uppercase;
 }
 
 #p4-schedule-table .p4-ms-c-project,
@@ -688,6 +698,11 @@ select {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+#p4-schedule-table .p4-ms-c-project {
+  -webkit-line-clamp: 3;
+  font-weight: 500;
 }
 
 #p4-schedule-table .p4-ms-c-slip {
@@ -706,10 +721,33 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+#p4-schedule-table .p4-ms-left-row--head .p4-ms-c-date {
+  white-space: normal;
+  min-width: 0;
+  overflow: hidden;
+}
+
 #p4-schedule-table .p4-ms-c-brand {
-  font-size: 10.5px;
+  font-size: 10px;
   white-space: normal;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#p4-schedule-table .p4-ms-c-staff {
+  overflow: visible;
+}
+
+#p4-schedule-table .p4-ms-c-staff .p4-badge {
+  max-width: none;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 8px;
+  padding: 1px 5px;
 }
 
 #p4-schedule-table .p4-ms-c-pct {

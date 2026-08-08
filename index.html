@@ -4749,15 +4749,22 @@
         '<path d="M15 13.5a3 3 0 0 1 3-2.5h.5a3 3 0 0 1 3 3V19"/>' +
         '</svg>';
 
-      function formatHandsBadge(label) {
+      function formatHandsBadge(label, opts) {
+        opts = opts || {};
+        var compact = !!opts.compact;
         if (!label) return '';
         if (label === 'Needs More Hands') {
+          // Milestone Schedule uses a short label so the badge isn't truncated mid-word
+          var needsText = compact ? 'Needs Hands' : 'Needs More Hands';
           return '<span class="p4-badge p4-badge--critical" title="Needs More Hands">' +
-            handsIconSvg + ' Needs More Hands</span>';
+            (compact ? '' : handsIconSvg + ' ') + needsText + '</span>';
         }
         if (label === 'Understaffed, Being Addressed') {
-          // Short inline label; full wording on hover title
+          // Short inline label everywhere; full wording on hover title
           return '<span class="p4-badge p4-badge--neutral" title="Understaffed, Being Addressed">Understaffed</span>';
+        }
+        if (compact && label === 'Not enough data yet') {
+          return '<span class="p4-badge p4-badge--muted" title="Not enough data yet">No data yet</span>';
         }
         return '<span class="p4-badge p4-badge--muted" title="' + String(label).replace(/"/g, '&quot;') + '">' + label + '</span>';
       }
@@ -4968,7 +4975,7 @@
       // ── Milestone Schedule: sticky table + pixel Gantt (planned vs delay) ────
       var tableEl = document.getElementById('p4-schedule-table');
       var MS_DAY = 86400000;
-      var P4_MS_LEFT_W = 720;
+      var P4_MS_LEFT_W = 760;
       var P4_MS_PX_PER_DAY = 10;
 
       function p4TimelineStatusKey(r) {
@@ -5059,7 +5066,7 @@
         var focusCount = focusList.length;
         var todayMs = p4StartOfDay(today);
 
-        // Extent: planned dates, actual ends, today (delay bars need room past planned end)
+        // Extent from currently visible rows + today (must keep bars on-screen)
         var rangeMin = Infinity;
         var rangeMax = -Infinity;
         function extendRange(t) {
@@ -5068,10 +5075,15 @@
           if (t > rangeMax) rangeMax = t;
         }
         visible.forEach(function(r) {
+          var stKey = p4TimelineStatusKey(r);
           if (r.startD && !isNaN(r.startD.getTime())) extendRange(p4StartOfDay(r.startD));
           if (r.endD && !isNaN(r.endD.getTime())) extendRange(p4StartOfDay(r.endD));
           var ad = p4ParseScheduleDate(r.actualEndRaw);
           if (ad) extendRange(p4StartOfDay(ad));
+          // Delay bars run planned-end → today for overdue / late in-progress
+          if ((stKey === 'overdue' || stKey === 'in-progress') && r.endD && !isNaN(r.endD.getTime())) {
+            if (p4StartOfDay(r.endD) < todayMs) extendRange(todayMs);
+          }
         });
         extendRange(todayMs);
 
@@ -5081,20 +5093,20 @@
           rangeMax += MS_DAY * 7;
         }
         if (hasRange) {
-          // Pad to month boundaries + 1 week for breathing room
-          rangeMin = p4StartOfMonth(rangeMin - MS_DAY * 7);
-          var endPad = new Date(rangeMax + MS_DAY * 14);
-          rangeMax = new Date(endPad.getFullYear(), endPad.getMonth() + 1, 1).getTime() - MS_DAY;
+          // Light pad only — do NOT snap back a full previous month (that shoved bars off-screen)
+          rangeMin = p4StartOfWeekMon(rangeMin - MS_DAY * 3);
+          var endD = new Date(rangeMax + MS_DAY * 10);
+          endD.setHours(0, 0, 0, 0);
+          // End of the week of (max + pad), not end of next calendar month
+          rangeMax = p4StartOfWeekMon(endD.getTime()) + MS_DAY * 6;
         }
         var rangeDays = hasRange ? Math.max(1, Math.round((rangeMax - rangeMin) / MS_DAY) + 1) : 1;
         var timelineW = Math.max(480, rangeDays * P4_MS_PX_PER_DAY);
 
         function xOf(ms) {
           if (!hasRange || ms == null || isNaN(ms)) return null;
-          var x = ((ms - rangeMin) / MS_DAY) * P4_MS_PX_PER_DAY;
-          if (x < 0) x = 0;
-          if (x > timelineW) x = timelineW;
-          return x;
+          // Do not clamp — bars outside pad shouldn't be hidden by max clamp at 0 width issues
+          return ((ms - rangeMin) / MS_DAY) * P4_MS_PX_PER_DAY;
         }
 
         // Month bands
@@ -5143,13 +5155,15 @@
             : '';
 
         function barSlice(leftX, rightX, className, title) {
-          if (leftX === null || rightX === null) return '';
-          var w = Math.max(rightX - leftX, 4);
-          if (leftX + w > timelineW) w = timelineW - leftX;
-          if (w <= 0) return '';
+          if (leftX === null || rightX === null || isNaN(leftX) || isNaN(rightX)) return '';
+          var L = Math.max(0, Math.min(leftX, rightX));
+          var R = Math.min(timelineW, Math.max(leftX, rightX));
+          var w = Math.max(R - L, 4);
+          if (L + w > timelineW) w = Math.max(timelineW - L, 0);
+          if (w <= 0 || L >= timelineW) return '';
           return (
             '<div class="p4-ms-bar ' + className + '"' +
-            ' style="left:' + leftX.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px"' +
+            ' style="left:' + L.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px"' +
             (title ? ' title="' + p4EscAttr(title) + '"' : '') +
             '></div>'
           );
@@ -5213,8 +5227,8 @@
               '<div class="p4-ms-cell p4-ms-c-project">Project</div>' +
               '<div class="p4-ms-cell p4-ms-c-milestone">Milestone</div>' +
               '<div class="p4-ms-cell p4-ms-c-brand">Brand / Dept</div>' +
-              '<div class="p4-ms-cell p4-ms-c-date">Planned Start</div>' +
-              '<div class="p4-ms-cell p4-ms-c-date">Planned End</div>' +
+              '<div class="p4-ms-cell p4-ms-c-date"><span class="p4-ms-th-stack">Planned<br>Start</span></div>' +
+              '<div class="p4-ms-cell p4-ms-c-date"><span class="p4-ms-th-stack">Planned<br>End</span></div>' +
               '<div class="p4-ms-cell p4-ms-c-slip">Slippage</div>' +
               '<div class="p4-ms-cell p4-ms-c-staff">Staffing</div>' +
               '<div class="p4-ms-cell p4-ms-c-status">Status</div>' +
@@ -5239,7 +5253,7 @@
             slippageStr = 'On Schedule';
           }
           var handsLabel = handsByProject[r.project] || '';
-          var handsCell = formatHandsBadge(handsLabel);
+          var handsCell = formatHandsBadge(handsLabel, { compact: true });
           var dateNote = r.dateFlag
             ? '<span class="p4-badge p4-badge--critical" title="Planned Start is after Planned End">' +
               r.dateFlag + '</span> '
@@ -5436,6 +5450,26 @@
               if (!isNaN(idx)) openDrawer(idx);
             }
           });
+        });
+
+        // Scroll timeline so Today (or earliest visible bar) is on-screen, not empty left months
+        function scrollTimelineIntoView() {
+          var scrollEl = tableEl.querySelector('.p4-ms-scroll');
+          if (!scrollEl || !hasRange) return;
+          var viewW = scrollEl.clientWidth;
+          if (viewW < 40) return;
+          var stickyW = P4_MS_LEFT_W;
+          var timelineView = Math.max(120, viewW - stickyW);
+          var focusX = todayX !== null ? todayX : 0;
+          var targetLeft = stickyW + focusX - timelineView * 0.45;
+          if (targetLeft < 0) targetLeft = 0;
+          var maxScroll = Math.max(0, scrollEl.scrollWidth - viewW);
+          if (targetLeft > maxScroll) targetLeft = maxScroll;
+          scrollEl.scrollLeft = targetLeft;
+        }
+        requestAnimationFrame(function() {
+          scrollTimelineIntoView();
+          requestAnimationFrame(scrollTimelineIntoView);
         });
       }
 
