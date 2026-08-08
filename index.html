@@ -247,118 +247,148 @@
           </div>
         </section>
 
-        <!-- ─── P2: Sales & Pipeline ───────────────────────── -->
-        <section id="page-p2" class="page">
+        <!-- ─── P2: Sales & Pipeline (decision dashboard) ───── -->
+        <!-- p2-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p2" class="page p2-test-palette">
           <div class="p2-layout">
             <div class="p2-head">
               <div class="page-header p2-page-header">
                 <span class="page-badge">P2</span>
                 <h1 class="page-title p2-page-title">Sales &amp; Pipeline</h1>
               </div>
-              <p class="p2-filter-cue" id="p2-filter-cue">Brand · Month · Year filters apply above</p>
+              <p class="p2-filter-cue" id="p2-filter-cue">Filters apply to: Date Created (leads &amp; opportunities)</p>
+              <p class="p2-data-quality" id="p2-data-quality" aria-live="polite"></p>
             </div>
 
-            <!-- Tier 1: KPI band 3×2 — Volume then Efficiency -->
-            <div class="p2-kpi-band">
-              <div class="p2-kpi-group" aria-label="Volume">
-                <p class="p2-kpi-group-label">Volume</p>
-                <div class="p2-kpi-row">
-                  <div class="kpi-card card p2-kpi" data-kpi="leads">
-                    <div class="kpi-label">Leads</div>
-                    <div class="kpi-value" id="kpi-p2-leads">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-leads-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-leads-delta" hidden></div>
-                    </div>
-                    <div class="kpi-week-pulse" id="kpi-p2-leads-pulse" hidden></div>
-                    <div class="kpi-sub" id="kpi-p2-leads-sub">Loading...</div>
-                  </div>
-                  <div class="kpi-card card p2-kpi" data-kpi="quotes">
-                    <div class="kpi-label">Quotes</div>
-                    <div class="kpi-value" id="kpi-p2-quotes">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-quotes-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-quotes-delta" hidden></div>
-                    </div>
-                    <div class="kpi-sub" id="kpi-p2-quotes-sub">Loading...</div>
-                  </div>
-                  <div class="kpi-card card p2-kpi" data-kpi="wins">
-                    <div class="kpi-label">Wins</div>
-                    <div class="kpi-value" id="kpi-p2-won">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-won-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-won-delta" hidden></div>
-                    </div>
-                    <div class="kpi-week-pulse" id="kpi-p2-won-pulse" hidden></div>
-                    <div class="kpi-sub" id="kpi-p2-won-sub">Loading...</div>
-                  </div>
-                </div>
+            <!-- Primary KPIs (6) -->
+            <div class="p2-kpi-band" aria-label="Primary sales KPIs">
+              <div class="kpi-card card p2-kpi" data-kpi="open-pipe">
+                <div class="kpi-label">Open Pipeline Value</div>
+                <div class="kpi-value" id="kpi-p2-open">-</div>
+                <div class="kpi-sub" id="kpi-p2-open-sub">Loading...</div>
               </div>
-              <div class="p2-kpi-group" aria-label="Efficiency">
-                <p class="p2-kpi-group-label">Efficiency</p>
-                <div class="p2-kpi-row">
-                  <div class="kpi-card card p2-kpi" data-kpi="winrate">
-                    <div class="kpi-label">Win Rate</div>
-                    <div class="kpi-value" id="kpi-p2-winrate">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-winrate-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-winrate-delta" hidden></div>
-                    </div>
-                    <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
-                  </div>
-                  <div class="kpi-card card p2-kpi" data-kpi="spend">
-                    <div class="kpi-label">Total Spend</div>
-                    <div class="kpi-value" id="kpi-p2-spend">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-spend-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-spend-delta" hidden></div>
-                    </div>
-                    <div class="kpi-sub" id="kpi-p2-spend-sub">Loading...</div>
-                  </div>
-                  <div class="kpi-card card p2-kpi" data-kpi="cpl">
-                    <div class="kpi-label">Cost Per Lead</div>
-                    <div class="kpi-value" id="kpi-p2-cpl">—</div>
-                    <div class="p2-kpi-trend">
-                      <svg class="kpi-sparkline" id="kpi-p2-cpl-spark" hidden aria-hidden="true"></svg>
-                      <div class="p2-kpi-delta" id="kpi-p2-cpl-delta" hidden></div>
-                    </div>
-                    <div class="kpi-sub" id="kpi-p2-cpl-sub">Loading...</div>
-                  </div>
-                </div>
+              <div class="kpi-card card p2-kpi" data-kpi="weighted">
+                <div class="kpi-label">Weighted Pipeline</div>
+                <div class="kpi-value" id="kpi-p2-weighted">-</div>
+                <div class="kpi-sub" id="kpi-p2-weighted-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="coverage">
+                <div class="kpi-label">Target Coverage</div>
+                <div class="kpi-value" id="kpi-p2-coverage">-</div>
+                <div class="kpi-sub" id="kpi-p2-coverage-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="quotes-out">
+                <div class="kpi-label">Quotes Outstanding</div>
+                <div class="kpi-value" id="kpi-p2-quotes-out">-</div>
+                <div class="kpi-sub" id="kpi-p2-quotes-out-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="winrate">
+                <div class="kpi-label">Quote Win Rate</div>
+                <div class="kpi-value" id="kpi-p2-winrate">-</div>
+                <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi p2-kpi--risk" data-kpi="stalled">
+                <div class="kpi-label">Stalled Pipeline</div>
+                <div class="kpi-value" id="kpi-p2-stalled">-</div>
+                <div class="kpi-sub" id="kpi-p2-stalled-sub">Loading...</div>
               </div>
             </div>
 
-            <!-- Tier 2 + 3: Funnel (anchor) | Lead sources -->
+            <!-- Secondary KPIs -->
+            <div class="p2-kpi-secondary" aria-label="Secondary sales metrics">
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Avg job value (won)</span>
+                <span class="p2-sec-value" id="kpi-p2-avg-job">-</span>
+              </div>
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Median sales cycle</span>
+                <span class="p2-sec-value" id="kpi-p2-cycle">-</span>
+              </div>
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Pipeline added this month</span>
+                <span class="p2-sec-value" id="kpi-p2-added">-</span>
+              </div>
+              <div class="p2-sec-metric p2-sec-metric--rates">
+                <span class="p2-sec-label">Funnel rates</span>
+                <span class="p2-sec-value p2-sec-rates" id="kpi-p2-funnel-rates">-</span>
+              </div>
+            </div>
+
+            <!-- Row 2: Funnel | Revenue forecast -->
             <div class="p2-mid-row">
               <div class="chart-card card p2-funnel-card">
-                <div class="chart-title">Pipeline Funnel</div>
-                <div id="p2-funnel-overall" class="p2-funnel-overall" aria-live="polite">—</div>
-                <div class="p2-chart-wrap p2-funnel-wrap">
-                  <canvas id="chart-p2-funnel" aria-label="Pipeline funnel Lead Quoted Won"></canvas>
+                <div class="p2-card-head">
+                  <div class="chart-title">Pipeline Funnel</div>
+                  <div class="p2-toggle" role="group" aria-label="Funnel metric">
+                    <button type="button" class="p2-toggle-btn is-active" id="p2-funnel-mode-value" data-mode="value">Value</button>
+                    <button type="button" class="p2-toggle-btn" id="p2-funnel-mode-count" data-mode="count">Count</button>
+                  </div>
                 </div>
-                <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden>*out-of-cohort wins: wins in this period were not all quoted in the same period</p>
+                <div id="p2-funnel-rates" class="p2-funnel-rates" aria-live="polite"></div>
+                <div class="p2-chart-wrap p2-funnel-wrap">
+                  <canvas id="chart-p2-funnel" aria-label="Pipeline funnel by stage"></canvas>
+                </div>
+                <div id="p2-funnel-stage-detail" class="p2-funnel-stage-detail"></div>
+                <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden></p>
+              </div>
+              <div class="chart-card card p2-forecast-card">
+                <div class="chart-title">Revenue Forecast by Expected Close</div>
+                <p class="p2-section-hint">Stacked by stage certainty · target from Targets sheet when present</p>
+                <div class="p2-chart-wrap p2-forecast-wrap">
+                  <canvas id="chart-p2-forecast" aria-label="Revenue forecast stacked by month"></canvas>
+                </div>
+                <div id="p2-forecast-gap" class="p2-forecast-gap" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <!-- Row 3: Waterfall | Source quality -->
+            <div class="p2-mid-row">
+              <div class="chart-card card p2-waterfall-card">
+                <div class="chart-title">Pipeline Movement Waterfall</div>
+                <p class="p2-section-hint">Opening to closing movement</p>
+                <div id="p2-waterfall-body" class="p2-pending-panel">
+                  <p class="p2-pending-line">Pending - movement needs period opening/closing snapshots (not in GHL_Pipeline)</p>
+                </div>
+                <div class="p2-chart-wrap p2-waterfall-wrap" hidden>
+                  <canvas id="chart-p2-waterfall" aria-label="Pipeline movement waterfall"></canvas>
+                </div>
               </div>
               <div class="chart-card card p2-sources-card">
-                <div class="chart-title">Lead Source Performance</div>
-                <div class="p2-chart-wrap p2-sources-wrap">
-                  <canvas id="chart-p2-sources"></canvas>
+                <div class="chart-title">Source Quality</div>
+                <div id="p2-concentration" class="p2-concentration" hidden></div>
+                <div id="p2-source-table" class="p2-source-table">Loading sources...</div>
+                <div class="p2-chart-wrap p2-bubble-wrap">
+                  <canvas id="chart-p2-bubble" aria-label="Source quality bubble chart"></canvas>
                 </div>
+                <div class="p2-source-footer" id="p2-source-cpl-note"></div>
               </div>
             </div>
 
-            <!-- Tier 4: Campaign performance full width -->
-            <div class="chart-row p2-campaign-row">
-              <div class="chart-card card p2-campaign-card">
-                <div class="chart-title">Campaign Performance (Ad Spend vs Cost Per Lead)</div>
-                <div class="p2-chart-wrap p2-campaign-wrap">
-                  <canvas id="chart-p2-campaigns"></canvas>
+            <!-- Bottom: Opportunities requiring action -->
+            <div class="section-card p2-action-card">
+              <div class="section-title-row">
+                <div class="section-title">Opportunities Requiring Action
+                  <span class="p2-section-hint" id="p2-action-hint">Exceptions first · stalled, overdue, high value</span>
                 </div>
+                <button type="button" class="p2-view-all-btn" id="p2-view-all-btn">View all opportunities</button>
               </div>
+              <div id="p2-action-table">Loading opportunities...</div>
             </div>
 
-            <div class="section-card p2-detail-card">
-              <div class="section-title">Pipeline Detail</div>
-              <div id="p2-pipeline-table">Loading pipeline data...</div>
+            <!-- Deal ageing Gantt (top 10) -->
+            <div class="section-card p2-gantt-card">
+              <div class="section-title">Deal Ageing
+                <span class="p2-section-hint">Top 10 largest or most stalled open deals</span>
+              </div>
+              <div id="p2-gantt" class="p2-gantt">Loading...</div>
+            </div>
+
+            <!-- Campaign scorecard (secondary - full analysis on P10) -->
+            <div class="section-card p2-campaign-card">
+              <div class="section-title">Campaign Scorecard
+                <span class="p2-section-hint">Paid media snapshot · full analysis on P10 Marketing</span>
+              </div>
+              <div id="p2-campaign-scorecard" class="p2-campaign-scorecard">Loading...</div>
             </div>
           </div>
         </section>
@@ -1017,7 +1047,7 @@
 
     var BB_PAGE_DIRECTORY = {
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
-      P2: 'Sales & Pipeline (restructured). Layout: (1) KPI band as a 3x2 grid: Volume row = Leads, Quotes, Wins; Efficiency row = Win Rate, Total Spend, Cost Per Lead. Each KPI card has the current value, a trend sparkline, a directional delta vs last week, and a short source note (e.g. From GHL leads / Paid ad spend). (2) Pipeline Funnel: horizontal stepped bars Lead (solid black) → Quoted (dark grey / Soft Gray) → Won (light grey / Brilliant Silver); each bar shows count and conversion % from the prior stage (Quoted from Lead, Won from Quote). If Quote-to-Won exceeds 100%, that is a known out-of-cohort quirk (wins in this period did not all originate from quotes in the same period), footnoted on the page, explain it calmly if asked, do not treat it as a calculation error. (3) Lead Source Performance: channel breakdown of where leads originate (e.g. Facebook Ads, Website booking, Word of Mouth, Others), with counts. (4) Campaign Performance: full-width dual Y-axis chart, Ad Spend as black columns (left axis) vs Cost Per Lead as grey line with open circular nodes (right axis) per campaign. Use this structure when answering (e.g. why is Win Rate low, what is driving Cost Per Lead up, explain the funnel) from live page data only. For full week-over-week Sales comparison across periods, send the user to P8.',
+      P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall: Pending without opening/closing snapshots. (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value $1 display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
       P3: 'Quoting & Estimating. Layout: (1) Quoting Funnel by Status is a horizontal status pipeline of connected boxes (Draft, Sent, Accepted, In Progress, Awaiting Approval, etc.), not a classic drop-off funnel shape, because these statuses are not a strict sequential reduction. (2) Quotes by Status Share is a 100% stacked horizontal bar (not a donut). (3) Quotes by Estimator is dual-axis: quote volume as bars, Avg Days to Decision as a solid black line, plus a target line for days to decision pulled live from the Targets tab. (4) Quoting Funnel Detail table: text columns left-aligned, numbers right-aligned. Also covers budget vs actual per quote and estimating accuracy where data is loaded. Answer only from live page data.',
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (monthly focus, not weekly). Layout: (1) KPI row of five cards: Revenue, Gross Margin, Net Profit, Net Margin, and Accounts Receivable (renamed from Outstanding Invoices). AR is a balance shown as At [date], not a period P&L flow, and has a top-border attention marker. (2) Brand-level charts: Revenue vs Target and Net Profit vs Target use solid actual bars with a target reference line and direct variance labels (not dual competing bar series). Immaterial variances under about $500 are omitted or shown as roughly zero. (3) Overhead Variance is a months-by-brand variance matrix table with small inline micro-bars, not a dual grey chart. (4) Reporting periods use explicit date ranges (e.g. 1 Apr - 31 Jul 2026), never ambiguous shorthand. Monthly only: say so if asked for weekly P5. Planned later, not built yet: a second KPI band for working capital/cash style metrics and a risk/exceptions intervention table; both wait on fuller Xero data. If asked for those or for cash/WC on P5, say they are not available yet on this page, do not invent figures. Answer only from live P5 page data.',
@@ -1880,13 +1910,6 @@
     }
 
 
-    // ═══════════════════════════════════════════════════════════════
-    // P1 — EXECUTIVE SNAPSHOT
-    // Sources: Targets · Xero_Financials · GHL_Leads · GHL_Pipeline
-    //          · Xero_Projects (active jobs) · Weekly_Summary fallback
-    // KPIs:   Revenue / Margin / Leads / Jobs Won / Quotes / Active Jobs
-    // Chart:  Monthly Target (outline) vs Actual Revenue (fill)
-    // Table:  All targets by month
     // ═══════════════════════════════════════════════════════════════
     // P1 — EXECUTIVE SNAPSHOT (decision cockpit)
     // Sources: Targets · Xero_Financials · CashFlow_Forecast · Xero_Invoices
@@ -3472,12 +3495,30 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P2 — SALES & PIPELINE
-    // Sources: GHL_Leads, GHL_Pipeline, Marketing_Paid, Marketing_Sources
-    // KPIs:    Total Leads, Quotes Sent, Jobs Won, Win Rate, Ad Spend, Avg CPL
-    // Charts:  Lead sources, pipeline funnel, ad spend vs CPL by campaign
-    // Table:   Pipeline detail (no GHL ID / Probability %)
+    // P2 — SALES & PIPELINE (decision dashboard)
+    // Sources: GHL_Leads, GHL_Pipeline, Marketing_Paid, Marketing_Sources, Targets
+    // GHL_Quotes: not available (API 400) - quotes from lead/quote stage + pipeline
+    // Period filter: Date Created (leads & opportunities) - labelled on page
+    // Forecast chart: groups open deals by Expected Close Date month
+    // Stalled threshold: 14 days (confirm with Lori/Ben)
     // ═══════════════════════════════════════════════════════════════
+    var p2ShowAllOpps = false;
+    var p2FunnelMode = 'value'; // default Value
+    var _p2LastPayload = null;
+
+    // confirm threshold with Lori/Ben
+    var P2_STALLED_DAYS = 14;
+
+    // Simple typical days per funnel stage before "over age" (confirm with Lori/Ben)
+    var P2_STAGE_TYPICAL_DAYS = {
+      'New Lead': 5,
+      'Qualified': 10,
+      'Site Visit': 14,
+      'Quote Sent': 21,
+      'Follow-up / Negotiation': 21,
+      'Won / Lost': 0
+    };
+
     async function loadP2() {
       showLoading(true);
       removeError('p2');
@@ -3485,10 +3526,11 @@
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.GHL_LEADS),
           fetchSheet(CONFIG.TABS.GHL_PIPELINE),
-          fetchSheet(CONFIG.TABS.MARKETING_PAID),
-          fetchSheet(CONFIG.TABS.MARKETING_SOURCES)
+          fetchSheet(CONFIG.TABS.MARKETING_PAID).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.MARKETING_SOURCES).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
         ]);
-        renderP2(results[0], results[1], results[2], results[3]);
+        renderP2(results[0], results[1], results[2], results[3], results[4]);
       } catch (err) {
         console.error('P2 load error:', err);
         showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions.');
@@ -3498,33 +3540,72 @@
       }
     }
 
-    function renderP2(leads, pipeline, marketing, sources) {
-      function applyFilters(rows) {
-        return filterByMonths(filterByYear(filterByBrand(rows, activeBrand), activeYear), activeMonths);
+    function renderP2(leads, pipeline, marketing, sources, targets) {
+      _p2LastPayload = {
+        leads: leads || [],
+        pipeline: pipeline || [],
+        marketing: marketing || [],
+        sources: sources || [],
+        targets: targets || []
+      };
+
+      // ── Date field for page period filters (documented choice) ──
+      // Date Created on GHL_Leads and Created Date on GHL_Pipeline.
+      // Forecast chart alone uses Expected Close Date for month buckets.
+      function p2CreatedDateStr(r) {
+        return col(r, 'Date Created', 'Created Date', 'date_created', 'created_date') || '';
       }
 
-      var leadsFiltered = applyFilters(leads || []);
-      var pipeFiltered  = applyFilters(pipeline || []);
-      var mktFiltered   = applyFilters(marketing || []);
-      var srcFiltered   = applyFilters(sources || []);
+      function p2FilterByCreated(rows) {
+        var branded = filterByBrand(rows || [], activeBrand);
+        var yearOn = activeYear && activeYear !== 'ALL';
+        var monthsOn = activeMonths && activeMonths.length > 0;
+        if (!yearOn && !monthsOn) return branded;
+        return branded.filter(function(r) {
+          var parts = parseRowDateParts(p2CreatedDateStr(r));
+          if (!parts) return false;
+          if (yearOn && parts.year !== String(activeYear)) return false;
+          if (monthsOn) {
+            return activeMonths.some(function(sel) {
+              var needle = String(sel || '').trim().toLowerCase().substring(0, 3);
+              return needle && String(parts.month).toLowerCase().startsWith(needle);
+            });
+          }
+          return true;
+        });
+      }
+
+      // Marketing: keep Month/Year/Date columns via shared helpers
+      function applyMktFilters(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      }
+
+      var leadsFiltered = p2FilterByCreated(leads || []);
+      var pipeFiltered  = p2FilterByCreated(pipeline || []);
+      var mktFiltered   = applyMktFilters(marketing || []);
+      var srcFiltered   = applyMktFilters(sources || []);
+      var targetsBranded = filterByBrand(targets || [], activeBrand);
 
       var cue = document.getElementById('p2-filter-cue');
       if (cue) {
         var monthLabel = (!activeMonths || !activeMonths.length)
-          ? 'All months'
-          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months');
+          ? 'All months (by Date Created)'
+          : ((activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months') +
+            ' · Date Created');
         var yearLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
         var brandLabel = activeBrand || 'ALL';
-        cue.textContent = brandLabel + '  ·  ' + monthLabel + '  ·  ' + yearLabel;
+        cue.textContent =
+          brandLabel + ' · ' + monthLabel + ' · ' + yearLabel +
+          ' · Filters apply to: Date Created (leads & opportunities). Forecast chart uses Expected Close.';
       }
 
-      setBBPageData('P2', 'P2: Sales & Pipeline', {
-        leads:     leadsFiltered.slice(0, 200),
-        pipeline:  pipeFiltered.slice(0, 200),
-        marketing: mktFiltered.slice(0, 100),
-        sources:   srcFiltered.slice(0, 100),
-        weekPulse: 'Lightweight this-week leads/won on KPI cards only. For week-over-week Sales go to P8.'
-      });
+      function escapeP2(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
 
       function stageOf(r) {
         return String(col(r, 'Pipeline Stage', 'pipeline_stage', 'Stage', 'stage') || '').trim();
@@ -3532,617 +3613,1313 @@
       function statusOf(r) {
         return String(col(r, 'Status', 'status') || '').trim();
       }
-      function isQuotedStage(s) {
-        var t = s.toLowerCase();
-        return t === 'quoted' || t.indexOf('quoted') !== -1;
+      function oppName(r) {
+        return String(col(r, 'Contact Name', 'contact_name', 'Full Name', 'Name') || '').trim() || 'Unnamed';
       }
-      function isWonStatus(status) {
-        return status.toLowerCase() === 'won';
+      function ownerOf(r) {
+        return String(col(r, 'Assigned to', 'Assigned To', 'Owner', 'owner', 'Sales Owner') || '').trim();
       }
-      function isQuotedLead(r) {
-        var stage = stageOf(r);
-        if (isQuotedStage(stage) || isWonStatus(statusOf(r)) || stage.toLowerCase() === 'won') return true;
-        return !!col(r, 'Quote Sent Date', 'quote_sent_date');
-      }
-      function isWonLead(r) {
-        return isWonStatus(statusOf(r)) || stageOf(r).toLowerCase() === 'won';
-      }
-      function clearP2Charts() {
-        ['chart-p2-sources', 'chart-p2-campaigns', 'chart-p2-funnel'].forEach(function(id) {
-          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
-        });
-        destroyApex('chart-p2-funnel');
+      function leadSourceOf(r) {
+        return String(col(r, 'Lead Source', 'lead_source', 'Source', 'source') || '').trim() || 'Unknown';
       }
 
-      // ── KPI cards ─────────────────────────────────────────────
-      var totalLeads = leadsFiltered.length;
-      var quotesSent = leadsFiltered.filter(isQuotedLead).length;
-      var jobsWon = leadsFiltered.filter(isWonLead).length;
-      var winRate = totalLeads > 0 ? (jobsWon / totalLeads) * 100 : 0;
-
-      var totalSpend = mktFiltered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
-      }, 0);
-      var cplVals = mktFiltered.map(function(r) {
-        return parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
-      }).filter(function(n) { return n > 0; });
-      var avgCPL = cplVals.length
-        ? cplVals.reduce(function(s, n) { return s + n; }, 0) / cplVals.length
-        : (function() {
-            var leadsGen = mktFiltered.reduce(function(s, r) {
-              return s + parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
-            }, 0);
-            return leadsGen > 0 ? totalSpend / leadsGen : 0;
-          })();
-
-      var noData = totalLeads === 0 && pipeFiltered.length === 0 && mktFiltered.length === 0;
-      if (noData) {
-        ['kpi-p2-leads','kpi-p2-quotes','kpi-p2-won','kpi-p2-winrate','kpi-p2-spend','kpi-p2-cpl']
-          .forEach(function(id) { setKPI(id, id + '-sub', '—', 'No data for selection'); });
-        ['kpi-p2-leads-spark','kpi-p2-quotes-spark','kpi-p2-won-spark',
-         'kpi-p2-winrate-spark','kpi-p2-spend-spark','kpi-p2-cpl-spark']
-          .forEach(function(id) { drawKpiSparkline(id, null); });
-        ['kpi-p2-leads-delta','kpi-p2-quotes-delta','kpi-p2-won-delta',
-         'kpi-p2-winrate-delta','kpi-p2-spend-delta','kpi-p2-cpl-delta']
-          .forEach(function(id) { setKpiDelta(id, null); });
-        setWeekPulse('kpi-p2-leads-pulse', '');
-        setWeekPulse('kpi-p2-won-pulse', '');
-      } else {
-        setKPI('kpi-p2-leads',   'kpi-p2-leads-sub',   totalLeads || '—', 'From GHL leads');
-        setKPI('kpi-p2-quotes',  'kpi-p2-quotes-sub',  quotesSent || '—', 'Quoted / quote sent');
-        setKPI('kpi-p2-won',     'kpi-p2-won-sub',     jobsWon || '—',    'Status = Won');
-        setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', totalLeads ? formatPct(winRate) : '—', 'Jobs won / total leads');
-        setKPI('kpi-p2-spend',   'kpi-p2-spend-sub',   totalSpend ? formatCurrency(totalSpend) : '—', 'Paid ad spend');
-        setKPI('kpi-p2-cpl',     'kpi-p2-cpl-sub',     avgCPL ? formatCurrency(avgCPL) : '—', 'Average cost per lead');
+      // Raw value cell (distinguishes blank vs $1 vs real)
+      function rawValueCell(r) {
+        return rawColByNames(r, ['Value ($)', 'Value', 'value', 'Deal Value', 'Opportunity Value']);
+      }
+      function parseDealValue(r) {
+        var raw = rawValueCell(r);
+        if (raw === '' || raw == null) return null;
+        var n = parseNum(raw);
+        return isNaN(n) ? null : n;
+      }
+      // Obvious placeholders ($1 or empty) - exclude from weighted / open $ totals
+      function isPlaceholderValue(n) {
+        if (n == null || n === 0) return true;
+        return n > 0 && n <= 1.01;
+      }
+      function realDealValue(r) {
+        var n = parseDealValue(r);
+        if (n == null || isPlaceholderValue(n)) return null;
+        return n;
+      }
+      function displayValueHtml(r) {
+        var n = parseDealValue(r);
+        if (n == null || isPlaceholderValue(n)) {
+          return '<span class="p2-value-pending">Value not entered</span>';
+        }
+        return formatCurrency(n);
       }
 
-      // ── Sparklines + week-over-week deltas (alongside, not instead of sparks) ──
-      (function applyP2Trends() {
-        function leadDate(r) {
-          return col(r, 'Date Created', 'Created Date', 'Last Activity Date', 'Date', 'date') || getRowDateStr(r);
-        }
-        function wonDate(r) {
-          return col(r, 'Close Date', 'Expected Close Date', 'Date Created', 'Last Activity Date') || getRowDateStr(r);
-        }
-        function quoteDate(r) {
-          return col(r, 'Quote Sent Date', 'quote_sent_date', 'Date Created', 'Created Date') || getRowDateStr(r);
-        }
-        function mktDate(r) {
-          return col(r, 'Date', 'Week Ending', 'Period', 'Month') || getRowDateStr(r);
-        }
-
-        var leadsByW = {}, quotesByW = {}, wonByW = {};
-        leadsFiltered.forEach(function(r) {
-          var kl = weekKeyFromDateStr(leadDate(r));
-          if (kl) leadsByW[kl] = (leadsByW[kl] || 0) + 1;
-          if (isQuotedLead(r)) {
-            var kq = weekKeyFromDateStr(quoteDate(r));
-            if (kq) quotesByW[kq] = (quotesByW[kq] || 0) + 1;
-          }
-          if (isWonLead(r)) {
-            var kw = weekKeyFromDateStr(wonDate(r));
-            if (kw) wonByW[kw] = (wonByW[kw] || 0) + 1;
-          }
-        });
-
-        var spendByW = {}, cplSumByW = {}, cplNByW = {};
-        mktFiltered.forEach(function(r) {
-          var k = weekKeyFromDateStr(mktDate(r));
-          if (!k) return;
-          spendByW[k] = (spendByW[k] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
-          var cpl = parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
-          if (cpl > 0) {
-            cplSumByW[k] = (cplSumByW[k] || 0) + cpl;
-            cplNByW[k] = (cplNByW[k] || 0) + 1;
-          }
-        });
-        var cplByW = {};
-        Object.keys(cplSumByW).forEach(function(k) {
-          cplByW[k] = cplNByW[k] ? cplSumByW[k] / cplNByW[k] : 0;
-        });
-
-        var leadSeries = weekSeriesFromMap(leadsByW, 8);
-        var quoteSeries = weekSeriesFromMap(quotesByW, 8);
-        var wonSeries = weekSeriesFromMap(wonByW, 8);
-        var spendSeries = weekSeriesFromMap(spendByW, 8);
-        var cplSeries = weekSeriesFromMap(cplByW, 8);
-
-        // Win rate by week from aligned lead/won maps
-        var wrByW = {};
-        Object.keys(leadsByW).forEach(function(k) {
-          var L = leadsByW[k] || 0;
-          var W = wonByW[k] || 0;
-          if (L > 0) wrByW[k] = (W / L) * 100;
-        });
-        var wrSeries = weekSeriesFromMap(wrByW, 8);
-
-        drawKpiSparkline('kpi-p2-leads-spark', leadSeries.values);
-        drawKpiSparkline('kpi-p2-quotes-spark', quoteSeries.values);
-        drawKpiSparkline('kpi-p2-won-spark', wonSeries.values);
-        drawKpiSparkline('kpi-p2-winrate-spark', wrSeries.values);
-        drawKpiSparkline('kpi-p2-spend-spark', spendSeries.values);
-        drawKpiSparkline('kpi-p2-cpl-spark', cplSeries.values);
-
-        function lastTwoPct(series) {
-          if (!series.values || series.values.length < 2) return null;
-          var curr = series.values[series.values.length - 1];
-          var prev = series.values[series.values.length - 2];
-          return pctChangeWeek(curr, prev);
-        }
-
-        setKpiDelta('kpi-p2-leads-delta', lastTwoPct(leadSeries), 'vs last week');
-        setKpiDelta('kpi-p2-quotes-delta', lastTwoPct(quoteSeries), 'vs last week');
-        setKpiDelta('kpi-p2-won-delta', lastTwoPct(wonSeries), 'vs last week');
-        setKpiDelta('kpi-p2-winrate-delta', lastTwoPct(wrSeries), 'vs last week');
-        setKpiDelta('kpi-p2-spend-delta', lastTwoPct(spendSeries), 'vs last week');
-        setKpiDelta('kpi-p2-cpl-delta', lastTwoPct(cplSeries), 'vs last week');
-
-        if (leadSeries.latestKey) {
-          setWeekPulse('kpi-p2-leads-pulse', 'This week: ' + leadSeries.latestVal + ' leads');
-        } else {
-          setWeekPulse('kpi-p2-leads-pulse', '');
-        }
-        if (wonSeries.latestKey) {
-          setWeekPulse('kpi-p2-won-pulse', 'This week: ' + wonSeries.latestVal + ' won');
-        } else {
-          setWeekPulse('kpi-p2-won-pulse', '');
-        }
-      })();
-
-      clearP2Charts();
-
-      var P2_CHARCOAL = '#262425';
-      var P2_SOFT_GRAY = '#BCBDBE';
-      var P2_SILVER = '#D2D4D5';
-      var P2_WHITE = '#FFFFFF';
-      var P2_GRID = { color: 'rgba(188,189,190,0.28)', lineWidth: 0.75 };
-
-      // Chart plugin: force count label beside every horizontal bar
-      var p2BarEndLabels = {
-        id: 'p2BarEndLabels',
-        afterDatasetsDraw: function(chart) {
-          var ctx = chart.ctx;
-          var meta = chart.getDatasetMeta(0);
-          if (!meta || !meta.data) return;
-          ctx.save();
-          ctx.fillStyle = P2_CHARCOAL;
-          ctx.font = '600 11px Montserrat, sans-serif';
-          ctx.textBaseline = 'middle';
-          meta.data.forEach(function(bar, i) {
-            var val = chart.data.datasets[0].data[i];
-            if (val === null || val === undefined) return;
-            var text = String(val);
-            var x = bar.x + 6;
-            var y = bar.y;
-            // Keep label readable when bar is tiny: still show at end of bar position
-            if (x < chart.chartArea.left + 8) x = chart.chartArea.left + 8;
-            ctx.textAlign = 'left';
-            ctx.fillText(text, x, y);
-          });
-          ctx.restore();
-        }
-      };
-
-      // ── Lead Source Performance (linear scale + end labels on every bar) ──
-      var bySource = {};
-      leadsFiltered.forEach(function(r) {
-        var src = col(r, 'Lead Source', 'lead_source', 'Source', 'source') || 'Unknown';
-        bySource[src] = (bySource[src] || 0) + 1;
-      });
-      var sourceEntries = Object.keys(bySource).map(function(k) {
-        return { source: k, count: bySource[k] };
-      }).sort(function(a, b) { return b.count - a.count; });
-      var maxSrc = sourceEntries.length ? sourceEntries[0].count : 1;
-
-      function getSourceBarColor(count, max) {
-        var pct = max > 0 ? count / max : 0;
-        if (pct >= 0.66) return P2_CHARCOAL;
-        if (pct >= 0.33) return P2_SOFT_GRAY;
-        return P2_SILVER;
+      function parseProb(r) {
+        var raw = col(r, 'Probability %', 'Probability', 'probability', 'Win Probability');
+        if (raw === '' || raw == null) return null;
+        var n = parseNum(raw);
+        if (n > 1 && n <= 100) return n / 100;
+        if (n >= 0 && n <= 1) return n;
+        return null;
       }
 
-      var sourcesWrap = document.querySelector('#page-p2 .p2-sources-wrap');
-      if (sourcesWrap) {
-        sourcesWrap.style.height = Math.max(200, Math.min(420, sourceEntries.length * 28 + 48)) + 'px';
+      function isWon(r) {
+        var st = statusOf(r).toLowerCase();
+        var stage = stageOf(r).toLowerCase();
+        return st === 'won' || stage === 'won';
+      }
+      function isLost(r) {
+        var st = statusOf(r).toLowerCase();
+        var stage = stageOf(r).toLowerCase();
+        if (st === 'lost') return true;
+        if (stage.indexOf('lost') !== -1) return true;
+        return false;
+      }
+      function isOpen(r) {
+        if (isWon(r) || isLost(r)) return false;
+        var st = statusOf(r).toLowerCase();
+        // Status "Close" treated as non-open if present without won
+        if (st === 'close' || st === 'closed') return false;
+        return true;
+      }
+      function isQuoted(r) {
+        var stage = stageOf(r).toLowerCase();
+        if (stage === 'quoted' || stage.indexOf('quote') !== -1) return true;
+        if (isWon(r)) return true;
+        if (col(r, 'Quote Sent Date', 'quote_sent_date')) return true;
+        // Follow-up after quote is still "quoted path"
+        if (stage.indexOf('follow') !== -1 || stage.indexOf('negotiat') !== -1) return true;
+        return false;
       }
 
-      makeChart('chart-p2-sources', {
-        type: 'bar',
-        data: {
-          labels: sourceEntries.length
-            ? sourceEntries.map(function(e) {
-                return e.source.length > 32 ? e.source.substring(0, 32) + '…' : e.source;
-              })
-            : ['No leads'],
-          datasets: [{
-            label: 'Leads',
-            data: sourceEntries.length ? sourceEntries.map(function(e) { return e.count; }) : [0],
-            backgroundColor: sourceEntries.length
-              ? sourceEntries.map(function(e) { return getSourceBarColor(e.count, maxSrc); })
-              : [P2_SILVER],
-            borderWidth: 0,
-            borderRadius: 0,
-            barThickness: 14
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { right: 36 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                title: function(items) {
-                  var i = items[0] && items[0].dataIndex;
-                  return sourceEntries[i] ? sourceEntries[i].source : '';
-                },
-                label: function(ctx) { return ctx.raw + ' leads'; }
-              }
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: { precision: 0, color: P2_CHARCOAL, font: { size: 10 } },
-              grid: P2_GRID,
-              border: { color: P2_SOFT_GRAY }
-            },
-            y: {
-              ticks: { color: P2_CHARCOAL, font: { size: 10, family: 'Montserrat' } },
-              grid: { display: false },
-              border: { color: P2_SOFT_GRAY }
-            }
-          }
-        },
-        plugins: [p2BarEndLabels]
-      });
-
-      // ── Pipeline Funnel: Chart.js horizontal stepped bars (Lead → Quoted → Won) ──
-      // Values = actual volumes so bar lengths are proportional (not equal-width labels).
-      // Conversion % on y-labels; * footnote when Won/Quote > 100%.
-      var leadN = totalLeads;
-      var quotedN = quotesSent;
-      var wonN = jobsWon;
-      var leadToQuoted = leadN > 0 ? (quotedN / leadN) * 100 : null;
-      var quotedToWon = quotedN > 0 ? (wonN / quotedN) * 100 : null;
-      var leadToWon = leadN > 0 ? (wonN / leadN) * 100 : null;
-      var outOfCohort = quotedToWon !== null && quotedToWon > 100;
-
-      var overallEl = document.getElementById('p2-funnel-overall');
-      if (overallEl) {
-        if (leadToWon === null || leadN === 0) {
-          overallEl.innerHTML = '—<span class="p2-funnel-overall-label">Lead → Won</span>';
-        } else {
-          overallEl.innerHTML =
-            formatPct(leadToWon) +
-            '<span class="p2-funnel-overall-label">Lead → Won</span>';
+      // Map raw GHL stages to decision funnel buckets
+      function funnelBucket(stage) {
+        var t = String(stage || '').toLowerCase().trim();
+        if (!t) return 'New Lead';
+        if (t === 'won' || t.indexOf('lost') !== -1) return 'Won / Lost';
+        if (t.indexOf('follow') !== -1 || t.indexOf('negotiat') !== -1 || t.indexOf('on hold') !== -1) {
+          return 'Follow-up / Negotiation';
         }
+        if (t === 'quoted' || t.indexOf('quote') !== -1) return 'Quote Sent';
+        if (t.indexOf('appointment') !== -1 || t.indexOf('site visit') !== -1 || t.indexOf('site-visit') !== -1) {
+          return 'Site Visit';
+        }
+        if (t.indexOf('qualif') !== -1 || t.indexOf('catalogue') !== -1 || t.indexOf('catalog') !== -1) {
+          return 'Qualified';
+        }
+        if (t.indexOf('contacted') !== -1) return 'Qualified'; // contacted treated as progressing toward qualified
+        if (t.indexOf('new lead') !== -1 || t.indexOf('initial') !== -1 || t.indexOf('inquiry') !== -1) {
+          return 'New Lead';
+        }
+        return 'New Lead';
       }
 
-      var qConvLabel = leadToQuoted === null ? '' : Math.round(leadToQuoted) + '% from Lead';
-      var wConvLabel = quotedToWon === null
-        ? ''
-        : (Math.round(quotedToWon) + '% from Quote' + (outOfCohort ? '*' : ''));
-
-      // Custom y-labels: stage name + count; conversion stays readable beside category
-      var funnelYLabels = [
-        'Lead  ' + leadN,
-        'Quoted  ' + quotedN + (qConvLabel ? '  ·  ' + qConvLabel : ''),
-        'Won  ' + wonN + (wConvLabel ? '  ·  ' + wConvLabel : '')
+      var FUNNEL_ORDER = [
+        'New Lead',
+        'Qualified',
+        'Site Visit',
+        'Quote Sent',
+        'Follow-up / Negotiation',
+        'Won / Lost'
       ];
 
-      var funnelValues = [leadN, quotedN, wonN];
-      var funnelMax = Math.max.apply(null, funnelValues.concat([1]));
-      var hasFunnelData = leadN > 0 || quotedN > 0 || wonN > 0;
+      // Certainty buckets for forecast stack
+      function certaintyOf(r) {
+        if (isWon(r)) return 'won';
+        var bucket = funnelBucket(stageOf(r));
+        if (bucket === 'Follow-up / Negotiation' || bucket === 'Quote Sent') return 'committed';
+        if (bucket === 'Site Visit' || bucket === 'Qualified') return 'likely';
+        return 'early';
+      }
 
-      // End-of-bar count labels (charcoal; works on silver bars too)
-      var p2FunnelEndLabels = {
-        id: 'p2FunnelEndLabels',
-        afterDatasetsDraw: function(chart) {
-          var ctx = chart.ctx;
-          var meta = chart.getDatasetMeta(0);
-          if (!meta || !meta.data) return;
-          ctx.save();
-          ctx.fillStyle = P2_CHARCOAL;
-          ctx.font = '600 12px Montserrat, sans-serif';
-          ctx.textBaseline = 'middle';
-          meta.data.forEach(function(bar, i) {
-            var val = chart.data.datasets[0].data[i];
-            if (val === null || val === undefined) return;
-            var text = String(val);
-            var x = bar.x + 8;
-            if (x + ctx.measureText(text).width > chart.chartArea.right - 2) {
-              ctx.fillStyle = P2_WHITE;
-              ctx.textAlign = 'right';
-              ctx.fillText(text, bar.x - 6, bar.y);
-              ctx.fillStyle = P2_CHARCOAL;
+      // Activity join: Last Activity Date from leads by name (lower)
+      var leadByName = {};
+      (leads || []).forEach(function(r) {
+        var n = String(col(r, 'Full Name', 'Contact Name', 'Name') || '').trim().toLowerCase();
+        if (!n) return;
+        leadByName[n] = r;
+      });
+
+      function lastActivityDate(pipeRow) {
+        var name = oppName(pipeRow).toLowerCase();
+        var lead = leadByName[name];
+        var raw = '';
+        if (lead) raw = col(lead, 'Last Activity Date', 'last_activity_date') || '';
+        if (!raw) raw = col(pipeRow, 'Last Activity Date', 'Close Date', 'Created Date') || p2CreatedDateStr(pipeRow);
+        return parseFlexibleDate(raw);
+      }
+
+      function daysSince(d) {
+        if (!d || isNaN(d.getTime())) return null;
+        var now = new Date();
+        var ms = now.getTime() - d.getTime();
+        return Math.floor(ms / 86400000);
+      }
+
+      function daysInStage(r) {
+        var raw = col(r, 'Days in Stage', 'days_in_stage');
+        if (raw !== '' && raw != null && parseNum(raw) > 0) return parseNum(raw);
+        // Fallback: age from created date when Days in Stage empty
+        var created = parseFlexibleDate(p2CreatedDateStr(r));
+        return daysSince(created);
+      }
+
+      // ── Live flags ──
+      var hasLeads = (leads || []).length > 0;
+      var hasPipe = (pipeline || []).length > 0;
+      var hasMkt = (marketing || []).length > 0;
+      var hasTargets = (targets || []).length > 0;
+      var openRows = pipeFiltered.filter(isOpen);
+      var openWithRealValue = openRows.filter(function(r) { return realDealValue(r) != null; });
+      var openValuePlaceholderOnly = openRows.length > 0 && openWithRealValue.length === 0;
+
+      // ── KPI calculations ──
+      var openValueSum = null;
+      var weightedSum = null;
+      if (hasPipe && openRows.length) {
+        if (openWithRealValue.length) {
+          openValueSum = 0;
+          weightedSum = 0;
+          openWithRealValue.forEach(function(r) {
+            var v = realDealValue(r);
+            openValueSum += v;
+            var p = parseProb(r);
+            var wRaw = col(r, 'Weighted Value ($)', 'Weighted Value', 'weighted_value');
+            var w = (wRaw !== '' && wRaw != null) ? parseNum(wRaw) : null;
+            if (w != null && w > 1.01) {
+              weightedSum += w;
+            } else if (p != null) {
+              weightedSum += v * p;
             } else {
-              ctx.textAlign = 'left';
-              ctx.fillText(text, x, bar.y);
+              // no probability - skip contribution rather than invent
             }
           });
-          ctx.restore();
+        } else {
+          openValueSum = null; // all placeholders
+          weightedSum = null;
         }
+      } else if (!hasPipe) {
+        openValueSum = null;
+        weightedSum = null;
+      } else {
+        openValueSum = 0;
+        weightedSum = 0;
+      }
+
+      // Future revenue targets (selected year, remaining months or selected months)
+      var futureTarget = null;
+      if (hasTargets && targetsBranded.length) {
+        var tYear = (activeYear && activeYear !== 'ALL') ? String(activeYear) : String(new Date().getFullYear());
+        var tRows = targetsBranded.filter(function(r) {
+          var y = String(col(r, 'Year', 'year') || '').trim();
+          if (y && y !== tYear) return false;
+          if (!y) {
+            var parts = parseRowDateParts(col(r, 'Date', 'date') || '');
+            if (parts && parts.year !== tYear) return false;
+          }
+          return true;
+        });
+        if (activeMonths && activeMonths.length) {
+          tRows = tRows.filter(function(r) {
+            var m = String(col(r, 'Month', 'month') || '').trim().substring(0, 3).toLowerCase();
+            return activeMonths.some(function(sel) {
+              return String(sel).toLowerCase().substring(0, 3) === m;
+            });
+          });
+        }
+        var tSum = 0;
+        var tAny = false;
+        tRows.forEach(function(r) {
+          var v = parseNum(col(r, 'Revenue Target ($)', 'Revenue Target', 'Sales Target ($)', 'Sales Target'));
+          if (v > 0) { tSum += v; tAny = true; }
+        });
+        if (tAny) futureTarget = tSum;
+      }
+
+      var coverage = null;
+      if (weightedSum != null && futureTarget != null && futureTarget > 0) {
+        coverage = (weightedSum / futureTarget) * 100;
+      }
+
+      // Quotes outstanding: open at Quote Sent or Follow-up
+      var quoteOutRows = openRows.filter(function(r) {
+        var b = funnelBucket(stageOf(r));
+        return b === 'Quote Sent' || b === 'Follow-up / Negotiation';
+      });
+      var quoteOutCount = quoteOutRows.length;
+      var quoteOutValue = 0;
+      var quoteOutValueKnown = false;
+      quoteOutRows.forEach(function(r) {
+        var v = realDealValue(r);
+        if (v != null) { quoteOutValue += v; quoteOutValueKnown = true; }
+      });
+
+      // Quote win rate: wins ÷ closed quoted deals (not lead-to-win)
+      // Closed quoted = won + lost that were on quote path, or status Won/Lost from quoted stages
+      var wonPipe = pipeFiltered.filter(isWon);
+      var lostPipe = pipeFiltered.filter(isLost);
+      // Also count leads for volume-based rates when pipeline status sparse
+      var leadQuoted = leadsFiltered.filter(isQuoted);
+      var leadWon = leadsFiltered.filter(function(r) {
+        return stageOf(r).toLowerCase() === 'won' ||
+          String(col(r, 'Lost Reason') || '').toLowerCase() === 'won';
+      });
+      // Prefer pipeline wins; fall back to lead stages
+      var winsCount = wonPipe.length || leadWon.length;
+      var winsValue = 0;
+      var winsValueKnown = false;
+      wonPipe.forEach(function(r) {
+        var v = realDealValue(r);
+        if (v != null) { winsValue += v; winsValueKnown = true; }
+      });
+
+      // Closed quotes = won + lost (pipeline). If no lost rows, use quoted leads that ended (won only) carefully.
+      var closedQuoteCount = wonPipe.length + lostPipe.length;
+      // When Lost is sparse, also treat Lost Reason closed outcomes on leads with quote as closed
+      if (closedQuoteCount === 0 && winsCount > 0) {
+        closedQuoteCount = winsCount; // only wins known - still show win rate as 100% of known closed
+      }
+      var closedQuoteValue = 0;
+      var closedQuoteValueKnown = false;
+      wonPipe.concat(lostPipe).forEach(function(r) {
+        var v = realDealValue(r);
+        if (v != null) { closedQuoteValue += v; closedQuoteValueKnown = true; }
+      });
+
+      var quoteWinRateCount = closedQuoteCount > 0 ? (winsCount / closedQuoteCount) * 100 : null;
+      var quoteWinRateValue = (closedQuoteValueKnown && closedQuoteValue > 0 && winsValueKnown)
+        ? (winsValue / closedQuoteValue) * 100
+        : null;
+
+      // Funnel rates (labelled separately)
+      var nLeads = leadsFiltered.length;
+      var nQuoted = leadQuoted.length || pipeFiltered.filter(isQuoted).length;
+      var nWins = winsCount;
+      var rateLeadQuote = nLeads > 0 ? (nQuoted / nLeads) * 100 : null;
+      var rateQuoteWin = nQuoted > 0 ? (nWins / nQuoted) * 100 : null; // quote-to-win (cohort-ish)
+      var rateLeadWin = nLeads > 0 ? (nWins / nLeads) * 100 : null;
+      // Prefer strict closed-quote win rate for "Quote-to-Win" when closed set exists
+      if (quoteWinRateCount != null) rateQuoteWin = quoteWinRateCount;
+
+      // Stalled pipeline: open deals with no activity for P2_STALLED_DAYS+
+      var stalledRows = [];
+      var stalledValue = 0;
+      var stalledValueKnown = false;
+      openRows.forEach(function(r) {
+        var act = lastActivityDate(r);
+        var days = daysSince(act);
+        if (days != null && days >= P2_STALLED_DAYS) {
+          stalledRows.push({ row: r, days: days });
+          var v = realDealValue(r);
+          if (v != null) { stalledValue += v; stalledValueKnown = true; }
+        }
+      });
+
+      // Secondary metrics
+      var avgJob = (winsValueKnown && winsCount > 0) ? winsValue / winsCount : null;
+      var cycleDays = [];
+      wonPipe.forEach(function(r) {
+        var d = parseNum(col(r, 'Days to Close', 'days_to_close'));
+        if (d > 0) cycleDays.push(d);
+        else {
+          var c = parseFlexibleDate(p2CreatedDateStr(r));
+          var close = parseFlexibleDate(col(r, 'Close Date', 'Expected Close Date') || '');
+          if (c && close) {
+            var dd = Math.round((close - c) / 86400000);
+            if (dd > 0) cycleDays.push(dd);
+          }
+        }
+      });
+      cycleDays.sort(function(a, b) { return a - b; });
+      var medianCycle = cycleDays.length
+        ? cycleDays[Math.floor(cycleDays.length / 2)]
+        : null;
+
+      // Pipeline added this month (by created date = current calendar month)
+      var now = new Date();
+      var thisMonthAbbr = _MONTH_ABBR[now.getMonth()];
+      var thisYearStr = String(now.getFullYear());
+      var addedThisMonth = 0;
+      var addedKnown = false;
+      openRows.forEach(function(r) {
+        var parts = parseRowDateParts(p2CreatedDateStr(r));
+        if (!parts) return;
+        if (parts.month === thisMonthAbbr && parts.year === thisYearStr) {
+          addedKnown = true;
+          var v = realDealValue(r);
+          if (v != null) addedThisMonth += v;
+        }
+      });
+
+      // Delta helper: raw count change + % + 4-week rolling avg
+      function p2DeltaHtml(seriesMap, unitLabel) {
+        var series = weekSeriesFromMap(seriesMap, 8);
+        if (!series.values || series.values.length < 2) return '';
+        var curr = series.values[series.values.length - 1];
+        var prev = series.values[series.values.length - 2];
+        var raw = curr - prev;
+        var pct = pctChangeWeek(curr, prev);
+        var last4 = series.values.slice(-4);
+        var avg4 = last4.reduce(function(s, n) { return s + n; }, 0) / last4.length;
+        var rawStr = (raw > 0 ? '+' : '') + (Math.round(raw * 10) / 10) + (unitLabel ? ' ' + unitLabel : '');
+        var pctStr = pct == null ? '' : ((pct > 0 ? '+' : '') + Math.round(pct) + '%');
+        var avgStr = '4-wk avg ' + (Math.round(avg4 * 10) / 10);
+        return rawStr + (pctStr ? ' · ' + pctStr : '') + ' · ' + avgStr + ' vs last week';
+      }
+
+      // Leads by week for secondary volume context
+      var leadsByW = {};
+      leadsFiltered.forEach(function(r) {
+        var k = weekKeyFromDateStr(p2CreatedDateStr(r) || getRowDateStr(r));
+        if (k) leadsByW[k] = (leadsByW[k] || 0) + 1;
+      });
+
+      // ── Render KPIs ──
+      if (!hasPipe) {
+        setKPI('kpi-p2-open', 'kpi-p2-open-sub', 'Pending', 'Awaiting GHL_Pipeline');
+        setKPI('kpi-p2-weighted', 'kpi-p2-weighted-sub', 'Pending', 'Awaiting GHL_Pipeline');
+        setKPI('kpi-p2-quotes-out', 'kpi-p2-quotes-out-sub', 'Pending', 'Awaiting GHL_Pipeline');
+        setKPI('kpi-p2-stalled', 'kpi-p2-stalled-sub', 'Pending', 'Awaiting GHL_Pipeline');
+      } else if (openValuePlaceholderOnly) {
+        setKPI('kpi-p2-open', 'kpi-p2-open-sub', 'Value not entered',
+          openRows.length + ' open · most values are $1 placeholders');
+        setKPI('kpi-p2-weighted', 'kpi-p2-weighted-sub', 'Value not entered',
+          'Excluded placeholder $1 from weighted total');
+      } else {
+        setKPI('kpi-p2-open', 'kpi-p2-open-sub',
+          openValueSum != null ? formatCurrency(openValueSum) : 'Pending',
+          openRows.length + ' open · real values only (excludes $1 placeholders)');
+        setKPI('kpi-p2-weighted', 'kpi-p2-weighted-sub',
+          weightedSum != null ? formatCurrency(weightedSum) : 'Pending',
+          'Value x Probability % (calibrated from sheet)');
+      }
+
+      if (coverage != null) {
+        setKPI('kpi-p2-coverage', 'kpi-p2-coverage-sub', formatPct(coverage),
+          'Weighted ' + formatCurrency(weightedSum) + ' / target ' + formatCurrency(futureTarget));
+      } else if (!hasTargets || futureTarget == null) {
+        setKPI('kpi-p2-coverage', 'kpi-p2-coverage-sub', 'Pending',
+          'Awaiting sales revenue targets for coverage math');
+      } else if (weightedSum == null) {
+        setKPI('kpi-p2-coverage', 'kpi-p2-coverage-sub', 'Pending',
+          'Weighted pipeline not available');
+      } else {
+        setKPI('kpi-p2-coverage', 'kpi-p2-coverage-sub', 'Pending', 'Insufficient data');
+      }
+
+      if (hasPipe) {
+        var qOutMain = String(quoteOutCount);
+        if (quoteOutValueKnown) qOutMain += ' · ' + formatCurrency(quoteOutValue);
+        setKPI('kpi-p2-quotes-out', 'kpi-p2-quotes-out-sub', qOutMain,
+          quoteOutValueKnown ? 'Count + $ at Quote Sent / Follow-up' : 'Count · $ pending (values not entered)');
+      }
+
+      if (quoteWinRateCount != null) {
+        var wrMain = formatPct(quoteWinRateCount) + ' by count';
+        if (quoteWinRateValue != null) wrMain = formatPct(quoteWinRateCount) + ' / ' + formatPct(quoteWinRateValue);
+        setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', wrMain,
+          'Quote win rate = wins ÷ closed quotes' +
+          (quoteWinRateValue != null ? ' (count · value)' : ' (count; value pending)'));
+      } else if (!hasPipe && !hasLeads) {
+        setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', 'Pending', 'Awaiting GHL data');
+      } else {
+        setKPI('kpi-p2-winrate', 'kpi-p2-winrate-sub', 'Pending',
+          'Need closed quotes (won + lost) to compute win rate');
+      }
+
+      if (hasPipe) {
+        var stallMain = stalledValueKnown
+          ? formatCurrency(stalledValue)
+          : (stalledRows.length ? String(stalledRows.length) + ' deals' : formatCurrency(0));
+        setKPI('kpi-p2-stalled', 'kpi-p2-stalled-sub', stallMain,
+          stalledRows.length + ' open · ' + P2_STALLED_DAYS + '+ days no activity');
+      }
+
+      // Secondary
+      function setTxt(id, v) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = v;
+      }
+      setTxt('kpi-p2-avg-job', avgJob != null ? formatCurrency(avgJob) : 'Pending');
+      setTxt('kpi-p2-cycle', medianCycle != null ? Math.round(medianCycle) + ' days' : 'Pending');
+      setTxt('kpi-p2-added',
+        addedKnown
+          ? (addedThisMonth > 0 ? formatCurrency(addedThisMonth) : 'Value not entered')
+          : 'Pending');
+
+      var ratesEl = document.getElementById('kpi-p2-funnel-rates');
+      if (ratesEl) {
+        ratesEl.innerHTML =
+          '<span>Lead-to-Quote <strong>' +
+            (rateLeadQuote != null ? formatPct(rateLeadQuote) : 'Pending') +
+          '</strong></span>' +
+          '<span>Quote-to-Win <strong>' +
+            (rateQuoteWin != null ? formatPct(rateQuoteWin) : 'Pending') +
+          '</strong></span>' +
+          '<span>Lead-to-Win <strong>' +
+            (rateLeadWin != null ? formatPct(rateLeadWin) : 'Pending') +
+          '</strong></span>';
+      }
+
+      var funnelRatesBar = document.getElementById('p2-funnel-rates');
+      if (funnelRatesBar) {
+        funnelRatesBar.innerHTML =
+          '<span class="p2-funnel-rate-step">Lead-to-Quote <strong>' +
+            (rateLeadQuote != null ? formatPct(rateLeadQuote) : '-') + '</strong></span>' +
+          '<span class="p2-funnel-rate-step">Quote-to-Win <strong>' +
+            (rateQuoteWin != null ? formatPct(rateQuoteWin) : '-') + '</strong></span>' +
+          '<span class="p2-funnel-rate-step">Lead-to-Win <strong>' +
+            (rateLeadWin != null ? formatPct(rateLeadWin) : '-') + '</strong></span>' +
+          (nLeads
+            ? '<span class="p2-funnel-rate-meta">' + nLeads + ' leads · ' + nQuoted + ' quoted · ' +
+              nWins + ' wins' +
+              (Object.keys(leadsByW).length >= 2
+                ? ' · Δ leads ' + p2DeltaHtml(leadsByW, '')
+                : '') +
+            '</span>'
+            : '');
+      }
+
+      // Data quality strip
+      var dq = document.getElementById('p2-data-quality');
+      if (dq) {
+        var bits = [];
+        bits.push(hasLeads ? 'GHL_Leads live (' + leadsFiltered.length + ' filtered)' : 'GHL_Leads empty');
+        bits.push(hasPipe ? 'GHL_Pipeline live (' + pipeFiltered.length + ' filtered)' : 'GHL_Pipeline empty');
+        bits.push('GHL_Quotes not available');
+        bits.push(hasMkt ? 'Marketing_Paid live' : 'Marketing_Paid pending');
+        if (openRows.length) {
+          var phN = openRows.length - openWithRealValue.length;
+          if (phN > 0) bits.push(phN + ' open deals with Value not entered ($1/blank)');
+        }
+        var daysFilled = pipeFiltered.filter(function(r) {
+          return col(r, 'Days in Stage') !== '' && col(r, 'Days in Stage') != null;
+        }).length;
+        if (hasPipe && daysFilled < pipeFiltered.length * 0.2) {
+          bits.push('Days in Stage mostly empty - age uses Created Date');
+        }
+        bits.push('Stalled threshold: ' + P2_STALLED_DAYS + '+ days no activity');
+        dq.textContent = 'Data: ' + bits.join(' · ');
+      }
+
+      function clearP2Charts() {
+        ['chart-p2-funnel', 'chart-p2-forecast', 'chart-p2-waterfall', 'chart-p2-bubble',
+         'chart-p2-sources', 'chart-p2-campaigns'].forEach(function(id) {
+          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        });
+      }
+      clearP2Charts();
+
+      var P2_TEXT = '#111827';
+      var P2_MUTED = '#6B7280';
+      var P2_BORDER = '#E2E4E8';
+      var P2_ACCENT = '#EA580C';
+      var P2_ACTION = '#2563EB';
+      var P2_GRID = { color: 'rgba(226,228,232,0.9)', lineWidth: 0.75 };
+      var stageColors = {
+        'New Lead': '#9CA3AF',
+        'Qualified': '#6B7280',
+        'Site Visit': '#4B5563',
+        'Quote Sent': '#374151',
+        'Follow-up / Negotiation': '#1F2937',
+        'Won / Lost': '#111827'
       };
 
-      makeChart('chart-p2-funnel', {
-        type: 'bar',
-        data: {
-          labels: hasFunnelData ? funnelYLabels : ['No data'],
-          datasets: [{
-            label: 'Pipeline',
-            data: hasFunnelData ? funnelValues : [0],
-            backgroundColor: hasFunnelData
-              ? [P2_CHARCOAL, P2_SOFT_GRAY, P2_SILVER]
-              : [P2_SILVER],
-            borderWidth: 0,
-            borderRadius: 0,
-            barThickness: 28,
-            maxBarThickness: 36
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { right: 40, left: 4, top: 4, bottom: 4 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                title: function(items) {
-                  var i = items[0] && items[0].dataIndex;
-                  return ['Lead', 'Quoted', 'Won'][i] || '';
-                },
-                label: function(ctx) {
-                  var i = ctx.dataIndex;
-                  var parts = [ctx.raw + ' deals'];
-                  if (i === 1 && leadToQuoted !== null) {
-                    parts.push(Math.round(leadToQuoted) + '% from Lead');
-                  }
-                  if (i === 2 && quotedToWon !== null) {
-                    parts.push(
-                      Math.round(quotedToWon) + '% from Quote' +
-                      (outOfCohort ? ' (out-of-cohort)' : '')
-                    );
-                  }
-                  return parts;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              // Shared linear scale so bar length ∝ actual counts
-              suggestedMax: funnelMax,
-              ticks: {
-                precision: 0,
-                color: P2_CHARCOAL,
-                font: { size: 10, family: 'Montserrat' }
-              },
-              grid: P2_GRID,
-              border: { color: P2_SOFT_GRAY }
-            },
-            y: {
-              ticks: {
-                color: P2_CHARCOAL,
-                font: { size: 11, family: 'Montserrat', weight: '600' },
-                autoSkip: false
-              },
-              grid: { display: false },
-              border: { color: P2_SOFT_GRAY }
-            }
-          }
-        },
-        plugins: hasFunnelData ? [p2FunnelEndLabels] : []
+      // ── Funnel chart ──
+      var stageStats = {};
+      FUNNEL_ORDER.forEach(function(s) {
+        stageStats[s] = { count: 0, value: 0, valueKnown: false, days: [], dropPrev: null };
       });
-
-      var footEl = document.getElementById('p2-funnel-footnote');
-      if (footEl) {
-        if (outOfCohort) footEl.removeAttribute('hidden');
-        else footEl.setAttribute('hidden', '');
+      // For funnel: show current snapshot of filtered pipeline stages
+      pipeFiltered.forEach(function(r) {
+        var b = funnelBucket(stageOf(r));
+        if (!stageStats[b]) stageStats[b] = { count: 0, value: 0, valueKnown: false, days: [] };
+        stageStats[b].count++;
+        var v = realDealValue(r);
+        if (v != null) { stageStats[b].value += v; stageStats[b].valueKnown = true; }
+        var d = daysInStage(r);
+        if (d != null && d >= 0) stageStats[b].days.push(d);
+      });
+      // If pipeline empty but leads exist, build counts from leads
+      if (!pipeFiltered.length && leadsFiltered.length) {
+        leadsFiltered.forEach(function(r) {
+          var b = funnelBucket(stageOf(r));
+          if (!stageStats[b]) stageStats[b] = { count: 0, value: 0, valueKnown: false, days: [] };
+          stageStats[b].count++;
+        });
       }
 
-      // ── Campaign Performance: dual Y, black bars + grey CPL line ──
-      var byCampaign = {};
-      mktFiltered.forEach(function(r) {
-        var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
-        if (!byCampaign[name]) byCampaign[name] = { spend: 0, cplSum: 0, cplN: 0 };
-        byCampaign[name].spend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
-        var cpl = parseNum(col(r, 'Cost Per Lead ($)', 'Cost Per Lead', 'CPL', 'cpl'));
-        if (cpl > 0) { byCampaign[name].cplSum += cpl; byCampaign[name].cplN++; }
-      });
-      var campEntries = Object.keys(byCampaign).map(function(k) {
-        var c = byCampaign[k];
-        return {
-          name: k,
-          spend: c.spend,
-          cpl: c.cplN ? c.cplSum / c.cplN : 0
-        };
-      }).sort(function(a, b) { return b.spend - a.spend; }).slice(0, 12);
+      function avgDays(arr) {
+        if (!arr || !arr.length) return null;
+        return arr.reduce(function(s, n) { return s + n; }, 0) / arr.length;
+      }
 
-      var campLabels = campEntries.length
-        ? campEntries.map(function(e) {
-            return e.name.length > 22 ? e.name.substring(0, 20) + '…' : e.name;
-          })
-        : ['No campaigns'];
+      function drawP2Funnel() {
+        var mode = p2FunnelMode === 'count' ? 'count' : 'value';
+        var labels = FUNNEL_ORDER.slice();
+        var data = labels.map(function(s) {
+          var st = stageStats[s] || { count: 0, value: 0, valueKnown: false };
+          if (mode === 'count') return st.count;
+          return st.valueKnown ? st.value : st.count; // fall back to count scale if no $
+        });
+        var hasAny = data.some(function(n) { return n > 0; });
 
-      makeChart('chart-p2-campaigns', {
-        type: 'bar',
-        data: {
-          labels: campLabels,
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Ad Spend',
-              data: campEntries.length
-                ? campEntries.map(function(e) { return Math.round(e.spend * 100) / 100; })
-                : [0],
-              backgroundColor: P2_CHARCOAL,
+        var convLabels = labels.map(function(s, i) {
+          if (i === 0) return s;
+          var prev = stageStats[labels[i - 1]].count || 0;
+          var cur = stageStats[s].count || 0;
+          var conv = prev > 0 ? Math.round((cur / prev) * 100) : null;
+          var drop = prev > 0 ? prev - cur : null;
+          var ad = avgDays(stageStats[s].days);
+          var extra = [];
+          if (conv != null) extra.push(conv + '% from prev');
+          if (drop != null && drop > 0 && mode === 'count') extra.push('drop ' + drop);
+          if (ad != null) extra.push('avg ' + Math.round(ad) + 'd');
+          return s + (extra.length ? '  ·  ' + extra.join(' · ') : '');
+        });
+
+        var detail = document.getElementById('p2-funnel-stage-detail');
+        if (detail) {
+          var html = '<table class="p2-mini-table"><thead><tr>' +
+            '<th>Stage</th><th class="text-right">Count</th><th class="text-right">Value</th>' +
+            '<th class="text-right">From prev</th><th class="text-right">Avg days</th></tr></thead><tbody>';
+          labels.forEach(function(s, i) {
+            var st = stageStats[s];
+            var prev = i > 0 ? stageStats[labels[i - 1]].count : null;
+            var conv = (prev && prev > 0) ? formatPct((st.count / prev) * 100) : '-';
+            var ad = avgDays(st.days);
+            html += '<tr><td>' + escapeP2(s) + '</td>' +
+              '<td class="text-right">' + st.count + '</td>' +
+              '<td class="text-right">' +
+                (st.valueKnown ? formatCurrency(st.value) : (st.count ? 'Value not entered' : '-')) +
+              '</td>' +
+              '<td class="text-right">' + conv + '</td>' +
+              '<td class="text-right">' + (ad != null ? Math.round(ad) + 'd' : 'Pending') +
+              '</td></tr>';
+          });
+          html += '</tbody></table>';
+          detail.innerHTML = html;
+        }
+
+        var foot = document.getElementById('p2-funnel-footnote');
+        if (foot) {
+          var notes = [];
+          if (mode === 'value' && openValuePlaceholderOnly) {
+            notes.push('Most open deal values are $1 placeholders - chart uses counts where $ is missing.');
+          }
+          // Snapshot stage counts are not a pure cohort - later stages can exceed earlier ones
+          var inflated = false;
+          for (var fi = 1; fi < labels.length; fi++) {
+            if ((stageStats[labels[fi]].count || 0) > (stageStats[labels[fi - 1]].count || 0)) {
+              inflated = true;
+              break;
+            }
+          }
+          if (inflated) {
+            notes.push('Stage counts are a live snapshot (not a same-cohort funnel), so conversion from previous can exceed 100%.');
+          }
+          if (notes.length) {
+            foot.textContent = notes.join(' ');
+            foot.removeAttribute('hidden');
+          } else {
+            foot.setAttribute('hidden', '');
+          }
+        }
+
+        makeChart('chart-p2-funnel', {
+          type: 'bar',
+          data: {
+            labels: hasAny ? convLabels : ['No data'],
+            datasets: [{
+              label: mode === 'count' ? 'Count' : 'Value',
+              data: hasAny ? data : [0],
+              backgroundColor: hasAny
+                ? labels.map(function(s) { return stageColors[s] || P2_MUTED; })
+                : [P2_BORDER],
               borderWidth: 0,
               borderRadius: 0,
-              yAxisID: 'y',
-              order: 2
-            },
-            {
-              type: 'line',
-              label: 'Cost Per Lead',
-              data: campEntries.length
-                ? campEntries.map(function(e) { return Math.round(e.cpl * 100) / 100; })
-                : [0],
-              borderColor: P2_SOFT_GRAY,
-              backgroundColor: P2_WHITE,
-              borderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 6,
-              pointBackgroundColor: P2_WHITE,
-              pointBorderColor: P2_SOFT_GRAY,
-              pointBorderWidth: 2,
-              fill: false,
-              tension: 0,
-              yAxisID: 'y1',
-              order: 1
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                color: P2_CHARCOAL,
-                font: { size: 11, family: 'Montserrat' },
-                boxWidth: 12,
-                usePointStyle: false
-              }
-            },
-            tooltip: {
-              callbacks: {
-                title: function(items) {
-                  var i = items[0] && items[0].dataIndex;
-                  return campEntries[i] ? campEntries[i].name : '';
-                },
-                label: function(ctx) {
-                  return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0);
+              barThickness: 22,
+              maxBarThickness: 28
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 16 } },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: function(items) {
+                    var i = items[0] && items[0].dataIndex;
+                    return labels[i] || '';
+                  },
+                  label: function(ctx) {
+                    var i = ctx.dataIndex;
+                    var st = stageStats[labels[i]] || {};
+                    if (mode === 'count') return st.count + ' opportunities';
+                    return st.valueKnown ? formatCurrency(st.value) : 'Value not entered';
+                  }
                 }
               }
-            }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: {
-                color: P2_CHARCOAL,
-                maxRotation: 45,
-                minRotation: 0,
-                autoSkip: false,
-                font: { size: 10, family: 'Montserrat' }
-              },
-              border: { color: P2_SOFT_GRAY }
             },
-            y: {
-              type: 'linear',
-              position: 'left',
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Ad Spend ($)',
-                color: P2_CHARCOAL,
-                font: { size: 10, family: 'Montserrat', weight: '600' }
-              },
-              ticks: {
-                color: P2_CHARCOAL,
-                callback: function(v) {
-                  return '$' + (v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : v);
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  color: P2_MUTED,
+                  font: { size: 10 },
+                  callback: function(v) {
+                    if (mode === 'value' && v >= 1000) return '$' + (v / 1000).toFixed(0) + 'k';
+                    return v;
+                  }
                 },
-                font: { size: 10 }
+                grid: P2_GRID,
+                border: { color: P2_BORDER }
               },
-              grid: P2_GRID,
-              border: { color: P2_SOFT_GRAY }
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Cost Per Lead ($)',
-                color: P2_SOFT_GRAY,
-                font: { size: 10, family: 'Montserrat', weight: '600' }
-              },
-              ticks: {
-                color: P2_SOFT_GRAY,
-                callback: function(v) { return '$' + v; },
-                font: { size: 10 }
-              },
-              grid: { drawOnChartArea: false },
-              border: { color: P2_SOFT_GRAY }
+              y: {
+                ticks: { color: P2_TEXT, font: { size: 10, family: 'Montserrat' }, autoSkip: false },
+                grid: { display: false },
+                border: { color: P2_BORDER }
+              }
             }
           }
+        });
+      }
+
+      // Toggle handlers
+      ['p2-funnel-mode-value', 'p2-funnel-mode-count'].forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (!btn || btn._p2Bound) return;
+        btn._p2Bound = true;
+        btn.addEventListener('click', function() {
+          p2FunnelMode = btn.getAttribute('data-mode') || 'value';
+          document.querySelectorAll('#page-p2 .p2-toggle-btn').forEach(function(b) {
+            b.classList.toggle('is-active', b.getAttribute('data-mode') === p2FunnelMode);
+          });
+          if (_charts['chart-p2-funnel']) { _charts['chart-p2-funnel'].destroy(); delete _charts['chart-p2-funnel']; }
+          drawP2Funnel();
+        });
+      });
+      document.querySelectorAll('#page-p2 .p2-toggle-btn').forEach(function(b) {
+        b.classList.toggle('is-active', b.getAttribute('data-mode') === p2FunnelMode);
+      });
+      drawP2Funnel();
+
+      // ── Revenue forecast by Expected Close month ──
+      var monthKeys = [];
+      var byMonth = {}; // key -> { committed, likely, early, won }
+      function monthKeyFromDate(d) {
+        if (!d || isNaN(d.getTime())) return null;
+        return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+      }
+      function monthLabel(key) {
+        var p = String(key).split('-');
+        var mi = parseInt(p[1], 10) - 1;
+        return _MONTH_ABBR[mi] + ' ' + p[0].slice(2);
+      }
+
+      // Include open + recently won in forecast view for selected brand (pipeline filtered by created;
+      // for forecast use brand-filtered full open set with expected close so forward view is useful)
+      var forecastRows = filterByBrand(pipeline || [], activeBrand).filter(function(r) {
+        return isOpen(r) || isWon(r);
+      });
+      forecastRows.forEach(function(r) {
+        var d = parseFlexibleDate(col(r, 'Expected Close Date', 'expected_close_date') || '');
+        var key = monthKeyFromDate(d);
+        if (!key) return;
+        if (!byMonth[key]) byMonth[key] = { committed: 0, likely: 0, early: 0, won: 0 };
+        var v = realDealValue(r);
+        if (v == null) return;
+        var c = certaintyOf(r);
+        if (c === 'won') byMonth[key].won += v;
+        else if (c === 'committed') byMonth[key].committed += v;
+        else if (c === 'likely') byMonth[key].likely += v;
+        else byMonth[key].early += v;
+      });
+      monthKeys = Object.keys(byMonth).sort();
+      // Align with year filter if set
+      if (activeYear && activeYear !== 'ALL') {
+        monthKeys = monthKeys.filter(function(k) { return k.indexOf(String(activeYear)) === 0; });
+      }
+
+      // Target line per month from Targets
+      var targetByMonth = {};
+      if (hasTargets) {
+        targetsBranded.forEach(function(r) {
+          var y = String(col(r, 'Year', 'year') || '').trim();
+          var m = String(col(r, 'Month', 'month') || '').trim().substring(0, 3);
+          var mi = _MONTH_ABBR.indexOf(m.charAt(0).toUpperCase() + m.slice(1, 3).toLowerCase());
+          if (mi < 0) {
+            for (var i = 0; i < 12; i++) {
+              if (_MONTH_ABBR[i].toLowerCase() === m.toLowerCase()) { mi = i; break; }
+            }
+          }
+          if (!y) {
+            var parts = parseRowDateParts(col(r, 'Date') || '');
+            if (parts) { y = parts.year; mi = _MONTH_ABBR.indexOf(parts.month); }
+          }
+          if (!y || mi < 0) return;
+          var key = y + '-' + ('0' + (mi + 1)).slice(-2);
+          var v = parseNum(col(r, 'Revenue Target ($)', 'Revenue Target'));
+          if (v > 0) targetByMonth[key] = (targetByMonth[key] || 0) + v;
+        });
+      }
+
+      var gapEl = document.getElementById('p2-forecast-gap');
+      if (monthKeys.length) {
+        makeChart('chart-p2-forecast', {
+          type: 'bar',
+          data: {
+            labels: monthKeys.map(monthLabel),
+            datasets: [
+              {
+                label: 'Won (secured)',
+                data: monthKeys.map(function(k) { return byMonth[k].won; }),
+                backgroundColor: '#111827',
+                stack: 'fc',
+                borderWidth: 0
+              },
+              {
+                label: 'Committed (quote / negotiation)',
+                data: monthKeys.map(function(k) { return byMonth[k].committed; }),
+                backgroundColor: '#374151',
+                stack: 'fc',
+                borderWidth: 0
+              },
+              {
+                label: 'Likely (qualified / site visit)',
+                data: monthKeys.map(function(k) { return byMonth[k].likely; }),
+                backgroundColor: '#9CA3AF',
+                stack: 'fc',
+                borderWidth: 0
+              },
+              {
+                label: 'Early stage',
+                data: monthKeys.map(function(k) { return byMonth[k].early; }),
+                backgroundColor: '#D1D5DB',
+                stack: 'fc',
+                borderWidth: 0
+              },
+              {
+                type: 'line',
+                label: 'Revenue target',
+                data: monthKeys.map(function(k) {
+                  return targetByMonth[k] != null ? targetByMonth[k] : null;
+                }),
+                borderColor: P2_ACTION,
+                backgroundColor: P2_ACTION,
+                borderWidth: 2,
+                pointRadius: 3,
+                tension: 0,
+                fill: false,
+                spanGaps: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: P2_TEXT, font: { size: 10 }, boxWidth: 10 }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    if (ctx.raw == null) return ctx.dataset.label + ': Pending';
+                    return ctx.dataset.label + ': ' + formatCurrency(ctx.raw);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                ticks: { color: P2_MUTED, font: { size: 10 } },
+                grid: { display: false },
+                border: { color: P2_BORDER }
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: {
+                  color: P2_MUTED,
+                  font: { size: 10 },
+                  callback: function(v) {
+                    return '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+                  }
+                },
+                grid: P2_GRID,
+                border: { color: P2_BORDER }
+              }
+            }
+          }
+        });
+
+        // Gap label for next month with data
+        var nextKey = monthKeys.find(function(k) {
+          var p = k.split('-');
+          var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1);
+          return d >= new Date(now.getFullYear(), now.getMonth(), 1);
+        }) || monthKeys[monthKeys.length - 1];
+        if (gapEl && nextKey) {
+          var b = byMonth[nextKey];
+          var pipeM = (b.committed || 0) + (b.likely || 0) + (b.early || 0) + (b.won || 0);
+          var tgt = targetByMonth[nextKey];
+          if (tgt != null && tgt > 0) {
+            var gap = tgt - pipeM;
+            gapEl.innerHTML = '<strong>' + escapeP2(monthLabel(nextKey)) + '</strong>: pipeline ' +
+              formatCurrency(pipeM) + ' vs target ' + formatCurrency(tgt) +
+              ' · gap ' + (gap > 0 ? formatCurrency(gap) + ' short' : formatCurrency(-gap) + ' over');
+          } else {
+            gapEl.innerHTML = '<strong>' + escapeP2(monthLabel(nextKey)) + '</strong>: pipeline ' +
+              formatCurrency(pipeM) + ' · target Pending';
+          }
         }
+      } else {
+        if (gapEl) {
+          gapEl.innerHTML = '<p class="p2-pending-line">Awaiting Expected Close dates with real deal values for forecast.</p>';
+        }
+      }
+
+      // ── Waterfall: Pending (no movement history) ──
+      var wfBody = document.getElementById('p2-waterfall-body');
+      if (wfBody) {
+        wfBody.innerHTML =
+          '<p class="p2-pending-line">Pending - Opening / New / Won / Lost / Slipped movement needs period snapshots not present in GHL_Pipeline.</p>' +
+          '<p class="p2-pending-line">Live snapshot: ' + openRows.length + ' open · ' +
+          winsCount + ' won · ' + lostPipe.length + ' lost in filtered Created Date window.</p>';
+      }
+
+      // ── Source quality ──
+      var bySrc = {};
+      leadsFiltered.forEach(function(r) {
+        var src = leadSourceOf(r);
+        if (!bySrc[src]) {
+          bySrc[src] = {
+            source: src, leads: 0, qualified: 0, quotes: 0, wins: 0,
+            wonRev: 0, wonRevKnown: false, cost: 0, costKnown: false
+          };
+        }
+        bySrc[src].leads++;
+        var b = funnelBucket(stageOf(r));
+        if (b !== 'New Lead') bySrc[src].qualified++;
+        if (isQuoted(r)) bySrc[src].quotes++;
+        if (stageOf(r).toLowerCase() === 'won') bySrc[src].wins++;
+      });
+      // Attach won revenue from pipeline via name match if possible - else leave pending
+      wonPipe.forEach(function(r) {
+        // Best-effort: no source on pipeline; skip revenue by source unless Marketing_Sources has it
+      });
+      // Marketing_Sources for quotes/wins/revenue/cost if live
+      srcFiltered.forEach(function(r) {
+        var src = String(col(r, 'Lead Source', 'Source') || '').trim() || 'Unknown';
+        if (!bySrc[src]) {
+          bySrc[src] = {
+            source: src, leads: 0, qualified: 0, quotes: 0, wins: 0,
+            wonRev: 0, wonRevKnown: false, cost: 0, costKnown: false
+          };
+        }
+        var lc = parseNum(col(r, 'Leads Count', 'Leads', 'leads'));
+        if (lc > 0 && bySrc[src].leads === 0) bySrc[src].leads = lc;
+        var qs = parseNum(col(r, 'Quotes Sent', 'Quotes'));
+        if (qs > 0) bySrc[src].quotes = Math.max(bySrc[src].quotes, qs);
+        var jw = parseNum(col(r, 'Jobs Won', 'Wins', 'Won'));
+        if (jw > 0) bySrc[src].wins = Math.max(bySrc[src].wins, jw);
+        var rev = parseNum(col(r, 'Revenue ($)', 'Revenue'));
+        if (rev > 0) { bySrc[src].wonRev += rev; bySrc[src].wonRevKnown = true; }
+        var cost = parseNum(col(r, 'Cost ($)', 'Cost', 'Spend'));
+        if (cost > 0) { bySrc[src].cost += cost; bySrc[src].costKnown = true; }
       });
 
-      // ── Pipeline detail table ─
-      function escapeP2Text(s) {
-        return String(s)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-      }
-      function formatP2ContactName(v) {
-        if (v === '' || v == null) return '—';
-        var raw = String(v).trim();
-        var text = raw.replace(/<[^>]*>/g, '').trim() || raw;
-        var hrefMatch = raw.match(/href=["']([^"']+)["']/i);
-        var url = hrefMatch ? hrefMatch[1] : (/^(https?:\/\/|mailto:)/i.test(raw) ? raw : '');
-        if (url) {
-          return '<a class="p2-table-link" href="' + escapeP2Text(url) + '" target="_blank" rel="noopener noreferrer">' +
-            escapeP2Text(text) + '</a>';
+      // Paid spend for Facebook Ads style sources from Marketing_Paid
+      var paidSpend = 0;
+      var paidLeads = 0;
+      mktFiltered.forEach(function(r) {
+        paidSpend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend'));
+        paidLeads += parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
+      });
+      var cplPaid = (paidLeads > 0 && paidSpend > 0) ? paidSpend / paidLeads : null;
+
+      var srcList = Object.keys(bySrc).map(function(k) { return bySrc[k]; })
+        .sort(function(a, b) { return b.leads - a.leads; });
+      var totalSrcLeads = srcList.reduce(function(s, e) { return s + e.leads; }, 0);
+
+      // Concentration risk ≥ ~80-85%
+      var concEl = document.getElementById('p2-concentration');
+      if (concEl && srcList.length && totalSrcLeads > 0) {
+        var top = srcList[0];
+        var share = top.leads / totalSrcLeads;
+        if (share >= 0.80) {
+          concEl.removeAttribute('hidden');
+          concEl.className = 'p2-concentration p2-concentration--risk';
+          concEl.innerHTML = '<strong>Channel concentration risk:</strong> ' +
+            escapeP2(top.source) + ' is ' + formatPct(share * 100) +
+            ' of leads (' + top.leads + ' / ' + totalSrcLeads +
+            '). Single-channel dependency - diversify or protect this source.';
+        } else {
+          concEl.setAttribute('hidden', '');
+          concEl.innerHTML = '';
         }
-        return escapeP2Text(text);
       }
 
-      if (pipeFiltered.length > 0) {
-        document.getElementById('p2-pipeline-table').innerHTML = buildTable(pipeFiltered, [
-          {
-            label: 'Contact Name',
-            key: ['Contact Name', 'contact_name', 'Full Name', 'Name'],
-            format: formatP2ContactName
-          },
-          { label: 'Brand', key: ['Brand', 'brand'] },
-          { label: 'Department', key: ['Department', 'department', 'Deparment'] },
-          { label: 'Pipeline Stage', key: ['Pipeline Stage', 'pipeline_stage', 'Stage'] },
-          {
-            label: 'Value ($)',
-            key: ['Value ($)', 'Value', 'value', 'Deal Value'],
-            format: function(v) {
-              return v !== '' && v != null
-                ? '<span class="p2-money">' + formatCurrency(parseNum(v)) + '</span>'
-                : '—';
-            }
-          },
-          {
-            label: 'Weighted Value ($)',
-            key: ['Weighted Value ($)', 'Weighted Value', 'weighted_value'],
-            format: function(v) {
-              return v !== '' && v != null
-                ? '<span class="p2-money">' + formatCurrency(parseNum(v)) + '</span>'
-                : '—';
-            }
-          },
-          { label: 'Status', key: ['Status', 'status'] }
-        ]);
-      } else {
-        document.getElementById('p2-pipeline-table').innerHTML =
-          '<p class="no-data-msg">No pipeline data for selected filters.</p>';
+      var srcTable = document.getElementById('p2-source-table');
+      if (srcTable) {
+        if (!srcList.length) {
+          srcTable.innerHTML = '<p class="p2-pending-line">Awaiting lead source data.</p>';
+        } else {
+          var sh = '<div class="table-wrap"><table class="data-table p2-table"><thead><tr>' +
+            '<th>Source</th><th class="text-right">Leads</th><th class="text-right">Qualified Rate</th>' +
+            '<th class="text-right">Quotes</th><th class="text-right">Wins</th>' +
+            '<th class="text-right">Won Revenue</th><th class="text-right">Cost Per Win</th>' +
+            '</tr></thead><tbody>';
+          srcList.forEach(function(e) {
+            var qRate = e.leads > 0 ? formatPct((e.qualified / e.leads) * 100) : '-';
+            var wonRev = e.wonRevKnown ? formatCurrency(e.wonRev) : 'Pending';
+            var cpw = (e.costKnown && e.wins > 0) ? formatCurrency(e.cost / e.wins) : (e.wins ? 'Pending' : '-');
+            sh += '<tr><td>' + escapeP2(e.source) + '</td>' +
+              '<td class="text-right">' + e.leads + '</td>' +
+              '<td class="text-right">' + qRate + '</td>' +
+              '<td class="text-right">' + e.quotes + '</td>' +
+              '<td class="text-right">' + e.wins + '</td>' +
+              '<td class="text-right">' + wonRev + '</td>' +
+              '<td class="text-right">' + cpw + '</td></tr>';
+          });
+          sh += '</tbody></table></div>';
+          srcTable.innerHTML = sh;
+        }
       }
+
+      var cplNote = document.getElementById('p2-source-cpl-note');
+      if (cplNote) {
+        if (cplPaid != null) {
+          cplNote.innerHTML = 'CPL (paid leads only): <strong>' + formatCurrency(cplPaid) +
+            '</strong> = ad spend ' + formatCurrency(paidSpend) + ' ÷ ' + paidLeads +
+            ' paid leads · full campaign detail on <button type="button" class="p2-link-btn" data-goto="p10">P10 Marketing</button>';
+        } else if (hasMkt) {
+          cplNote.textContent = 'CPL (paid leads only): Pending - spend or paid lead counts incomplete.';
+        } else {
+          cplNote.textContent = 'CPL (paid leads only): Awaiting Marketing_Paid · all-leads CPL not computed here.';
+        }
+        var goto = cplNote.querySelector('[data-goto]');
+        if (goto && !goto._p2Bound) {
+          goto._p2Bound = true;
+          goto.addEventListener('click', function() {
+            showPage('p10');
+            if (typeof loadCurrentPage === 'function') loadCurrentPage();
+          });
+        }
+      }
+
+      // Bubble chart: X cost/qualified, Y win rate, size won revenue
+      var bubbleData = srcList.filter(function(e) { return e.leads > 0; }).map(function(e) {
+        var costPerQual = (e.costKnown && e.qualified > 0) ? e.cost / e.qualified
+          : (cplPaid != null && /facebook|ads|paid|meta|google/i.test(e.source) && e.qualified > 0
+            ? (paidSpend / Math.max(paidLeads, 1)) : null);
+        var winRate = e.leads > 0 ? (e.wins / e.leads) * 100 : 0;
+        var size = e.wonRevKnown ? e.wonRev : e.wins * 10;
+        return {
+          x: costPerQual != null ? costPerQual : e.leads, // fallback x = lead volume if no cost
+          y: winRate,
+          r: Math.max(4, Math.min(28, Math.sqrt(Math.max(size, 1)) / 3)),
+          label: e.source,
+          hasCost: costPerQual != null
+        };
+      });
+
+      if (bubbleData.length) {
+        makeChart('chart-p2-bubble', {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              label: 'Sources',
+              data: bubbleData,
+              backgroundColor: 'rgba(37, 99, 235, 0.35)',
+              borderColor: P2_ACTION,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    var d = ctx.raw;
+                    return d.label + ': win rate ' + (Math.round(d.y * 10) / 10) + '%' +
+                      (d.hasCost ? ', cost/qual ' + formatCurrency(d.x) : ', leads ' + d.x);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: bubbleData.some(function(d) { return d.hasCost; })
+                    ? 'Cost per qualified'
+                    : 'Leads (cost pending)',
+                  color: P2_MUTED,
+                  font: { size: 10 }
+                },
+                ticks: { color: P2_MUTED, font: { size: 10 } },
+                grid: P2_GRID
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Win rate % (wins / leads)',
+                  color: P2_MUTED,
+                  font: { size: 10 }
+                },
+                beginAtZero: true,
+                ticks: { color: P2_MUTED, font: { size: 10 }, callback: function(v) { return v + '%'; } },
+                grid: P2_GRID
+              }
+            }
+          }
+        });
+      }
+
+      // ── Opportunities requiring action ──
+      function riskOfOpp(r, daysAct) {
+        if (daysAct != null && daysAct >= P2_STALLED_DAYS) return 'Stalled';
+        var b = funnelBucket(stageOf(r));
+        var age = daysInStage(r);
+        var typ = P2_STAGE_TYPICAL_DAYS[b];
+        if (typ && age != null && age > typ) return 'Over-age';
+        var exp = parseFlexibleDate(col(r, 'Expected Close Date') || '');
+        if (exp && exp < now && isOpen(r)) return 'Past expected close';
+        var v = realDealValue(r);
+        if (v == null && isOpen(r)) return 'Value missing';
+        return 'Watch';
+      }
+
+      var actionOpps = openRows.map(function(r) {
+        var daysAct = daysSince(lastActivityDate(r));
+        var risk = riskOfOpp(r, daysAct);
+        var v = realDealValue(r);
+        var score = 0;
+        if (risk === 'Stalled') score += 100;
+        if (risk === 'Past expected close') score += 80;
+        if (risk === 'Over-age') score += 60;
+        if (risk === 'Value missing') score += 40;
+        score += (v || 0) / 10000;
+        if (daysAct != null) score += Math.min(daysAct, 90) / 10;
+        return {
+          row: r,
+          name: oppName(r),
+          stage: stageOf(r) || funnelBucket(stageOf(r)),
+          bucket: funnelBucket(stageOf(r)),
+          value: v,
+          daysStage: daysInStage(r),
+          daysAct: daysAct,
+          expected: col(r, 'Expected Close Date') || '',
+          owner: ownerOf(r) || ownerOf(leadByName[oppName(r).toLowerCase()] || {}) || '-',
+          risk: risk,
+          prob: parseProb(r),
+          lostReason: col(r, 'Lost Reason') || '',
+          lastContact: lastActivityDate(r),
+          score: score
+        };
+      }).sort(function(a, b) { return b.score - a.score; });
+
+      // Prefer exceptions first
+      var exceptions = actionOpps.filter(function(o) {
+        return o.risk === 'Stalled' || o.risk === 'Past expected close' ||
+          o.risk === 'Over-age' || o.risk === 'Value missing';
+      });
+      var actionSource = exceptions.length ? exceptions : actionOpps;
+      var shown = p2ShowAllOpps ? actionOpps : actionSource.slice(0, 8);
+
+      var hint = document.getElementById('p2-action-hint');
+      if (hint) {
+        hint.textContent = p2ShowAllOpps
+          ? ('Showing all ' + actionOpps.length + ' open opportunities')
+          : ('Top ' + shown.length + ' exceptions · stalled and overdue first');
+      }
+      var viewBtn = document.getElementById('p2-view-all-btn');
+      if (viewBtn) {
+        viewBtn.textContent = p2ShowAllOpps ? 'Show top exceptions' : 'View all opportunities';
+        if (!viewBtn._p2Bound) {
+          viewBtn._p2Bound = true;
+          viewBtn.addEventListener('click', function() {
+            p2ShowAllOpps = !p2ShowAllOpps;
+            if (_p2LastPayload) {
+              renderP2(
+                _p2LastPayload.leads,
+                _p2LastPayload.pipeline,
+                _p2LastPayload.marketing,
+                _p2LastPayload.sources,
+                _p2LastPayload.targets
+              );
+            }
+          });
+        }
+      }
+
+      var actEl = document.getElementById('p2-action-table');
+      if (actEl) {
+        if (!shown.length) {
+          actEl.innerHTML = '<p class="no-data-msg">No open opportunities for current filters.</p>';
+        } else {
+          var ah = '<div class="table-wrap"><table class="data-table p2-table"><thead><tr>' +
+            '<th>Opportunity</th><th>Stage</th><th class="text-right">Value</th>' +
+            '<th class="text-right">Days in Stage</th><th>Expected Close</th>' +
+            '<th>Next Action</th><th>Owner</th><th>Risk</th>' +
+            '<th>Last Contacted</th><th class="text-right">Probability</th>' +
+            '</tr></thead><tbody>';
+          shown.forEach(function(o) {
+            var nextAction = '-';
+            if (o.risk === 'Stalled') nextAction = 'Re-engage (no activity ' + o.daysAct + 'd)';
+            else if (o.risk === 'Past expected close') nextAction = 'Update close date or close-out';
+            else if (o.risk === 'Value missing') nextAction = 'Enter deal value';
+            else if (o.risk === 'Over-age') nextAction = 'Advance or nurture decision';
+            else nextAction = 'Follow up';
+
+            var riskClass = (o.risk === 'Stalled' || o.risk === 'Past expected close')
+              ? 'p2-risk p2-risk--accent'
+              : (o.risk === 'Over-age' || o.risk === 'Value missing' ? 'p2-risk p2-risk--watch' : 'p2-risk');
+
+            ah += '<tr>' +
+              '<td>' + escapeP2(o.name) + '</td>' +
+              '<td>' + escapeP2(o.stage) + '</td>' +
+              '<td class="text-right">' +
+                (o.value != null ? formatCurrency(o.value) : '<span class="p2-value-pending">Value not entered</span>') +
+              '</td>' +
+              '<td class="text-right">' + (o.daysStage != null ? o.daysStage : 'Pending') + '</td>' +
+              '<td>' + escapeP2(o.expected || '-') + '</td>' +
+              '<td>' + escapeP2(nextAction) + '</td>' +
+              '<td>' + escapeP2(o.owner || '-') + '</td>' +
+              '<td><span class="' + riskClass + '">' + escapeP2(o.risk) + '</span></td>' +
+              '<td>' + (o.lastContact ? o.lastContact.toLocaleDateString('en-AU') : 'Pending') + '</td>' +
+              '<td class="text-right">' +
+                (o.prob != null ? Math.round(o.prob * 100) + '%' : 'Pending') +
+              '</td></tr>';
+          });
+          ah += '</tbody></table></div>';
+          actEl.innerHTML = ah;
+        }
+      }
+
+      // ── Deal ageing Gantt top 10 ──
+      var ganttPool = openRows.map(function(r) {
+        var v = realDealValue(r) || 0;
+        var daysAct = daysSince(lastActivityDate(r)) || 0;
+        var age = daysInStage(r) || 0;
+        return { row: r, v: v, stall: daysAct, age: age, score: v + daysAct * 500 };
+      }).sort(function(a, b) {
+        // largest or most stalled
+        return b.score - a.score;
+      }).slice(0, 10);
+
+      var ganttEl = document.getElementById('p2-gantt');
+      if (ganttEl) {
+        if (!ganttPool.length) {
+          ganttEl.innerHTML = '<p class="p2-pending-line">No open deals to age.</p>';
+        } else {
+          var maxAge = Math.max.apply(null, ganttPool.map(function(g) { return g.age || 1; }).concat([30]));
+          var gh = '<div class="p2-gantt-rows">';
+          ganttPool.forEach(function(g) {
+            var r = g.row;
+            var b = funnelBucket(stageOf(r));
+            var typ = P2_STAGE_TYPICAL_DAYS[b] || 14;
+            var over = g.age > typ;
+            var pct = Math.min(100, ((g.age || 0) / maxAge) * 100);
+            var exp = parseFlexibleDate(col(r, 'Expected Close Date') || '');
+            var created = parseFlexibleDate(p2CreatedDateStr(r));
+            var expPct = null;
+            if (created && exp && maxAge > 0) {
+              var span = Math.max(1, Math.round((exp - created) / 86400000));
+              expPct = Math.min(100, (span / maxAge) * 100);
+            }
+            gh += '<div class="p2-gantt-row' + (over ? ' is-over' : '') + '">' +
+              '<div class="p2-gantt-label" title="' + escapeP2(oppName(r)) + '">' +
+                escapeP2(oppName(r).length > 28 ? oppName(r).slice(0, 26) + '...' : oppName(r)) +
+              '</div>' +
+              '<div class="p2-gantt-track">' +
+                '<span class="p2-gantt-seg' + (over ? ' p2-gantt-seg--risk' : '') +
+                  '" style="width:' + pct + '%"></span>' +
+                (expPct != null
+                  ? '<span class="p2-gantt-marker" style="left:' + expPct + '%" title="Expected close"></span>'
+                  : '') +
+              '</div>' +
+              '<div class="p2-gantt-meta">' + escapeP2(b) + ' · ' +
+                (g.age != null ? g.age + 'd' : '?') +
+                (over ? ' · over typical ' + typ + 'd' : '') +
+              '</div></div>';
+          });
+          gh += '</div>';
+          ganttEl.innerHTML = gh;
+        }
+      }
+
+      // ── Campaign scorecard (small) ──
+      var campEl = document.getElementById('p2-campaign-scorecard');
+      if (campEl) {
+        if (!mktFiltered.length) {
+          campEl.innerHTML = '<p class="p2-pending-line">Awaiting Marketing_Paid · see P10 for full analysis.</p>';
+        } else {
+          var camps = {};
+          mktFiltered.forEach(function(r) {
+            var name = col(r, 'Campaign Name', 'Campaign') || 'Unknown';
+            if (!camps[name]) camps[name] = { spend: 0, leads: 0, name: name };
+            camps[name].spend += parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend'));
+            camps[name].leads += parseNum(col(r, 'Leads Generated', 'Leads'));
+          });
+          var campList = Object.keys(camps).map(function(k) { return camps[k]; })
+            .sort(function(a, b) { return b.spend - a.spend; }).slice(0, 6);
+          var ch = '<div class="p2-camp-grid">';
+          campList.forEach(function(c) {
+            var cpl = c.leads > 0 ? c.spend / c.leads : null;
+            ch += '<div class="p2-camp-item">' +
+              '<div class="p2-camp-name">' + escapeP2(c.name) + '</div>' +
+              '<div class="p2-camp-metrics">' +
+                '<span>Spend ' + formatCurrency(c.spend) + '</span>' +
+                '<span>Leads ' + c.leads + '</span>' +
+                '<span>CPL (paid leads only) ' +
+                  (cpl != null ? formatCurrency(cpl) : 'Pending') + '</span>' +
+              '</div></div>';
+          });
+          ch += '</div>';
+          ch += '<p class="p2-section-hint">Full dual-axis campaign analysis lives on P10 Marketing.</p>';
+          campEl.innerHTML = ch;
+        }
+      }
+
+      setBBPageData('P2', 'P2: Sales & Pipeline', {
+        periodFilter: 'Date Created (leads & opportunities)',
+        forecastAxis: 'Expected Close Date',
+        stalledDays: P2_STALLED_DAYS,
+        kpis: {
+          openPipeline: openValueSum,
+          weightedPipeline: weightedSum,
+          targetCoverage: coverage,
+          futureTarget: futureTarget,
+          quotesOutstanding: { count: quoteOutCount, value: quoteOutValueKnown ? quoteOutValue : null },
+          quoteWinRateCount: quoteWinRateCount,
+          quoteWinRateValue: quoteWinRateValue,
+          stalled: { count: stalledRows.length, value: stalledValueKnown ? stalledValue : null },
+          rates: {
+            leadToQuote: rateLeadQuote,
+            quoteToWin: rateQuoteWin,
+            leadToWin: rateLeadWin
+          },
+          cplPaidLeadsOnly: cplPaid,
+          avgJobValue: avgJob,
+          medianCycleDays: medianCycle
+        },
+        funnel: FUNNEL_ORDER.map(function(s) {
+          return { stage: s, count: stageStats[s].count, value: stageStats[s].valueKnown ? stageStats[s].value : null };
+        }),
+        concentration: (srcList[0] && totalSrcLeads)
+          ? { source: srcList[0].source, share: srcList[0].leads / totalSrcLeads }
+          : null,
+        sourcesLive: { leads: hasLeads, pipeline: hasPipe, marketing: hasMkt, targets: hasTargets, ghlQuotes: false },
+        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Waterfall pending without snapshots.'
+      });
     }
 
 
