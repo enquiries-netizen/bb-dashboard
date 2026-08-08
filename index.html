@@ -4823,7 +4823,7 @@
                 '<td>' + p7Esc(r.platform || r.source || P7_NA) + '</td>' +
                 '<td>' + (r.rating != null ? r.rating : P7_NA) + '</td>' +
                 '<td>' + (r.comment ? 'Yes' : 'No') + '</td>' +
-                '<td>' + p7Esc(r.missingFields.join(', ') || '—') + '</td>' +
+                '<td>' + p7Esc(r.missingFields.join(', ') || '-') + '</td>' +
                 '<td>' + p7Esc(r.origin) + '</td>' +
                 '</tr>';
             }).join('') +
