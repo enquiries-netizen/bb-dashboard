@@ -13682,9 +13682,9 @@
 
       html += '<div class="p6-section-card p6-main-heatmap">';
       html += '<div class="p6-section-title">12-week department capacity</div>';
-      html += '<p class="p6-section-hint">Util % = hours ÷ departmental available capacity. Bands: &lt;' +
-        P6_UTIL_UNDER_PCT + '% under · ' + P6_UTIL_HEALTHY_LO + '-' + P6_UTIL_HEALTHY_HI +
-        '% healthy · ' + P6_UTIL_HEALTHY_HI + '-100% watch · &gt;100% over · grey data gap.</p>';
+      html += '<p class="p6-section-hint">Actual productive hours ÷ departmental available hours. Grey = data gap. Thresholds: under &lt;' +
+        P6_UTIL_UNDER_PCT + '%, healthy ' + P6_UTIL_HEALTHY_LO + '-' + P6_UTIL_HEALTHY_HI +
+        '%, near ≤100%, over &gt;100%.</p>';
       html += p6RenderHeatmap(m);
       html += '</div></div>';
 
