@@ -6928,6 +6928,58 @@ p.p8-section-hint {
   margin-top: 8px;
 }
 
+/* Channel / department mix: full-width share bars + numbers table */
+.p10-panel--mix {
+  width: 100%;
+  min-width: 0;
+}
+
+.p10-mix-block {
+  margin-bottom: 16px;
+}
+
+.p10-mix-block:last-child {
+  margin-bottom: 0;
+}
+
+.p10-chart-wrap--mix {
+  height: 180px;
+  margin: 4px 0 12px;
+}
+
+.p10-mix-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Full-width mix: category names and share headers must not clip */
+#page-p10 .p10-panel--mix .p10-mix-data-table th,
+#page-p10 .p10-panel--mix .p10-mix-data-table td {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: normal;
+}
+
+#page-p10 .p10-panel--mix .p10-mix-data-table td:first-child {
+  max-width: none;
+  min-width: 10rem;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#page-p10 .p10-panel--mix .p10-mix-data-table th {
+  min-width: 5.5rem;
+}
+
+#page-p10 .p10-panel--mix .p10-mix-data-table th:first-child {
+  min-width: 10rem;
+}
+
+#page-p10 .p10-panel--mix .p10-mix-data-table th:last-child {
+  min-width: 9rem;
+}
+
 .p10-section-hint {
   font-family: var(--font-body);
   font-size: 12px;

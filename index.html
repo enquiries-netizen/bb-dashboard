@@ -1073,21 +1073,21 @@
               </div>
             </div>
 
-            <!-- Row 2: Campaign matrix | Channel mix -->
-            <div class="p10-row-two">
-              <div class="section-card p10-panel">
-                <div class="section-title">Campaign performance matrix</div>
-                <p class="p10-section-hint">X = cost per qualified lead · Y = lead-to-win % · size = attributed contract value · colour = department · border = platform</p>
-                <div class="p10-chart-wrap p10-chart-wrap--bubble">
-                  <canvas id="chart-p10-matrix" aria-label="Campaign performance bubble matrix"></canvas>
-                </div>
-                <p class="p10-section-hint" id="p10-matrix-legend"></p>
+            <!-- Row 2: Campaign matrix (full width) -->
+            <div class="section-card p10-panel">
+              <div class="section-title">Campaign performance matrix</div>
+              <p class="p10-section-hint">X = cost per qualified lead · Y = lead-to-win % · size = attributed contract value · colour = department · border = platform</p>
+              <div class="p10-chart-wrap p10-chart-wrap--bubble">
+                <canvas id="chart-p10-matrix" aria-label="Campaign performance bubble matrix"></canvas>
               </div>
-              <div class="section-card p10-panel">
-                <div class="section-title">Channel and department mix</div>
-                <p class="p10-section-hint" id="p10-mix-concentration"></p>
-                <div id="p10-mix-table">Loading mix…</div>
-              </div>
+              <p class="p10-section-hint" id="p10-matrix-legend"></p>
+            </div>
+
+            <!-- Row 3: Channel and department mix (full width, below matrix) -->
+            <div class="section-card p10-panel p10-panel--mix">
+              <div class="section-title">Channel and department mix</div>
+              <p class="p10-section-hint" id="p10-mix-concentration"></p>
+              <div id="p10-mix-table">Loading mix…</div>
             </div>
 
             <div class="section-card p10-panel">
@@ -12208,18 +12208,123 @@
         if (platEntries.length && totalSpend > 0 && (platEntries[0].spend / totalSpend) >= P10_CONC_RISK) {
           mixConc.className = 'p10-section-hint p10-section-hint--risk';
           mixConc.textContent = 'Concentration warning: ' + platEntries[0].name +
-            ' holds ' + p10Pct((platEntries[0].spend / totalSpend) * 100, 0) + ' of spend.';
+            ' holds ' + p10Pct((platEntries[0].spend / totalSpend) * 100, 0) + ' of spend. ' +
+            'Paired bars: Spend share vs GP / contract share. Accent when spend share exceeds outcome share (over-investment); healthy when GP share meets or beats spend share.';
         } else {
           mixConc.className = 'p10-section-hint';
-          mixConc.textContent = 'Spend / QL / GP share by channel and department.';
+          mixConc.textContent = 'Paired bars: Spend share vs GP / contract share by channel and department. ' +
+            'Accent when spend share exceeds outcome share (over-investment); healthy when GP share meets or beats spend share. Table below for exact %.';
         }
       }
 
-      function renderMixBlock(title, rows) {
-        var h = '<div class="p10-subhead">' + p10Esc(title) + '</div>';
-        h += '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+      // Share efficiency: spend meaningfully over GP/outcome share => inefficient (accent)
+      var P10_MIX_GAP_PP = 1; // percentage-point materiality
+      function mixShareColor(spendShare, gpShare) {
+        if (gpShare == null || isNaN(gpShare)) return cGap;
+        if (spendShare > gpShare + P10_MIX_GAP_PP) return cAccent;
+        return cHealthy;
+      }
+
+      function renderMixShareChart(canvasId, rows) {
+        var wrap = document.getElementById(canvasId + '-wrap');
+        if (wrap) {
+          wrap.style.height = Math.max(140, rows.length * 44 + 48) + 'px';
+        }
+        if (!rows.length) {
+          makeChart(canvasId, {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } }
+            }
+          });
+          return;
+        }
+        var labels = rows.map(function(r) { return r.name; });
+        var spendData = rows.map(function(r) { return r.spendShare; });
+        var gpData = rows.map(function(r) {
+          return r.gpShare != null && !isNaN(r.gpShare) ? r.gpShare : null;
+        });
+        var spendColors = rows.map(function(r) {
+          return mixShareColor(r.spendShare, r.gpShare);
+        });
+        var gpColors = rows.map(function(r) {
+          return mixShareColor(r.spendShare, r.gpShare);
+        });
+        makeChart(canvasId, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Spend share',
+                data: spendData,
+                backgroundColor: spendColors,
+                borderWidth: 0,
+                barThickness: 12
+              },
+              {
+                label: 'GP / contract share',
+                data: gpData,
+                backgroundColor: gpColors,
+                borderWidth: 0,
+                barThickness: 12
+              }
+            ]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: brandMuted, boxWidth: 10, font: { size: 10 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    if (ctx.raw == null) return ctx.dataset.label + ': Pending';
+                    return ctx.dataset.label + ': ' + p10Pct(ctx.raw, 0);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                suggestedMax: 100,
+                grid: { color: brandBorder },
+                ticks: {
+                  color: brandMuted,
+                  callback: function(v) { return v + '%'; }
+                }
+              },
+              y: {
+                grid: { display: false },
+                ticks: {
+                  color: brandCharcoal,
+                  font: { size: 11 },
+                  autoSkip: false
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function renderMixBlock(title, rows, chartId) {
+        var h = '<div class="p10-mix-block">';
+        h += '<div class="p10-subhead">' + p10Esc(title) + '</div>';
+        h += '<div class="p10-chart-wrap p10-chart-wrap--mix" id="' + p10Esc(chartId) + '-wrap">';
+        h += '<canvas id="' + p10Esc(chartId) + '" aria-label="' + p10Esc(title) + ' spend vs GP share bars"></canvas>';
+        h += '</div>';
+        h += '<div class="table-wrap p10-mix-table-wrap"><table class="data-table p10-table p10-mix-data-table"><thead><tr>' +
           '<th>Name</th><th class="text-right">Spend share</th><th class="text-right">QL share</th>' +
-          '<th class="text-right">Pipeline share</th><th class="text-right">GP / contract share</th>' +
+          '<th class="text-right">Pipeline share</th><th class="text-right">GP / Contract Share</th>' +
           '</tr></thead><tbody>';
         if (!rows.length) {
           h += '<tr><td colspan="5" class="p10-pending-cell">No data</td></tr>';
@@ -12232,14 +12337,18 @@
               '<td class="text-right">' + (r.gpShare != null ? p10Pct(r.gpShare, 0) : 'Pending') + '</td></tr>';
           });
         }
-        h += '</tbody></table></div>';
+        h += '</tbody></table></div></div>';
         return h;
       }
+      var channelMixRows = mixRows(byPlatAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins);
+      var deptMixRows = mixRows(byDeptAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins);
       var mixEl = document.getElementById('p10-mix-table');
       if (mixEl) {
         mixEl.innerHTML =
-          renderMixBlock('By channel', mixRows(byPlatAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins)) +
-          renderMixBlock('By department', mixRows(byDeptAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins));
+          renderMixBlock('By channel', channelMixRows, 'chart-p10-mix-channel') +
+          renderMixBlock('By department', deptMixRows, 'chart-p10-mix-dept');
+        renderMixShareChart('chart-p10-mix-channel', channelMixRows);
+        renderMixShareChart('chart-p10-mix-dept', deptMixRows);
       }
 
       // ── Demand-to-capacity alignment ──
