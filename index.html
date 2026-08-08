@@ -1036,84 +1036,159 @@
           </div>
         </section>
 
-        <!-- ─── P10: Marketing Performance ───────────────── -->
-        <section id="page-p10" class="page">
-          <div class="page-header">
-            <span class="page-badge">P10</span>
-            <h1 class="page-title">Marketing Performance</h1>
-          </div>
+        <!-- ─── P10: Marketing (profitable demand) ─────────── -->
+        <!-- p10-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p10" class="page p10-test-palette">
+          <div class="p10-layout">
+            <div class="p10-head">
+              <div class="page-header p10-page-header">
+                <span class="page-badge">P10</span>
+                <h1 class="page-title">Marketing</h1>
+              </div>
+              <div class="p10-filters" id="p10-filters">
+                <label class="p10-filter">
+                  <span class="filter-label">Department</span>
+                  <select id="p10-dept-filter" class="filter-select page-filter-select p10-select" aria-label="Department">
+                    <option value="ALL">All Departments</option>
+                  </select>
+                </label>
+                <label class="p10-filter">
+                  <span class="filter-label">Channel</span>
+                  <select id="p10-channel-filter" class="filter-select page-filter-select p10-select" aria-label="Channel">
+                    <option value="ALL">All Channels</option>
+                  </select>
+                </label>
+                <label class="p10-filter">
+                  <span class="filter-label">Attribution</span>
+                  <select id="p10-attr-model" class="filter-select page-filter-select p10-select" aria-label="Attribution model">
+                    <option value="last">Last Paid Touch</option>
+                    <option value="first">First Touch</option>
+                    <option value="multi">Multi-Touch</option>
+                    <option value="sourced">Marketing Sourced</option>
+                    <option value="influenced">Marketing Influenced</option>
+                  </select>
+                </label>
+              </div>
+              <p class="p10-updated" id="p10-last-updated">Last updated…</p>
+              <p class="p10-data-quality" id="p10-data-quality" aria-live="polite"></p>
+              <p class="p10-period-note" id="p10-period-note">Period uses global Brand / Month / Year. Brand is the global selector.</p>
+            </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Spend</div>
-              <div class="kpi-value" id="kpi-mkt-spend">—</div>
-              <svg class="kpi-sparkline" id="kpi-mkt-spend-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-week-pulse" id="kpi-mkt-spend-pulse"></div>
-              <div class="kpi-sub" id="kpi-mkt-spend-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Total Leads</div>
-              <div class="kpi-value" id="kpi-mkt-leads">—</div>
-              <svg class="kpi-sparkline" id="kpi-mkt-leads-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-week-pulse" id="kpi-mkt-leads-pulse"></div>
-              <div class="kpi-sub" id="kpi-mkt-leads-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Cost Per Lead</div>
-              <div class="kpi-value" id="kpi-mkt-cpl">—</div>
-              <svg class="kpi-sparkline" id="kpi-mkt-cpl-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-sub" id="kpi-mkt-cpl-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">ROAS</div>
-              <div class="kpi-value" id="kpi-mkt-roas">—</div>
-              <svg class="kpi-sparkline" id="kpi-mkt-roas-spark" hidden aria-hidden="true"></svg>
-              <div class="kpi-sub" id="kpi-mkt-roas-sub">Loading...</div>
-            </div>
-          </div>
+            <div class="p10-callouts" id="p10-callouts"></div>
 
-          <div class="p10-meta-row" id="p10-meta-row">
-            <span class="p10-platform-badge" id="p10-platform-badge" hidden></span>
-            <div class="p10-roas-highlight" id="p10-roas-highlight" hidden>
-              <span class="p10-roas-highlight-label">Best ROAS</span>
-              <span class="p10-roas-highlight-name" id="p10-roas-highlight-name"></span>
-              <span class="p10-roas-highlight-value" id="p10-roas-highlight-value"></span>
-            </div>
-          </div>
-
-          <div class="chart-row two-col">
-            <div class="chart-card card">
-              <div class="chart-title">Ad Spend by Campaign</div>
-              <div class="p10-spend-chart-wrap" id="p10-spend-chart-wrap">
-                <canvas id="chart-p10-spend" height="200"></canvas>
+            <div class="p10-kpi-row" aria-label="Marketing KPIs">
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Marketing Spend</div>
+                <div class="kpi-value" id="kpi-mkt-spend">-</div>
+                <div class="kpi-sub" id="kpi-mkt-spend-sub">Loading…</div>
+              </div>
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Qualified Leads</div>
+                <div class="kpi-value" id="kpi-mkt-ql">-</div>
+                <div class="kpi-sub" id="kpi-mkt-ql-sub">Loading…</div>
+              </div>
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Cost per Qualified Lead</div>
+                <div class="kpi-value" id="kpi-mkt-cpql">-</div>
+                <div class="kpi-sub" id="kpi-mkt-cpql-sub">Loading…</div>
+              </div>
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Marketing-Sourced Pipeline</div>
+                <div class="kpi-value" id="kpi-mkt-pipeline">-</div>
+                <div class="kpi-sub" id="kpi-mkt-pipeline-sub">Loading…</div>
+              </div>
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Customer Acquisition Cost</div>
+                <div class="kpi-value" id="kpi-mkt-cac">-</div>
+                <div class="kpi-sub" id="kpi-mkt-cac-sub">Loading…</div>
+              </div>
+              <div class="kpi-card card p10-kpi-card">
+                <div class="kpi-label">Marketing ROI</div>
+                <div class="kpi-value" id="kpi-mkt-roi">-</div>
+                <div class="kpi-sub" id="kpi-mkt-roi-sub">Loading…</div>
               </div>
             </div>
-            <div class="chart-card card">
-              <div class="chart-title">Weekly Leads vs Spend</div>
-              <canvas id="chart-p10-trend" height="200"></canvas>
-            </div>
-          </div>
 
-          <div class="chart-row">
-            <div class="chart-card card">
-              <div class="chart-title">Spend by Department</div>
-              <div class="p10-dept-chart-wrap" id="p10-dept-chart-wrap">
-                <canvas id="chart-p10-dept" height="200"></canvas>
+            <div class="p10-secondary-strip" id="p10-secondary-strip" aria-label="Secondary metrics"></div>
+
+            <!-- Row 1: Funnel | Budget + capacity -->
+            <div class="p10-row-two">
+              <div class="section-card p10-panel p10-panel--wide">
+                <div class="section-title">Commercial funnel</div>
+                <p class="p10-section-hint" id="p10-funnel-cohort-note">
+                  Cohort note: paid media volumes are for the selected period. Later stages (quotes, wins, GP) may convert after the period, so stage-to-stage rates are illustrative, not pure same-cohort conversion.
+                </p>
+                <div id="p10-commercial-funnel">Loading funnel…</div>
               </div>
-              <p class="no-data-msg" id="p10-dept-empty" hidden>Data not available</p>
+              <div class="section-card p10-panel">
+                <div class="section-title">Budget pacing + capacity</div>
+                <p class="p10-section-hint">Budget / Spend / Forecast · status uses healthy under, accent over</p>
+                <div id="p10-budget-pacing">Loading pacing…</div>
+                <div class="p10-chart-wrap p10-chart-wrap--sm">
+                  <canvas id="chart-p10-budget" aria-label="Budget pacing bullets"></canvas>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">Funnel Health</div>
-            <p class="p10-section-hint">CTR % vs Conversion Rate % — flags Creative/Targeting or Landing Page/Follow-up when below campaign average.</p>
-            <p class="p10-section-hint p10-funnel-legend">Landing Page/Follow-up: the ad is earning clicks, but visitors aren't converting once they land, check the page, offer clarity, or follow-up speed. Creative/Targeting: the ad isn't earning clicks in the first place, check the image, headline, or who it's being shown to.</p>
-            <div id="p10-funnel-table">Loading funnel data...</div>
-          </div>
+            <!-- Row 2: Campaign matrix | Channel mix -->
+            <div class="p10-row-two">
+              <div class="section-card p10-panel">
+                <div class="section-title">Campaign performance matrix</div>
+                <p class="p10-section-hint">X = cost per qualified lead · Y = lead-to-win % · size = attributed contract value · colour = department · border = platform</p>
+                <div class="p10-chart-wrap p10-chart-wrap--bubble">
+                  <canvas id="chart-p10-matrix" aria-label="Campaign performance bubble matrix"></canvas>
+                </div>
+                <p class="p10-section-hint" id="p10-matrix-legend"></p>
+              </div>
+              <div class="section-card p10-panel">
+                <div class="section-title">Channel and department mix</div>
+                <p class="p10-section-hint" id="p10-mix-concentration"></p>
+                <div id="p10-mix-table">Loading mix…</div>
+              </div>
+            </div>
 
-          <div class="section-card">
-            <div class="section-title">Campaign Performance</div>
-            <div id="p10-campaign-table">Loading campaign data...</div>
+            <div class="section-card p10-panel">
+              <div class="section-title">Demand-to-capacity alignment</div>
+              <p class="p10-section-hint">Marketing demand vs P2 pipeline vs P6 delivery capacity. Capacity is re-used when live; never invented.</p>
+              <div id="p10-capacity-align">Loading alignment…</div>
+            </div>
+
+            <div class="section-card p10-panel">
+              <div class="section-title">Funnel diagnostics</div>
+              <p class="p10-section-hint">Each row shows benchmark, actual, sample size, confidence, and recommended action. Landing sessions may be incomplete if not tracked reliably.</p>
+              <div id="p10-funnel-diagnostics">Loading diagnostics…</div>
+            </div>
+
+            <div class="section-card p10-panel">
+              <div class="section-title">Campaign actions
+                <span class="p10-section-hint">Real flags only from page state</span>
+              </div>
+              <div id="p10-campaign-actions">Loading actions…</div>
+            </div>
+
+            <div class="section-card p10-panel p10-attr-strip">
+              <div class="section-title">Attribution transparency</div>
+              <p class="p10-section-hint" id="p10-attr-summary">Last paid touch · 90-day window · Value as won contract value · GP subject to completed project costs.</p>
+              <div class="p10-attr-toggles" id="p10-attr-toggles" role="tablist" aria-label="Attribution model">
+                <button type="button" class="p10-toggle-btn is-active" data-attr="last">Last Touch</button>
+                <button type="button" class="p10-toggle-btn" data-attr="first">First Touch</button>
+                <button type="button" class="p10-toggle-btn" data-attr="multi">Multi-Touch</button>
+                <button type="button" class="p10-toggle-btn" data-attr="sourced">Marketing Sourced</button>
+                <button type="button" class="p10-toggle-btn" data-attr="influenced">Marketing Influenced</button>
+              </div>
+              <p class="p10-section-hint" id="p10-attr-detail"></p>
+            </div>
+
+            <details class="p10-detail-block">
+              <summary>Drill-down: ad, creative and landing metrics</summary>
+              <p class="p10-section-hint">Detailed campaign metrics. Primary ROAS-style multiples are not used as success scores when sample size is low.</p>
+              <div id="p10-drill-table">Loading…</div>
+            </details>
+
+            <div class="section-card p10-panel p10-sources-panel">
+              <div class="section-title">Data sources</div>
+              <div id="p10-sources-table" class="p10-table-scroll"></div>
+            </div>
           </div>
         </section>
 
@@ -1206,7 +1281,7 @@
       P7: 'Client Satisfaction (placeholder). Page shows title and notice that data is being finalised. Full customer-journey rebuild paused until updated Client Satisfaction data arrives. Answer only that the page is parked / pending data finalisation; do not invent CSAT, NPS, or review metrics.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
-      P10: 'Marketing: ad spend, leads, CPL, ROAS, campaign performance. Has a lightweight "this week" pulse (spend / leads) on KPI cards with a short trend, not full week-over-week comparison. For week-over-week Marketing, send the user to P8.',
+      P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, median first contact, channel concentration, capacity alignment. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Quality & Variations: defects/rework, variations log, site diary issues'
     };
 
@@ -1281,28 +1356,23 @@
 
         if (pageKey === 'P10') {
           var concerns = (data.funnelHealth || []).filter(function(r) { return r && r.concern; });
-          var creative = concerns.filter(function(r) { return r.concern === 'Creative/Targeting'; });
-          var landing = concerns.filter(function(r) { return r.concern === 'Landing Page/Follow-up'; });
-          if (creative.length) {
-            push(creative.length + ' campaign' + (creative.length === 1 ? '' : 's') +
-              ' flagged Creative/Targeting (CTR below the current selection average)' +
-              (creative[0].name ? ': e.g. ' + creative[0].name : '') + '.');
-          } else if (landing.length) {
-            push(landing.length + ' campaign' + (landing.length === 1 ? '' : 's') +
-              ' flagged Landing Page/Follow-up (OK CTR, conversion below average)' +
-              (landing[0].name ? ': e.g. ' + landing[0].name : '') + '.');
+          if (concerns.length) {
+            push(concerns.length + ' funnel diagnostic flag' + (concerns.length === 1 ? '' : 's') +
+              (concerns[0].name ? ' (e.g. ' + concerns[0].name + ')' : '') + '.');
           }
-          if (data.bestRoas && data.bestRoas.campaign && data.bestRoas.roas != null) {
-            push(data.bestRoas.campaign + ' has the best attributed ROAS in this view at ' +
-              Number(data.bestRoas.roas).toFixed(2) + 'x.');
+          if (data.concentration && data.concentration.share >= 0.8) {
+            push('Channel concentration risk: ' + (data.concentration.platform || 'one platform') +
+              ' is about ' + Math.round(data.concentration.share * 100) + '% of paid spend.');
           }
-          if (data.spendMonthComparison && data.spendMonthComparison.pctChange != null) {
-            var sm = data.spendMonthComparison;
-            var sdir = sm.pctChange > 0 ? 'up' : (sm.pctChange < 0 ? 'down' : 'flat');
-            if (sdir !== 'flat') {
-              push('Ad spend is ' + sdir + ' ' + Math.abs(Math.round(sm.pctChange)) +
-                '% ' + sm.currentMonth + ' vs ' + sm.previousMonth + '.');
-            }
+          if (data.leadReconciliation && data.leadReconciliation.mismatch) {
+            push('Lead counts differ between Marketing_Paid and GHL_Leads for this period (definition gap).');
+          }
+          if (data.kpis && data.kpis.marketingRoi == null && data.kpis.attributedContractValue > 0) {
+            push('Attributed won contract value is available; Marketing ROI is Pending without attributed gross profit.');
+          }
+          if (data.actions && data.actions.length) {
+            push(data.actions.length + ' campaign action' + (data.actions.length === 1 ? '' : 's') +
+              ' proposed from live page state.');
           }
         }
 
@@ -10568,18 +10638,130 @@
     // Tables: Funnel Health (CTR vs Conv Rate + concern flags),
     //         Campaign Performance (ROAS-first sort, No Leads Matched Yet)
     // ═══════════════════════════════════════════════════════════════
+    // P10 — MARKETING (profitable demand dashboard)
+    // Primary: Marketing_Paid. Soft/optional: Weekly Summary(Marketing),
+    // Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity.
+    // Never invent metrics. Pending / Not available when unconfirmed.
+    // ═══════════════════════════════════════════════════════════════
+    var _p10SheetMeta = {};
+    var _p10LastPayload = null;
+    var _p10State = {
+      dept: 'ALL',
+      channel: 'ALL',
+      attr: 'last'
+    };
+    var P10_MIN_WINS_CONFIDENT = 5;
+    var P10_MIN_QL_CONFIDENT = 10;
+    var P10_CONC_RISK = 0.80;
+    // Soft CTR / conv benchmarks for diagnostics (industry-style references, not sheet targets)
+    var P10_BENCH_CTR = 1.0;
+    var P10_BENCH_CONV = 5.0;
+
+    function p10FetchSheet(tabName) {
+      return fetchSheet(tabName).then(function(data) {
+        return { ok: true, data: data || [], tab: tabName, status: 200 };
+      }).catch(function(err) {
+        var msg = err && err.message ? String(err.message) : String(err || '');
+        var m = msg.match(/Sheets API error\s+(\d+)/i);
+        var status = m ? parseInt(m[1], 10) : null;
+        console.warn('[P10] Sheet load failed:', tabName, status != null ? ('HTTP ' + status) : msg);
+        return { ok: false, data: [], tab: tabName, status: status, error: err };
+      });
+    }
+
+    function p10Esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /** Currency with cents for small values so CPC isn't $0 */
+    function p10Money(n, forceDecimals) {
+      if (n === null || n === undefined || isNaN(n)) return 'Pending';
+      var abs = Math.abs(n);
+      var decimals = forceDecimals != null
+        ? forceDecimals
+        : (abs > 0 && abs < 1 ? 4 : (abs < 100 ? 2 : 0));
+      var sign = n < 0 ? '-' : '';
+      return sign + '$' + abs.toLocaleString('en-AU', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function p10Pct(n, digits) {
+      if (n === null || n === undefined || isNaN(n)) return 'Pending';
+      var d = digits != null ? digits : 1;
+      return (Math.round(n * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d) + '%';
+    }
+
+    function p10Confidence(wins, sampleExtra) {
+      var n = wins != null ? wins : 0;
+      if (sampleExtra != null && sampleExtra > n) n = sampleExtra;
+      if (n <= 0) return { label: 'No sample', level: 'none' };
+      if (n < 3) return { label: 'Low confidence', level: 'low' };
+      if (n < P10_MIN_WINS_CONFIDENT) return { label: 'Limited sample', level: 'limited' };
+      return { label: 'Adequate sample', level: 'ok' };
+    }
+
+    function p10AttrLabel(model) {
+      var map = {
+        last: 'Last paid touch · 90-day window · Value as won contract value · GP subject to completed project costs.',
+        first: 'First touch · 90-day window · Value as won contract value · GP subject to completed project costs. First-touch paths Pending when not tracked on sheet.',
+        multi: 'Multi-touch · credit split Pending when path data not on sheet. Contract value and GP labelled separately.',
+        sourced: 'Marketing sourced · jobs opened by paid/organic marketing. Influenced credit not double-counted here.',
+        influenced: 'Marketing influenced · any paid touch in the path. Full influence paths Pending when not tracked.'
+      };
+      return map[model] || map.last;
+    }
+
     async function loadP10() {
       showLoading(true);
       removeError('p10');
       try {
-        var marketingWeekly = [];
-        try {
-          marketingWeekly = await fetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING);
-        } catch (e) {
-          marketingWeekly = [];
+        var settled = await Promise.all([
+          p10FetchSheet(CONFIG.TABS.MARKETING_PAID),
+          p10FetchSheet(CONFIG.TABS.WEEKLY_SUMMARY_MARKETING),
+          p10FetchSheet(CONFIG.TABS.MARKETING_SOURCES),
+          p10FetchSheet(CONFIG.TABS.TARGETS),
+          p10FetchSheet(CONFIG.TABS.GHL_LEADS),
+          p10FetchSheet(CONFIG.TABS.GHL_PIPELINE),
+          p10FetchSheet(CONFIG.TABS.CAPACITY)
+        ]);
+        _p10SheetMeta = {
+          paid: { ok: settled[0].ok, status: settled[0].status, rows: (settled[0].data || []).length },
+          weekly: { ok: settled[1].ok, status: settled[1].status, rows: (settled[1].data || []).length },
+          sources: { ok: settled[2].ok, status: settled[2].status, rows: (settled[2].data || []).length },
+          targets: { ok: settled[3].ok, status: settled[3].status, rows: (settled[3].data || []).length },
+          leads: { ok: settled[4].ok, status: settled[4].status, rows: (settled[4].data || []).length },
+          pipeline: { ok: settled[5].ok, status: settled[5].status, rows: (settled[5].data || []).length },
+          capacity: { ok: settled[6].ok, status: settled[6].status, rows: (settled[6].data || []).length }
+        };
+
+        if (!settled[0].ok && !(settled[0].data || []).length) {
+          // Soft banner only when paid + supporting marketing both fail
+          if (!settled[2].ok) {
+            showError('p10', 'Marketing_Paid could not be loaded. Check sheet permissions.');
+          } else {
+            showError('p10', 'Marketing_Paid could not be loaded, other optional sources may still show.');
+          }
+        } else if (!settled[0].ok) {
+          showError('p10', 'Marketing_Paid could not be loaded, other data is showing normally');
         }
-        var marketing = await fetchSheet(CONFIG.TABS.MARKETING_PAID);
-        renderP10(marketing, marketingWeekly);
+
+        _p10LastPayload = {
+          marketing: settled[0].data || [],
+          weekly: settled[1].data || [],
+          sources: settled[2].data || [],
+          targets: settled[3].data || [],
+          leads: settled[4].data || [],
+          pipeline: settled[5].data || [],
+          capacity: settled[6].data || []
+        };
+        p10BindFiltersOnce();
+        renderP10();
       } catch (err) {
         console.error('P10 load error:', err);
         showError('p10', 'Could not load Marketing data.');
@@ -10589,169 +10771,65 @@
       }
     }
 
-    function renderP10(marketing, marketingWeekly) {
-      var brandCharcoal = '#262425';
-      var brandSoftGray = '#BCBDBE';
-      var brandSilver   = '#D2D4D5';
-
-      // One shared filtered set for KPIs + charts (Brand / Year / Month)
-      var filtered = filterByMonths(
-        filterByYear(filterByBrand(marketing || [], activeBrand), activeYear),
-        activeMonths
-      );
-      var mktWeekFiltered = filterByMonths(
-        filterByYear(filterByBrand(marketingWeekly || [], activeBrand), activeYear),
-        activeMonths
-      );
-      setBBPageData('P10', 'P10: Marketing', { marketing: filtered, spendByDepartment: [], funnelHealth: [] });
-
-      function clearP10Charts() {
-        ['chart-p10-spend', 'chart-p10-trend', 'chart-p10-dept'].forEach(function(id) {
-          if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+    function p10BindFiltersOnce() {
+      if (window._p10FiltersBound) return;
+      window._p10FiltersBound = true;
+      var deptEl = document.getElementById('p10-dept-filter');
+      var chEl = document.getElementById('p10-channel-filter');
+      var attrEl = document.getElementById('p10-attr-model');
+      if (deptEl) {
+        deptEl.addEventListener('change', function() {
+          _p10State.dept = deptEl.value || 'ALL';
+          renderP10();
         });
       }
-
-      function setDeptChartEmpty(isEmpty) {
-        var wrap = document.getElementById('p10-dept-chart-wrap');
-        var empty = document.getElementById('p10-dept-empty');
-        if (wrap) {
-          if (isEmpty) wrap.setAttribute('hidden', '');
-          else wrap.removeAttribute('hidden');
-        }
-        if (empty) {
-          if (isEmpty) empty.removeAttribute('hidden');
-          else empty.setAttribute('hidden', '');
-        }
-      }
-
-      function renderSparkline(svgId, values) {
-        var svg = document.getElementById(svgId);
-        if (!svg) return;
-        var nums = (values || []).filter(function(v) {
-          return v !== null && v !== undefined && !isNaN(v);
+      if (chEl) {
+        chEl.addEventListener('change', function() {
+          _p10State.channel = chEl.value || 'ALL';
+          renderP10();
         });
-        if (nums.length < 2) {
-          svg.innerHTML = '';
-          svg.setAttribute('hidden', '');
-          return;
-        }
-        var w = 120, h = 22, pad = 2;
-        var min = Math.min.apply(null, nums);
-        var max = Math.max.apply(null, nums);
-        var range = max - min || 1;
-        var pts = nums.map(function(v, i) {
-          var x = pad + (i / (nums.length - 1)) * (w - pad * 2);
-          var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-          return x.toFixed(1) + ',' + y.toFixed(1);
-        }).join(' ');
-        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-        svg.setAttribute('preserveAspectRatio', 'none');
-        svg.innerHTML =
-          '<polyline fill="none" stroke="' + brandCharcoal + '" stroke-width="1.25" ' +
-          'stroke-linecap="round" stroke-linejoin="round" points="' + pts + '"/>';
-        svg.removeAttribute('hidden');
       }
-
-      function clearSparklines() {
-        ['kpi-mkt-spend-spark', 'kpi-mkt-leads-spark', 'kpi-mkt-cpl-spark', 'kpi-mkt-roas-spark']
-          .forEach(function(id) { renderSparkline(id, null); });
-      }
-
-      function setPlatformBadge(byPlatform, totalSpendAmt) {
-        var el = document.getElementById('p10-platform-badge');
-        if (!el) return;
-        var labels = Object.keys(byPlatform || {});
-        if (!labels.length || totalSpendAmt <= 0) {
-          el.setAttribute('hidden', '');
-          el.textContent = '';
-          return;
-        }
-        var parts = labels.map(function(p) {
-          var pct = Math.round((byPlatform[p] / totalSpendAmt) * 100);
-          return pct + '% ' + p;
+      if (attrEl) {
+        attrEl.addEventListener('change', function() {
+          _p10State.attr = attrEl.value || 'last';
+          p10SyncAttrToggles();
+          renderP10();
         });
-        el.textContent = parts.join(' · ');
-        el.removeAttribute('hidden');
       }
-
-      function setRoasHighlight(row) {
-        var wrap = document.getElementById('p10-roas-highlight');
-        var nameEl = document.getElementById('p10-roas-highlight-name');
-        var valEl = document.getElementById('p10-roas-highlight-value');
-        if (!wrap || !nameEl || !valEl) return;
-        if (!row) {
-          wrap.setAttribute('hidden', '');
-          nameEl.textContent = '';
-          valEl.textContent = '';
-          return;
-        }
-        var name = col(row, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Campaign';
-        var roas = parseNum(col(row, 'ROAS', 'roas'));
-        nameEl.textContent = name;
-        valEl.textContent = roas.toFixed(2) + 'x';
-        wrap.removeAttribute('hidden');
-      }
-
-      /** Blank ROAS = GHL has not attributed via Campaign ID match yet. */
-      function isAttributionPending(r) {
-        return String(col(r, 'ROAS', 'roas') || '').trim() === '';
-      }
-
-      function pendingLabel() {
-        return '<span class="p10-pending">No Leads Matched Yet</span>';
-      }
-
-      function parseMonthYearKey(key) {
-        var s = String(key || '').trim();
-        var m = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
-        if (!m) return null;
-        var token = m[1].substring(0, 3).toLowerCase();
-        var idx = -1;
-        for (var i = 0; i < _MONTH_ABBR.length; i++) {
-          if (_MONTH_ABBR[i].toLowerCase() === token) { idx = i; break; }
-        }
-        if (idx < 0) return null;
-        return { year: parseInt(m[2], 10), month: idx };
-      }
-
-      function monthKeyFromYM(year, monthIdx) {
-        var full = new Date(year, monthIdx, 1).toLocaleString('en-AU', { month: 'long' });
-        return full + ' ' + year;
-      }
-
-      function trailingMonthKeys(endKey, n) {
-        var p = parseMonthYearKey(endKey);
-        if (!p) return [];
-        var keys = [];
-        for (var i = n - 1; i >= 0; i--) {
-          var d = new Date(p.year, p.month - i, 1);
-          keys.push(monthKeyFromYM(d.getFullYear(), d.getMonth()));
-        }
-        return keys;
-      }
-
-      function normalizeMonthKey(key) {
-        var p = parseMonthYearKey(key);
-        return p ? monthKeyFromYM(p.year, p.month) : String(key || '').trim();
-      }
-
-      function rowMonthKey(r) {
-        var m = String(col(r, 'Month', 'month') || '').trim();
-        var y = String(col(r, 'Year', 'year') || '').trim();
-        if (m && y) return normalizeMonthKey(m + ' ' + y);
-        return '';
-      }
-
-      function sparkValuesForKeys(keys, lookup) {
-        var vals = [];
-        keys.forEach(function(k) {
-          if (Object.prototype.hasOwnProperty.call(lookup, k) &&
-              lookup[k] !== null && lookup[k] !== undefined && !isNaN(lookup[k])) {
-            vals.push(lookup[k]);
-          }
+      var toggles = document.getElementById('p10-attr-toggles');
+      if (toggles) {
+        toggles.addEventListener('click', function(e) {
+          var btn = e.target.closest('[data-attr]');
+          if (!btn) return;
+          _p10State.attr = btn.getAttribute('data-attr') || 'last';
+          if (attrEl) attrEl.value = _p10State.attr;
+          p10SyncAttrToggles();
+          renderP10();
         });
-        return vals;
       }
+    }
+
+    function p10SyncAttrToggles() {
+      var root = document.getElementById('p10-attr-toggles');
+      if (!root) return;
+      root.querySelectorAll('[data-attr]').forEach(function(btn) {
+        if (btn.getAttribute('data-attr') === _p10State.attr) btn.classList.add('is-active');
+        else btn.classList.remove('is-active');
+      });
+    }
+
+    function renderP10() {
+      var payload = _p10LastPayload;
+      if (!payload) return;
+
+      var brandCharcoal = '#111827';
+      var brandMuted = '#6B7280';
+      var brandBorder = '#E2E4E8';
+      var cAccent = '#EA580C';
+      var cHealthy = '#4B7A5A';
+      var cWatch = '#F59E0B';
+      var cAction = '#2563EB';
+      var cGap = '#9CA3AF';
 
       function spendOf(r) {
         return parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'));
@@ -10759,14 +10837,16 @@
       function leadsOf(r) {
         return parseNum(col(r, 'Leads Generated', 'Leads', 'leads'));
       }
-      function roasRawOf(r) {
-        return String(col(r, 'ROAS', 'roas') || '').trim();
-      }
       function wonJobsOf(r) {
         return parseNum(col(r, 'Won Jobs', 'won_jobs', 'Jobs Won'));
       }
-      function revenueOf(r) {
-        return parseNum(col(r, 'Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Revenue', 'revenue'));
+      function contractValueOf(r) {
+        return parseNum(col(r, 'Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Contract Value', 'Won Contract Value', 'Revenue', 'revenue'));
+      }
+      function gpOf(r) {
+        var raw = rawColByNames(r, ['Gross Profit from Won Jobs $', 'Attributed GP $', 'Gross Profit $', 'GP $', 'Gross Profit']);
+        if (String(raw).trim() === '') return null;
+        return parseNum(raw);
       }
       function impressionsOf(r) {
         return parseNum(col(r, 'Impressions', 'impressions'));
@@ -10778,276 +10858,654 @@
         var raw = col(r, 'Cost Per Click ($)', 'Cost Per Click', 'CPC', 'cpc');
         if (String(raw).trim() !== '') return parseNum(raw);
         var clicks = clicksOf(r);
-        return clicks > 0 ? spendOf(r) / clicks : 0;
+        return clicks > 0 ? spendOf(r) / clicks : null;
       }
       function ctrOf(r) {
         var raw = col(r, 'Click Through Rate %', 'Click Through Rate', 'CTR', 'ctr', 'CTR %');
         if (String(raw).trim() !== '') return parseNum(raw);
         var imps = impressionsOf(r);
-        return imps > 0 ? (clicksOf(r) / imps) * 100 : 0;
+        return imps > 0 ? (clicksOf(r) / imps) * 100 : null;
       }
       function convRateOf(r) {
         var raw = col(r, 'Conversion Rate %', 'Conversion Rate', 'conversion_rate', 'Conv Rate');
         if (String(raw).trim() !== '') return parseNum(raw);
         var clicks = clicksOf(r);
-        return clicks > 0 ? (leadsOf(r) / clicks) * 100 : 0;
+        return clicks > 0 ? (leadsOf(r) / clicks) * 100 : null;
       }
       function deptOf(r) {
-        return String(col(r, 'Department', 'department') || '').trim();
+        return canonicalDeptName(col(r, 'Department', 'department')) ||
+          String(col(r, 'Department', 'department') || '').trim();
+      }
+      function platformOf(r) {
+        return String(col(r, 'Platform', 'platform', 'Channel', 'channel') || '').trim() || 'Unknown';
       }
       function campaignNameOf(r) {
         return col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
       }
-      function formatPct(v) {
-        if (v === null || v === undefined || isNaN(v)) return '—';
-        return (Math.round(v * 100) / 100).toFixed(2) + '%';
+      function qualLeadsOf(r) {
+        var raw = rawColByNames(r, ['Qualified Leads', 'qualified_leads', 'QL', 'Quality Leads']);
+        if (String(raw).trim() !== '') return parseNum(raw);
+        return null;
       }
 
-      // KPIs from the same filtered rows — show $0 / 0 when empty (not "No data")
-      var totalSpend = filtered.reduce(function(s, r) { return s + spendOf(r); }, 0);
-      var totalLeads = filtered.reduce(function(s, r) { return s + leadsOf(r); }, 0);
-      var roasRows = filtered.filter(function(r) { return roasRawOf(r) !== ''; });
-      var avgRoas = roasRows.length
-        ? roasRows.reduce(function(s, r) { return s + parseNum(roasRawOf(r)); }, 0) / roasRows.length
-        : 0;
-      var avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
+      // Brand + period on marketing
+      var marketingAll = filterByMonths(
+        filterByYear(filterByBrand(payload.marketing || [], activeBrand), activeYear),
+        activeMonths
+      );
+      var weeklyAll = filterByMonths(
+        filterByYear(filterByBrand(payload.weekly || [], activeBrand), activeYear),
+        activeMonths
+      );
+      var sourcesAll = filterByMonths(
+        filterByYear(filterByBrand(payload.sources || [], activeBrand), activeYear),
+        activeMonths
+      );
+      var targetsAll = filterByMonths(
+        filterByYear(filterByBrand(payload.targets || [], activeBrand), activeYear),
+        activeMonths
+      );
 
-      setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub', formatCurrency(totalSpend), 'Total paid ad spend');
-      setKPI('kpi-mkt-leads', 'kpi-mkt-leads-sub', String(totalLeads),         'Leads generated');
-      setKPI('kpi-mkt-cpl',   'kpi-mkt-cpl-sub',   formatCurrency(avgCPL),     'Cost per lead');
-      setKPI('kpi-mkt-roas',  'kpi-mkt-roas-sub',
-        roasRows.length ? avgRoas.toFixed(2) + 'x' : '—',
-        roasRows.length ? 'Avg return on ad spend (attributed)' : 'No attributed ROAS yet');
-
-      // Lightweight this-week pulse (Weekly Summary(Marketing); fall back to Marketing_Paid dates).
-      // Pulse sparklines prefer weekly series; monthly series fill in only when weekly is missing.
-      function mktWeekKeyP10(r) {
-        var ws = col(r, 'Week Start', 'week_start', 'Week', 'week', 'Week Ending', 'Period');
-        if (ws) {
-          var asDate = weekKeyFromDateStr(ws);
-          if (asDate) return asDate;
-          return String(ws).trim();
-        }
-        var wn = parseNum(col(r, 'Week Number', 'week number'));
-        if (wn) return 'W' + wn;
-        return '';
-      }
-      var mktSpendWeekMap = {};
-      var mktLeadsWeekMap = {};
-      mktWeekFiltered.forEach(function(r) {
-        var k = mktWeekKeyP10(r);
-        if (!k) return;
-        mktSpendWeekMap[k] = (mktSpendWeekMap[k] || 0) + parseNum(col(r, 'Ad Spend ($)', 'Ad Spend', 'Spend ($)', 'Spend', 'Total Spend'));
-        mktLeadsWeekMap[k] = (mktLeadsWeekMap[k] || 0) + parseNum(col(r, 'Leads Generated', 'Leads', 'Total Leads', 'leads'));
+      // Populate page filters from data (preserve selection)
+      var deptSet = {};
+      var channelSet = {};
+      marketingAll.forEach(function(r) {
+        var d = deptOf(r);
+        if (d) deptSet[d] = true;
+        var p = platformOf(r);
+        if (p) channelSet[p] = true;
       });
-      if (!Object.keys(mktSpendWeekMap).length) {
-        filtered.forEach(function(r) {
-          var k = weekKeyFromDateStr(col(r, 'Week Start', 'week_start', 'Date', 'date') || getRowDateStr(r));
-          if (!k) return;
-          mktSpendWeekMap[k] = (mktSpendWeekMap[k] || 0) + spendOf(r);
-          mktLeadsWeekMap[k] = (mktLeadsWeekMap[k] || 0) + leadsOf(r);
+      function fillSelect(id, map, current, allLabel) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var keys = Object.keys(map).sort();
+        var html = '<option value="ALL">' + allLabel + '</option>';
+        keys.forEach(function(k) {
+          html += '<option value="' + p10Esc(k) + '"' +
+            (current === k ? ' selected' : '') + '>' + p10Esc(k) + '</option>';
+        });
+        el.innerHTML = html;
+        if (current && current !== 'ALL' && !map[current]) {
+          el.value = 'ALL';
+          return 'ALL';
+        }
+        el.value = current || 'ALL';
+        return el.value;
+      }
+      _p10State.dept = fillSelect('p10-dept-filter', deptSet, _p10State.dept, 'All Departments');
+      _p10State.channel = fillSelect('p10-channel-filter', channelSet, _p10State.channel, 'All Channels');
+      var attrSel = document.getElementById('p10-attr-model');
+      if (attrSel) attrSel.value = _p10State.attr || 'last';
+      p10SyncAttrToggles();
+
+      var filtered = marketingAll.filter(function(r) {
+        if (_p10State.dept && _p10State.dept !== 'ALL') {
+          if (normalizeDeptKey(deptOf(r)) !== normalizeDeptKey(_p10State.dept)) return false;
+        }
+        if (_p10State.channel && _p10State.channel !== 'ALL') {
+          if (platformOf(r) !== _p10State.channel) return false;
+        }
+        return true;
+      });
+
+      // GHL period filter by Date Created (align with P2 period definition)
+      function p10LeadDateStr(r) {
+        return col(r, 'Date Created', 'Created Date', 'date_created', 'created_date') || '';
+      }
+      function p10FilterByCreated(rows) {
+        var branded = filterByBrand(rows || [], activeBrand);
+        var yearOn = activeYear && activeYear !== 'ALL';
+        var monthsOn = activeMonths && activeMonths.length > 0;
+        if (!yearOn && !monthsOn) return branded;
+        return branded.filter(function(r) {
+          var parts = parseRowDateParts(p10LeadDateStr(r));
+          if (!parts) return false;
+          if (yearOn && parts.year !== String(activeYear)) return false;
+          if (monthsOn) {
+            return activeMonths.some(function(sel) {
+              var needle = String(sel || '').trim().toLowerCase().substring(0, 3);
+              return needle && String(parts.month).toLowerCase().startsWith(needle);
+            });
+          }
+          return true;
         });
       }
-      var mktSpendWeekSeries = weekSeriesFromMap(mktSpendWeekMap, 8);
-      var mktLeadsWeekSeries = weekSeriesFromMap(mktLeadsWeekMap, 8);
-      if (mktSpendWeekSeries.latestKey) {
-        setWeekPulse('kpi-mkt-spend-pulse', 'This week: ' + formatCurrency(mktSpendWeekSeries.latestVal));
-      } else {
-        setWeekPulse('kpi-mkt-spend-pulse', '');
-      }
-      if (mktLeadsWeekSeries.latestKey) {
-        setWeekPulse('kpi-mkt-leads-pulse', 'This week: ' + mktLeadsWeekSeries.latestVal + ' leads');
-      } else {
-        setWeekPulse('kpi-mkt-leads-pulse', '');
+      var leadsFiltered = p10FilterByCreated(payload.leads || []);
+      var pipeFiltered = p10FilterByCreated(payload.pipeline || []);
+      if (_p10State.dept && _p10State.dept !== 'ALL') {
+        leadsFiltered = leadsFiltered.filter(function(r) {
+          var d = col(r, 'Department', 'department');
+          return !d || normalizeDeptKey(d) === normalizeDeptKey(_p10State.dept);
+        });
+        pipeFiltered = pipeFiltered.filter(function(r) {
+          var d = col(r, 'Department', 'department');
+          return !d || normalizeDeptKey(d) === normalizeDeptKey(_p10State.dept);
+        });
       }
 
-      // Platform breakdown kept for badge + future multi-platform chart
+      function isP2Qualified(r) {
+        var stage = String(col(r, 'Pipeline Stage', 'Stage', 'stage', 'Status') || '').toLowerCase();
+        if (stage.indexOf('qualif') !== -1 || stage.indexOf('catalogue') !== -1 ||
+            stage.indexOf('catalog') !== -1 || stage.indexOf('contacted') !== -1) return true;
+        if (stage.indexOf('appointment') !== -1 || stage.indexOf('site visit') !== -1) return true;
+        if (stage.indexOf('quote') !== -1 || stage.indexOf('follow') !== -1 ||
+            stage.indexOf('negotiat') !== -1 || stage === 'won') return true;
+        var ql = String(col(r, 'Qualified', 'Is Qualified', 'Lead Quality') || '').toLowerCase();
+        if (ql === 'yes' || ql === 'true' || ql === '1' || ql === 'qualified') return true;
+        return false;
+      }
+      function isP2Won(r) {
+        return String(col(r, 'Pipeline Stage', 'Stage', 'stage', 'Status') || '').toLowerCase() === 'won';
+      }
+      function isP2Open(r) {
+        var s = String(col(r, 'Pipeline Stage', 'Stage', 'stage', 'Status') || '').toLowerCase();
+        return s && s !== 'won' && s.indexOf('lost') === -1;
+      }
+      function dealValue(r) {
+        return parseNum(col(r, 'Opportunity Value', 'Deal Value', 'Value', 'Contract Value', 'value'));
+      }
+      function leadSourceOf(r) {
+        return String(col(r, 'Lead Source', 'Source', 'source', 'UTM Source') || '').trim() || 'Unknown';
+      }
+      function isMarketingSource(src) {
+        var t = String(src || '').toLowerCase();
+        return /facebook|meta|instagram|google|ads|paid|ppc|marketing|campaign|tiktok|linkedin|organic|seo|website/.test(t);
+      }
+
+      // ── Totals from Marketing_Paid ──
+      var totalSpend = filtered.reduce(function(s, r) { return s + spendOf(r); }, 0);
+      var totalRawLeads = filtered.reduce(function(s, r) { return s + leadsOf(r); }, 0);
+      var totalImps = filtered.reduce(function(s, r) { return s + impressionsOf(r); }, 0);
+      var totalClicks = filtered.reduce(function(s, r) { return s + clicksOf(r); }, 0);
+      var totalWins = filtered.reduce(function(s, r) { return s + wonJobsOf(r); }, 0);
+      var totalContract = filtered.reduce(function(s, r) { return s + contractValueOf(r); }, 0);
+      var gpSum = 0;
+      var gpKnown = false;
+      var qlFromSheet = 0;
+      var qlSheetKnown = false;
+      filtered.forEach(function(r) {
+        var g = gpOf(r);
+        if (g != null) { gpSum += g; gpKnown = true; }
+        var q = qualLeadsOf(r);
+        if (q != null) { qlFromSheet += q; qlSheetKnown = true; }
+      });
+
+      // Qualified leads: prefer Marketing_Paid QL column; else GHL stages (cross-check)
+      var p2TotalLeads = leadsFiltered.length;
+      var p2Qualified = leadsFiltered.filter(isP2Qualified).length;
+      var p2Quoted = leadsFiltered.filter(function(r) {
+        var s = String(col(r, 'Pipeline Stage', 'Stage', 'stage', 'Status') || '').toLowerCase();
+        return s.indexOf('quote') !== -1 || s.indexOf('follow') !== -1 || s.indexOf('negotiat') !== -1 || s === 'won';
+      }).length;
+      var p2Wins = leadsFiltered.filter(isP2Won).length;
+      if (!p2Wins) {
+        p2Wins = pipeFiltered.filter(isP2Won).length;
+      }
+
+      var qualifiedLeads = qlSheetKnown ? qlFromSheet : ( _p10SheetMeta.leads && _p10SheetMeta.leads.ok
+        ? p2Qualified : null);
+      var qlPending = qualifiedLeads == null;
+
+      // Cross-check raw leads Marketing_Paid vs P2
+      var leadMismatch = false;
+      var leadMismatchNote = '';
+      if (_p10SheetMeta.leads && _p10SheetMeta.leads.ok && totalRawLeads > 0 && p2TotalLeads > 0) {
+        var dens = Math.abs(totalRawLeads - p2TotalLeads) / Math.max(totalRawLeads, p2TotalLeads, 1);
+        // Only flag when same-period counts diverge substantially (definition gap)
+        if (dens > 0.25 && Math.abs(totalRawLeads - p2TotalLeads) >= 5) {
+          leadMismatch = true;
+          leadMismatchNote = 'Lead count definition gap: Marketing_Paid reports ' + Math.round(totalRawLeads) +
+            ' paid leads for this period; GHL_Leads shows ' + p2TotalLeads +
+            ' contacts by Date Created. Different sources/definitions, not hidden.';
+        }
+      }
+
+      // Open marketing pipeline value (open opps with marketing-ish source when available; else Pending)
+      var mktPipeValue = 0;
+      var mktPipeKnown = false;
+      var openPipe = pipeFiltered.filter(isP2Open);
+      openPipe.forEach(function(r) {
+        var src = leadSourceOf(r);
+        // Pipeline often lacks source; if any marketing source mark appears, count it
+        if (src && src !== 'Unknown' && isMarketingSource(src)) {
+          var v = dealValue(r);
+          // skip placeholder $1
+          if (v > 1) { mktPipeValue += v; mktPipeKnown = true; }
+        }
+      });
+      // If sources tab has pipeline fields
+      sourcesAll.forEach(function(r) {
+        var openV = parseNum(col(r, 'Open Pipeline $', 'Pipeline Value', 'Open Opportunity Value'));
+        if (openV > 0) { mktPipeValue += openV; mktPipeKnown = true; }
+      });
+      if (!mktPipeKnown && openPipe.length) {
+        // Soft aggregate of all open deal values labelled as incomplete attribution
+        var allOpen = 0;
+        var anyV = false;
+        openPipe.forEach(function(r) {
+          var v = dealValue(r);
+          if (v > 1) { allOpen += v; anyV = true; }
+        });
+        // Don't claim marketing-sourced unless we can; leave pending
+      }
+
+      // Budget from Targets
+      var mktBudget = null;
+      targetsAll.forEach(function(r) {
+        var b = parseNum(col(r, 'Marketing Budget ($)', 'Marketing Budget', 'Ad Budget ($)', 'Ad Budget', 'Paid Media Budget', 'Marketing Spend Target'));
+        if (b > 0) mktBudget = (mktBudget || 0) + b;
+      });
+
+      // Spend pace (calendar month of active selection when single month)
+      var now = new Date();
+      var day = now.getDate();
+      var daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      var paceFrac = Math.min(1, Math.max(0.05, day / daysInMonth));
+      var expectedMonthEnd = paceFrac > 0 ? totalSpend / paceFrac : totalSpend;
+      var remainingBudget = mktBudget != null ? mktBudget - totalSpend : null;
+
+      // CAC, CPQL, ROI
+      var cac = totalWins > 0 ? totalSpend / totalWins : null;
+      var cpql = (!qlPending && qualifiedLeads > 0) ? totalSpend / qualifiedLeads : null;
+      var confWins = p10Confidence(totalWins);
+
+      // Marketing ROI = (Attributed GP − Spend) / Spend. Contract value is NOT ROI.
+      var mktRoi = null;
+      var mktRoiPending = true;
+      if (gpKnown && totalSpend > 0) {
+        mktRoi = (gpSum - totalSpend) / totalSpend;
+        mktRoiPending = false;
+      }
+
+      // Site visits / quotes from pipeline for funnel stage volumes
+      var siteVisits = pipeFiltered.filter(function(r) {
+        var s = String(col(r, 'Pipeline Stage', 'Stage', 'stage') || '').toLowerCase();
+        return s.indexOf('appointment') !== -1 || s.indexOf('site visit') !== -1 || s.indexOf('site-visit') !== -1;
+      }).length;
+      var quotesN = pipeFiltered.filter(function(r) {
+        var s = String(col(r, 'Pipeline Stage', 'Stage', 'stage') || '').toLowerCase();
+        return s.indexOf('quote') !== -1 || s.indexOf('follow') !== -1 || s.indexOf('negotiat') !== -1 || s === 'won';
+      }).length;
+      var quotesAlt = 0;
+      sourcesAll.forEach(function(r) {
+        quotesAlt += parseNum(col(r, 'Quotes Sent', 'Quotes'));
+      });
+      if (!quotesN && quotesAlt) quotesN = quotesAlt;
+
+      // ── Data quality banner + sources ──
+      var dqParts = [];
+      if (_p10SheetMeta.paid && _p10SheetMeta.paid.ok) {
+        dqParts.push('Marketing_Paid live (' + (_p10SheetMeta.paid.rows || 0) + ' rows)');
+      } else {
+        dqParts.push('Marketing_Paid not available');
+      }
+      if (_p10SheetMeta.sources && _p10SheetMeta.sources.ok && _p10SheetMeta.sources.rows > 0) {
+        dqParts.push('Marketing_Sources live');
+      } else {
+        dqParts.push('Marketing_Sources awaiting or empty');
+      }
+      if (leadMismatch) dqParts.push('Lead definition gap vs P2');
+      if (mktRoiPending) dqParts.push('Marketing ROI Pending (no attributed GP column)');
+      if (_p10State.attr !== 'last') {
+        dqParts.push('Attribution model ' + _p10State.attr + ': credit paths may be Pending');
+      }
+
+      var lu = document.getElementById('p10-last-updated');
+      if (lu) {
+        lu.textContent = 'Last updated ' + now.toLocaleString('en-AU', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) + ' · Brand ' + (activeBrand || 'ALL') +
+          (activeYear && activeYear !== 'ALL' ? ' · ' + activeYear : '') +
+          (activeMonths && activeMonths.length ? ' · ' + activeMonths.join(', ') : '');
+      }
+      var dq = document.getElementById('p10-data-quality');
+      if (dq) dq.textContent = dqParts.join(' · ');
+
+      // Callouts
+      var callouts = [];
+      // Platform concentration
       var byPlatform = {};
       filtered.forEach(function(r) {
-        var p = col(r, 'Platform', 'platform') || 'Other';
+        var p = platformOf(r);
         byPlatform[p] = (byPlatform[p] || 0) + spendOf(r);
       });
-      setPlatformBadge(byPlatform, totalSpend);
-
-      // Best real-ROAS campaign highlight
-      var bestRoasRow = null;
-      roasRows.forEach(function(r) {
-        var v = parseNum(roasRawOf(r));
-        if (!bestRoasRow || v > parseNum(roasRawOf(bestRoasRow))) bestRoasRow = r;
-      });
-      setRoasHighlight(bestRoasRow);
-
-      // Sparklines: trailing months from brand+year scope (omit if <2 pts)
-      var brandYearRows = filterByYear(filterByBrand(marketing || [], activeBrand), activeYear);
-      var endKey = '';
-      if (activeMonths && activeMonths.length === 1 && activeYear && activeYear !== 'ALL') {
-        var mi = -1;
-        for (var mi2 = 0; mi2 < _MONTH_ABBR.length; mi2++) {
-          if (_MONTH_ABBR[mi2].toLowerCase() === String(activeMonths[0]).substring(0, 3).toLowerCase()) {
-            mi = mi2; break;
-          }
-        }
-        if (mi >= 0) endKey = monthKeyFromYM(parseInt(activeYear, 10), mi);
-      }
-      if (!endKey) {
-        brandYearRows.forEach(function(r) {
-          var k = rowMonthKey(r);
-          if (!k) return;
-          if (!endKey || (parseMonthYearKey(k) && parseMonthYearKey(endKey) &&
-              (parseMonthYearKey(k).year > parseMonthYearKey(endKey).year ||
-               (parseMonthYearKey(k).year === parseMonthYearKey(endKey).year &&
-                parseMonthYearKey(k).month > parseMonthYearKey(endKey).month)))) {
-            endKey = k;
-          }
-        });
-      }
-      var sparkMonths = endKey ? trailingMonthKeys(endKey, 8) : [];
-      var spendByMonth = {};
-      var leadsByMonth = {};
-      var roasSumByMonth = {};
-      var roasCntByMonth = {};
-      brandYearRows.forEach(function(r) {
-        var k = rowMonthKey(r);
-        if (!k) return;
-        spendByMonth[k] = (spendByMonth[k] || 0) + spendOf(r);
-        leadsByMonth[k] = (leadsByMonth[k] || 0) + leadsOf(r);
-        if (roasRawOf(r) !== '') {
-          roasSumByMonth[k] = (roasSumByMonth[k] || 0) + parseNum(roasRawOf(r));
-          roasCntByMonth[k] = (roasCntByMonth[k] || 0) + 1;
-        }
-      });
-      var cplByMonth = {};
-      var avgRoasByMonth = {};
-      sparkMonths.forEach(function(k) {
-        if (spendByMonth[k] !== undefined && leadsByMonth[k] > 0) {
-          cplByMonth[k] = spendByMonth[k] / leadsByMonth[k];
-        }
-        if (roasCntByMonth[k]) {
-          avgRoasByMonth[k] = roasSumByMonth[k] / roasCntByMonth[k];
-        }
-      });
-      // Prefer week-series sparklines on spend/leads when pulse data exists
-      if (mktSpendWeekSeries.values.length >= 2) {
-        drawKpiSparkline('kpi-mkt-spend-spark', mktSpendWeekSeries.values, brandCharcoal);
-      } else {
-        renderSparkline('kpi-mkt-spend-spark', sparkValuesForKeys(sparkMonths, spendByMonth));
-      }
-      if (mktLeadsWeekSeries.values.length >= 2) {
-        drawKpiSparkline('kpi-mkt-leads-spark', mktLeadsWeekSeries.values, brandCharcoal);
-      } else {
-        renderSparkline('kpi-mkt-leads-spark', sparkValuesForKeys(sparkMonths, leadsByMonth));
-      }
-      renderSparkline('kpi-mkt-cpl-spark',   sparkValuesForKeys(sparkMonths, cplByMonth));
-      renderSparkline('kpi-mkt-roas-spark',  sparkValuesForKeys(sparkMonths, avgRoasByMonth));
-
-      clearP10Charts();
-
-        if (filtered.length === 0) {
-        setPlatformBadge({}, 0);
-        setRoasHighlight(null);
-        clearSparklines();
-        // Re-apply week sparklines if we have weekly pulse data after clearSparklines
-        if (mktSpendWeekSeries.values.length >= 2) {
-          drawKpiSparkline('kpi-mkt-spend-spark', mktSpendWeekSeries.values, brandCharcoal);
-        }
-        if (mktLeadsWeekSeries.values.length >= 2) {
-          drawKpiSparkline('kpi-mkt-leads-spark', mktLeadsWeekSeries.values, brandCharcoal);
-        }
-        setDeptChartEmpty(true);
-        document.getElementById('p10-funnel-table').innerHTML =
-          '<p class="no-data-msg">Data not available</p>';
-        document.getElementById('p10-campaign-table').innerHTML =
-          '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
-        setBBPageData('P10', 'P10: Marketing', {
-          marketing: filtered,
-          spendByDepartment: [],
-          funnelHealth: [],
-          weekPulse: {
-            spend: mktSpendWeekSeries.latestKey != null ? mktSpendWeekSeries.latestVal : null,
-            leads: mktLeadsWeekSeries.latestKey != null ? mktLeadsWeekSeries.latestVal : null,
-            note: 'Lightweight this-week numbers only. For week-over-week Marketing go to P8.'
-          }
-        });
-        return;
-      }
-
-      // ── Ad Spend by Campaign — ranked horizontal bars (highest first) ─
-      var byCampaign = {};
-      filtered.forEach(function(r) {
-        var name = col(r, 'Campaign Name', 'campaign_name', 'Campaign', 'campaign') || 'Unknown';
-        byCampaign[name] = (byCampaign[name] || 0) + spendOf(r);
-      });
-      var campaignEntries = Object.keys(byCampaign).map(function(name) {
-        return { name: name, spend: byCampaign[name] };
-      }).filter(function(e) { return e.spend > 0; })
-        .sort(function(a, b) { return b.spend - a.spend; });
-
-      var spendWrap = document.getElementById('p10-spend-chart-wrap');
-      if (spendWrap) {
-        spendWrap.style.height = Math.max(200, Math.max(campaignEntries.length, 1) * 28 + 48) + 'px';
-      }
-
-      var spendLabelPlugin = {
-        id: 'p10SpendBarLabels',
-        afterDatasetsDraw: function(chart) {
-          var ctx = chart.ctx;
-          var meta = chart.getDatasetMeta(0);
-          if (!meta) return;
-          meta.data.forEach(function(el, i) {
-            var val = chart.data.datasets[0].data[i];
-            if (val === null || val === undefined || isNaN(val)) return;
-            var pos = el.tooltipPosition();
-            ctx.save();
-            ctx.fillStyle = brandCharcoal;
-            ctx.font = '600 11px Montserrat, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(formatCurrency(val), pos.x + 8, pos.y);
-            ctx.restore();
+      var platEntries = Object.keys(byPlatform).map(function(k) {
+        return { name: k, spend: byPlatform[k] };
+      }).sort(function(a, b) { return b.spend - a.spend; });
+      if (platEntries.length && totalSpend > 0) {
+        var topP = platEntries[0];
+        var topShare = topP.spend / totalSpend;
+        if (topShare >= P10_CONC_RISK) {
+          callouts.push({
+            level: 'risk',
+            text: 'Channel concentration risk: ' + topP.name + ' is ' + p10Pct(topShare * 100, 0) +
+              ' of paid spend (' + p10Money(topP.spend, 0) + ' of ' + p10Money(totalSpend, 0) +
+              '). Single-channel dependency, diversify or actively protect this channel.'
           });
         }
-      };
+      }
+      if (leadMismatch) {
+        callouts.push({ level: 'watch', text: leadMismatchNote });
+      }
+      // Best attributed contract with low confidence wording (replace ROAS highlight)
+      var bestCamp = null;
+      filtered.forEach(function(r) {
+        var v = contractValueOf(r);
+        var w = wonJobsOf(r);
+        if (v > 0 && (!bestCamp || v > contractValueOf(bestCamp))) bestCamp = r;
+      });
+      if (bestCamp) {
+        var bw = wonJobsOf(bestCamp);
+        var bc = p10Confidence(bw);
+        callouts.push({
+          level: bc.level === 'ok' ? 'info' : 'watch',
+          text: 'Attributed won contract value: ' + p10Money(contractValueOf(bestCamp), 0) +
+            ' · ' + Math.round(bw) + ' job' + (bw === 1 ? '' : 's') +
+            ' · ' + bc.label +
+            (campaignNameOf(bestCamp) ? ' · ' + campaignNameOf(bestCamp) : '') +
+            '. Not platform ROAS.'
+        });
+      }
+      if (mktRoiPending && totalContract > 0) {
+        callouts.push({
+          level: 'info',
+          text: 'Contract value total attributed ' + p10Money(totalContract, 0) +
+            ' on ' + Math.round(totalWins) + ' won job(s). Marketing ROI needs attributed gross profit after completed costs (Pending).'
+        });
+      }
 
-      // Platform doughnut deferred while Object.keys(byPlatform).length < 2 (badge only).
-      makeChart('chart-p10-spend', {
+      var callEl = document.getElementById('p10-callouts');
+      if (callEl) {
+        if (!callouts.length) {
+          callEl.innerHTML = '';
+        } else {
+          callEl.innerHTML = callouts.map(function(c) {
+            return '<div class="p10-callout p10-callout--' + p10Esc(c.level) + '">' + p10Esc(c.text) + '</div>';
+          }).join('');
+        }
+      }
+
+      // ── KPIs ──
+      var budgetSub = mktBudget != null
+        ? ('Budget ' + p10Money(mktBudget, 0) +
+          (remainingBudget != null
+            ? (remainingBudget >= 0
+              ? ' · remaining ' + p10Money(remainingBudget, 0)
+              : ' · over by ' + p10Money(Math.abs(remainingBudget), 0))
+            : ''))
+        : 'Approved budget Pending (Targets)';
+      setKPI('kpi-mkt-spend', 'kpi-mkt-spend-sub',
+        p10Money(totalSpend, 0),
+        budgetSub + (mktBudget != null && totalSpend > mktBudget ? ' · Over budget' : ''));
+
+      if (qlPending) {
+        setKPI('kpi-mkt-ql', 'kpi-mkt-ql-sub', 'Pending',
+          _p10SheetMeta.leads && _p10SheetMeta.leads.ok
+            ? 'No qualified-lead field on Marketing_Paid and GHL filter returned 0'
+            : 'Awaiting Qualified Leads field or GHL_Leads');
+      } else {
+        setKPI('kpi-mkt-ql', 'kpi-mkt-ql-sub', String(Math.round(qualifiedLeads)),
+          qlSheetKnown
+            ? 'From Marketing_Paid qualified field'
+            : ('From GHL stages · P2-aligned · raw paid leads ' + Math.round(totalRawLeads)));
+      }
+
+      if (cpql != null) {
+        setKPI('kpi-mkt-cpql', 'kpi-mkt-cpql-sub', p10Money(cpql, 2),
+          'Spend ÷ qualified leads · n=' + Math.round(qualifiedLeads));
+      } else {
+        setKPI('kpi-mkt-cpql', 'kpi-mkt-cpql-sub', 'Pending',
+          qlPending ? 'Needs qualified leads' : 'No qualified leads in period');
+      }
+
+      if (mktPipeKnown) {
+        setKPI('kpi-mkt-pipeline', 'kpi-mkt-pipeline-sub', p10Money(mktPipeValue, 0),
+          'Open opportunity value from marketing sources');
+      } else {
+        setKPI('kpi-mkt-pipeline', 'kpi-mkt-pipeline-sub', 'Pending',
+          'Open pipeline not reliably tagged to marketing sources');
+      }
+
+      if (cac != null) {
+        setKPI('kpi-mkt-cac', 'kpi-mkt-cac-sub', p10Money(cac, 0),
+          'Spend ÷ ' + Math.round(totalWins) + ' won job(s) · ' + confWins.label);
+      } else {
+        setKPI('kpi-mkt-cac', 'kpi-mkt-cac-sub', totalSpend > 0 ? 'No wins' : 'Pending',
+          totalSpend > 0 ? 'Spend with zero attributed won jobs' : 'No spend and no wins');
+      }
+
+      if (!mktRoiPending && mktRoi != null) {
+        setKPI('kpi-mkt-roi', 'kpi-mkt-roi-sub',
+          p10Pct(mktRoi * 100, 0),
+          '(Attributed GP ' + p10Money(gpSum, 0) + ' − Spend) ÷ Spend · ' + confWins.label);
+      } else {
+        setKPI('kpi-mkt-roi', 'kpi-mkt-roi-sub', 'Pending',
+          'Needs attributed gross profit after costs. Contract value is not Marketing ROI.');
+      }
+
+      // Accent mark on spend KPI if over budget
+      var spendCard = document.getElementById('kpi-mkt-spend');
+      if (spendCard && spendCard.parentElement) {
+        if (mktBudget != null && totalSpend > mktBudget) {
+          spendCard.parentElement.classList.add('p10-kpi--risk');
+        } else {
+          spendCard.parentElement.classList.remove('p10-kpi--risk');
+        }
+      }
+      var roiCard = document.getElementById('kpi-mkt-roi');
+      if (roiCard && roiCard.parentElement) {
+        if (!mktRoiPending && mktRoi != null && mktRoi < 0) {
+          roiCard.parentElement.classList.add('p10-kpi--risk');
+        } else {
+          roiCard.parentElement.classList.remove('p10-kpi--risk');
+        }
+      }
+
+      // Secondary strip
+      var leadQuality = (!qlPending && totalRawLeads > 0)
+        ? (qualifiedLeads / totalRawLeads) * 100
+        : (p2TotalLeads > 0 ? (p2Qualified / p2TotalLeads) * 100 : null);
+      var leadToQuote = null;
+      if (!qlPending && qualifiedLeads > 0 && quotesN > 0) {
+        leadToQuote = (quotesN / Math.max(qualifiedLeads, 1)) * 100;
+      } else if (p2TotalLeads > 0 && p2Quoted > 0) {
+        leadToQuote = (p2Quoted / p2TotalLeads) * 100;
+      }
+      var quoteToWin = quotesN > 0 && totalWins > 0
+        ? (totalWins / quotesN) * 100
+        : (p2Quoted > 0 && p2Wins > 0 ? (p2Wins / p2Quoted) * 100 : null);
+
+      var channelConc = platEntries.length && totalSpend > 0
+        ? (platEntries[0].name + ' ' + p10Pct((platEntries[0].spend / totalSpend) * 100, 0))
+        : 'Pending';
+
+      // Capacity alignment snap for secondary
+      var capAlignNote = 'Pending';
+      var deptCapMap = p10DeptCapacityRollup(payload.capacity || [], activeBrand);
+
+      var secondary = [
+        { label: 'Raw leads', value: String(Math.round(totalRawLeads)), sub: 'Paid media count' },
+        { label: 'Lead quality %', value: leadQuality != null ? p10Pct(leadQuality, 0) : 'Pending', sub: 'Qualified / raw' },
+        { label: 'Lead to quote', value: leadToQuote != null ? p10Pct(leadToQuote, 0) : 'Pending', sub: 'Illustrative rate' },
+        { label: 'Quote to win', value: quoteToWin != null ? p10Pct(quoteToWin, 0) : 'Pending', sub: 'Illustrative rate' },
+        { label: 'Median first contact', value: 'Pending', sub: 'Not on Marketing_Paid' },
+        { label: 'Channel concentration', value: channelConc, sub: topShareDisplay(platEntries, totalSpend) },
+        { label: 'Capacity alignment', value: Object.keys(deptCapMap).length ? 'See table' : 'Pending', sub: 'P6 Capacity rollup' }
+      ];
+      function topShareDisplay(entries, total) {
+        if (!entries.length || !(total > 0)) return 'No spend';
+        var s = entries[0].spend / total;
+        if (s >= P10_CONC_RISK) return 'Risk ≥80%';
+        if (s >= 0.6) return 'Elevated';
+        return 'Diversified';
+      }
+      var secEl = document.getElementById('p10-secondary-strip');
+      if (secEl) {
+        secEl.innerHTML = secondary.map(function(s) {
+          return '<div class="p10-sec-item">' +
+            '<div class="p10-sec-label">' + p10Esc(s.label) + '</div>' +
+            '<div class="p10-sec-value">' + p10Esc(s.value) + '</div>' +
+            '<div class="p10-sec-sub">' + p10Esc(s.sub) + '</div></div>';
+        }).join('');
+      }
+
+      // ── Commercial funnel stages ──
+      var funnelStages = [
+        { key: 'imps', label: 'Impressions', vol: totalImps, value: null, time: 'Pending' },
+        { key: 'clicks', label: 'Clicks', vol: totalClicks, value: null, time: 'Pending' },
+        { key: 'leads', label: 'Leads', vol: totalRawLeads, value: null, time: 'Pending' },
+        { key: 'ql', label: 'Qualified Leads', vol: qlPending ? null : qualifiedLeads, value: null, time: 'Pending' },
+        { key: 'visits', label: 'Site Visits', vol: _p10SheetMeta.pipeline && _p10SheetMeta.pipeline.ok ? siteVisits : null, value: null, time: 'Pending' },
+        { key: 'quotes', label: 'Quotes', vol: (_p10SheetMeta.pipeline && _p10SheetMeta.pipeline.ok) || quotesAlt ? quotesN : null, value: null, time: 'Pending' },
+        { key: 'wins', label: 'Won Jobs', vol: totalWins, value: totalContract > 0 ? totalContract : null, time: 'Pending' },
+        { key: 'gp', label: 'Gross Profit', vol: null, value: gpKnown ? gpSum : null, time: 'Pending' }
+      ];
+
+      var funnelHtml = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+        '<th>Stage</th><th class="text-right">Volume</th><th class="text-right">Conv from prior</th>' +
+        '<th class="text-right">Cost per outcome</th><th class="text-right">Pipeline / contract</th>' +
+        '<th class="text-right">Avg time next</th><th>Vs target</th></tr></thead><tbody>';
+      var prevVol = null;
+      funnelStages.forEach(function(st, idx) {
+        var volText = st.vol == null ? 'Pending' : String(Math.round(st.vol));
+        var convText = '—';
+        if (idx > 0 && prevVol != null && prevVol > 0 && st.vol != null) {
+          convText = p10Pct((st.vol / prevVol) * 100, 1);
+        } else if (idx > 0 && (prevVol == null || st.vol == null)) {
+          convText = 'Pending';
+        }
+        var costText = 'Pending';
+        if (st.vol != null && st.vol > 0 && totalSpend > 0 && st.key !== 'imps') {
+          costText = p10Money(totalSpend / st.vol, st.key === 'clicks' ? 4 : 2);
+        } else if (st.key === 'imps' && st.vol > 0 && totalSpend > 0) {
+          costText = p10Money(totalSpend / st.vol, 4) + ' CPM/ unit';
+        }
+        if (st.key === 'imps' && st.vol > 0) {
+          // CPM standard: cost per 1000
+          costText = p10Money((totalSpend / st.vol) * 1000, 2) + ' CPM';
+        }
+        var valText = st.value != null ? p10Money(st.value, 0) : (st.key === 'gp' ? 'Pending' : '—');
+        if (st.key === 'wins' && st.value != null) {
+          valText = p10Money(st.value, 0) + ' contract';
+        }
+        if (st.key === 'gp' && st.value != null) valText = p10Money(st.value, 0);
+        funnelHtml += '<tr><td>' + p10Esc(st.label) + '</td>' +
+          '<td class="text-right">' + p10Esc(volText) + '</td>' +
+          '<td class="text-right">' + p10Esc(convText) + '</td>' +
+          '<td class="text-right">' + p10Esc(costText) + '</td>' +
+          '<td class="text-right">' + p10Esc(valText) + '</td>' +
+          '<td class="text-right">' + p10Esc(st.time) + '</td>' +
+          '<td>Pending</td></tr>';
+        if (st.vol != null) prevVol = st.vol;
+      });
+      funnelHtml += '</tbody></table></div>';
+      var funEl = document.getElementById('p10-commercial-funnel');
+      if (funEl) funEl.innerHTML = funnelHtml;
+
+      // ── Budget pacing ──
+      var byDeptSpend = {};
+      filtered.forEach(function(r) {
+        var d = deptOf(r) || 'Unassigned';
+        if (!byDeptSpend[d]) byDeptSpend[d] = { spend: 0, leads: 0, wins: 0, contract: 0, ql: 0 };
+        byDeptSpend[d].spend += spendOf(r);
+        byDeptSpend[d].leads += leadsOf(r);
+        byDeptSpend[d].wins += wonJobsOf(r);
+        byDeptSpend[d].contract += contractValueOf(r);
+        var q = qualLeadsOf(r);
+        if (q != null) byDeptSpend[d].ql += q;
+      });
+      var byPlatSpend = {};
+      filtered.forEach(function(r) {
+        var p = platformOf(r);
+        byPlatSpend[p] = (byPlatSpend[p] || 0) + spendOf(r);
+      });
+
+      var paceStatus = 'Not Active';
+      var paceClass = 'gap';
+      if (totalSpend > 0 && mktBudget != null) {
+        if (totalSpend > mktBudget) { paceStatus = 'Over'; paceClass = 'over'; }
+        else if (expectedMonthEnd > mktBudget * 1.05) { paceStatus = 'Watch'; paceClass = 'watch'; }
+        else { paceStatus = 'Under / On'; paceClass = 'healthy'; }
+      } else if (totalSpend > 0 && mktBudget == null) {
+        paceStatus = 'Budget Pending';
+        paceClass = 'gap';
+      }
+
+      var paceHtml = '<div class="p10-pace-summary">' +
+        '<div class="p10-pace-row"><span>Monthly budget</span><strong>' +
+        (mktBudget != null ? p10Money(mktBudget, 0) : 'Pending') + '</strong></div>' +
+        '<div class="p10-pace-row"><span>Spend to date</span><strong>' + p10Money(totalSpend, 0) + '</strong></div>' +
+        '<div class="p10-pace-row"><span>Expected month-end</span><strong>' +
+        (totalSpend > 0 ? p10Money(expectedMonthEnd, 0) : 'Pending') + '</strong></div>' +
+        '<div class="p10-pace-row"><span>Remaining</span><strong>' +
+        (remainingBudget != null ? p10Money(remainingBudget, 0) : 'Pending') + '</strong></div>' +
+        '<div class="p10-pace-row"><span>Status</span><strong class="p10-status--' + paceClass + '">' +
+        p10Esc(paceStatus) + '</strong></div></div>';
+
+      paceHtml += '<div class="p10-pace-breakdown"><div class="p10-subhead">By platform</div>';
+      Object.keys(byPlatSpend).sort(function(a, b) { return byPlatSpend[b] - byPlatSpend[a]; }).forEach(function(p) {
+        var sh = totalSpend > 0 ? (byPlatSpend[p] / totalSpend) * 100 : 0;
+        paceHtml += '<div class="p10-pace-row"><span title="' + p10Esc(p) + '">' + p10Esc(p) +
+          '</span><strong>' + p10Money(byPlatSpend[p], 0) + ' · ' + p10Pct(sh, 0) + '</strong></div>';
+      });
+      if (!Object.keys(byPlatSpend).length) {
+        paceHtml += '<p class="p10-pending-line">No platform spend in selection.</p>';
+      }
+      paceHtml += '<div class="p10-subhead">By department</div>';
+      Object.keys(byDeptSpend).sort(function(a, b) {
+        return byDeptSpend[b].spend - byDeptSpend[a].spend;
+      }).forEach(function(d) {
+        var sh = totalSpend > 0 ? (byDeptSpend[d].spend / totalSpend) * 100 : 0;
+        paceHtml += '<div class="p10-pace-row"><span title="' + p10Esc(d) + '">' + p10Esc(d) +
+          '</span><strong>' + p10Money(byDeptSpend[d].spend, 0) + ' · ' + p10Pct(sh, 0) + '</strong></div>';
+      });
+      if (!Object.keys(byDeptSpend).length) {
+        paceHtml += '<p class="p10-pending-line">No department split on Marketing_Paid.</p>';
+      }
+      paceHtml += '</div>';
+      var paceEl = document.getElementById('p10-budget-pacing');
+      if (paceEl) paceEl.innerHTML = paceHtml;
+
+      // Budget bullet chart (horizontal bars budget vs spend vs forecast)
+      makeChart('chart-p10-budget', {
         type: 'bar',
         data: {
-          labels: campaignEntries.length
-            ? campaignEntries.map(function(e) {
-                return e.name.length > 36 ? e.name.substring(0, 36) + '…' : e.name;
-              })
-            : ['No spend'],
+          labels: ['Budget', 'Spend', 'Forecast'],
           datasets: [{
-            label: 'Ad Spend',
-            data: campaignEntries.length
-              ? campaignEntries.map(function(e) { return e.spend; })
-              : [0],
-            backgroundColor: brandCharcoal,
+            data: [
+              mktBudget != null ? mktBudget : null,
+              totalSpend,
+              totalSpend > 0 ? expectedMonthEnd : null
+            ],
+            backgroundColor: [
+              brandBorder,
+              (paceClass === 'over' ? cAccent : brandCharcoal),
+              cAction
+            ],
             borderWidth: 0,
-            borderRadius: 0,
-            barThickness: 14
+            barThickness: 18
           }]
         },
-        plugins: [spendLabelPlugin],
         options: {
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { right: 64 } },
           plugins: {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                label: function(ctx) {
+                  return ctx.raw == null ? 'Pending' : p10Money(ctx.raw, 0);
+                }
               }
             }
           },
           scales: {
             x: {
               beginAtZero: true,
-              grid: { color: brandSilver },
+              grid: { color: brandBorder },
               ticks: {
-                color: brandSoftGray,
+                color: brandMuted,
                 callback: function(v) { return '$' + v; }
               }
             },
@@ -11059,383 +11517,734 @@
         }
       });
 
-      // Leads vs Spend by month — combo chart
-      var byMonth = {};
+      // ── Campaign aggregation for matrix ──
+      var camps = {};
       filtered.forEach(function(r) {
-        var d = col(r, 'Month', 'month', 'Date', 'date') || '';
-        if (!d) return;
-        if (!byMonth[d]) byMonth[d] = { spend: 0, leads: 0 };
-        byMonth[d].spend += spendOf(r);
-        byMonth[d].leads += leadsOf(r);
+        var name = campaignNameOf(r);
+        if (!camps[name]) {
+          camps[name] = {
+            name: name,
+            spend: 0, leads: 0, ql: 0, qlKnown: false, wins: 0, contract: 0, gp: 0, gpKnown: false,
+            imps: 0, clicks: 0, depts: {}, plats: {}, cpcSum: 0, cpcN: 0, ctrSum: 0, ctrN: 0, convSum: 0, convN: 0
+          };
+        }
+        var c = camps[name];
+        c.spend += spendOf(r);
+        c.leads += leadsOf(r);
+        c.wins += wonJobsOf(r);
+        c.contract += contractValueOf(r);
+        c.imps += impressionsOf(r);
+        c.clicks += clicksOf(r);
+        var q = qualLeadsOf(r);
+        if (q != null) { c.ql += q; c.qlKnown = true; }
+        var g = gpOf(r);
+        if (g != null) { c.gp += g; c.gpKnown = true; }
+        var d = deptOf(r);
+        if (d) c.depts[d] = true;
+        c.plats[platformOf(r)] = true;
+        var cpc = cpcOf(r);
+        if (cpc != null && !isNaN(cpc)) { c.cpcSum += cpc; c.cpcN += 1; }
+        var ctr = ctrOf(r);
+        if (ctr != null && !isNaN(ctr)) { c.ctrSum += ctr; c.ctrN += 1; }
+        var conv = convRateOf(r);
+        if (conv != null && !isNaN(conv)) { c.convSum += conv; c.convN += 1; }
       });
-      var monthKeys = Object.keys(byMonth);
-
-      makeChart('chart-p10-trend', {
-        type: 'bar',
-        data: {
-          labels: monthKeys,
-          datasets: [
-            {
-              label:           'Spend ($)',
-              data:            monthKeys.map(function(k) { return byMonth[k].spend; }),
-              backgroundColor: brandCharcoal,
-              borderWidth:     0,
-              borderRadius:    0,
-              yAxisID:         'y'
-            },
-            {
-              label:           'Leads',
-              data:            monthKeys.map(function(k) { return byMonth[k].leads; }),
-              type:            'line',
-              borderColor:     brandSoftGray,
-              backgroundColor: 'transparent',
-              tension:         0.3,
-              pointRadius:     3,
-              pointBackgroundColor: brandCharcoal,
-              yAxisID:         'y1'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top', labels: { color: brandCharcoal } }
-          },
-          scales: {
-            y:  {
-              beginAtZero: true,
-              position: 'left',
-              ticks: { color: brandSoftGray, callback: function(v) { return '$' + v; } },
-              grid: { color: brandSilver }
-            },
-            y1: {
-              beginAtZero: true,
-              position: 'right',
-              ticks: { color: brandSoftGray },
-              grid: { drawOnChartArea: false }
-            },
-            x: { ticks: { color: brandCharcoal }, grid: { display: false } }
+      var campList = Object.keys(camps).map(function(k) {
+        var c = camps[k];
+        c.dept = Object.keys(c.depts).join(', ') || '—';
+        c.platform = Object.keys(c.plats).join(', ') || '—';
+        c.primaryDept = Object.keys(c.depts)[0] || 'Other';
+        c.primaryPlat = Object.keys(c.plats)[0] || 'Other';
+        if (!c.qlKnown) {
+          // Approximate QL from lead quality ratio if global QL known
+          if (!qlPending && totalRawLeads > 0 && qualifiedLeads > 0 && c.leads > 0) {
+            c.ql = c.leads * (qualifiedLeads / totalRawLeads);
+            c.qlProxy = true;
+          } else {
+            c.ql = c.leads; // treat all paid leads as QL fallback for matrix x-axis
+            c.qlProxy = true;
           }
+        }
+        c.cpql = c.ql > 0 ? c.spend / c.ql : null;
+        c.winRate = c.leads > 0 ? (c.wins / c.leads) * 100 : 0;
+        c.ctr = c.imps > 0 ? (c.clicks / c.imps) * 100 : (c.ctrN ? c.ctrSum / c.ctrN : null);
+        c.conv = c.clicks > 0 ? (c.leads / c.clicks) * 100 : (c.convN ? c.convSum / c.convN : null);
+        c.cpc = c.clicks > 0 ? c.spend / c.clicks : (c.cpcN ? c.cpcSum / c.cpcN : null);
+        c.conf = p10Confidence(c.wins, c.leads);
+        return c;
+      });
+
+      // Department colour map
+      var deptColors = {};
+      var palette = ['#111827', '#2563EB', '#4B7A5A', '#6B7280', '#8B5E34', '#374151', '#1D4ED8'];
+      var di = 0;
+      campList.forEach(function(c) {
+        if (!deptColors[c.primaryDept]) {
+          deptColors[c.primaryDept] = palette[di % palette.length];
+          di += 1;
         }
       });
 
-      // ── Spend by Department — ranked horizontal bars ─────────────
-      var byDept = {};
-      filtered.forEach(function(r) {
-        var dept = deptOf(r);
-        if (!dept) return;
-        byDept[dept] = (byDept[dept] || 0) + spendOf(r);
-      });
-      var deptEntries = Object.keys(byDept).map(function(name) {
-        return { name: name, spend: byDept[name] };
-      }).filter(function(e) { return e.spend > 0; })
-        .sort(function(a, b) { return b.spend - a.spend; });
-
-      if (!deptEntries.length) {
-        setDeptChartEmpty(true);
-      } else {
-        setDeptChartEmpty(false);
-        var deptWrap = document.getElementById('p10-dept-chart-wrap');
-        if (deptWrap) {
-          deptWrap.style.height = Math.max(200, deptEntries.length * 28 + 48) + 'px';
-        }
-
-        var deptLabelPlugin = {
-          id: 'p10DeptBarLabels',
-          afterDatasetsDraw: function(chart) {
-            var ctx = chart.ctx;
-            var meta = chart.getDatasetMeta(0);
-            if (!meta) return;
-            meta.data.forEach(function(el, i) {
-              var val = chart.data.datasets[0].data[i];
-              if (val === null || val === undefined || isNaN(val)) return;
-              var pos = el.tooltipPosition();
-              ctx.save();
-              ctx.fillStyle = brandCharcoal;
-              ctx.font = '600 11px Montserrat, sans-serif';
-              ctx.textAlign = 'left';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(formatCurrency(val), pos.x + 8, pos.y);
-              ctx.restore();
-            });
-          }
+      // Bubble chart matrices - use Chart.js bubble
+      var bubblePoints = campList.filter(function(c) { return c.spend > 0 || c.leads > 0; }).map(function(c) {
+        var r = Math.max(5, Math.min(32, Math.sqrt(Math.max(c.contract, c.spend, 1)) / 8));
+        if (c.conf.level === 'low' || c.conf.level === 'none') r = Math.max(4, r * 0.7);
+        return {
+          x: c.cpql != null ? c.cpql : 0,
+          y: c.winRate,
+          r: r,
+          label: c.name,
+          dept: c.primaryDept,
+          plat: c.primaryPlat,
+          wins: c.wins,
+          conf: c.conf.label,
+          contract: c.contract,
+          spend: c.spend,
+          lowSample: c.conf.level === 'low' || c.conf.level === 'none' || c.conf.level === 'limited'
         };
+      });
 
-        makeChart('chart-p10-dept', {
-          type: 'bar',
-          data: {
-            labels: deptEntries.map(function(e) {
-              return e.name.length > 36 ? e.name.substring(0, 36) + '…' : e.name;
-            }),
-            datasets: [{
-              label: 'Ad Spend',
-              data: deptEntries.map(function(e) { return e.spend; }),
-              backgroundColor: brandCharcoal,
-              borderWidth: 0,
-              borderRadius: 0,
-              barThickness: 14
-            }]
-          },
-          plugins: [deptLabelPlugin],
+      var matrixDatasets = [];
+      var byDeptBub = {};
+      bubblePoints.forEach(function(p) {
+        if (!byDeptBub[p.dept]) byDeptBub[p.dept] = [];
+        byDeptBub[p.dept].push(p);
+      });
+      Object.keys(byDeptBub).forEach(function(dept) {
+        matrixDatasets.push({
+          label: dept,
+          data: byDeptBub[dept],
+          backgroundColor: (deptColors[dept] || brandCharcoal).replace(')', ', 0.35)').replace('rgb', 'rgba').indexOf('rgba') >= 0
+            ? (function() {
+                // hex to rgba
+                var hex = deptColors[dept] || brandCharcoal;
+                var h = hex.replace('#', '');
+                if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+                var r = parseInt(h.substring(0, 2), 16);
+                var g = parseInt(h.substring(2, 4), 16);
+                var b = parseInt(h.substring(4, 6), 16);
+                return 'rgba(' + r + ',' + g + ',' + b + ',0.35)';
+              })()
+            : 'rgba(17,24,39,0.35)',
+          borderColor: deptColors[dept] || brandCharcoal,
+          borderWidth: 2
+        });
+      });
+
+      // Fix color conversion for each dataset
+      matrixDatasets = Object.keys(byDeptBub).map(function(dept) {
+        var hex = deptColors[dept] || brandCharcoal;
+        var h = String(hex).replace('#', '');
+        if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+        var rr = parseInt(h.substring(0, 2), 16);
+        var gg = parseInt(h.substring(2, 4), 16);
+        var bb = parseInt(h.substring(4, 6), 16);
+        return {
+          label: dept,
+          data: byDeptBub[dept],
+          backgroundColor: 'rgba(' + rr + ',' + gg + ',' + bb + ',0.32)',
+          borderColor: 'rgb(' + rr + ',' + gg + ',' + bb + ')',
+          borderWidth: 2
+        };
+      });
+
+      if (bubblePoints.length) {
+        makeChart('chart-p10-matrix', {
+          type: 'bubble',
+          data: { datasets: matrixDatasets },
           options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { right: 64 } },
             plugins: {
-              legend: { display: false },
+              legend: {
+                position: 'bottom',
+                labels: { color: brandMuted, boxWidth: 10, font: { size: 10 } }
+              },
               tooltip: {
                 callbacks: {
-                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                  label: function(ctx) {
+                    var d = ctx.raw;
+                    var lines = [
+                      d.label,
+                      'CPQL ' + (d.x != null ? p10Money(d.x, 2) : 'Pending'),
+                      'Lead-to-win ' + p10Pct(d.y, 1),
+                      'Contract value ' + p10Money(d.contract, 0),
+                      'Spend ' + p10Money(d.spend, 0),
+                      d.wins + ' win(s) · ' + d.conf,
+                      d.dept + ' · ' + d.plat
+                    ];
+                    return lines;
+                  },
+                  title: function(items) {
+                    var d = items[0] && items[0].raw;
+                    return d ? d.label : '';
+                  }
                 }
               }
             },
             scales: {
               x: {
-                beginAtZero: true,
-                grid: { color: brandSilver },
+                title: {
+                  display: true,
+                  text: 'Cost per qualified lead',
+                  color: brandMuted,
+                  font: { size: 10 }
+                },
                 ticks: {
-                  color: brandSoftGray,
-                  callback: function(v) { return '$' + v; }
-                }
+                  color: brandMuted,
+                  font: { size: 10 },
+                  callback: function(v) { return p10Money(v, v < 10 ? 2 : 0); }
+                },
+                grid: { color: brandBorder }
               },
               y: {
-                grid: { display: false },
-                ticks: { color: brandCharcoal, font: { size: 11 } }
+                title: {
+                  display: true,
+                  text: 'Lead-to-win %',
+                  color: brandMuted,
+                  font: { size: 10 }
+                },
+                beginAtZero: true,
+                ticks: {
+                  color: brandMuted,
+                  font: { size: 10 },
+                  callback: function(v) { return v + '%'; }
+                },
+                grid: { color: brandBorder }
               }
             }
           }
         });
-      }
-
-      // ── Funnel Health — CTR % vs Conversion Rate % per campaign ──
-      var funnelByCampaign = {};
-      filtered.forEach(function(r) {
-        var name = campaignNameOf(r);
-        if (!funnelByCampaign[name]) {
-          funnelByCampaign[name] = {
-            name: name,
-            impressions: 0,
-            clicks: 0,
-            spend: 0,
-            leads: 0,
-            ctrSum: 0,
-            ctrN: 0,
-            convSum: 0,
-            convN: 0,
-            cpcSum: 0,
-            cpcN: 0,
-            depts: {}
-          };
-        }
-        var agg = funnelByCampaign[name];
-        agg.impressions += impressionsOf(r);
-        agg.clicks += clicksOf(r);
-        agg.spend += spendOf(r);
-        agg.leads += leadsOf(r);
-        var ctr = ctrOf(r);
-        if (ctr > 0 || String(col(r, 'Click Through Rate %', 'Click Through Rate', 'CTR', 'ctr', 'CTR %')).trim() !== '') {
-          agg.ctrSum += ctr;
-          agg.ctrN += 1;
-        }
-        var conv = convRateOf(r);
-        if (conv > 0 || String(col(r, 'Conversion Rate %', 'Conversion Rate', 'conversion_rate', 'Conv Rate')).trim() !== '') {
-          agg.convSum += conv;
-          agg.convN += 1;
-        }
-        var cpc = cpcOf(r);
-        if (cpc > 0 || String(col(r, 'Cost Per Click ($)', 'Cost Per Click', 'CPC', 'cpc')).trim() !== '') {
-          agg.cpcSum += cpc;
-          agg.cpcN += 1;
-        }
-        var d = deptOf(r);
-        if (d) agg.depts[d] = true;
-      });
-
-      var funnelRows = Object.keys(funnelByCampaign).map(function(name) {
-        var a = funnelByCampaign[name];
-        var ctr = a.impressions > 0
-          ? (a.clicks / a.impressions) * 100
-          : (a.ctrN ? a.ctrSum / a.ctrN : null);
-        var conv = a.convN
-          ? a.convSum / a.convN
-          : (a.clicks > 0 ? (a.leads / a.clicks) * 100 : null);
-        var cpc = a.clicks > 0
-          ? a.spend / a.clicks
-          : (a.cpcN ? a.cpcSum / a.cpcN : null);
-        return {
-          name: a.name,
-          ctr: ctr,
-          conv: conv,
-          cpc: cpc,
-          impressions: a.impressions,
-          clicks: a.clicks,
-          department: Object.keys(a.depts).join(', ') || '—'
-        };
-      });
-
-      var ctrVals = funnelRows.map(function(r) { return r.ctr; }).filter(function(v) {
-        return v !== null && v !== undefined && !isNaN(v);
-      });
-      var convVals = funnelRows.map(function(r) { return r.conv; }).filter(function(v) {
-        return v !== null && v !== undefined && !isNaN(v);
-      });
-      var avgCtr = ctrVals.length
-        ? ctrVals.reduce(function(s, v) { return s + v; }, 0) / ctrVals.length
-        : null;
-      var avgConv = convVals.length
-        ? convVals.reduce(function(s, v) { return s + v; }, 0) / convVals.length
-        : null;
-
-      funnelRows.forEach(function(r) {
-        r.concern = '';
-        var hasCtr = r.ctr !== null && r.ctr !== undefined && !isNaN(r.ctr);
-        var hasConv = r.conv !== null && r.conv !== undefined && !isNaN(r.conv);
-        if (hasCtr && avgCtr !== null && r.ctr < avgCtr) {
-          r.concern = 'Creative/Targeting';
-        } else if (hasCtr && avgCtr !== null && r.ctr >= avgCtr &&
-                   hasConv && avgConv !== null && r.conv < avgConv) {
-          r.concern = 'Landing Page/Follow-up';
-        }
-      });
-
-      funnelRows.sort(function(a, b) {
-        var aCtr = a.ctr == null ? -1 : a.ctr;
-        var bCtr = b.ctr == null ? -1 : b.ctr;
-        return bCtr - aCtr;
-      });
-
-      var funnelEl = document.getElementById('p10-funnel-table');
-      if (!funnelRows.length || (ctrVals.length === 0 && convVals.length === 0 &&
-          funnelRows.every(function(r) { return !r.impressions && !r.clicks; }))) {
-        funnelEl.innerHTML = '<p class="no-data-msg">Data not available</p>';
       } else {
-        var funnelHtml =
-          '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-          '<th>Campaign</th><th>Department</th><th>CTR %</th><th>Conv. Rate %</th>' +
-          '<th>Concern</th><th>CPC</th><th>Impressions</th><th>Clicks</th>' +
-          '</tr></thead><tbody>';
-        funnelRows.forEach(function(r) {
-          var concernCell = r.concern
-            ? '<td class="p10-funnel-flag-cell"><span class="p10-funnel-flag">' + r.concern + '</span></td>'
-            : '<td>—</td>';
-          funnelHtml +=
-            '<tr>' +
-            '<td>' + r.name + '</td>' +
-            '<td>' + r.department + '</td>' +
-            '<td>' + (r.ctr != null ? formatPct(r.ctr) : '—') + '</td>' +
-            '<td>' + (r.conv != null ? formatPct(r.conv) : '—') + '</td>' +
-            concernCell +
-            '<td>' + (r.cpc != null && !isNaN(r.cpc) ? formatCurrency(r.cpc) : '—') + '</td>' +
-            '<td>' + (r.impressions ? String(Math.round(r.impressions)) : '—') + '</td>' +
-            '<td>' + (r.clicks ? String(Math.round(r.clicks)) : '—') + '</td>' +
-            '</tr>';
+        makeChart('chart-p10-matrix', {
+          type: 'bubble',
+          data: { datasets: [] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
-        funnelHtml += '</tbody></table></div>';
-        funnelEl.innerHTML = funnelHtml;
       }
 
-      setBBPageData('P10', 'P10: Marketing', {
-        marketing: filtered.slice(0, 250),
-        spendByDepartment: deptEntries,
-        funnelHealth: funnelRows,
-        funnelAverages: { ctr: avgCtr, conversionRate: avgConv },
-        bestRoas: bestRoasRow ? {
-          campaign: campaignNameOf(bestRoasRow),
-          roas: parseNum(roasRawOf(bestRoasRow)),
-          brand: col(bestRoasRow, 'Brand', 'brand') || '',
-          month: col(bestRoasRow, 'Month', 'month') || '',
-          year: col(bestRoasRow, 'Year', 'year') || ''
-        } : null,
-        weekPulse: {
-          spend: mktSpendWeekSeries.latestKey != null ? mktSpendWeekSeries.latestVal : null,
-          leads: mktLeadsWeekSeries.latestKey != null ? mktLeadsWeekSeries.latestVal : null,
-          note: 'Lightweight this-week numbers only. For week-over-week Marketing go to P8.'
-        },
-        spendByMonth: spendByMonth,
-        spendMonthComparison: (function() {
-          var keys = sparkMonths.filter(function(k) {
-            return spendByMonth[k] !== undefined && spendByMonth[k] !== null;
-          });
-          if (keys.length < 2) return null;
-          var prevM = keys[keys.length - 2];
-          var currM = keys[keys.length - 1];
-          var prevV = spendByMonth[prevM];
-          var currV = spendByMonth[currM];
-          if (!(prevV > 0)) return null;
+      var medCpql = null;
+      var medWin = null;
+      (function() {
+        var xs = bubblePoints.map(function(p) { return p.x; }).filter(function(v) { return v != null && !isNaN(v); }).sort(function(a, b) { return a - b; });
+        var ys = bubblePoints.map(function(p) { return p.y; }).filter(function(v) { return v != null && !isNaN(v); }).sort(function(a, b) { return a - b; });
+        if (xs.length) medCpql = xs[Math.floor(xs.length / 2)];
+        if (ys.length) medWin = ys[Math.floor(ys.length / 2)];
+      })();
+      var leg = document.getElementById('p10-matrix-legend');
+      if (leg) {
+        leg.textContent = bubblePoints.length
+          ? ('Quadrants vs median CPQL ' +
+            (medCpql != null ? p10Money(medCpql, 2) : 'n/a') +
+            ' and median win rate ' +
+            (medWin != null ? p10Pct(medWin, 1) : 'n/a') +
+            '. Low/limited sample campaigns are smaller. Hover for full campaign name.')
+          : 'No campaigns in selection.';
+      }
+
+      // ── Channel / department mix table ──
+      function mixRows(map, totalSpendX, totalQl, totalPipe, totalGp, totalContractX, totalWinsX) {
+        return Object.keys(map).map(function(k) {
+          var e = map[k];
           return {
-            previousMonth: prevM,
-            currentMonth: currM,
-            previousSpend: prevV,
-            currentSpend: currV,
-            pctChange: ((currV - prevV) / prevV) * 100
+            name: k,
+            spendShare: totalSpendX > 0 ? (e.spend / totalSpendX) * 100 : 0,
+            qlShare: totalQl > 0 ? (e.ql / totalQl) * 100 : null,
+            pipeShare: null,
+            gpShare: totalGp > 0 && e.gpKnown ? (e.gp / totalGp) * 100 : (totalContractX > 0 ? (e.contract / totalContractX) * 100 : null),
+            spend: e.spend,
+            ql: e.ql,
+            contract: e.contract,
+            wins: e.wins
           };
-        })()
+        }).sort(function(a, b) { return b.spend - a.spend; });
+      }
+      var totalQlForShare = campList.reduce(function(s, c) { return s + (c.ql || 0); }, 0);
+      var byPlatAgg = {};
+      campList.forEach(function(c) {
+        var p = c.primaryPlat;
+        if (!byPlatAgg[p]) byPlatAgg[p] = { spend: 0, ql: 0, leads: 0, contract: 0, gp: 0, gpKnown: false, wins: 0 };
+        byPlatAgg[p].spend += c.spend;
+        byPlatAgg[p].ql += c.ql || 0;
+        byPlatAgg[p].leads += c.leads || 0;
+        byPlatAgg[p].contract += c.contract;
+        byPlatAgg[p].wins += c.wins;
+        if (c.gpKnown) { byPlatAgg[p].gp += c.gp; byPlatAgg[p].gpKnown = true; }
+      });
+      var byDeptAgg = {};
+      campList.forEach(function(c) {
+        var d = c.primaryDept;
+        if (!byDeptAgg[d]) byDeptAgg[d] = { spend: 0, ql: 0, leads: 0, contract: 0, gp: 0, gpKnown: false, wins: 0 };
+        byDeptAgg[d].spend += c.spend;
+        byDeptAgg[d].ql += c.ql || 0;
+        byDeptAgg[d].leads += c.leads || 0;
+        byDeptAgg[d].contract += c.contract;
+        byDeptAgg[d].wins += c.wins;
+        if (c.gpKnown) { byDeptAgg[d].gp += c.gp; byDeptAgg[d].gpKnown = true; }
       });
 
-      // Campaign Performance — real ROAS first; No Leads Matched Yet for attribution gaps
-      var sorted = filtered.slice().sort(function(a, b) {
-        var aPending = isAttributionPending(a);
-        var bPending = isAttributionPending(b);
-        if (aPending !== bPending) return aPending ? 1 : -1;
-        if (!aPending && !bPending) {
-          var aRoas = parseNum(roasRawOf(a));
-          var bRoas = parseNum(roasRawOf(b));
-          if (aRoas !== bRoas) return bRoas - aRoas;
+      var mixConc = document.getElementById('p10-mix-concentration');
+      if (mixConc) {
+        if (platEntries.length && totalSpend > 0 && (platEntries[0].spend / totalSpend) >= P10_CONC_RISK) {
+          mixConc.className = 'p10-section-hint p10-section-hint--risk';
+          mixConc.textContent = 'Concentration warning: ' + platEntries[0].name +
+            ' holds ' + p10Pct((platEntries[0].spend / totalSpend) * 100, 0) + ' of spend.';
+        } else {
+          mixConc.className = 'p10-section-hint';
+          mixConc.textContent = 'Spend / QL / GP share by channel and department.';
         }
-        return spendOf(b) - spendOf(a);
+      }
+
+      function renderMixBlock(title, rows) {
+        var h = '<div class="p10-subhead">' + p10Esc(title) + '</div>';
+        h += '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+          '<th>Name</th><th class="text-right">Spend share</th><th class="text-right">QL share</th>' +
+          '<th class="text-right">Pipeline share</th><th class="text-right">GP / contract share</th>' +
+          '</tr></thead><tbody>';
+        if (!rows.length) {
+          h += '<tr><td colspan="5" class="p10-pending-cell">No data</td></tr>';
+        } else {
+          rows.forEach(function(r) {
+            h += '<tr><td title="' + p10Esc(r.name) + '">' + p10Esc(r.name) + '</td>' +
+              '<td class="text-right">' + p10Pct(r.spendShare, 0) + '</td>' +
+              '<td class="text-right">' + (r.qlShare != null ? p10Pct(r.qlShare, 0) : 'Pending') + '</td>' +
+              '<td class="text-right">Pending</td>' +
+              '<td class="text-right">' + (r.gpShare != null ? p10Pct(r.gpShare, 0) : 'Pending') + '</td></tr>';
+          });
+        }
+        h += '</tbody></table></div>';
+        return h;
+      }
+      var mixEl = document.getElementById('p10-mix-table');
+      if (mixEl) {
+        mixEl.innerHTML =
+          renderMixBlock('By channel', mixRows(byPlatAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins)) +
+          renderMixBlock('By department', mixRows(byDeptAgg, totalSpend, totalQlForShare, 0, gpKnown ? gpSum : 0, totalContract, totalWins));
+      }
+
+      // ── Demand-to-capacity alignment ──
+      // Marketing demand = spend share + contracted pipeline wins; delivery from Capacity util
+      var pipeByDept = {};
+      openPipe.forEach(function(r) {
+        var d = canonicalDeptName(col(r, 'Department', 'department')) ||
+          String(col(r, 'Department', 'department') || '').trim() || 'Unassigned';
+        var v = dealValue(r);
+        if (v > 1) pipeByDept[d] = (pipeByDept[d] || 0) + v;
       });
 
-      document.getElementById('p10-campaign-table').innerHTML = buildTable(sorted, [
-        { label: 'Campaign', key: ['Campaign Name', 'campaign_name', 'Campaign', 'campaign'] },
-        { label: 'Brand',    key: ['Brand', 'brand'] },
-        { label: 'Platform', key: ['Platform', 'platform'] },
-        { label: 'Month',    key: ['Month', 'month'] },
-        { label: 'Year',     key: ['Year', 'year'] },
-        {
-          label: 'Ad Spend',
-          key: ['Ad Spend ($)', 'Ad Spend', 'ad_spend', 'Spend'],
-          format: function(v) { return formatCurrency(parseNum(v)); }
-        },
-        {
-          label: 'Leads',
-          key: ['Leads Generated', 'Leads', 'leads'],
-          format: function(v) { return String(parseNum(v)); }
-        },
-        {
-          label: 'CPL',
-          key: ['Cost Per Lead ($)', 'Cost Per Lead', 'CPL'],
-          format: function(v) { return formatCurrency(parseNum(v)); }
-        },
-        {
-          label: 'ROAS',
-          key: ['ROAS', 'roas'],
-          format: function(v, r) {
-            if (isAttributionPending(r)) return pendingLabel();
-            return parseNum(v).toFixed(2) + 'x';
+      var alignDepts = {};
+      Object.keys(byDeptAgg).forEach(function(d) { alignDepts[d] = true; });
+      Object.keys(pipeByDept).forEach(function(d) { alignDepts[d] = true; });
+      Object.keys(deptCapMap).forEach(function(d) { alignDepts[d] = true; });
+
+      var alignHtml = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+        '<th>Department</th><th class="text-right">Marketing Demand</th>' +
+        '<th class="text-right">Sales Pipeline (P2)</th>' +
+        '<th class="text-right">Delivery Capacity (P6)</th><th>Recommendation</th></tr></thead><tbody>';
+
+      var alignKeys = Object.keys(alignDepts).sort();
+      if (!alignKeys.length) {
+        alignHtml += '<tr><td colspan="5" class="p10-pending-cell">Awaiting department splits on Marketing_Paid / Pipeline / Capacity.</td></tr>';
+      } else {
+        alignKeys.forEach(function(d) {
+          if (_p10State.dept && _p10State.dept !== 'ALL' &&
+              normalizeDeptKey(d) !== normalizeDeptKey(_p10State.dept)) return;
+          var mkt = byDeptAgg[d];
+          var demandText = mkt
+            ? (p10Money(mkt.spend, 0) + ' spend · ' + Math.round(mkt.leads || mkt.ql || 0) + ' leads')
+            : 'No paid demand';
+          var pipeV = pipeByDept[d];
+          var pipeText = pipeV != null ? p10Money(pipeV, 0) : 'Pending';
+          var cap = deptCapMap[d];
+          var capText = 'Pending';
+          var util = null;
+          if (cap && cap.available > 0) {
+            util = (cap.logged / cap.available) * 100;
+            capText = p10Pct(util, 0) + ' util · ' +
+              Math.round(cap.logged) + 'h / ' + Math.round(cap.available) + 'h';
+          } else if (cap && cap.available === 0) {
+            capText = 'Not available';
           }
-        },
-        {
-          label: 'Won Jobs',
-          key: ['Won Jobs', 'won_jobs', 'Jobs Won'],
-          format: function(v, r) {
-            if (isAttributionPending(r) && parseNum(v) === 0) return pendingLabel();
-            return String(parseNum(v));
+          var rec = 'Maintain';
+          var mktShare = mkt && totalSpend > 0 ? mkt.spend / totalSpend : 0;
+          if (util != null && util >= 100 && mktShare >= 0.25) {
+            rec = 'Hold scaling';
+          } else if (util != null && util >= 85 && mktShare >= 0.35) {
+            rec = 'Hold scaling';
+          } else if (util != null && util < 60 && mktShare < 0.15 && totalSpend > 0) {
+            rec = 'Test demand';
+          } else if (mkt && mkt.wins === 0 && mkt.spend > 0 && mkt.leads > 5) {
+            rec = 'Review offer';
+          } else if (!mkt && pipeV > 0) {
+            rec = 'Maintain';
+          } else if (cap == null) {
+            rec = 'Pending capacity';
           }
-        },
-        {
-          label: 'Revenue',
-          key: ['Revenue from Won Jobs $', 'Revenue from Won Jobs', 'Revenue', 'revenue'],
-          format: function(v, r) {
-            if (isAttributionPending(r) && parseNum(v) === 0) return pendingLabel();
-            return formatCurrency(parseNum(v));
+          // Capacity pressure callout class
+          var recClass = (rec === 'Hold scaling') ? 'p10-status--over' :
+            (rec === 'Review offer' ? 'p10-status--watch' : 'p10-status--healthy');
+          alignHtml += '<tr><td title="' + p10Esc(d) + '">' + p10Esc(d) + '</td>' +
+            '<td class="text-right">' + p10Esc(demandText) + '</td>' +
+            '<td class="text-right">' + p10Esc(pipeText) + '</td>' +
+            '<td class="text-right">' + p10Esc(capText) + '</td>' +
+            '<td class="' + recClass + '">' + p10Esc(rec) + '</td></tr>';
+        });
+      }
+      alignHtml += '</tbody></table></div>';
+      if (!(_p10SheetMeta.capacity && _p10SheetMeta.capacity.ok)) {
+        alignHtml += '<p class="p10-pending-line">Capacity sheet not available. Delivery Capacity column shows Pending.</p>';
+      } else {
+        alignHtml += '<p class="p10-section-hint">Capacity util reuses Capacity tab hours (logged vs available) for the latest loaded week rows. Full planning workspace lives on P6.</p>';
+      }
+      var alignEl = document.getElementById('p10-capacity-align');
+      if (alignEl) alignEl.innerHTML = alignHtml;
+
+      // ── Funnel diagnostics ──
+      var diagRows = [];
+      campList.forEach(function(c) {
+        var nClicks = Math.round(c.clicks || 0);
+        var nLeads = Math.round(c.leads || 0);
+        var conf = p10Confidence(c.wins, nLeads);
+        // Creative/Targeting: low CTR vs benchmark
+        if (c.ctr != null && c.imps > 100) {
+          if (c.ctr < P10_BENCH_CTR) {
+            diagRows.push({
+              pattern: 'Creative / targeting',
+              issue: 'CTR below ' + P10_BENCH_CTR + '% benchmark',
+              benchmark: P10_BENCH_CTR.toFixed(1) + '% CTR',
+              actual: p10Pct(c.ctr, 2),
+              n: 'n clicks=' + nClicks + ' · imps=' + Math.round(c.imps),
+              conf: conf.label,
+              action: 'Refresh creative or tighten audience',
+              owner: 'Marketing',
+              due: 'This week',
+              campaign: c.name
+            });
+          } else if (c.conv != null && c.conv < P10_BENCH_CONV && nClicks >= 20) {
+            diagRows.push({
+              pattern: 'Landing / follow-up',
+              issue: 'OK CTR but conversion below ' + P10_BENCH_CONV + '% benchmark',
+              benchmark: P10_BENCH_CONV.toFixed(1) + '% click-to-lead',
+              actual: p10Pct(c.conv, 2),
+              n: 'n clicks=' + nClicks + ' · leads=' + nLeads,
+              conf: conf.label,
+              action: 'Review landing page, form, follow-up speed',
+              owner: 'Marketing + Sales',
+              due: 'This week',
+              campaign: c.name
+            });
           }
+        }
+        if (c.wins === 1 && c.contract > 0) {
+          diagRows.push({
+            pattern: 'Minimum sample',
+            issue: 'Single win drives attributed contract value',
+            benchmark: '≥' + P10_MIN_WINS_CONFIDENT + ' wins for confident scale',
+            actual: '1 win · ' + p10Money(c.contract, 0),
+            n: 'n wins=1 · leads=' + nLeads,
+            conf: 'Low confidence',
+            action: 'Do not scale on ROAS-style multiple; watch next wins',
+            owner: 'Marketing',
+            due: 'Ongoing',
+            campaign: c.name
+          });
+        }
+        if (c.spend > 0 && c.leads === 0 && c.clicks > 50) {
+          diagRows.push({
+            pattern: 'Zero lead',
+            issue: 'Spend and clicks with no leads',
+            benchmark: '>0 leads when clicks > 50',
+            actual: p10Money(c.spend, 0) + ' · ' + Math.round(c.clicks) + ' clicks',
+            n: 'n clicks=' + Math.round(c.clicks),
+            conf: conf.label,
+            action: 'Pause or redesign offer',
+            owner: 'Marketing',
+            due: 'Immediate',
+            campaign: c.name
+          });
+        }
+      });
+      // Cap diagnostics to a reasonable set
+      diagRows = diagRows.slice(0, 12);
+
+      var diagEl = document.getElementById('p10-funnel-diagnostics');
+      if (diagEl) {
+        if (!diagRows.length) {
+          diagEl.innerHTML = '<p class="p10-pending-line">No diagnostic flags for this selection (or impressions/CTR not present). Landing sessions are not fully tracked on Marketing_Paid.</p>';
+        } else {
+          var dh = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+            '<th>Campaign</th><th>Pattern</th><th>Issue</th><th>Benchmark</th><th>Actual</th>' +
+            '<th>Sample (n)</th><th>Confidence</th><th>Action</th><th>Owner</th><th>Due</th>' +
+            '</tr></thead><tbody>';
+          diagRows.forEach(function(r) {
+            dh += '<tr><td title="' + p10Esc(r.campaign) + '">' + p10Esc(r.campaign) + '</td>' +
+              '<td>' + p10Esc(r.pattern) + '</td>' +
+              '<td>' + p10Esc(r.issue) + '</td>' +
+              '<td>' + p10Esc(r.benchmark) + '</td>' +
+              '<td>' + p10Esc(r.actual) + '</td>' +
+              '<td>' + p10Esc(r.n) + '</td>' +
+              '<td>' + p10Esc(r.conf) + '</td>' +
+              '<td>' + p10Esc(r.action) + '</td>' +
+              '<td>' + p10Esc(r.owner) + '</td>' +
+              '<td>' + p10Esc(r.due) + '</td></tr>';
+          });
+          dh += '</tbody></table></div>';
+          dh += '<p class="p10-section-hint">Landing page session data is not reliably on Marketing_Paid, treat conversion-stage notes as partial.</p>';
+          diagEl.innerHTML = dh;
+        }
+      }
+
+      // ── Campaign actions (from real page state only) ──
+      var actions = [];
+      if (platEntries.length && totalSpend > 0 && (platEntries[0].spend / totalSpend) >= P10_CONC_RISK) {
+        actions.push({
+          priority: 'High',
+          campaign: platEntries[0].name + ' (channel)',
+          issue: 'Channel concentration ≥80% of spend',
+          impact: p10Money(platEntries[0].spend, 0) + ' single-channel exposure',
+          rec: 'Diversify platforms or document accepted dependence',
+          approval: 'Proposed'
+        });
+      }
+      campList.forEach(function(c) {
+        if (c.wins > 0 && c.wins < 3 && c.contract > 0) {
+          actions.push({
+            priority: 'Medium',
+            campaign: c.name,
+            issue: 'Low win sample for commercial claims',
+            impact: p10Money(c.contract, 0) + ' attributed contract · ' + Math.round(c.wins) + ' win(s)',
+            rec: 'Hold scale decisions until sample improves',
+            approval: 'Proposed'
+          });
+        }
+        if (medCpql != null && c.cpql != null && c.cpql > medCpql * 1.5 && c.winRate < (medWin || 0) && c.spend > 0) {
+          actions.push({
+            priority: 'High',
+            campaign: c.name,
+            issue: 'High CPQL and weak win rate (pause / redesign quadrant)',
+            impact: 'CPQL ' + p10Money(c.cpql, 2) + ' · win rate ' + p10Pct(c.winRate, 1),
+            rec: 'Pause or redesign creative and offer',
+            approval: 'Proposed'
+          });
+        }
+        if (medCpql != null && c.cpql != null && c.cpql <= medCpql && c.winRate >= (medWin || 0) && c.wins >= 3) {
+          actions.push({
+            priority: 'Low',
+            campaign: c.name,
+            issue: 'Efficient and converting (scale carefully)',
+            impact: p10Money(c.contract, 0) + ' contract · ' + c.conf.label,
+            rec: 'Scale carefully within capacity',
+            approval: 'Proposed'
+          });
+        }
+      });
+      // Capacity pressure actions
+      Object.keys(byDeptAgg).forEach(function(d) {
+        var cap = deptCapMap[d];
+        var mkt = byDeptAgg[d];
+        if (!cap || !mkt || !(cap.available > 0)) return;
+        var util = (cap.logged / cap.available) * 100;
+        if (util >= 100 && mkt.spend > 0) {
+          actions.push({
+            priority: 'High',
+            campaign: d + ' demand',
+            issue: 'Delivery capacity pressure vs marketing demand',
+            impact: p10Pct(util, 0) + ' util · ' + p10Money(mkt.spend, 0) + ' spend',
+            rec: 'Hold scaling until capacity frees or reallocate demand',
+            approval: 'Proposed'
+          });
+        }
+      });
+      // de-dupe + cap
+      var seenAct = {};
+      actions = actions.filter(function(a) {
+        var k = a.campaign + '|' + a.issue;
+        if (seenAct[k]) return false;
+        seenAct[k] = true;
+        return true;
+      }).slice(0, 8);
+      var priOrder = { High: 0, Medium: 1, Low: 2 };
+      actions.sort(function(a, b) {
+        return (priOrder[a.priority] != null ? priOrder[a.priority] : 9) -
+          (priOrder[b.priority] != null ? priOrder[b.priority] : 9);
+      });
+
+      var actEl = document.getElementById('p10-campaign-actions');
+      if (actEl) {
+        if (!actions.length) {
+          actEl.innerHTML = '<p class="p10-pending-line">No action flags for current filters.</p>';
+        } else {
+          var ah = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+            '<th>Priority</th><th>Campaign</th><th>Issue</th><th>Commercial Impact</th>' +
+            '<th>Recommended Action</th><th>Approval</th></tr></thead><tbody>';
+          actions.forEach(function(a) {
+            var pc = a.priority === 'High' ? 'p10-pri--high' :
+              (a.priority === 'Medium' ? 'p10-pri--med' : 'p10-pri--low');
+            ah += '<tr><td class="' + pc + '">' + p10Esc(a.priority) + '</td>' +
+              '<td title="' + p10Esc(a.campaign) + '">' + p10Esc(a.campaign) + '</td>' +
+              '<td>' + p10Esc(a.issue) + '</td>' +
+              '<td>' + p10Esc(a.impact) + '</td>' +
+              '<td>' + p10Esc(a.rec) + '</td>' +
+              '<td>' + p10Esc(a.approval) + '</td></tr>';
+          });
+          ah += '</tbody></table></div>';
+          actEl.innerHTML = ah;
+        }
+      }
+
+      // Attribution strip
+      var attrSum = document.getElementById('p10-attr-summary');
+      if (attrSum) attrSum.textContent = p10AttrLabel(_p10State.attr);
+      var attrDet = document.getElementById('p10-attr-detail');
+      if (attrDet) {
+        if (_p10State.attr === 'last') {
+          attrDet.textContent = 'Data model on Marketing_Paid is treated as last paid touch. Won contract value and gross profit are labelled separately, never as one "Revenue" figure.';
+        } else {
+          attrDet.textContent = 'Paths for ' + _p10State.attr +
+            ' are not fully stored on Marketing_Paid. Figures still show last-paid column values with this model label for planning discussions; multi-touch credit is Pending.';
+        }
+      }
+
+      // Drill-down detailed metrics (no duplicate of removed campaign ROAS table as primary)
+      var drillEl = document.getElementById('p10-drill-table');
+      if (drillEl) {
+        if (!campList.length) {
+          drillEl.innerHTML = '<p class="no-data-msg">No paid marketing data for selected filters.</p>';
+        } else {
+          var sorted = campList.slice().sort(function(a, b) { return b.spend - a.spend; });
+          var th = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+            '<th>Campaign</th><th>Platform</th><th>Department</th>' +
+            '<th class="text-right">Spend</th><th class="text-right">Impr.</th><th class="text-right">Clicks</th>' +
+            '<th class="text-right">CPC</th><th class="text-right">CTR</th><th class="text-right">Leads</th>' +
+            '<th class="text-right">Wins</th><th class="text-right">Contract value</th>' +
+            '<th class="text-right">Attributed GP</th><th>Confidence</th></tr></thead><tbody>';
+          sorted.forEach(function(c) {
+            th += '<tr>' +
+              '<td title="' + p10Esc(c.name) + '">' + p10Esc(c.name) + '</td>' +
+              '<td>' + p10Esc(c.platform) + '</td>' +
+              '<td title="' + p10Esc(c.dept) + '">' + p10Esc(c.dept) + '</td>' +
+              '<td class="text-right">' + p10Money(c.spend, 0) + '</td>' +
+              '<td class="text-right">' + (c.imps ? Math.round(c.imps) : '—') + '</td>' +
+              '<td class="text-right">' + (c.clicks ? Math.round(c.clicks) : '—') + '</td>' +
+              '<td class="text-right">' + (c.cpc != null ? p10Money(c.cpc, c.cpc < 1 ? 4 : 2) : '—') + '</td>' +
+              '<td class="text-right">' + (c.ctr != null ? p10Pct(c.ctr, 2) : '—') + '</td>' +
+              '<td class="text-right">' + Math.round(c.leads) + '</td>' +
+              '<td class="text-right">' + Math.round(c.wins) + '</td>' +
+              '<td class="text-right">' + (c.contract > 0 ? p10Money(c.contract, 0) : '—') + '</td>' +
+              '<td class="text-right">' + (c.gpKnown ? p10Money(c.gp, 0) : 'Pending') + '</td>' +
+              '<td>' + p10Esc(c.conf.label) + '</td></tr>';
+          });
+          th += '</tbody></table></div>';
+          drillEl.innerHTML = th;
+        }
+      }
+
+      // Sources table
+      function srcRow(name, meta, note) {
+        var status = 'Not available';
+        if (meta && meta.ok) {
+          status = meta.rows > 0 ? ('Live · ' + meta.rows + ' rows') : 'Live · empty';
+        } else if (meta && meta.status) {
+          status = 'Not available (HTTP ' + meta.status + ')';
+        }
+        return { name: name, status: status, note: note };
+      }
+      var srcRows = [
+        srcRow('Marketing_Paid', _p10SheetMeta.paid, 'Spend, clicks, leads, attributed wins/contract value'),
+        srcRow('Weekly Summary(Marketing)', _p10SheetMeta.weekly, 'Weekly pulse (optional)'),
+        srcRow('Marketing_Sources', _p10SheetMeta.sources, 'Manual source rollups when present'),
+        srcRow('Targets', _p10SheetMeta.targets, 'Marketing budget when column present'),
+        srcRow('GHL_Leads', _p10SheetMeta.leads, 'Qualified leads cross-check vs P2 definitions'),
+        srcRow('GHL_Pipeline', _p10SheetMeta.pipeline, 'Site visits, quotes, open pipeline'),
+        srcRow('Capacity', _p10SheetMeta.capacity, 'Delivery util by department (P6 reuse)')
+      ];
+      var srcEl = document.getElementById('p10-sources-table');
+      if (srcEl) {
+        var sh = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
+          '<th>Source</th><th>Status</th><th>Role on P10</th></tr></thead><tbody>';
+        srcRows.forEach(function(r) {
+          sh += '<tr><td>' + p10Esc(r.name) + '</td><td>' + p10Esc(r.status) +
+            '</td><td>' + p10Esc(r.note) + '</td></tr>';
+        });
+        sh += '</tbody></table></div>';
+        srcEl.innerHTML = sh;
+      }
+
+      // BB assistant payload
+      setBBPageData('P10', 'P10: Marketing', {
+        attributionModel: _p10State.attr,
+        kpis: {
+          spend: totalSpend,
+          budget: mktBudget,
+          qualifiedLeads: qualifiedLeads,
+          cpql: cpql,
+          pipeline: mktPipeKnown ? mktPipeValue : null,
+          cac: cac,
+          marketingRoi: mktRoiPending ? null : mktRoi,
+          rawLeads: totalRawLeads,
+          wins: totalWins,
+          attributedContractValue: totalContract,
+          attributedGp: gpKnown ? gpSum : null
         },
-        { label: 'Campaign ID', key: ['Campaign ID', 'campaign_id'] },
-        { label: 'Department',  key: ['Department', 'department'] }
-      ]);
+        concentration: platEntries.length && totalSpend > 0 ? {
+          platform: platEntries[0].name,
+          share: platEntries[0].spend / totalSpend
+        } : null,
+        leadReconciliation: {
+          marketingPaidLeads: totalRawLeads,
+          ghlLeads: p2TotalLeads,
+          mismatch: leadMismatch,
+          note: leadMismatchNote || null
+        },
+        funnelHealth: diagRows.map(function(r) {
+          return { name: r.campaign, concern: r.pattern, issue: r.issue, conf: r.conf };
+        }),
+        campaigns: campList.slice(0, 100).map(function(c) {
+          return {
+            name: c.name,
+            spend: c.spend,
+            leads: c.leads,
+            wins: c.wins,
+            contractValue: c.contract,
+            gp: c.gpKnown ? c.gp : null,
+            cpql: c.cpql,
+            winRate: c.winRate,
+            confidence: c.conf.label,
+            dept: c.dept,
+            platform: c.platform
+          };
+        }),
+        actions: actions,
+        capacityAlignment: Object.keys(alignDepts),
+        sheetMeta: _p10SheetMeta,
+        note: 'Marketing ROI uses attributed GP after spend when available. Contract value is not ROAS. For week-over-week Marketing go to P8.'
+      });
     }
 
+    /** Department capacity rollup from Capacity sheet (P6-compatible fields). */
+    function p10DeptCapacityRollup(capRows, brand) {
+      var rows = filterByBrand(capRows || [], brand || activeBrand);
+      if (!rows.length) return {};
+      // Pick latest week present
+      var maxWeek = 0;
+      rows.forEach(function(r) {
+        var w = parseInt(col(r, 'Week', 'week', 'Week Number', 'week number'), 10) || 0;
+        if (w > maxWeek) maxWeek = w;
+      });
+      var map = {};
+      rows.forEach(function(r) {
+        var w = parseInt(col(r, 'Week', 'week', 'Week Number', 'week number'), 10) || 0;
+        if (maxWeek && w !== maxWeek) return;
+        var dept = canonicalDeptName(col(r, 'Department', 'department')) ||
+          String(col(r, 'Department', 'department') || '').trim() || 'Unassigned';
+        var avail = parseNum(col(r, 'Hours Available', 'hours available'));
+        var logged = parseNum(col(r, 'Hours Logged', 'hours logged'));
+        if (!map[dept]) map[dept] = { available: 0, logged: 0, week: maxWeek };
+        if (avail > 0) map[dept].available += avail;
+        if (logged > 0) map[dept].logged += logged;
+      });
+      return map;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // P11 — QUALITY & VARIATIONS
