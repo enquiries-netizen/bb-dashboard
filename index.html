@@ -845,60 +845,137 @@
           </div>
         </section>
 
-        <!-- ─── P9: Cash Flow & Forecast ──────────────────── -->
-        <section id="page-p9" class="page">
-          <div class="page-header">
-            <span class="page-badge">P9</span>
-            <h1 class="page-title">Cash Flow &amp; Forecast</h1>
-          </div>
+        <!-- ─── P9: Cash Flow (13-week liquidity control) ─── -->
+        <!-- p9-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p9" class="page p9-test-palette">
+          <div class="p9-layout">
+            <div class="p9-head">
+              <div class="page-header p9-page-header">
+                <span class="page-badge">P9</span>
+                <h1 class="page-title">Cash Flow</h1>
+              </div>
+              <div class="p9-filters" id="p9-filters">
+                <label class="p9-filter">
+                  <span class="filter-label">Scenario</span>
+                  <select id="p9-scenario" class="filter-select page-filter-select p9-select" aria-label="Cash scenario">
+                    <option value="base">Base</option>
+                    <option value="downside">Downside</option>
+                    <option value="upside">Upside</option>
+                  </select>
+                </label>
+                <label class="p9-filter">
+                  <span class="filter-label">Week (waterfall)</span>
+                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Selected week"></select>
+                </label>
+              </div>
+              <p class="p9-updated" id="p9-last-updated">Last updated...</p>
+              <p class="p9-data-quality" id="p9-data-quality" aria-live="polite"></p>
+              <p class="p9-gst-note" id="p9-gst-note">GST basis: amounts shown GST-inclusive where source provides Inc GST (prefer inclusive if uncertain).</p>
+            </div>
 
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Cash In</div>
-              <div class="kpi-value" id="kpi-p9-cash-in">—</div>
-              <div class="kpi-sub" id="kpi-p9-cash-in-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Cash Out</div>
-              <div class="kpi-value" id="kpi-p9-cash-out">—</div>
-              <div class="kpi-sub" id="kpi-p9-cash-out-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Net Cash Flow</div>
-              <div class="kpi-value" id="kpi-p9-net">—</div>
-              <div class="kpi-sub" id="kpi-p9-net-sub">Loading...</div>
-            </div>
-          </div>
-
-          <div class="section-card">
-            <div class="section-title">13-Week Rolling Forecast</div>
-            <div class="chart-row">
-              <div class="chart-card card" id="p9-forecast-wrap">
-                <div class="chart-title">Closing Balance by Week</div>
-                <canvas id="chart-p9-forecast" height="110"></canvas>
+            <div class="p9-kpi-row" aria-label="Cash flow KPIs">
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-avail">
+                <div class="kpi-label">Available Cash</div>
+                <div class="kpi-value" id="kpi-p9-avail">-</div>
+                <div class="kpi-sub" id="kpi-p9-avail-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-in">
+                <div class="kpi-label">13-Week Cash In</div>
+                <div class="kpi-value" id="kpi-p9-cash-in">-</div>
+                <div class="kpi-sub" id="kpi-p9-cash-in-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-out">
+                <div class="kpi-label">13-Week Cash Out</div>
+                <div class="kpi-value" id="kpi-p9-cash-out">-</div>
+                <div class="kpi-sub" id="kpi-p9-cash-out-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-net">
+                <div class="kpi-label">Net Cash Movement</div>
+                <div class="kpi-value" id="kpi-p9-net">-</div>
+                <div class="kpi-sub" id="kpi-p9-net-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-low">
+                <div class="kpi-label">Lowest Forecast Balance</div>
+                <div class="kpi-value" id="kpi-p9-low">-</div>
+                <div class="kpi-sub" id="kpi-p9-low-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p9-kpi-card" id="p9-kpi-ar">
+                <div class="kpi-label">Overdue Receivables</div>
+                <div class="kpi-value" id="kpi-p9-ar">-</div>
+                <div class="kpi-sub" id="kpi-p9-ar-sub">Loading...</div>
               </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">AR Ageing</div>
-            <div class="chart-row">
-              <div class="chart-card card" id="p9-ageing-wrap">
-                <div class="chart-title">Outstanding by Ageing Bucket</div>
-                <canvas id="chart-p9-ageing" height="180"></canvas>
+            <div class="p9-row-two">
+              <div class="section-card p9-panel p9-panel--wide" id="p9-forecast-wrap">
+                <div class="p9-card-head">
+                  <div class="chart-title">13-week cash position</div>
+                  <span class="p9-section-hint" id="p9-horizon-hint">Rolling from current week</span>
+                </div>
+                <div class="p9-chart-wrap p9-chart-wrap--main">
+                  <canvas id="chart-p9-forecast" aria-label="13-week cash position"></canvas>
+                </div>
+                <p class="p9-section-hint" id="p9-forecast-note"></p>
+              </div>
+              <div class="section-card p9-panel" id="p9-waterfall-wrap">
+                <div class="p9-card-head"><div class="chart-title">Selected-week bridge</div></div>
+                <p class="p9-section-hint" id="p9-waterfall-hint">Opening to closing for selected week</p>
+                <div class="p9-chart-wrap">
+                  <canvas id="chart-p9-waterfall" aria-label="Week cash waterfall"></canvas>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="section-card">
-            <div class="section-title">Overhead Commitments</div>
-            <div class="chart-row">
-              <div class="chart-card card" id="p9-overhead-wrap">
-                <div class="chart-title">Monthly Overhead (Actual vs Budget)</div>
-                <canvas id="chart-p9-overhead" height="110"></canvas>
+            <div class="p9-row-two">
+              <div class="section-card p9-panel" id="p9-inout-wrap">
+                <div class="chart-title">Weekly inflows vs outflows</div>
+                <p class="p9-section-hint">Category splits Pending when not on CashFlow_Forecast · totals from weekly receipts/payments</p>
+                <div class="p9-chart-wrap">
+                  <canvas id="chart-p9-inout" aria-label="Weekly cash in vs out"></canvas>
+                </div>
+              </div>
+              <div class="section-card p9-panel" id="p9-ageing-wrap">
+                <div class="chart-title">AR ageing · collection risk</div>
+                <p class="p9-section-hint">Open authorised/sent only · paid excluded · chronological buckets</p>
+                <div class="p9-chart-wrap p9-chart-wrap--ageing">
+                  <canvas id="chart-p9-ageing" aria-label="AR ageing"></canvas>
+                </div>
+                <div id="p9-ageing-summary" class="p9-ageing-summary"></div>
+                <div class="section-title p9-subhead">Collection priority</div>
+                <div id="p9-collection-table" class="p9-table-scroll">Loading...</div>
               </div>
             </div>
-            <div id="p9-overhead-table"></div>
+
+            <div class="p9-row-two">
+              <div class="section-card p9-panel">
+                <div class="section-title">Payment commitments</div>
+                <p class="p9-section-hint">Funded / review timing / confirm liability · not overhead budget variance (that is P5)</p>
+                <div id="p9-commitments-table" class="p9-table-scroll">Loading...</div>
+              </div>
+              <div class="section-card p9-panel p9-action-panel">
+                <div class="section-title">Cash actions <span class="p9-section-hint">Up to 5 real flags only</span></div>
+                <div id="p9-action-list">Loading...</div>
+              </div>
+            </div>
+
+            <div class="p9-row-two">
+              <div class="section-card p9-panel" id="p9-scenario-panel">
+                <div class="section-title">Scenario controls · assumptions</div>
+                <div id="p9-scenario-assumptions" class="p9-assumptions"></div>
+                <div id="p9-scenario-effects" class="p9-scenario-effects"></div>
+              </div>
+              <div class="section-card p9-panel">
+                <div class="section-title">Forecast accuracy</div>
+                <p class="p9-section-hint">Forecast closing vs actual closing when both exist</p>
+                <div id="p9-accuracy-table" class="p9-table-scroll">Loading...</div>
+                <p class="p9-section-hint" id="p9-accuracy-note"></p>
+              </div>
+            </div>
+
+            <div class="section-card p9-panel p9-sources-panel">
+              <div class="section-title">Data sources</div>
+              <div id="p9-sources-table" class="p9-table-scroll"></div>
+            </div>
           </div>
         </section>
 
@@ -1091,6 +1168,7 @@
                 </div>
               </div>
               <p class="p11-data-quality" id="p11-data-quality" aria-live="polite">Quality data confidence: checking sources...</p>
+              <p class="p11-sources" id="p11-sources">Sources: checking...</p>
               <p class="p11-updated" id="p11-last-updated">Last updated...</p>
             </div>
 
@@ -1195,7 +1273,7 @@
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: left ~70% Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12; muted project bars, tentative outlined, leave hatched, overallocation accent stripe, actual overlay); right ~30% 12-week department capacity heatmap (util vs dept availability; bands <60 under / 60-85 healthy / 85-100 watch / >100 over / grey gap); lower Planned vs Actual/Forecast chart + Capacity Exceptions action table (Priority, Issue, Impact, Action). Employee detail tables behind drill-down only on planning. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction (placeholder). Page shows title and notice that data is being finalised. Full customer-journey rebuild paused until updated Client Satisfaction data arrives. Answer only that the page is parked / pending data finalisation; do not invent CSAT, NPS, or review metrics.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
-      P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
+      P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, median first contact, channel concentration, capacity alignment. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.'
     };
@@ -10082,478 +10160,902 @@
     }
 
 
-    // ═══════════════════════════════════════════════════════════════
-    // P9 — CASH FLOW & FORECAST
-    // Sources: CashFlow_Forecast · Xero_Invoices · Xero_Overhead
-    //          (+ Xero_Financials Cash In/Out/Flow as KPI fallback)
-    // KPIs:   Cash In, Cash Out, Net Cash Flow
-    // Charts: 13-week Closing Balance · AR Ageing · Overhead commitments
-    // ═══════════════════════════════════════════════════════════════
+    // ===============================================================
+    // P9 - CASH FLOW (13-week liquidity control)
+    // Sources: CashFlow_Forecast · Xero_Invoices (+ Xero_Financials status)
+    // ===============================================================
+    var _p9Cache = null;
+    var _p9SheetMeta = {};
+    if (typeof window._p9Scenario === 'undefined') window._p9Scenario = 'base';
+    if (typeof window._p9SelectedWeek === 'undefined') window._p9SelectedWeek = null;
+
     async function loadP9() {
       showLoading(true);
       removeError('p9');
       try {
+        function capture(tabKey) {
+          return fetchSheet(CONFIG.TABS[tabKey]).then(function(rows) {
+            return { ok: Array.isArray(rows) && rows.length > 0, rows: rows || [], error: null, loadedAt: new Date() };
+          }).catch(function(err) {
+            return { ok: false, rows: [], error: (err && err.message) || 'load failed', loadedAt: new Date() };
+          });
+        }
         var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.CASHFLOW_FORECAST).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; })
+          capture('CASHFLOW_FORECAST'),
+          capture('XERO_INVOICES'),
+          capture('XERO_FINANCIALS')
         ]);
-        renderP9(results[0], results[1], results[2], results[3]);
+        _p9SheetMeta = { cashflow: results[0], invoices: results[1], financials: results[2] };
+        _p9Cache = {
+          forecast: results[0].rows, invoices: results[1].rows, financials: results[2].rows, loadedAt: new Date()
+        };
+        var scEl = document.getElementById('p9-scenario');
+        if (scEl && !scEl._p9Bound) {
+          scEl._p9Bound = true;
+          scEl.value = window._p9Scenario || 'base';
+          scEl.addEventListener('change', function() { window._p9Scenario = this.value || 'base'; renderP9(); });
+        }
+        var wkEl = document.getElementById('p9-week-select');
+        if (wkEl && !wkEl._p9Bound) {
+          wkEl._p9Bound = true;
+          wkEl.addEventListener('change', function() { window._p9SelectedWeek = this.value || null; renderP9(); });
+        }
+        renderP9();
       } catch (err) {
         console.error('P9 load error:', err);
-        showError('p9', 'Could not load Cash Flow & Forecast data. Check sheet permissions.');
+        showError('p9', 'Could not load Cash Flow data. Check sheet permissions.');
       } finally {
         showLoading(false);
         init3DTilt();
       }
     }
 
-    function renderP9(forecast, invoices, overhead, financials) {
-      var brandCharcoal = '#262425';
-      var brandSoftGray = '#BCBDBE';
-      var brandSilver   = '#D2D4D5';
+    function renderP9() {
+      if (!_p9Cache) return;
+      var P9c = { text: '#111827', muted: '#6B7280', accent: '#EA580C', watch: '#F59E0B', healthy: '#4B7A5A', action: '#2563EB', gap: '#9CA3AF' };
+      var brand = (typeof activeBrand !== 'undefined' && activeBrand) ? activeBrand : 'ALL';
+      var scenario = window._p9Scenario || 'base';
+      var scEl0 = document.getElementById('p9-scenario');
+      if (scEl0 && scEl0.value !== scenario) scEl0.value = scenario;
+      var forecastRaw = _p9Cache.forecast || [];
+      var invoicesRaw = _p9Cache.invoices || [];
+      var meta = _p9SheetMeta || {};
 
-      function applyFilters(rows) {
-        return filterByMonths(
-          filterByYear(filterByBrand(rows || [], activeBrand), activeYear),
-          activeMonths
-        );
+      function p9ParseDate(str) {
+        if (!str) return null;
+        var s = String(str).trim();
+        if (/^last updated/i.test(s)) return null;
+        var p = s.split('/');
+        if (p.length === 3) {
+          var d = new Date(parseInt(p[2], 10), parseInt(p[1], 10) - 1, parseInt(p[0], 10));
+          return isNaN(d.getTime()) ? null : d;
+        }
+        var d2 = new Date(s);
+        return isNaN(d2.getTime()) ? null : d2;
       }
-
-      function isForecastDataRow(r) {
-        var week = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
-        if (!week) return false;
-        if (/^last updated/i.test(week)) return false;
-        return !!parseRowDateParts(week);
+      function p9MondayOf(d) {
+        var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        var day = x.getDay();
+        x.setDate(x.getDate() + (day === 0 ? -6 : 1 - day));
+        x.setHours(0, 0, 0, 0);
+        return x;
       }
-
-      var cfAll = (forecast || []).filter(isForecastDataRow);
-      var cfFiltered = applyFilters(cfAll);
-      var invFiltered = applyFilters(invoices || []);
-      var ohFiltered  = applyFilters(overhead || []);
-      var finFiltered = applyFilters(financials || []);
-
-      setBBPageData('P9', 'P9: Cash Flow & Forecast', {
-        forecast: cfFiltered,
-        invoices: invFiltered.slice(0, 300),
-        overhead: ohFiltered
-      });
-
-      function destroyIf(id) {
-        if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+      function p9AddDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+      function p9DateKey(d) {
+        if (!d) return '';
+        var dd = d.getDate(), mm = d.getMonth() + 1;
+        return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm + '/' + d.getFullYear();
       }
-
-      function clearChartPlaceholder(wrapId, canvasId) {
-        var wrap = document.getElementById(wrapId);
-        if (!wrap) return;
-        var ph = wrap.querySelector('.chart-placeholder');
-        if (ph) ph.remove();
-        var canvas = document.getElementById(canvasId);
-        if (canvas) canvas.style.display = '';
+      function p9WeekLabel(d) {
+        if (!d) return '-';
+        var dd = d.getDate();
+        return (dd < 10 ? '0' : '') + dd + ' ' + _MONTH_ABBR[d.getMonth()];
       }
-
-      function showChartEmpty(wrapId, canvasId, msg) {
+      function p9MoneyCompact(v) {
+        if (v == null || isNaN(v)) return 'Pending';
+        var a = Math.abs(v), s = v < 0 ? '-' : '';
+        if (a >= 1000000) return s + '$' + (a / 1000000).toFixed(2) + 'M';
+        if (a >= 1000) return s + '$' + Math.round(a / 1000) + 'k';
+        return s + formatCurrency(Math.abs(v));
+      }
+      function p9Fmt(v) { return (v == null || isNaN(v)) ? 'Pending' : formatCurrency(v); }
+      function p9VarWord(diff) {
+        if (diff == null || isNaN(diff)) return 'Pending';
+        return p9MoneyCompact(Math.abs(diff)) + ' ' + (diff < 0 ? 'adverse' : (diff > 0 ? 'favourable' : 'flat'));
+      }
+      function moneyTicks() {
+        return { callback: function(v) {
+          var a = Math.abs(v);
+          if (a >= 1000000) return (v < 0 ? '-' : '') + '$' + (a / 1000000).toFixed(1) + 'M';
+          if (a >= 1000) return (v < 0 ? '-' : '') + '$' + Math.round(a / 1000) + 'k';
+          return '$' + v;
+        }};
+      }
+      function destroyIf(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
+      function clearPh(wrapId, canvasId) {
+        var wrap = document.getElementById(wrapId); if (!wrap) return;
+        var ph = wrap.querySelector('.chart-placeholder'); if (ph) ph.remove();
+        var c = document.getElementById(canvasId); if (c) c.style.display = '';
+      }
+      function emptyChart(wrapId, canvasId, msg) {
         destroyIf(canvasId);
-        var wrap = document.getElementById(wrapId);
-        if (!wrap) return;
-        var existing = wrap.querySelector('.chart-placeholder');
-        if (existing) existing.remove();
-        var canvas = document.getElementById(canvasId);
-        if (canvas) canvas.style.display = 'none';
+        var wrap = document.getElementById(wrapId); if (!wrap) return;
+        var ex = wrap.querySelector('.chart-placeholder'); if (ex) ex.remove();
+        var c = document.getElementById(canvasId); if (c) c.style.display = 'none';
         var ph = document.createElement('div');
         ph.className = 'chart-placeholder p9-empty-card';
         ph.innerHTML = '<span>' + msg + '</span>';
         wrap.appendChild(ph);
       }
-
-      function emptyMsg(msg) {
-        return '<div class="p9-empty-card"><p class="no-data-msg">' + msg + '</p></div>';
+      function setT(id, t) { var el = document.getElementById(id); if (el) el.textContent = t; }
+      function setH(id, h) { var el = document.getElementById(id); if (el) el.innerHTML = h; }
+      function setTone(cardId, tone) {
+        var el = document.getElementById(cardId); if (!el) return;
+        el.classList.remove('p9-kpi--risk', 'p9-kpi--watch', 'p9-kpi--healthy', 'p9-kpi--gap');
+        if (tone) el.classList.add('p9-kpi--' + tone);
+      }
+      function presentNum(raw) {
+        if (raw === '' || raw == null || String(raw).trim() === '') return null;
+        return parseNum(raw);
+      }
+      function isIC(r) {
+        var c = String(col(r, 'Client Name', 'client') || '').toLowerCase();
+        var b = String(col(r, 'Brand', 'brand') || '').toLowerCase();
+        if (/\b(inter[- ]?company|interco)\b/.test(c)) return true;
+        return b === 'intercompany' || b === 'ic';
       }
 
-      function moneyTicks() {
+      var cfAll = (forecastRaw || []).filter(function(r) {
+        var week = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
+        return week && !/^last updated/i.test(week) && !!p9ParseDate(week);
+      });
+      var cfBrand = filterByBrand(cfAll, brand);
+      var sheetWeeks = cfBrand.map(function(r) {
+        var d = p9ParseDate(col(r, 'Week Start', 'week_start', 'Week', 'week'));
+        var cashIn = parseNum(col(r, 'Cash In (Expected)', 'Cash In', 'Money In', 'cash_in'));
+        var cashOut = parseNum(col(r, 'Cash Out (Committed)', 'Cash Out', 'Money Out', 'cash_out'));
+        var netRaw = col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow', 'net_movement');
         return {
-          callback: function(v) {
-            return '$' + (Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
-              : Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
-          }
+          row: r, date: d, key: p9DateKey(d), cashIn: cashIn, cashOut: cashOut,
+          net: (netRaw !== '' && netRaw != null) ? parseNum(netRaw) : cashIn - cashOut,
+          open: presentNum(col(r, 'Opening Balance', 'opening_balance', 'Open Balance')),
+          close: presentNum(col(r, 'Closing Balance', 'closing_balance', 'Close Balance')),
+          notes: String(col(r, 'Notes', 'notes') || '').trim(),
+          confidence: String(col(r, 'Confidence', 'confidence') || '').trim() || ((cashIn === 0 && cashOut === 0) ? 'Placeholder' : 'Estimated'),
+          facility: presentNum(col(r, 'Available Facility', 'Facility Headroom', 'Credit Facility', 'Facility Available')),
+          minCash: presentNum(col(r, 'Min Cash', 'Minimum Cash', 'Cash Reserve', 'Min Balance', 'Reserve Threshold')),
+          bank: presentNum(col(r, 'Bank Balance', 'Reconciled Bank', 'Reconciled Balance', 'Banked Balance'))
         };
-      }
+      }).filter(function(w) { return w.date; }).sort(function(a, b) { return a.date - b.date; });
 
-      function sortByWeek(rows) {
-        return rows.slice().sort(function(a, b) {
-          var pa = parseRowDateParts(col(a, 'Week Start', 'week_start', 'Week', 'week'));
-          var pb = parseRowDateParts(col(b, 'Week Start', 'week_start', 'Week', 'week'));
-          if (!pa && !pb) return 0;
-          if (!pa) return 1;
-          if (!pb) return -1;
-          var ia = _MONTH_ABBR.indexOf(pa.month);
-          var ib = _MONTH_ABBR.indexOf(pb.month);
-          if (pa.year !== pb.year) return Number(pa.year) - Number(pb.year);
-          if (ia !== ib) return ia - ib;
-          var da = String(col(a, 'Week Start', 'week_start') || '').split('/')[0];
-          var db = String(col(b, 'Week Start', 'week_start') || '').split('/')[0];
-          return (parseInt(da, 10) || 0) - (parseInt(db, 10) || 0);
+      var cfLastUpdated = null;
+      (forecastRaw || []).forEach(function(r) {
+        Object.keys(r || {}).forEach(function(k) {
+          var m = String(r[k] || '').match(/last updated[:\s]+(.+)/i);
+          if (m) cfLastUpdated = m[1].trim();
         });
-      }
+      });
+      var cfLive = !!(meta.cashflow && meta.cashflow.ok && sheetWeeks.length);
+      var facilityKnown = null, minCashKnown = null, bankKnown = null;
+      sheetWeeks.forEach(function(w) {
+        if (w.facility != null) facilityKnown = w.facility;
+        if (w.minCash != null) minCashKnown = w.minCash;
+        if (w.bank != null) bankKnown = w.bank;
+      });
 
-      function weekLabel(r) {
-        var raw = String(col(r, 'Week Start', 'week_start', 'Week', 'week') || '').trim();
-        var parts = raw.split('/');
-        if (parts.length === 3) {
-          var d = parseInt(parts[0], 10);
-          var m = parseInt(parts[1], 10);
-          if (m >= 1 && m <= 12) {
-            return (d < 10 ? '0' : '') + d + ' ' + _MONTH_ABBR[m - 1];
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      var horizonStart = p9MondayOf(today);
+      var horizon = [];
+      for (var hi = 0; hi < 13; hi++) horizon.push(p9AddDays(horizonStart, hi * 7));
+      var byKey = {};
+      sheetWeeks.forEach(function(w) { byKey[w.key] = w; });
+      var lastKnown = null;
+      for (var li = sheetWeeks.length - 1; li >= 0; li--) {
+        if (sheetWeeks[li].close != null) { lastKnown = sheetWeeks[li]; break; }
+      }
+      var firstH = null;
+      for (var fi = 0; fi < sheetWeeks.length; fi++) {
+        if (sheetWeeks[fi].date.getTime() >= horizonStart.getTime()) { firstH = sheetWeeks[fi]; break; }
+      }
+      var openingBank = bankKnown != null ? bankKnown
+        : (firstH && firstH.open != null ? firstH.open
+        : (lastKnown && lastKnown.close != null ? lastKnown.close
+        : (sheetWeeks[0] && sheetWeeks[0].open != null ? sheetWeeks[0].open : null)));
+
+      var horizonMapped = 0;
+      var weeks = horizon.map(function(d, idx) {
+        var key = p9DateKey(d);
+        var match = byKey[key] || null;
+        if (match) horizonMapped++;
+        return {
+          date: d, key: key, label: p9WeekLabel(d), match: match, idx: idx,
+          cashIn: match ? match.cashIn : null, cashOut: match ? match.cashOut : null,
+          net: match ? match.net : null, open: match ? match.open : null, close: match ? match.close : null,
+          notes: match ? match.notes : '', confidence: match ? match.confidence : 'Awaiting',
+          isActual: d.getTime() + 6 * 86400000 < today.getTime(),
+          isCurrentWeek: d.getTime() <= today.getTime() && p9AddDays(d, 6).getTime() >= today.getTime()
+        };
+      });
+
+      var scConfig = {
+        base: { label: 'Base', receiptDelayWeeks: 0, costFactor: 1, capitalFactor: 1, facilityOn: true,
+          notes: ['Receipts on forecast due weeks', 'Costs as committed on sheet', 'Capital included as forecasted',
+            'Facility: ' + (facilityKnown != null ? 'available when set' : 'Pending (not in sheet)')] },
+        downside: { label: 'Downside', receiptDelayWeeks: 2, costFactor: 1.08, capitalFactor: 1, facilityOn: true,
+          notes: ['Receipts delayed ~14 days (shifted 2 weeks later where data exists)', 'Costs +8% where weekly outflows known',
+            'Project starts delayed implied by receipt lag', 'Capital included · facility Pending unless supplied'] },
+        upside: { label: 'Upside', receiptDelayWeeks: 0, costFactor: 0.97, capitalFactor: 0.5, facilityOn: true,
+          notes: ['Receipts on forecast weeks (no delay)', 'Costs -3% efficiency',
+            'Discretionary capital deferred 50% where outflows known', 'Facility Pending unless on sheet'] }
+      };
+      var sc = scConfig[scenario] || scConfig.base;
+
+      function buildSeries(scfg) {
+        var series = weeks.map(function(w) {
+          return { label: w.label, key: w.key, date: w.date, isActual: w.isActual, isCurrentWeek: w.isCurrentWeek,
+            match: w.match, cashIn: null, cashOut: null, close: null, open: null, net: null,
+            confidence: w.confidence, notes: w.notes };
+        });
+        var rawIn = weeks.map(function(w) { return w.cashIn; });
+        var rawOut = weeks.map(function(w) { return w.cashOut; });
+        for (var i = 0; i < 13; i++) {
+          var inVal = null, outVal = null;
+          if (scfg.receiptDelayWeeks === 0) inVal = rawIn[i];
+          else {
+            var src = i - scfg.receiptDelayWeeks;
+            if (src >= 0 && rawIn[src] != null) inVal = rawIn[src];
+          }
+          if (rawOut[i] != null) {
+            if (scfg.capitalFactor !== 1) {
+              var capital = rawOut[i] * 0.15;
+              outVal = (rawOut[i] - capital) * scfg.costFactor + capital * scfg.capitalFactor;
+            } else outVal = rawOut[i] * scfg.costFactor;
+          }
+          series[i].cashIn = inVal; series[i].cashOut = outVal;
+          series[i].net = (inVal != null || outVal != null) ? ((inVal || 0) - (outVal || 0)) : null;
+        }
+        var run = openingBank;
+        for (var j = 0; j < 13; j++) {
+          var s = series[j], w0 = weeks[j];
+          if (scfg.receiptDelayWeeks === 0 && scfg.costFactor === 1 && scfg.capitalFactor === 1 && w0.close != null) {
+            s.close = w0.close; s.open = w0.open != null ? w0.open : run; run = w0.close;
+          } else if (s.net != null && run != null) {
+            s.open = run; s.close = run + s.net; run = s.close;
+          } else if (s.net != null && run == null && w0.open != null) {
+            s.open = w0.open; s.close = w0.open + s.net; run = s.close;
+          } else {
+            s.close = w0.close; if (s.close != null) run = s.close;
           }
         }
-        return raw || '—';
+        return series;
       }
 
-      var cfSorted = sortByWeek(cfFiltered).slice(0, 13);
-
-      // ── Section 1 — Cash Position KPIs ───────────────────────
-      var cashIn = 0, cashOut = 0, netCash = 0, kpiSource = '';
-      if (cfSorted.length) {
-        cashIn = cfSorted.reduce(function(s, r) {
-          return s + parseNum(col(r, 'Cash In (Expected)', 'Cash In', 'Money In', 'cash_in'));
-        }, 0);
-        cashOut = cfSorted.reduce(function(s, r) {
-          return s + parseNum(col(r, 'Cash Out (Committed)', 'Cash Out', 'Money Out', 'cash_out'));
-        }, 0);
-        netCash = cfSorted.reduce(function(s, r) {
-          var n = col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow', 'net_movement');
-          if (n !== '' && n !== null && n !== undefined) return s + parseNum(n);
-          return s + parseNum(col(r, 'Cash In (Expected)', 'Cash In')) -
-            parseNum(col(r, 'Cash Out (Committed)', 'Cash Out'));
-        }, 0);
-        kpiSource = 'CashFlow_Forecast · ' + cfSorted.length + ' wk';
-      } else if (finFiltered.length) {
-        cashIn = finFiltered.reduce(function(s, r) {
-          return s + parseNum(col(r, 'Cash In ($)', 'Cash In', 'cash_in'));
-        }, 0);
-        cashOut = finFiltered.reduce(function(s, r) {
-          return s + parseNum(col(r, 'Cash Out ($)', 'Cash Out', 'cash_out'));
-        }, 0);
-        netCash = finFiltered.reduce(function(s, r) {
-          var n = col(r, 'Cash Flow ($)', 'Cash Flow', 'Net Cash Flow');
-          if (n !== '' && n !== null && n !== undefined) return s + parseNum(n);
-          return s + parseNum(col(r, 'Cash In ($)', 'Cash In')) -
-            parseNum(col(r, 'Cash Out ($)', 'Cash Out'));
-        }, 0);
-        kpiSource = 'Xero_Financials fallback';
+      var baseSeries = buildSeries(scConfig.base);
+      var primary = buildSeries(sc);
+      var downsideSeries = buildSeries(scConfig.downside);
+      var upsideSeries = buildSeries(scConfig.upside);
+      var anyInOut = primary.some(function(s) { return s.cashIn != null || s.cashOut != null; });
+      var cashIn13 = null, cashOut13 = null, net13 = null;
+      if (anyInOut) {
+        cashIn13 = primary.reduce(function(sum, s) { return sum + (s.cashIn || 0); }, 0);
+        cashOut13 = primary.reduce(function(sum, s) { return sum + (s.cashOut || 0); }, 0);
+        net13 = cashIn13 - cashOut13;
       }
+      var lowest = null, lowestWeek = null;
+      primary.forEach(function(s) {
+        if (s.close == null) return;
+        if (lowest == null || s.close < lowest) { lowest = s.close; lowestWeek = s.label; }
+      });
+      var weeksBelow = 0;
+      if (minCashKnown != null) primary.forEach(function(s) { if (s.close != null && s.close < minCashKnown) weeksBelow++; });
+      var fundingGap = (minCashKnown != null && lowest != null && lowest < minCashKnown) ? (minCashKnown - lowest) : null;
+      var facilityForAvail = (sc.facilityOn && facilityKnown != null) ? facilityKnown : null;
+      var availableCash = openingBank != null ? (openingBank + (facilityForAvail != null ? facilityForAvail : 0)) : null;
 
-      var hasKpis = cfSorted.length > 0 || finFiltered.length > 0;
-      setKPI('kpi-p9-cash-in', 'kpi-p9-cash-in-sub',
-        hasKpis ? formatCurrency(cashIn) : '—',
-        hasKpis ? kpiSource : 'Data not available');
-      setKPI('kpi-p9-cash-out', 'kpi-p9-cash-out-sub',
-        hasKpis ? formatCurrency(cashOut) : '—',
-        hasKpis ? kpiSource : 'Data not available');
-      setKPI('kpi-p9-net', 'kpi-p9-net-sub',
-        hasKpis ? formatCurrency(netCash) : '—',
-        hasKpis ? kpiSource : 'Data not available');
-
-      // ── Section 2 — 13-Week Rolling Forecast ─────────────────
-      clearChartPlaceholder('p9-forecast-wrap', 'chart-p9-forecast');
-      if (!cfSorted.length) {
-        showChartEmpty('p9-forecast-wrap', 'chart-p9-forecast', 'Data not available');
-      } else {
-        var labels = cfSorted.map(weekLabel);
-        var closing = cfSorted.map(function(r) {
-          return parseNum(col(r, 'Closing Balance', 'closing_balance', 'Close Balance'));
-        });
-        var hasClosing = closing.some(function(v) { return v !== 0; });
-        var series = hasClosing ? closing : cfSorted.map(function(r) {
-          return parseNum(col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow'));
-        });
-        var seriesLabel = hasClosing ? 'Closing Balance' : 'Net Movement';
-        var titleEl = document.querySelector('#p9-forecast-wrap .chart-title');
-        if (titleEl) titleEl.textContent = seriesLabel + ' by Week';
-
-        makeChart('chart-p9-forecast', {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: seriesLabel,
-              data: series,
-              borderColor: brandCharcoal,
-              backgroundColor: brandSilver,
-              fill: true,
-              tension: 0.35,
-              pointRadius: 3,
-              pointBackgroundColor: brandCharcoal,
-              pointBorderColor: brandCharcoal,
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: function(ctx) {
-                    return seriesLabel + ': ' + formatCurrency(ctx.raw || 0);
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: brandCharcoal, maxRotation: 45, minRotation: 0 }
-              },
-              y: {
-                beginAtZero: false,
-                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
-                grid: { color: 'rgba(210,212,213,0.5)' }
-              }
-            }
-          }
-        });
+      // AR
+      var invBrand = filterByBrand(invoicesRaw || [], brand);
+      var invOpen = invBrand.filter(function(r) {
+        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
+        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return false;
+        if (brand === 'ALL' && isIC(r)) return false;
+        return true;
+      });
+      function daysOd(r) {
+        var due = p9ParseDate(col(r, 'Due Date', 'due date'));
+        if (due) return Math.floor((today - due) / 86400000);
+        var dr = col(r, 'Days Overdue', 'days overdue', 'Days');
+        return (dr !== '' && dr != null) ? parseNum(dr) : null;
       }
-
-      // ── Section 3 — AR Ageing (Xero_Invoices) ────────────────
-      clearChartPlaceholder('p9-ageing-wrap', 'chart-p9-ageing');
-
-      function ageingBucketForInvoice(r) {
-        var bucket = String(col(r, 'Ageing Bucket', 'Ageing', 'aging bucket', 'Aging Bucket') || '').trim();
-        if (bucket) return bucket;
-
-        var daysRaw = col(r, 'Days Overdue', 'days overdue', 'Days');
-        if (daysRaw !== '' && daysRaw !== null && daysRaw !== undefined) {
-          var days = parseNum(daysRaw);
-          if (days <= 0) return 'Current';
-          if (days <= 30) return '0-30';
-          if (days <= 60) return '31-60';
-          if (days <= 90) return '61-90';
-          return '90+';
-        }
-
-        var dueStr = String(col(r, 'Due Date', 'due date') || '').trim();
-        if (!dueStr) return '';
-        var parts = dueStr.split('/');
-        if (parts.length !== 3) return '';
-        var due = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-        if (isNaN(due.getTime())) return '';
-        var today = new Date();
-        today.setHours(0, 0, 0, 0);
-        var diff = Math.floor((today - due) / 86400000);
-        if (diff <= 0) return 'Current';
-        if (diff <= 30) return '0-30';
-        if (diff <= 60) return '31-60';
-        if (diff <= 90) return '61-90';
+      function bucketDays(days) {
+        if (days == null || isNaN(days)) return null;
+        if (days <= 0) return 'Current';
+        if (days <= 30) return '1-30';
+        if (days <= 60) return '31-60';
+        if (days <= 90) return '61-90';
         return '90+';
       }
-
-      var byAgeing = {};
-      invFiltered.forEach(function(r) {
-        var st = String(col(r, 'Status', 'status') || '').toUpperCase().trim();
-        if (st === 'PAID' || st === 'VOIDED' || st === 'DELETED' || st === 'DRAFT') return;
-        var age = ageingBucketForInvoice(r);
-        if (!age) return;
+      function normBucket(raw) {
+        var s = String(raw || '').toLowerCase().replace(/\s+/g, '');
+        if (!s) return null;
+        if (s.indexOf('current') >= 0) return 'Current';
+        if (s.indexOf('0-30') >= 0 || s.indexOf('1-30') >= 0) return '1-30';
+        if (s.indexOf('31') >= 0 && s.indexOf('60') >= 0) return '31-60';
+        if (s.indexOf('61') >= 0) return '61-90';
+        if (s.indexOf('90') >= 0) return '90+';
+        return null;
+      }
+      var bucketOrder = ['Current', '1-30', '31-60', '61-90', '90+'];
+      var bucketMap = {};
+      bucketOrder.forEach(function(b) { bucketMap[b] = { amount: 0, count: 0, clients: {}, disputed: 0, promised: 0 }; });
+      var collectionRows = [];
+      var invLive = !!(meta.invoices && meta.invoices.ok);
+      invOpen.forEach(function(r) {
+        var days = daysOd(r);
+        var bucket = normBucket(col(r, 'Ageing Bucket', 'Ageing', 'aging bucket', 'Aging Bucket')) || bucketDays(days);
+        if (!bucket) return;
         var amt = parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
-        byAgeing[age] = (byAgeing[age] || 0) + amt;
-      });
-
-      // Fallback: latest CashFlow_Forecast AR snapshot when invoice ageing is empty
-      if (!Object.keys(byAgeing).length && cfSorted.length) {
-        var snap = null;
-        for (var si = cfSorted.length - 1; si >= 0; si--) {
-          var row = cfSorted[si];
-          var hasAr = ['AR 0-30', 'AR 31-60', 'AR 61-90', 'AR 90+'].some(function(k) {
-            return String(col(row, k) || '').trim() !== '';
+        if (!amt) return;
+        var bm = bucketMap[bucket];
+        bm.amount += amt; bm.count += 1;
+        var client = String(col(r, 'Client Name', 'client') || 'Unknown').trim() || 'Unknown';
+        bm.clients[client] = true;
+        var disputedRaw = col(r, 'Disputed', 'Dispute Amount', 'Dispute');
+        var promisedRaw = col(r, 'Promised Amount', 'Promised', 'Promise Amount');
+        var expectedRcpt = col(r, 'Expected Receipt', 'Expected Collection', 'Promised Date', 'Collection Date');
+        if (disputedRaw !== '' && disputedRaw != null) bm.disputed += parseNum(disputedRaw);
+        if (promisedRaw !== '' && promisedRaw != null) bm.promised += parseNum(promisedRaw);
+        if ((days != null && days > 0) || amt >= 50000) {
+          var status = String(col(r, 'Collection Status', 'Promise Status') || '').trim();
+          if (!status) {
+            if (disputedRaw && parseNum(disputedRaw) > 0) status = 'Disputed';
+            else if (promisedRaw && parseNum(promisedRaw) > 0) status = 'Promised';
+            else if (days != null && days > 30) status = 'Escalate';
+            else status = 'Promised';
+          }
+          collectionRows.push({
+            client: client, invoice: String(col(r, 'Invoice No', 'Invoice', 'invoice') || '-'),
+            amount: amt, days: days, expected: expectedRcpt ? String(expectedRcpt) : 'Pending',
+            owner: col(r, 'Owner', 'AR Owner', 'Collection Owner') || 'Finance', status: status, bucket: bucket
           });
-          if (hasAr) { snap = row; break; }
         }
-        if (snap) {
-          [['AR 0-30', '0-30'], ['AR 31-60', '31-60'], ['AR 61-90', '61-90'], ['AR 90+', '90+']].forEach(function(pair) {
-            var v = parseNum(col(snap, pair[0]));
-            if (v) byAgeing[pair[1]] = v;
-          });
-        }
-      }
-
-      function ageingSeverity(label) {
-        var s = String(label || '').toLowerCase().replace(/\s+/g, '');
-        if (s.indexOf('90') !== -1 || s.indexOf('over90') !== -1 || s.indexOf('120') !== -1) return 4;
-        if (s.indexOf('61') !== -1 || s.indexOf('60-90') !== -1) return 3;
-        if (s.indexOf('31') !== -1 || s.indexOf('30-60') !== -1) return 2;
-        if (s.indexOf('current') !== -1 || s.indexOf('0-30') !== -1 || s.indexOf('1-30') !== -1) return 1;
-        return 0;
-      }
-
-      function ageingColor(label) {
-        var sev = ageingSeverity(label);
-        if (sev >= 3) return brandCharcoal;
-        if (sev === 2) return brandSoftGray;
-        return brandSilver;
-      }
-
-      var ageingKeys = Object.keys(byAgeing).filter(function(k) {
-        return byAgeing[k] > 0;
-      }).sort(function(a, b) {
-        // Ranked by amount desc; severity used for colour only
-        return byAgeing[b] - byAgeing[a];
       });
-
-      if (!ageingKeys.length) {
-        showChartEmpty('p9-ageing-wrap', 'chart-p9-ageing', 'Data not available');
-      } else {
-        makeChart('chart-p9-ageing', {
-          type: 'bar',
-          data: {
-            labels: ageingKeys,
-            datasets: [{
-              label: 'Outstanding',
-              data: ageingKeys.map(function(k) { return byAgeing[k]; }),
-              backgroundColor: ageingKeys.map(ageingColor),
-              borderWidth: 0,
-              borderRadius: 2
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
-                }
-              }
-            },
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
-                grid: { color: 'rgba(210,212,213,0.5)' }
-              },
-              y: {
-                grid: { display: false },
-                ticks: { color: brandCharcoal }
-              }
-            }
+      var totalAR = bucketOrder.reduce(function(s, b) { return s + bucketMap[b].amount; }, 0);
+      var overdueAR = bucketMap['1-30'].amount + bucketMap['31-60'].amount + bucketMap['61-90'].amount + bucketMap['90+'].amount;
+      var hasAR = invLive && invOpen.length > 0 && totalAR > 0;
+      var expectedThisMonth = null;
+      if (hasAR) {
+        expectedThisMonth = 0;
+        invOpen.forEach(function(r) {
+          var due = p9ParseDate(col(r, 'Due Date', 'due date'));
+          if (due && due.getMonth() === today.getMonth() && due.getFullYear() === today.getFullYear()) {
+            expectedThisMonth += parseNum(col(r, 'Amount ($) Inc GST', 'Amount ($)', 'Amount', 'Total'));
           }
         });
       }
-
-      // ── Section 4 — Overhead Commitments (condensed) ─────────
-      clearChartPlaceholder('p9-overhead-wrap', 'chart-p9-overhead');
-      function ohMonthLabel(r) {
-        var m = String(col(r, 'Month', 'month') || '').trim();
-        var y = String(col(r, 'Year', 'year') || '').trim();
-        return (m + ' ' + y).trim();
-      }
-      function sortOh(rows) {
-        return rows.slice().sort(function(a, b) {
-          var ya = parseInt(col(a, 'Year', 'year') || '0', 10);
-          var yb = parseInt(col(b, 'Year', 'year') || '0', 10);
-          if (ya !== yb) return ya - yb;
-          var ma = _MONTH_ABBR.indexOf(String(getRowMonth(a) || '').substring(0, 3));
-          var mb = _MONTH_ABBR.indexOf(String(getRowMonth(b) || '').substring(0, 3));
-          return ma - mb;
-        });
-      }
-
-      var ohSorted = sortOh(ohFiltered);
-      var ohPeriods = [];
-      ohSorted.forEach(function(r) {
-        var lbl = ohMonthLabel(r);
-        if (lbl && ohPeriods.indexOf(lbl) === -1) ohPeriods.push(lbl);
+      collectionRows.sort(function(a, b) {
+        function score(x) {
+          var boost = x.bucket === '31-60' ? 1e6 : (x.bucket === '90+' ? 9e5 : (x.bucket === '61-90' ? 8e5 : 0));
+          return boost + (x.days || 0) * 1000 + x.amount / 1000;
+        }
+        return score(b) - score(a);
       });
+      var collectionTop = collectionRows.slice(0, 12);
 
-      var ohTableEl = document.getElementById('p9-overhead-table');
-      if (!ohPeriods.length) {
-        showChartEmpty('p9-overhead-wrap', 'chart-p9-overhead', 'Data not available');
-        if (ohTableEl) ohTableEl.innerHTML = emptyMsg('Data not available');
+      var weekSel = document.getElementById('p9-week-select');
+      if (weekSel) {
+        var prev = window._p9SelectedWeek;
+        weekSel.innerHTML = weeks.map(function(w) {
+          return '<option value="' + w.key + '">' + w.label + (w.isCurrentWeek ? ' · this week' : '') + '</option>';
+        }).join('');
+        var keys = weeks.map(function(w) { return w.key; });
+        if (!prev || keys.indexOf(prev) < 0) {
+          var pick = weeks.find(function(w) { return w.isCurrentWeek; }) || weeks.find(function(w) { return w.match; }) || weeks[0];
+          prev = pick ? pick.key : null;
+          window._p9SelectedWeek = prev;
+        }
+        weekSel.value = prev || '';
+      }
+      var selectedKey = window._p9SelectedWeek || (weeks[0] && weeks[0].key);
+      var selectedIdx = 0;
+      for (var si = 0; si < primary.length; si++) if (primary[si].key === selectedKey) { selectedIdx = si; break; }
+      var selectedWeek = primary[selectedIdx] || primary[0];
+
+      var brandLabel = brand || 'ALL';
+      var horizonLabel = weeks.length ? (p9WeekLabel(weeks[0].date) + ' to ' + p9WeekLabel(weeks[12].date)) : 'Pending';
+      setT('p9-last-updated',
+        'Forecast start ' + (weeks[0] ? p9DateKey(weeks[0].date) : 'Pending') +
+        ' · Brand ' + brandLabel + ' · Scenario ' + sc.label + ' · Horizon ' + horizonLabel +
+        (cfLastUpdated ? (' · CashFlow_Forecast last updated ' + cfLastUpdated) : '') +
+        (_p9Cache.loadedAt ? (' · Page loaded ' + _p9Cache.loadedAt.toLocaleString('en-AU')) : ''));
+      var q = [];
+      q.push(cfLive
+        ? ('CashFlow_Forecast live (' + sheetWeeks.length + ' week rows · ' + horizonMapped + '/13 horizon matches)')
+        : 'CashFlow_Forecast Pending / empty');
+      if (horizonMapped === 0 && sheetWeeks.length) q.push('Sheet weeks outside current 13-week window - forecast needs refresh');
+      q.push(invLive ? ('Xero_Invoices live (' + invOpen.length + ' open authorised/sent)') : 'Xero_Invoices Pending');
+      if (facilityKnown == null) q.push('Credit facility: Pending');
+      if (minCashKnown == null) q.push('Min cash threshold: Pending');
+      if (openingBank == null) q.push('Reconciled bank opening: Pending');
+      setT('p9-data-quality', q.join(' · '));
+
+      var availSub = [];
+      if (openingBank != null) {
+        availSub.push('Bank ' + formatCurrency(openingBank));
+        availSub.push(facilityKnown != null && sc.facilityOn ? ('facility ' + formatCurrency(facilityKnown)) : 'facility Pending');
+        if (horizonMapped === 0 && lastKnown) availSub.push('last sheet close ' + p9WeekLabel(lastKnown.date));
+      } else availSub.push('Awaiting reconciled bank on CashFlow_Forecast');
+      setKPI('kpi-p9-avail', 'kpi-p9-avail-sub', p9Fmt(availableCash), availSub.join(' · '));
+      setTone('p9-kpi-avail', availableCash == null ? 'gap' : 'healthy');
+      setKPI('kpi-p9-cash-in', 'kpi-p9-cash-in-sub', anyInOut ? formatCurrency(cashIn13) : 'Pending',
+        anyInOut ? (sc.label + ' · receipts (not invoiced revenue) · ' + horizonMapped + ' matched weeks') : 'Awaiting Cash In on horizon weeks');
+      setTone('p9-kpi-in', anyInOut ? null : 'gap');
+      setKPI('kpi-p9-cash-out', 'kpi-p9-cash-out-sub', anyInOut ? formatCurrency(cashOut13) : 'Pending',
+        anyInOut ? (sc.label + ' · committed outflows · ' + horizonMapped + ' matched weeks') : 'Awaiting Cash Out on horizon weeks');
+      setTone('p9-kpi-out', anyInOut ? null : 'gap');
+      setKPI('kpi-p9-net', 'kpi-p9-net-sub', anyInOut ? formatCurrency(net13) : 'Pending',
+        anyInOut ? (sc.label + ' · 13-week net movement') : 'Pending until in/out live');
+      setTone('p9-kpi-net', !anyInOut ? 'gap' : (net13 < 0 ? 'watch' : null));
+      setKPI('kpi-p9-low', 'kpi-p9-low-sub', lowest != null ? formatCurrency(lowest) : 'Pending',
+        lowest != null
+          ? ('Week of ' + (lowestWeek || '-') + (minCashKnown != null ? (' · reserve ' + formatCurrency(minCashKnown)) : ' · reserve Pending'))
+          : 'No closings on current horizon');
+      var lowTone = 'gap';
+      if (lowest != null) {
+        if ((minCashKnown != null && lowest < minCashKnown) || lowest < 0) lowTone = 'risk';
+        else if (minCashKnown != null && lowest < minCashKnown * 1.15) lowTone = 'watch';
+        else lowTone = 'healthy';
+      }
+      setTone('p9-kpi-low', lowTone);
+      setKPI('kpi-p9-ar', 'kpi-p9-ar-sub', hasAR ? formatCurrency(overdueAR) : (invLive ? formatCurrency(0) : 'Pending'),
+        hasAR
+          ? ('Past due 1d+ · expected this month ' + (expectedThisMonth != null ? formatCurrency(expectedThisMonth) : 'Pending') + ' · open AR ' + formatCurrency(totalAR))
+          : (invLive ? 'No past-due open invoices' : 'Awaiting Xero_Invoices'));
+      setTone('p9-kpi-ar', !hasAR && !invLive ? 'gap' : (overdueAR > 100000 ? 'watch' : null));
+      setT('p9-horizon-hint', 'Rolling ' + horizonLabel + ' · ' + horizonMapped + ' weeks linked to sheet · scenario ' + sc.label);
+
+      // Position chart
+      clearPh('p9-forecast-wrap', 'chart-p9-forecast'); destroyIf('chart-p9-forecast');
+      var labels = primary.map(function(s) { return s.label; });
+      var baseClose = baseSeries.map(function(s) { return s.close; });
+      var scClose = primary.map(function(s) { return s.close; });
+      var downClose = downsideSeries.map(function(s) { return s.close; });
+      var actualClose = primary.map(function(s) { return s.isActual && s.close != null ? s.close : null; });
+      var hasAnyClose = scClose.some(function(v) { return v != null; });
+      var noteEl = document.getElementById('p9-forecast-note');
+      if (!hasAnyClose) {
+        emptyChart('p9-forecast-wrap', 'chart-p9-forecast',
+          'Not available for current 13-week window. CashFlow_Forecast weeks do not overlap horizon - refresh sheet from current week.');
+        if (noteEl) {
+          noteEl.textContent = sheetWeeks.length
+            ? ('Last sheet week ' + p9WeekLabel(sheetWeeks[sheetWeeks.length - 1].date) +
+              (cfLastUpdated ? (' · updated ' + cfLastUpdated) : '') +
+              '. Opening shown in KPIs from last known close when available. No invented forward path.')
+            : 'Awaiting CashFlow_Forecast data.';
+        }
       } else {
-        var ohActual = ohPeriods.map(function(lbl) {
-          return ohSorted.filter(function(r) { return ohMonthLabel(r) === lbl; })
-            .reduce(function(s, r) {
-              return s + parseNum(col(r, 'Actual ($)', 'Actual', 'Overhead Actual ($)', 'Overhead Actual'));
-            }, 0);
+        var yVals = scClose.concat(baseClose).concat(downClose).filter(function(v) { return v != null && !isNaN(v); });
+        if (minCashKnown != null) yVals.push(minCashKnown);
+        if (facilityKnown != null && openingBank != null) yVals.push(openingBank + facilityKnown);
+        if (openingBank != null) yVals.push(openingBank);
+        var yMinData = Math.min.apply(null, yVals), yMaxData = Math.max.apply(null, yVals);
+        var pad = Math.max((yMaxData - Math.min(0, yMinData)) * 0.12, 50000);
+        var yMin = yMinData > 0 ? 0 : (Math.min(0, yMinData) - pad * 0.05);
+        var yMax = yMaxData + pad;
+        if (facilityKnown != null && openingBank != null) yMax = Math.max(yMax, openingBank + facilityKnown + pad * 0.2);
+        var todayIdx = -1;
+        for (var ti = 0; ti < primary.length; ti++) {
+          if (primary[ti].isCurrentWeek) { todayIdx = ti; break; }
+          if (primary[ti].date.getTime() <= today.getTime()) todayIdx = ti;
+        }
+        var todayPlugin = {
+          id: 'p9TodayLine',
+          afterDraw: function(chart) {
+            if (todayIdx < 0) return;
+            var m0 = chart.getDatasetMeta(0);
+            if (!m0 || !m0.data || !m0.data[todayIdx]) return;
+            var x = m0.data[todayIdx].x, ctx = chart.ctx, ya = chart.chartArea;
+            ctx.save();
+            ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.strokeStyle = P9c.muted; ctx.lineWidth = 1.5;
+            ctx.moveTo(x, ya.top); ctx.lineTo(x, ya.bottom); ctx.stroke();
+            ctx.setLineDash([]); ctx.fillStyle = P9c.muted; ctx.font = '11px sans-serif';
+            ctx.fillText('Today', x + 4, ya.top + 12);
+            if (lowest != null && lowestWeek) {
+              for (var i = 0; i < primary.length; i++) {
+                if (primary[i].close === lowest && primary[i].label === lowestWeek && m0.data[i]) {
+                  ctx.fillStyle = P9c.accent; ctx.font = '10px sans-serif';
+                  ctx.fillText('Low ' + p9MoneyCompact(lowest), m0.data[i].x + 4, m0.data[i].y - 8);
+                  break;
+                }
+              }
+            }
+            ctx.restore();
+          }
+        };
+        var datasets = [];
+        if (facilityKnown != null && openingBank != null && sc.facilityOn) {
+          datasets.push({
+            label: 'Facility ceiling', data: scClose.map(function() { return openingBank + facilityKnown; }),
+            borderColor: 'rgba(37,99,235,0.35)', backgroundColor: 'transparent', fill: false,
+            pointRadius: 0, borderWidth: 1, borderDash: [2, 2], tension: 0, order: 5
+          });
+        }
+        datasets.push({
+          label: 'Base forecast', data: baseClose, borderColor: P9c.action, backgroundColor: 'transparent',
+          borderWidth: 2, pointRadius: 2, pointBackgroundColor: P9c.action, tension: 0.25, spanGaps: false, order: 2
         });
-        var ohBudget = ohPeriods.map(function(lbl) {
-          return ohSorted.filter(function(r) { return ohMonthLabel(r) === lbl; })
-            .reduce(function(s, r) {
-              return s + parseNum(col(r,
-                'Monthly Budget ($)', 'Budget ($)', 'Budget',
-                'Overhead Budget ($)', 'Overhead Budget'));
-            }, 0);
+        if (scenario !== 'base') {
+          datasets.push({
+            label: sc.label + ' path', data: scClose,
+            borderColor: scenario === 'downside' ? P9c.accent : P9c.healthy, backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 3, tension: 0.25, spanGaps: false, order: 1
+          });
+        }
+        datasets.push({
+          label: 'Downside', data: downClose, borderColor: P9c.accent, backgroundColor: 'transparent',
+          borderWidth: 2, borderDash: [6, 4], pointRadius: 0, tension: 0.25, spanGaps: false, order: 3
         });
+        datasets.push({
+          label: 'Actual (past weeks)', data: actualClose, borderColor: P9c.text, backgroundColor: P9c.text,
+          showLine: true, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: P9c.text, tension: 0.2, spanGaps: false, order: 0
+        });
+        if (minCashKnown != null) {
+          datasets.push({
+            label: 'Min cash threshold', data: scClose.map(function() { return minCashKnown; }),
+            borderColor: P9c.watch, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [8, 4],
+            pointRadius: 0, tension: 0, order: 4
+          });
+        }
+        makeChart('chart-p9-forecast', {
+          type: 'line', data: { labels: labels, datasets: datasets },
+          options: {
+            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { position: 'top', labels: { color: P9c.text, boxWidth: 10, font: { size: 11 } } },
+              tooltip: { callbacks: { label: function(ctx) {
+                return ctx.raw == null ? (ctx.dataset.label + ': Pending') : (ctx.dataset.label + ': ' + formatCurrency(ctx.raw));
+              }}}
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: P9c.muted, maxRotation: 45, font: { size: 10 } } },
+              y: { min: yMin, max: yMax, ticks: Object.assign({ color: P9c.muted, font: { size: 10 } }, moneyTicks()),
+                grid: { color: 'rgba(226,228,232,0.8)' } }
+            }
+          },
+          plugins: [todayPlugin]
+        });
+        if (noteEl) {
+          var notes = ['Solid charcoal = actual · solid blue = base · dashed orange = downside'];
+          notes.push(minCashKnown != null ? 'amber line = min cash' : 'min cash threshold: Pending (line not drawn)');
+          if (facilityKnown == null) notes.push('facility headroom: Pending');
+          if (horizonMapped === 0) notes.push('no sheet weeks in horizon');
+          else if (horizonMapped < 13) notes.push((13 - horizonMapped) + ' horizon weeks still Awaiting on sheet');
+          notes.push('Cash In = receipts/expected collections · not revenue invoiced');
+          noteEl.textContent = notes.join(' · ');
+        }
+      }
 
-        makeChart('chart-p9-overhead', {
+      // Waterfall
+      clearPh('p9-waterfall-wrap', 'chart-p9-waterfall'); destroyIf('chart-p9-waterfall');
+      var sw = selectedWeek;
+      setT('p9-waterfall-hint', (sw ? sw.label : '-') + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
+      if (!sw || (sw.open == null && sw.close == null && sw.cashIn == null && sw.cashOut == null)) {
+        emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall', 'Not available for selected week - awaiting forecast row.');
+      } else {
+        var openW = sw.open != null ? sw.open : (openingBank != null && selectedIdx === 0 ? openingBank : null);
+        var receipts = sw.cashIn, totalOut = sw.cashOut;
+        var wfLabels = [], floatBase = [], floatVal = [], floatColor = [], running = openW != null ? openW : 0;
+        function wfTotal(label, v, color) {
+          wfLabels.push(label);
+          if (v == null) { floatBase.push(0); floatVal.push(null); floatColor.push(P9c.gap); }
+          else { floatBase.push(0); floatVal.push(v); floatColor.push(color || P9c.text); running = v; }
+        }
+        function wfDelta(label, v, isOut) {
+          wfLabels.push(label);
+          if (v == null) { floatBase.push(running); floatVal.push(null); floatColor.push(P9c.gap); return; }
+          var mag = Math.abs(v);
+          if (isOut) { floatBase.push(running - mag); floatVal.push(mag); floatColor.push(P9c.muted); running -= mag; }
+          else { floatBase.push(running); floatVal.push(mag); floatColor.push(P9c.action); running += mag; }
+        }
+        wfTotal('Opening', openW, P9c.text);
+        wfDelta('Customer Receipts', receipts, false);
+        wfLabels.push('Other Inflows'); floatBase.push(running); floatVal.push(null); floatColor.push(P9c.gap);
+        if (totalOut != null) {
+          wfDelta('Committed Outflows', totalOut, true);
+          ['Payroll', 'Suppliers', 'Subcontractors', 'Overheads', 'Tax / Super / BAS', 'Capital / Finance'].forEach(function(lbl) {
+            wfLabels.push(lbl); floatBase.push(running); floatVal.push(null); floatColor.push(P9c.gap);
+          });
+        } else {
+          ['Payroll', 'Suppliers', 'Subcontractors', 'Overheads', 'Tax / Super / BAS', 'Capital / Finance'].forEach(function(lbl) {
+            wfDelta(lbl, null, true);
+          });
+        }
+        var closeVal = sw.close != null ? sw.close : ((receipts != null || totalOut != null) && openW != null ? running : null);
+        wfTotal('Closing', closeVal, P9c.text);
+        makeChart('chart-p9-waterfall', {
           type: 'bar',
           data: {
-            labels: ohPeriods,
+            labels: wfLabels,
             datasets: [
-              {
-                label: 'Budget',
-                data: ohBudget,
-                backgroundColor: 'rgba(0,0,0,0)',
-                borderColor: brandSoftGray,
-                borderWidth: 2,
-                borderRadius: 2,
-                order: 2
-              },
-              {
-                label: 'Actual',
-                data: ohActual,
-                backgroundColor: brandCharcoal,
-                borderColor: brandCharcoal,
-                borderWidth: 0,
-                borderRadius: 2,
-                order: 1
-              }
+              { label: 'base', data: floatBase.map(function(v, i) { return floatVal[i] == null ? 0 : v; }), backgroundColor: 'transparent', borderWidth: 0, stack: 'wf', barPercentage: 0.7 },
+              { label: 'step', data: floatVal.map(function(v) { return v == null ? 0 : v; }),
+                backgroundColor: floatColor.map(function(c, i) { return floatVal[i] == null ? 'rgba(156,163,175,0.25)' : c; }),
+                borderWidth: 0, stack: 'wf', barPercentage: 0.7 }
             ]
           },
           options: {
-            responsive: true,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'top', labels: { color: brandCharcoal } },
-              tooltip: {
-                callbacks: {
-                  label: function(ctx) {
-                    return ctx.dataset.label + ': ' + formatCurrency(ctx.raw || 0);
-                  }
-                }
-              }
+              legend: { display: false },
+              tooltip: { callbacks: { label: function(ctx) {
+                if (ctx.datasetIndex === 0) return null;
+                var i = ctx.dataIndex;
+                return floatVal[i] == null ? (wfLabels[i] + ': Pending (category split not on sheet)') : (wfLabels[i] + ': ' + formatCurrency(floatVal[i]));
+              }}}
             },
             scales: {
-              x: { grid: { display: false }, ticks: { color: brandCharcoal } },
-              y: {
-                beginAtZero: true,
-                ticks: Object.assign({ color: brandCharcoal }, moneyTicks()),
-                grid: { color: 'rgba(210,212,213,0.5)' }
-              }
+              x: { stacked: true, ticks: { color: P9c.muted, maxRotation: 50, font: { size: 9 } }, grid: { display: false } },
+              y: { stacked: true, ticks: Object.assign({ color: P9c.muted, font: { size: 10 } }, moneyTicks()), grid: { color: 'rgba(226,228,232,0.8)' } }
             }
           }
         });
-
-        if (ohTableEl) {
-          var tableRows = ohPeriods.map(function(lbl, i) {
-            return {
-              Period: lbl,
-              Budget: ohBudget[i],
-              Actual: ohActual[i],
-              Variance: ohBudget[i] - ohActual[i]
-            };
-          });
-          ohTableEl.innerHTML = buildTable(tableRows, [
-            { label: 'Period', key: 'Period' },
-            { label: 'Budget', key: 'Budget', format: function(v) { return formatCurrency(parseNum(v)); } },
-            { label: 'Actual', key: 'Actual', format: function(v) { return formatCurrency(parseNum(v)); } },
-            { label: 'Variance', key: 'Variance', format: function(v) { return formatCurrency(parseNum(v)); } }
-          ]);
-        }
       }
+
+      // In/out bars
+      clearPh('p9-inout-wrap', 'chart-p9-inout'); destroyIf('chart-p9-inout');
+      if (!anyInOut) emptyChart('p9-inout-wrap', 'chart-p9-inout', 'Not available - no weekly Cash In / Cash Out on current horizon.');
+      else {
+        makeChart('chart-p9-inout', {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'Customer / other receipts', data: primary.map(function(s) { return s.cashIn; }), backgroundColor: P9c.action, stack: 'in' },
+              { label: 'Committed outflows', data: primary.map(function(s) { return s.cashOut != null ? -Math.abs(s.cashOut) : null; }), backgroundColor: P9c.muted, stack: 'out' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { color: P9c.text, boxWidth: 10, font: { size: 11 } } },
+              tooltip: { callbacks: { label: function(ctx) {
+                return ctx.raw == null ? (ctx.dataset.label + ': Pending') : (ctx.dataset.label + ': ' + formatCurrency(Math.abs(ctx.raw)));
+              }}}
+            },
+            scales: {
+              x: { stacked: true, ticks: { color: P9c.muted, maxRotation: 45, font: { size: 10 } }, grid: { display: false } },
+              y: { stacked: true, ticks: Object.assign({ color: P9c.muted, font: { size: 10 } }, moneyTicks()), grid: { color: 'rgba(226,228,232,0.8)' } }
+            }
+          }
+        });
+      }
+
+      // AR chart
+      clearPh('p9-ageing-wrap', 'chart-p9-ageing'); destroyIf('chart-p9-ageing');
+      setH('p9-ageing-summary', bucketOrder.map(function(b) {
+        var bm = bucketMap[b];
+        var pct = totalAR > 0 ? ((bm.amount / totalAR) * 100).toFixed(0) + '%' : '-';
+        return '<div class="p9-age-chip' + (b === '31-60' && bm.amount > 0 ? ' p9-age-chip--focus' : '') + '">' +
+          '<div class="p9-age-chip-label">' + b + '</div>' +
+          '<div class="p9-age-chip-val">' + (hasAR || bm.amount ? formatCurrency(bm.amount) : (invLive ? '$0' : 'Pending')) + '</div>' +
+          '<div class="p9-age-chip-meta">' + pct + ' · ' + bm.count + ' inv · ' + Object.keys(bm.clients).length + ' clients</div>' +
+          '<div class="p9-age-chip-meta">Disputed ' + (bm.disputed ? formatCurrency(bm.disputed) : 'Pending') +
+          ' · Promised ' + (bm.promised ? formatCurrency(bm.promised) : 'Pending') + '</div></div>';
+      }).join(''));
+      if (!invLive) emptyChart('p9-ageing-wrap', 'chart-p9-ageing', 'Xero_Invoices not available');
+      else {
+        var ageColors = bucketOrder.map(function(b) {
+          if (b === '90+' || b === '61-90') return P9c.accent;
+          if (b === '31-60') return P9c.watch;
+          if (b === '1-30') return P9c.muted;
+          return P9c.action;
+        });
+        makeChart('chart-p9-ageing', {
+          type: 'bar',
+          data: { labels: bucketOrder, datasets: [{
+            label: 'Outstanding (Inc GST)',
+            data: bucketOrder.map(function(b) { return bucketMap[b].amount; }),
+            backgroundColor: ageColors, borderWidth: 0, borderRadius: 2
+          }]},
+          options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) {
+              var b = bucketOrder[ctx.dataIndex], bm = bucketMap[b];
+              return formatCurrency(ctx.raw || 0) + ' · ' + bm.count + ' invoices · ' + Object.keys(bm.clients).length + ' clients';
+            }}}},
+            scales: {
+              x: { beginAtZero: true, ticks: Object.assign({ color: P9c.muted }, moneyTicks()), grid: { color: 'rgba(226,228,232,0.8)' } },
+              y: { grid: { display: false }, ticks: { color: P9c.text } }
+            }
+          }
+        });
+      }
+
+      if (!collectionTop.length) {
+        setH('p9-collection-table', invLive
+          ? '<p class="no-data-msg">No overdue or large open invoices requiring priority chase.</p>'
+          : '<p class="no-data-msg">Awaiting Xero_Invoices for collection priorities.</p>');
+      } else {
+        setH('p9-collection-table', buildTable(collectionTop.map(function(r) {
+          return { ClientInvoice: r.client + ' · ' + r.invoice, Amount: r.amount,
+            Days: r.days != null ? r.days : 'Pending', Expected: r.expected, Owner: r.owner, Status: r.status };
+        }), [
+          { label: 'Client / Invoice', key: 'ClientInvoice' },
+          { label: 'Amount', key: 'Amount', format: function(v) { return formatCurrency(parseNum(v)); } },
+          { label: 'Days Overdue', key: 'Days' },
+          { label: 'Expected Receipt', key: 'Expected' },
+          { label: 'Owner', key: 'Owner' },
+          { label: 'Status', key: 'Status' }
+        ]));
+      }
+
+      // Payment commitments
+      var commitments = [];
+      primary.forEach(function(s) {
+        if (s.cashOut == null || s.cashOut === 0) return;
+        var conf = (s.notes && /confirm|bas|payroll|loan/i.test(s.notes)) ? 'Confirmed' : 'Estimated';
+        var action = conf === 'Estimated' ? 'Confirm liability' : 'Funded';
+        if (s.cashOut > 150000 || (lowest != null && minCashKnown != null && lowest < minCashKnown)) action = 'Review timing';
+        var payName = 'Weekly payment run';
+        if (s.notes) {
+          if (/payroll/i.test(s.notes)) payName = 'Payroll';
+          else if (/bas|gst/i.test(s.notes)) payName = 'BAS / GST';
+          else if (/loan/i.test(s.notes)) payName = 'Loan repayment';
+          else if (/supplier/i.test(s.notes)) payName = 'Supplier payment run';
+          else payName = s.notes.substring(0, 40);
+        }
+        commitments.push({ Payment: payName, Supplier: s.notes || 'Unallocated outflows', Amount: s.cashOut, Due: s.label, Confidence: conf, Action: action });
+      });
+      commitments.sort(function(a, b) { return b.Amount - a.Amount; });
+      commitments = commitments.slice(0, 15);
+      if (!commitments.length) {
+        setH('p9-commitments-table', '<p class="no-data-msg">No payment commitments on current horizon. Awaiting Cash Out on CashFlow_Forecast.</p>');
+      } else {
+        setH('p9-commitments-table', buildTable(commitments, [
+          { label: 'Payment', key: 'Payment' }, { label: 'Supplier / Category', key: 'Supplier' },
+          { label: 'Amount', key: 'Amount', format: function(v) { return formatCurrency(parseNum(v)); } },
+          { label: 'Due', key: 'Due' }, { label: 'Confidence', key: 'Confidence' }, { label: 'Action', key: 'Action' }
+        ]));
+      }
+
+      // Actions
+      var actions = [];
+      function pushAction(priority, issue, impact, action, owner, due) {
+        if (actions.length >= 5) return;
+        actions.push({ priority: priority, issue: issue, impact: impact, action: action, owner: owner || 'Finance', due: due || 'This week' });
+      }
+      if (horizonMapped === 0 && sheetWeeks.length) {
+        pushAction('High', '13-week forecast does not cover current period',
+          'Horizon starts ' + (weeks[0] ? p9WeekLabel(weeks[0].date) : '-') + ' · last sheet week ' + p9WeekLabel(sheetWeeks[sheetWeeks.length - 1].date),
+          'Refresh CashFlow_Forecast from current Monday with bank opening, payroll, BAS, supplier runs', 'Finance', 'This week');
+      }
+      if (lowest != null && minCashKnown != null && lowest < minCashKnown) {
+        pushAction('High', 'Path dips below min cash reserve',
+          formatCurrency(lowest) + ' low in ' + lowestWeek + ' vs reserve ' + formatCurrency(minCashKnown),
+          'Protect collections and defer optional spend before ' + lowestWeek, 'Finance', lowestWeek || 'Before low week');
+      } else if (lowest != null && lowest < 0) {
+        pushAction('High', 'Forecast closes negative', formatCurrency(lowest) + ' in ' + lowestWeek,
+          'Secure funding or accelerate receipts before low week', 'Finance', lowestWeek || 'This month');
+      }
+      if (hasAR && bucketMap['31-60'].amount >= 100000) {
+        pushAction('High', 'Large 31-60 day receivables concentration',
+          formatCurrency(bucketMap['31-60'].amount) + ' · ' + bucketMap['31-60'].count + ' invoices',
+          'Execute collection priority (promised dates or escalate) on 31-60 bucket', 'Finance', 'This week');
+      }
+      if (hasAR && (bucketMap['61-90'].amount + bucketMap['90+'].amount) > 0) {
+        pushAction('Medium', 'Receivables aged 61+ days',
+          formatCurrency(bucketMap['61-90'].amount + bucketMap['90+'].amount),
+          'Escalate past 61 days · confirm disputed vs collectible', 'Finance', 'This week');
+      }
+      if (facilityKnown == null && openingBank != null) {
+        pushAction('Medium', 'Available credit facility not on forecast sheet', 'Facility headroom Pending',
+          'Add available facility balance to CashFlow_Forecast for true liquidity view', 'Finance', 'This month');
+      }
+      var heavy = primary.filter(function(s) { return s.cashOut != null && s.cashOut > 100000; });
+      if (heavy.length) {
+        var h = heavy.sort(function(a, b) { return b.cashOut - a.cashOut; })[0];
+        pushAction('Medium', 'Concentrated payment week', formatCurrency(h.cashOut) + ' outflows week of ' + h.label,
+          'Confirm funding source and timing before payment run', 'Finance', h.label);
+      }
+      if (minCashKnown == null && hasAnyClose) {
+        pushAction('Low', 'Minimum cash threshold not set on sheet', 'Reserve line Pending',
+          'Set min cash / reserve on CashFlow_Forecast for watch alerts', 'Finance', 'This month');
+      }
+      if (!actions.length) setH('p9-action-list', '<p class="no-data-msg">No cash pressure flags from current state.</p>');
+      else {
+        var actHtml = '<table class="data-table p9-action-table"><thead><tr><th>Priority</th><th>Issue</th><th>Cash Impact</th><th>Required Action</th><th>Owner</th><th>Due</th></tr></thead><tbody>';
+        actions.forEach(function(a) {
+          actHtml += '<tr><td><span class="p9-priority p9-priority--' + a.priority.toLowerCase() + '">' + a.priority +
+            '</span></td><td>' + a.issue + '</td><td>' + a.impact + '</td><td>' + a.action + '</td><td>' + a.owner +
+            '</td><td>' + a.due + '</td></tr>';
+        });
+        setH('p9-action-list', actHtml + '</tbody></table>');
+      }
+
+      // Scenarios
+      var assumpHtml = '<ul class="p9-assumption-list">';
+      sc.notes.forEach(function(n) { assumpHtml += '<li>' + n + '</li>'; });
+      assumpHtml += '</ul><p class="p9-section-hint">Also modelled: receipts delay 0 / 14d (downside) · cost factor · capital include/defer · facility on/off when known.</p>';
+      setH('p9-scenario-assumptions', assumpHtml);
+      function lowOf(series) {
+        var lo = null, lw = null;
+        series.forEach(function(s) {
+          if (s.close == null) return;
+          if (lo == null || s.close < lo) { lo = s.close; lw = s.label; }
+        });
+        return { low: lo, week: lw };
+      }
+      var bL = lowOf(baseSeries), dL = lowOf(downsideSeries), uL = lowOf(upsideSeries);
+      setH('p9-scenario-effects',
+        '<div class="p9-sc-grid">' +
+        '<div class="p9-sc-card"><div class="p9-sc-label">Base lowest</div><div class="p9-sc-val">' + p9Fmt(bL.low) + '</div><div class="p9-sc-meta">' + (bL.week || '-') + '</div></div>' +
+        '<div class="p9-sc-card"><div class="p9-sc-label">Downside lowest</div><div class="p9-sc-val">' + p9Fmt(dL.low) + '</div><div class="p9-sc-meta">' + (dL.week || '-') + '</div></div>' +
+        '<div class="p9-sc-card"><div class="p9-sc-label">Upside lowest</div><div class="p9-sc-val">' + p9Fmt(uL.low) + '</div><div class="p9-sc-meta">' + (uL.week || '-') + '</div></div>' +
+        '<div class="p9-sc-card"><div class="p9-sc-label">Weeks below reserve</div><div class="p9-sc-val">' + (minCashKnown != null ? String(weeksBelow) : 'Pending') + '</div><div class="p9-sc-meta">' + (minCashKnown != null ? ('reserve ' + formatCurrency(minCashKnown)) : 'threshold not on sheet') + '</div></div>' +
+        '<div class="p9-sc-card"><div class="p9-sc-label">Additional funding</div><div class="p9-sc-val">' + (fundingGap != null ? formatCurrency(fundingGap) : (minCashKnown == null ? 'Pending' : '$0')) + '</div><div class="p9-sc-meta">to restore min cash under ' + sc.label + '</div></div></div>');
+
+      // Accuracy
+      var accuracyRows = [];
+      sheetWeeks.forEach(function(w) {
+        if (w.date.getTime() + 6 * 86400000 >= today.getTime()) return;
+        var fc = col(w.row, 'Forecast Closing', 'Forecast Close', 'Forecasted Closing');
+        var ac = col(w.row, 'Actual Closing', 'Actual Close', 'Actual Closing Balance');
+        if (fc === '' || fc == null || ac === '' || ac == null) return;
+        accuracyRows.push({ Period: p9WeekLabel(w.date), Forecast: parseNum(fc), Actual: parseNum(ac), Variance: parseNum(ac) - parseNum(fc) });
+      });
+      accuracyRows = accuracyRows.slice(-8);
+      if (!accuracyRows.length) {
+        setH('p9-accuracy-table', '<p class="no-data-msg">Not available - sheet has no separate Forecast Closing vs Actual Closing columns. Add those to enable accuracy tracking.</p>');
+        setT('p9-accuracy-note', '4-week average error %: Pending');
+      } else {
+        setH('p9-accuracy-table', buildTable(accuracyRows.map(function(r) {
+          return { Period: r.Period, Forecast: r.Forecast, Actual: r.Actual, Variance: p9VarWord(r.Variance) };
+        }), [
+          { label: 'Period', key: 'Period' },
+          { label: 'Forecast Closing', key: 'Forecast', format: function(v) { return formatCurrency(parseNum(v)); } },
+          { label: 'Actual Closing', key: 'Actual', format: function(v) { return formatCurrency(parseNum(v)); } },
+          { label: 'Variance', key: 'Variance' }
+        ]));
+        var last4 = accuracyRows.slice(-4);
+        var avgErr = last4.reduce(function(s, r) { return s + (r.Actual ? Math.abs(r.Variance) / Math.abs(r.Actual) : 0); }, 0) / last4.length;
+        setT('p9-accuracy-note', '4-week average absolute error: ' + (avgErr * 100).toFixed(1) + '%' +
+          (avgErr > 0.1 ? ' · consistently exceeds 10% threshold - review forecast process' : ' · within 10% threshold'));
+      }
+
+      function srcRow(name, metaObj, extra) {
+        var live = metaObj && metaObj.ok;
+        return {
+          Source: name, Status: live ? 'Live' : 'Pending',
+          Rows: live ? String((metaObj.rows || []).length) : '-',
+          Updated: live
+            ? (name.indexOf('CashFlow') >= 0 && cfLastUpdated ? cfLastUpdated : (metaObj.loadedAt ? metaObj.loadedAt.toLocaleString('en-AU') : '-'))
+            : (metaObj && metaObj.error ? metaObj.error : 'Not available'),
+          Notes: extra || ''
+        };
+      }
+      setH('p9-sources-table', buildTable([
+        srcRow('CashFlow_Forecast', meta.cashflow,
+          (openingBank != null ? 'opening/last close used for bank · ' : '') +
+          (facilityKnown == null ? 'facility Pending · ' : '') +
+          (minCashKnown == null ? 'min cash Pending · ' : '') +
+          'GST not specified on tab · Inc GST used for invoices'),
+        srcRow('Xero_Invoices', meta.invoices,
+          'Open AUTHORISED/SENT only · drafts excluded · paid excluded · amounts Inc GST · days from Due Date when Days Overdue blank'),
+        srcRow('Xero_Financials', meta.financials, 'Not used to invent P and L cash · liquidity from CashFlow_Forecast + invoices')
+      ], [
+        { label: 'Source', key: 'Source' }, { label: 'Status', key: 'Status' }, { label: 'Rows', key: 'Rows' },
+        { label: 'Last updated', key: 'Updated' }, { label: 'Notes', key: 'Notes' }
+      ]));
+
+      setBBPageData('P9', 'P9: Cash Flow', {
+        brand: brandLabel, scenario: sc.label, horizon: horizonLabel, horizonMatched: horizonMapped,
+        openingBank: openingBank, facility: facilityKnown, minCash: minCashKnown, availableCash: availableCash,
+        cashIn13: cashIn13, cashOut13: cashOut13, net13: net13, lowest: lowest, lowestWeek: lowestWeek,
+        overdueAR: hasAR ? overdueAR : null, totalAR: hasAR ? totalAR : null,
+        arBuckets: bucketOrder.map(function(b) { return { bucket: b, amount: bucketMap[b].amount, count: bucketMap[b].count }; }),
+        collectionPriority: collectionTop.slice(0, 8), actions: actions,
+        sources: { cashflow: cfLive, invoices: invLive, cfLastUpdated: cfLastUpdated }
+      });
     }
-
-
 
     // ═══════════════════════════════════════════════════════════════
     // P10 - MARKETING (profitable demand dashboard)
@@ -12608,6 +13110,21 @@
       if (dqEl) {
         dqEl.textContent = 'Quality data confidence: ' + confLevel +
           (dqBits.length ? ' · ' + dqBits.join(' · ') : '');
+      }
+      var srcEl = document.getElementById('p11-sources');
+      if (srcEl) {
+        var diarySrc = !_p11LoadMeta.diariesOk
+          ? 'Buildpass_Site Diaries: Unavailable'
+          : ('Buildpass_Site Diaries: Live (' + entryCount + ' in selection)');
+        var varSrc = !_p11LoadMeta.variationsOk
+          ? 'Variations_Log: Unavailable'
+          : ('Variations_Log: Live (' + varCount + ' in selection)');
+        var defSrc = !_p11LoadMeta.defectsOk
+          ? 'Defects_Rework: Unavailable'
+          : (defectCount
+            ? ('Defects_Rework: Live (' + defectCount + ' recorded)')
+            : 'Defects_Rework: Live · 0 recorded (rework cost Unavailable, source not connected)');
+        srcEl.textContent = 'Sources · ' + diarySrc + ' · ' + varSrc + ' · ' + defSrc;
       }
 
       setBBPageData('P11', 'P11: Site Diary Quality and Variations Exceptions', {
