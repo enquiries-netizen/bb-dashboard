@@ -4965,15 +4965,16 @@
         });
       }
 
-      // ── Milestone Schedule: split table | wide Gantt (row-aligned) ────
+      // ── Milestone Schedule: sticky table + pixel Gantt (planned vs delay) ────
       var tableEl = document.getElementById('p4-schedule-table');
+      var MS_DAY = 86400000;
+      var P4_MS_LEFT_W = 720;
+      var P4_MS_PX_PER_DAY = 10;
 
-      /** Timeline bar status from sheet/normalized Status (not isOverdueNorm). */
       function p4TimelineStatusKey(r) {
         var lower = String(r.status != null ? r.status : '').toLowerCase().trim()
           .replace(/[_-]+/g, ' ')
           .replace(/\s+/g, ' ');
-
         if (lower === 'cancelled' || lower === 'canceled') return 'cancelled';
         if (lower === 'complete' || lower === 'completed') return 'completed';
         if (lower === 'overdue') return 'overdue';
@@ -5024,6 +5025,26 @@
         return '';
       }
 
+      function p4StartOfDay(d) {
+        var x = new Date(d.getTime());
+        x.setHours(0, 0, 0, 0);
+        return x.getTime();
+      }
+
+      function p4StartOfMonth(ms) {
+        var d = new Date(ms);
+        return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+      }
+
+      function p4StartOfWeekMon(ms) {
+        var d = new Date(ms);
+        d.setHours(0, 0, 0, 0);
+        var day = d.getDay(); // 0 Sun
+        var diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        return d.getTime();
+      }
+
       function renderP4MilestoneSchedule(sortedSched) {
         if (!tableEl) return;
         if (!sortedSched || !sortedSched.length) {
@@ -5036,116 +5057,226 @@
         var focusList = sortedSched.filter(p4ScheduleDefaultVisible);
         var visible = p4ScheduleShowAll ? sortedSched : focusList;
         var focusCount = focusList.length;
+        var todayMs = p4StartOfDay(today);
 
-        // Date range from visible rows + today (so Today line always has context)
+        // Extent: planned dates, actual ends, today (delay bars need room past planned end)
         var rangeMin = Infinity;
         var rangeMax = -Infinity;
-        visible.forEach(function(r) {
-          var s = r.startD && !isNaN(r.startD.getTime()) ? r.startD.getTime() : null;
-          var e = r.endD && !isNaN(r.endD.getTime()) ? r.endD.getTime() : null;
-          if (s !== null) {
-            if (s < rangeMin) rangeMin = s;
-            if (s > rangeMax) rangeMax = s;
-          }
-          if (e !== null) {
-            if (e < rangeMin) rangeMin = e;
-            if (e > rangeMax) rangeMax = e;
-          }
-        });
-        var todayMs = today.getTime();
-        if (isFinite(rangeMin)) {
-          if (todayMs < rangeMin) rangeMin = todayMs;
-          if (todayMs > rangeMax) rangeMax = todayMs;
+        function extendRange(t) {
+          if (t == null || isNaN(t)) return;
+          if (t < rangeMin) rangeMin = t;
+          if (t > rangeMax) rangeMax = t;
         }
+        visible.forEach(function(r) {
+          if (r.startD && !isNaN(r.startD.getTime())) extendRange(p4StartOfDay(r.startD));
+          if (r.endD && !isNaN(r.endD.getTime())) extendRange(p4StartOfDay(r.endD));
+          var ad = p4ParseScheduleDate(r.actualEndRaw);
+          if (ad) extendRange(p4StartOfDay(ad));
+        });
+        extendRange(todayMs);
+
         var hasRange = isFinite(rangeMin) && isFinite(rangeMax);
         if (hasRange && rangeMax <= rangeMin) {
-          rangeMin -= 86400000;
-          rangeMax += 86400000;
+          rangeMin -= MS_DAY * 7;
+          rangeMax += MS_DAY * 7;
         }
-        // modest padding so bars don't kiss the edges
         if (hasRange) {
-          var pad = Math.max((rangeMax - rangeMin) * 0.04, 86400000 * 3);
-          rangeMin -= pad;
-          rangeMax += pad;
+          // Pad to month boundaries + 1 week for breathing room
+          rangeMin = p4StartOfMonth(rangeMin - MS_DAY * 7);
+          var endPad = new Date(rangeMax + MS_DAY * 14);
+          rangeMax = new Date(endPad.getFullYear(), endPad.getMonth() + 1, 1).getTime() - MS_DAY;
         }
-        var rangeSpan = hasRange ? (rangeMax - rangeMin) : 1;
-        if (rangeSpan <= 0) rangeSpan = 1;
+        var rangeDays = hasRange ? Math.max(1, Math.round((rangeMax - rangeMin) / MS_DAY) + 1) : 1;
+        var timelineW = Math.max(480, rangeDays * P4_MS_PX_PER_DAY);
 
-        function p4TlPct(t) {
-          if (!hasRange || t == null || isNaN(t)) return null;
-          var p = ((t - rangeMin) / rangeSpan) * 100;
-          if (p < 0) p = 0;
-          if (p > 100) p = 100;
-          return p;
+        function xOf(ms) {
+          if (!hasRange || ms == null || isNaN(ms)) return null;
+          var x = ((ms - rangeMin) / MS_DAY) * P4_MS_PX_PER_DAY;
+          if (x < 0) x = 0;
+          if (x > timelineW) x = timelineW;
+          return x;
         }
 
-        var tickCount = 7;
-        var axisTicksHtml = '';
+        // Month bands
+        var monthsHtml = '';
+        var weeksHtml = '';
+        var weekLinesHtml = '';
         if (hasRange) {
-          for (var ti = 0; ti < tickCount; ti++) {
-            var tRatio = ti / (tickCount - 1);
-            var tDate = new Date(rangeMin + tRatio * rangeSpan);
-            axisTicksHtml +=
-              '<span class="p4-ms-tick" style="left:' + (tRatio * 100).toFixed(2) + '%">' +
-              '<span class="p4-ms-tick-label">' +
-              tDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: '2-digit' }) +
-              '</span></span>';
+          var mCursor = p4StartOfMonth(rangeMin);
+          while (mCursor <= rangeMax) {
+            var mNext = new Date(new Date(mCursor).getFullYear(), new Date(mCursor).getMonth() + 1, 1).getTime();
+            var mLeft = xOf(Math.max(mCursor, rangeMin));
+            var mRight = xOf(Math.min(mNext - MS_DAY, rangeMax));
+            if (mLeft !== null && mRight !== null && mRight > mLeft) {
+              var mLabel = new Date(mCursor).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+              monthsHtml +=
+                '<div class="p4-ms-month" style="left:' + mLeft.toFixed(1) + 'px;width:' +
+                (mRight - mLeft).toFixed(1) + 'px"><span>' + mLabel + '</span></div>';
+            }
+            mCursor = mNext;
+          }
+
+          var wCursor = p4StartOfWeekMon(rangeMin);
+          while (wCursor <= rangeMax + MS_DAY * 7) {
+            var wLeft = xOf(wCursor);
+            if (wLeft !== null && wCursor >= rangeMin - MS_DAY && wCursor <= rangeMax + MS_DAY) {
+              weekLinesHtml +=
+                '<div class="p4-ms-gridline p4-ms-gridline--week" style="left:' + wLeft.toFixed(1) + 'px"></div>';
+              var wEnd = wCursor + MS_DAY * 6;
+              var wRight = xOf(Math.min(wEnd, rangeMax));
+              if (wRight !== null && wRight > wLeft) {
+                var wLab = new Date(wCursor).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+                weeksHtml +=
+                  '<div class="p4-ms-week" style="left:' + wLeft.toFixed(1) + 'px;width:' +
+                  Math.max(wRight - wLeft, 1).toFixed(1) + 'px"><span>W ' + wLab + '</span></div>';
+              }
+            }
+            wCursor += MS_DAY * 7;
           }
         }
 
-        var todayTlPct = hasRange ? p4TlPct(todayMs) : null;
-        var todayLineHtml = (todayTlPct !== null)
-          ? '<div class="p4-ms-today" style="left:' + todayTlPct.toFixed(2) + '%" title="Today">' +
-            '<span class="p4-ms-today-label">Today</span></div>'
-          : '';
+        var todayX = hasRange ? xOf(todayMs) : null;
+        var todayLine =
+          todayX !== null
+            ? '<div class="p4-ms-today" style="left:' + todayX.toFixed(1) + 'px" title="Today">' +
+              '<span class="p4-ms-today-label">Today</span></div>'
+            : '';
 
-        var overdueWarnSvg =
-          '<svg class="p4-ms-warn-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">' +
-          '<path fill="currentColor" d="M8 1.2 14.8 14H1.2L8 1.2zm0 3.3-.9 5h1.8l-.9-5zM8 12.2a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z"/>' +
-          '</svg>';
+        function barSlice(leftX, rightX, className, title) {
+          if (leftX === null || rightX === null) return '';
+          var w = Math.max(rightX - leftX, 4);
+          if (leftX + w > timelineW) w = timelineW - leftX;
+          if (w <= 0) return '';
+          return (
+            '<div class="p4-ms-bar ' + className + '"' +
+            ' style="left:' + leftX.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px"' +
+            (title ? ' title="' + p4EscAttr(title) + '"' : '') +
+            '></div>'
+          );
+        }
 
-        function p4BarHtml(r) {
+        function p4GanttBarsHtml(r) {
           if (!hasRange) return '';
           var statusKey = p4TimelineStatusKey(r);
           var startOk = r.startD && !isNaN(r.startD.getTime());
           var endOk = r.endD && !isNaN(r.endD.getTime());
-          if (!startOk && !endOk) return '';
-          var t0 = startOk ? r.startD.getTime() : r.endD.getTime();
-          var t1 = endOk ? r.endD.getTime() : r.startD.getTime();
-          var barMin = Math.min(t0, t1);
-          var barMax = Math.max(t0, t1);
-          var left = p4TlPct(barMin);
-          var right = p4TlPct(barMax);
-          if (left === null || right === null) return '';
-          var width = Math.max(right - left, 0.5);
-          if (left + width > 100) width = 100 - left;
-          var pctDone = (r.pct !== null && r.pct !== undefined) ? Math.max(0, Math.min(100, r.pct)) : 0;
+          if (!startOk && !endOk) {
+            return '<span class="p4-ms-nodates">No planned dates</span>';
+          }
+          var tStart = startOk ? p4StartOfDay(r.startD) : p4StartOfDay(r.endD);
+          var tEnd = endOk ? p4StartOfDay(r.endD) : p4StartOfDay(r.startD);
+          if (tEnd < tStart) {
+            var tmp = tStart; tStart = tEnd; tEnd = tmp;
+          }
+          var x0 = xOf(tStart);
+          var x1 = xOf(tEnd);
+          var actualD = p4ParseScheduleDate(r.actualEndRaw);
+          var actualMs = actualD ? p4StartOfDay(actualD) : null;
           var startLabel = p4FmtDate(r.startD, r.startRaw) || '—';
           var endLabel = p4FmtDate(r.endD, r.endRaw) || '—';
-          var title =
-            (r.milestone || 'Milestone') +
-            ' · ' + startLabel + ' → ' + endLabel +
-            ' · ' + (r.status || statusKey) +
-            ' · ' + Math.round(pctDone) + '%';
+          var plannedTitle = 'Planned ' + startLabel + ' → ' + endLabel;
 
-          var bar =
-            '<div class="p4-ms-bar p4-ms-bar--' + statusKey + '"' +
-            ' data-status="' + statusKey + '"' +
-            ' style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%"' +
-            ' title="' + p4EscAttr(title) + '">';
-          if (statusKey === 'in-progress') {
-            bar += '<span class="p4-ms-bar-progress" style="width:' + Math.round(pctDone) + '%"></span>';
+          var html = '';
+          // Planned window — always the light reference bar
+          html += barSlice(x0, x1, 'p4-ms-bar--planned', plannedTitle);
+
+          if (statusKey === 'completed') {
+            // Solid charcoal across planned window
+            html += barSlice(x0, x1, 'p4-ms-bar--completed', 'Completed');
+            // If finished after planned end, charcoal delay stub to actual end
+            if (actualMs !== null && actualMs > tEnd) {
+              html += barSlice(x1, xOf(actualMs), 'p4-ms-bar--slip', 'Delay to actual end');
+            }
+          } else if (statusKey === 'in-progress') {
+            html += barSlice(x0, x1, 'p4-ms-bar--in-progress', 'In Progress');
+            // If already past planned end while in progress, show delay to today
+            if (todayMs > tEnd) {
+              html += barSlice(x1, xOf(todayMs), 'p4-ms-bar--slip', 'Delay past planned end');
+            }
+          } else if (statusKey === 'overdue') {
+            // Dual treatment: planned (faded) + solid charcoal delay planned-end → today
+            var slipTo = todayMs;
+            if (actualMs !== null && actualMs > tEnd) slipTo = Math.max(slipTo, actualMs);
+            if (slipTo < tEnd) slipTo = tEnd;
+            html += barSlice(x1, xOf(slipTo), 'p4-ms-bar--slip', 'Overdue / delay past planned end');
+          } else if (statusKey === 'not-started') {
+            html += barSlice(x0, x1, 'p4-ms-bar--not-started', 'Not Started');
+          } else if (statusKey === 'cancelled') {
+            html += barSlice(x0, x1, 'p4-ms-bar--cancelled', 'Cancelled');
           }
-          if (statusKey === 'overdue') {
-            bar += '<span class="p4-ms-bar-marker" aria-hidden="true">' + overdueWarnSvg + '</span>';
-          }
-          bar += '</div>';
-          return bar;
+          return html;
         }
 
-        var showActualDone = sortedSched.some(function(r) {
-          return !!p4ParseScheduleDate(r.actualEndRaw);
-        });
+        function rowLeftCells(r, isHead) {
+          if (isHead) {
+            return (
+              '<div class="p4-ms-cell p4-ms-c-project">Project</div>' +
+              '<div class="p4-ms-cell p4-ms-c-milestone">Milestone</div>' +
+              '<div class="p4-ms-cell p4-ms-c-brand">Brand / Dept</div>' +
+              '<div class="p4-ms-cell p4-ms-c-date">Planned Start</div>' +
+              '<div class="p4-ms-cell p4-ms-c-date">Planned End</div>' +
+              '<div class="p4-ms-cell p4-ms-c-slip">Slippage</div>' +
+              '<div class="p4-ms-cell p4-ms-c-staff">Staffing</div>' +
+              '<div class="p4-ms-cell p4-ms-c-status">Status</div>' +
+              '<div class="p4-ms-cell p4-ms-c-pct">% Done</div>'
+            );
+          }
+          var overdueRow = isOverdueNorm(r);
+          var startFmt = p4FmtDate(r.startD, r.startRaw) || '';
+          var endFmt = p4FmtDate(r.endD, r.endRaw) || '';
+          var slippageStr = '';
+          if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
+            var d = parseInt(r.slippageRaw, 10);
+            if (!isNaN(d)) {
+              if (d > 0) slippageStr = '+' + d + ' days';
+              else if (d < 0) slippageStr = Math.abs(d) + ' days early';
+              else slippageStr = 'On Schedule';
+            }
+          } else if (overdueRow && r.endD) {
+            var daysLate = Math.round((today - r.endD) / MS_DAY);
+            if (daysLate > 0) slippageStr = '+' + daysLate + ' days';
+          } else if (!overdueRow && r.status && String(r.status).toLowerCase().indexOf('complete') === -1) {
+            slippageStr = 'On Schedule';
+          }
+          var handsLabel = handsByProject[r.project] || '';
+          var handsCell = formatHandsBadge(handsLabel);
+          var dateNote = r.dateFlag
+            ? '<span class="p4-badge p4-badge--critical" title="Planned Start is after Planned End">' +
+              r.dateFlag + '</span> '
+            : '';
+          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '';
+          var brandDept = p4BrandDeptLine(r);
+          return (
+            '<div class="p4-ms-cell p4-ms-c-project" title="' + p4EscAttr(r.project || '') + '">' +
+            p4EscHtml(r.project || '') + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-milestone" title="' + p4EscAttr(r.milestone || '') + '">' +
+            p4EscHtml(r.milestone || '') + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-brand">' + p4EscHtml(brandDept) + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-date">' + dateNote + p4EscHtml(startFmt) + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-date">' + p4EscHtml(endFmt) + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-slip">' + p4EscHtml(slippageStr) + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-staff">' + handsCell + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-status">' + formatStatusBadge(r.status, overdueRow) + '</div>' +
+            '<div class="p4-ms-cell p4-ms-c-pct">' + p4EscHtml(pctFmt) + '</div>'
+          );
+        }
+
+        function drawerPayload(r) {
+          var actualD = p4ParseScheduleDate(r.actualEndRaw);
+          var handsLabel = handsByProject[r.project] || '—';
+          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '—';
+          return {
+            project: r.project || '—',
+            milestone: r.milestone || '—',
+            staffing: handsLabel || '—',
+            pct: pctFmt,
+            plannedStart: p4FmtDate(r.startD, r.startRaw) || '—',
+            plannedEnd: p4FmtDate(r.endD, r.endRaw) || '—',
+            actualEnd: actualD ? p4FmtDate(actualD, r.actualEndRaw) : (r.actualEndRaw || '—'),
+            status: r.status || '—',
+            brandDept: p4BrandDeptLine(r) || '—'
+          };
+        }
 
         var metaText = p4ScheduleShowAll
           ? 'Showing all ' + totalCount + ' milestones'
@@ -5154,21 +5285,6 @@
           ? 'Show Overdue &amp; In Progress only'
           : 'Show all milestones';
 
-        var leftHead =
-          '<div class="p4-ms-cell p4-ms-c-project">Project</div>' +
-          '<div class="p4-ms-cell p4-ms-c-milestone">Milestone</div>' +
-          '<div class="p4-ms-cell p4-ms-c-brand">Brand / Dept</div>' +
-          '<div class="p4-ms-cell p4-ms-c-date">Planned Start</div>' +
-          '<div class="p4-ms-cell p4-ms-c-date">Planned End</div>' +
-          '<div class="p4-ms-cell p4-ms-c-slip">Slippage</div>' +
-          '<div class="p4-ms-cell p4-ms-c-staff">Staffing</div>';
-        if (showActualDone) {
-          leftHead += '<div class="p4-ms-cell p4-ms-c-date">Actual Done</div>';
-        }
-        leftHead +=
-          '<div class="p4-ms-cell p4-ms-c-status">Status</div>' +
-          '<div class="p4-ms-cell p4-ms-c-pct">% Done</div>';
-
         var html =
           '<div class="p4-ms" role="region" aria-label="Milestone Schedule">' +
           '<div class="p4-ms-toolbar">' +
@@ -5176,9 +5292,10 @@
           '<button type="button" class="p4-ms-toggle" id="p4-ms-toggle">' + toggleLabel + '</button>' +
           '</div>' +
           '<div class="p4-ms-legend" aria-hidden="true">' +
+          '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--planned"></i>Planned window</span>' +
+          '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--slip"></i>Delay (past planned end)</span>' +
           '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--completed"></i>Completed</span>' +
           '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--in-progress"></i>In Progress</span>' +
-          '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--overdue"></i>Overdue</span>' +
           '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--not-started"></i>Not Started</span>' +
           '<span class="p4-ms-legend-item"><i class="p4-ms-swatch p4-ms-swatch--cancelled"></i>Cancelled</span>' +
           '</div>';
@@ -5198,83 +5315,69 @@
           return;
         }
 
-        var leftGridClass = 'p4-ms-left-inner' + (showActualDone ? ' p4-ms-left-inner--actual' : '');
-
         html +=
-          '<div class="p4-ms-body">' +
-          '<div class="p4-ms-row p4-ms-row--head">' +
-          '<div class="p4-ms-left"><div class="' + leftGridClass + ' p4-ms-left-inner--head">' + leftHead + '</div></div>' +
-          '<div class="p4-ms-right">' +
-          '<div class="p4-ms-axis" aria-hidden="true">' + axisTicksHtml + todayLineHtml + '</div>' +
-          '</div></div>';
+          '<div class="p4-ms-scroll">' +
+          '<div class="p4-ms-inner" style="min-width:' + (P4_MS_LEFT_W + timelineW) + 'px">' +
+          // Sticky data table column
+          '<div class="p4-ms-sticky-left" style="width:' + P4_MS_LEFT_W + 'px">' +
+          '<div class="p4-ms-left-row p4-ms-left-row--head">' +
+          '<div class="p4-ms-left-grid">' + rowLeftCells(null, true) + '</div></div>';
 
-        visible.forEach(function(r) {
-          var overdueRow = isOverdueNorm(r);
-          var startFmt = p4FmtDate(r.startD, r.startRaw) || '';
-          var endFmt = p4FmtDate(r.endD, r.endRaw) || '';
-          var actualD = p4ParseScheduleDate(r.actualEndRaw);
-          var actualEndFmt = actualD ? p4FmtDate(actualD, r.actualEndRaw) : '';
-
-          var slippageStr = '';
-          if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
-            var d = parseInt(r.slippageRaw, 10);
-            if (!isNaN(d)) {
-              if (d > 0) slippageStr = '+' + d + ' days';
-              else if (d < 0) slippageStr = Math.abs(d) + ' days early';
-              else slippageStr = 'On Schedule';
-            }
-          } else if (overdueRow && r.endD) {
-            var daysLate = Math.round((today - r.endD) / 86400000);
-            if (daysLate > 0) slippageStr = '+' + daysLate + ' days';
-          } else if (!overdueRow && r.status && String(r.status).toLowerCase().indexOf('complete') === -1) {
-            slippageStr = 'On Schedule';
-          }
-
-          var handsLabel = handsByProject[r.project] || '';
-          var handsCell = formatHandsBadge(handsLabel);
-
-          var dateNote = r.dateFlag
-            ? '<span class="p4-badge p4-badge--critical" title="Planned Start is after Planned End">' +
-              r.dateFlag + '</span> '
-            : '';
-
-          var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '';
-
-          var brandDept = p4BrandDeptLine(r);
-          var brandDeptTitle = '';
-          if (r.pctInfo && r.pctInfo.correctedFrom === 100 && r.pctInfo.reason) {
-            brandDeptTitle = r.pctInfo.reason;
-          }
-
-          var leftCells =
-            '<div class="p4-ms-cell p4-ms-c-project" title="' + p4EscAttr(r.project || '') + '">' +
-            p4EscHtml(r.project || '') + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-milestone" title="' + p4EscAttr(r.milestone || '') + '">' +
-            p4EscHtml(r.milestone || '') + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-brand"' +
-            (brandDeptTitle ? ' title="' + p4EscAttr(brandDeptTitle) + '"' : '') + '>' +
-            p4EscHtml(brandDept) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-date">' + dateNote + p4EscHtml(startFmt) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-date">' + p4EscHtml(endFmt) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-slip">' + p4EscHtml(slippageStr) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-staff">' + handsCell + '</div>';
-          if (showActualDone) {
-            leftCells += '<div class="p4-ms-cell p4-ms-c-date">' + p4EscHtml(actualEndFmt) + '</div>';
-          }
-          leftCells +=
-            '<div class="p4-ms-cell p4-ms-c-status">' + formatStatusBadge(r.status, overdueRow) + '</div>' +
-            '<div class="p4-ms-cell p4-ms-c-pct">' + p4EscHtml(pctFmt) + '</div>';
-
-          var rowClass = 'p4-ms-row' + (overdueRow ? ' p4-ms-row--risk' : '');
+        visible.forEach(function(r, idx) {
+          var risk = isOverdueNorm(r) ? ' p4-ms-left-row--risk' : '';
           html +=
-            '<div class="' + rowClass + '">' +
-            '<div class="p4-ms-left"><div class="' + leftGridClass + '">' + leftCells + '</div></div>' +
-            '<div class="p4-ms-right">' +
-            '<div class="p4-ms-track">' + todayLineHtml + p4BarHtml(r) + '</div>' +
-            '</div></div>';
+            '<div class="p4-ms-left-row' + risk + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0">' +
+            '<div class="p4-ms-left-grid">' + rowLeftCells(r, false) + '</div></div>';
         });
 
-        html += '</div></div>';
+        html +=
+          '</div>' +
+          // Timeline
+          '<div class="p4-ms-timeline" style="width:' + timelineW + 'px">' +
+          '<div class="p4-ms-timeline-head">' +
+          '<div class="p4-ms-months" style="width:' + timelineW + 'px">' + monthsHtml + '</div>' +
+          '<div class="p4-ms-weeks" style="width:' + timelineW + 'px">' + weeksHtml + '</div>' +
+          '<div class="p4-ms-grid-layer" style="width:' + timelineW + 'px">' +
+          weekLinesHtml + todayLine +
+          '</div></div>';
+
+        visible.forEach(function(r, idx) {
+          var risk = isOverdueNorm(r) ? ' p4-ms-lane--risk' : '';
+          html +=
+            '<div class="p4-ms-lane' + risk + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0" ' +
+            'style="width:' + timelineW + 'px">' +
+            '<div class="p4-ms-lane-grid">' + weekLinesHtml +
+            (todayX !== null
+              ? '<div class="p4-ms-today p4-ms-today--lane" style="left:' + todayX.toFixed(1) + 'px"></div>'
+              : '') +
+            '</div>' +
+            '<div class="p4-ms-lane-bars">' + p4GanttBarsHtml(r) + '</div></div>';
+        });
+
+        html +=
+          '</div></div></div>' +
+          // Drawer
+          '<div class="p4-ms-drawer-backdrop" id="p4-ms-drawer-backdrop" hidden></div>' +
+          '<aside class="p4-ms-drawer" id="p4-ms-drawer" hidden aria-label="Milestone details">' +
+          '<div class="p4-ms-drawer-head">' +
+          '<div>' +
+          '<div class="p4-ms-drawer-kicker">Milestone detail</div>' +
+          '<h3 class="p4-ms-drawer-title" id="p4-ms-drawer-title">—</h3>' +
+          '<p class="p4-ms-drawer-sub" id="p4-ms-drawer-sub"></p>' +
+          '</div>' +
+          '<button type="button" class="p4-ms-drawer-close" id="p4-ms-drawer-close" aria-label="Close">×</button>' +
+          '</div>' +
+          '<dl class="p4-ms-drawer-dl">' +
+          '<div><dt>Status</dt><dd id="p4-ms-d-status">—</dd></div>' +
+          '<div><dt>Staffing</dt><dd id="p4-ms-d-staff">—</dd></div>' +
+          '<div><dt>% Done</dt><dd id="p4-ms-d-pct">—</dd></div>' +
+          '<div><dt>Planned Start</dt><dd id="p4-ms-d-ps">—</dd></div>' +
+          '<div><dt>Planned End</dt><dd id="p4-ms-d-pe">—</dd></div>' +
+          '<div><dt>Actual End</dt><dd id="p4-ms-d-ae">—</dd></div>' +
+          '<div><dt>Brand / Dept</dt><dd id="p4-ms-d-bd">—</dd></div>' +
+          '</dl>' +
+          '</aside></div>';
+
         tableEl.innerHTML = html;
 
         var toggleBtn = document.getElementById('p4-ms-toggle');
@@ -5284,6 +5387,56 @@
             renderP4MilestoneSchedule(sortedSched);
           });
         }
+
+        var drawer = document.getElementById('p4-ms-drawer');
+        var backdrop = document.getElementById('p4-ms-drawer-backdrop');
+        var closeBtn = document.getElementById('p4-ms-drawer-close');
+
+        function closeDrawer() {
+          if (drawer) drawer.hidden = true;
+          if (backdrop) backdrop.hidden = true;
+          document.querySelectorAll('#p4-schedule-table .p4-ms-row-hit.is-active').forEach(function(el) {
+            el.classList.remove('is-active');
+          });
+        }
+
+        function openDrawer(idx) {
+          var r = visible[idx];
+          if (!r || !drawer) return;
+          var p = drawerPayload(r);
+          document.getElementById('p4-ms-drawer-title').textContent = p.milestone;
+          document.getElementById('p4-ms-drawer-sub').textContent = p.project;
+          document.getElementById('p4-ms-d-status').textContent = p.status;
+          document.getElementById('p4-ms-d-staff').textContent = p.staffing;
+          document.getElementById('p4-ms-d-pct').textContent = p.pct;
+          document.getElementById('p4-ms-d-ps').textContent = p.plannedStart;
+          document.getElementById('p4-ms-d-pe').textContent = p.plannedEnd;
+          document.getElementById('p4-ms-d-ae').textContent = p.actualEnd;
+          document.getElementById('p4-ms-d-bd').textContent = p.brandDept;
+          drawer.hidden = false;
+          if (backdrop) backdrop.hidden = false;
+          document.querySelectorAll('#p4-schedule-table .p4-ms-row-hit').forEach(function(el) {
+            el.classList.toggle('is-active', el.getAttribute('data-ms-idx') === String(idx));
+          });
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+        if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+        tableEl.querySelectorAll('.p4-ms-row-hit').forEach(function(el) {
+          el.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            var idx = parseInt(el.getAttribute('data-ms-idx'), 10);
+            if (!isNaN(idx)) openDrawer(idx);
+          });
+          el.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              var idx = parseInt(el.getAttribute('data-ms-idx'), 10);
+              if (!isNaN(idx)) openDrawer(idx);
+            }
+          });
+        });
       }
 
       if (schedFiltered.length > 0) {

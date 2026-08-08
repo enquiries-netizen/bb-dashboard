@@ -475,7 +475,7 @@ select {
   background: rgba(210, 212, 213, 0.35);
 }
 
-/* Milestone Schedule: split table | wide Gantt (row-aligned, shared vertical scroll) */
+/* Milestone Schedule: sticky table + pixel Gantt (planned vs delay bars) */
 #p4-schedule-table {
   max-width: 100%;
   min-width: 0;
@@ -485,6 +485,7 @@ select {
 #p4-schedule-table .p4-ms {
   max-width: 100%;
   min-width: 0;
+  position: relative;
 }
 
 #p4-schedule-table .p4-ms-toolbar {
@@ -542,29 +543,31 @@ select {
 
 #p4-schedule-table .p4-ms-swatch {
   display: inline-block;
-  width: 14px;
+  width: 16px;
   height: 8px;
   box-sizing: border-box;
   border-radius: 3px;
   flex-shrink: 0;
 }
 
+#p4-schedule-table .p4-ms-swatch--planned {
+  background: rgba(210, 212, 213, 0.75);
+  border: 1px solid #D2D4D5;
+}
+#p4-schedule-table .p4-ms-swatch--slip {
+  background: #262425;
+}
 #p4-schedule-table .p4-ms-swatch--completed { background: #262425; }
 #p4-schedule-table .p4-ms-swatch--in-progress {
   background: #BCBDBE;
   border: 1px solid #BCBDBE;
 }
-#p4-schedule-table .p4-ms-swatch--overdue {
-  background: #1a191a;
-  border: 2px solid #262425;
-  height: 10px;
-}
 #p4-schedule-table .p4-ms-swatch--not-started {
-  background: rgba(210, 212, 213, 0.2);
+  background: transparent;
   border: 1px solid #BCBDBE;
 }
 #p4-schedule-table .p4-ms-swatch--cancelled {
-  background: rgba(210, 212, 213, 0.3);
+  background: rgba(210, 212, 213, 0.35);
   border: 1px dashed #D2D4D5;
 }
 
@@ -575,118 +578,118 @@ select {
   line-height: 1.4;
 }
 
-/* Shared vertical scroll — every row is table | gantt halves */
-#p4-schedule-table .p4-ms-body {
-  max-height: min(62vh, 560px);
+/* Horizontal + vertical scroll container */
+#p4-schedule-table .p4-ms-scroll {
+  max-height: min(64vh, 580px);
   overflow: auto;
-  border: 1px solid rgba(188, 189, 190, 0.4);
+  border: 1px solid rgba(188, 189, 190, 0.45);
   border-radius: var(--radius-sm);
   background: #FFFFFF;
   -webkit-overflow-scrolling: touch;
 }
 
-#p4-schedule-table .p4-ms-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 38px;
+#p4-schedule-table .p4-ms-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  min-height: 100%;
+}
+
+/* Sticky left data panel — solid white so timeline never shows through */
+#p4-schedule-table .p4-ms-sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+  background: #FFFFFF;
+  border-right: 1px solid rgba(188, 189, 190, 0.65);
+  box-shadow: none;
+}
+
+#p4-schedule-table .p4-ms-left-row {
+  min-height: 44px;
   border-bottom: 1px solid rgba(210, 212, 213, 0.45);
-  align-items: stretch;
+  background: #FFFFFF;
+  box-sizing: border-box;
 }
 
-#p4-schedule-table .p4-ms-row:last-child {
-  border-bottom: none;
-}
-
-#p4-schedule-table .p4-ms-row--head {
+#p4-schedule-table .p4-ms-left-row--head {
   position: sticky;
   top: 0;
-  z-index: 4;
-  min-height: 42px;
+  z-index: 22;
+  min-height: 52px;
   background: #FFFFFF;
   border-bottom: 1px solid rgba(188, 189, 190, 0.55);
 }
 
-#p4-schedule-table .p4-ms-row--risk .p4-ms-left-inner,
-#p4-schedule-table .p4-ms-row--risk .p4-ms-right {
+#p4-schedule-table .p4-ms-left-row--risk {
   background: #F0F1F1;
 }
 
-#p4-schedule-table .p4-ms-left {
-  min-width: 0;
-  overflow-x: auto;
-  border-right: 1px solid rgba(188, 189, 190, 0.5);
-  background: #FFFFFF;
+#p4-schedule-table .p4-ms-left-row--risk .p4-ms-left-grid {
+  background: #F0F1F1;
 }
 
-#p4-schedule-table .p4-ms-left-inner {
+#p4-schedule-table .p4-ms-left-grid {
   display: grid;
-  /* Project | Milestone | Brand | Start | End | Slippage | Staff | [Actual] | Status | % */
   grid-template-columns:
-    minmax(88px, 1.1fr)
-    minmax(96px, 1.2fr)
-    minmax(72px, 0.9fr)
-    minmax(72px, 0.7fr)
-    minmax(72px, 0.7fr)
-    minmax(78px, 0.75fr)
-    minmax(70px, 0.85fr)
+    minmax(90px, 1.15fr)
+    minmax(100px, 1.25fr)
+    minmax(70px, 0.9fr)
     minmax(72px, 0.75fr)
+    minmax(72px, 0.75fr)
+    minmax(78px, 0.8fr)
+    minmax(86px, 0.95fr)
+    minmax(74px, 0.8fr)
     minmax(44px, 0.5fr);
   gap: 0;
   align-items: center;
-  min-width: 680px;
-  min-height: 100%;
   height: 100%;
-  box-sizing: border-box;
-  padding: 0 4px;
+  min-height: 44px;
+  padding: 0 6px;
   background: #FFFFFF;
+  box-sizing: border-box;
 }
 
-/* When Actual Done is present */
-#p4-schedule-table .p4-ms-left-inner--actual {
-  grid-template-columns:
-    minmax(88px, 1.1fr)
-    minmax(96px, 1.2fr)
-    minmax(72px, 0.9fr)
-    minmax(72px, 0.7fr)
-    minmax(72px, 0.7fr)
-    minmax(78px, 0.75fr)
-    minmax(70px, 0.85fr)
-    minmax(72px, 0.7fr)
-    minmax(72px, 0.75fr)
-    minmax(44px, 0.5fr);
-  min-width: 760px;
-}
-
-#p4-schedule-table .p4-ms-left-inner--head {
+#p4-schedule-table .p4-ms-left-row--head .p4-ms-left-grid {
+  min-height: 52px;
   font-family: var(--font-heading);
   font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.35px;
   text-transform: uppercase;
   color: #BCBDBE;
 }
 
 #p4-schedule-table .p4-ms-cell {
-  padding: 6px 5px;
+  padding: 5px 4px;
   font-size: 11px;
   line-height: 1.25;
   color: #262425;
-  box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
-#p4-schedule-table .p4-ms-left-inner--head .p4-ms-cell {
+#p4-schedule-table .p4-ms-left-row--head .p4-ms-cell {
   font-size: 8.5px;
   font-weight: 700;
   color: #BCBDBE;
   white-space: nowrap;
   overflow: visible;
-  text-overflow: clip;
 }
 
-/* Urgency columns emphasized */
+#p4-schedule-table .p4-ms-c-project,
+#p4-schedule-table .p4-ms-c-milestone {
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 #p4-schedule-table .p4-ms-c-slip {
   font-weight: 600;
   white-space: nowrap;
@@ -697,27 +700,16 @@ select {
   white-space: nowrap;
 }
 
-#p4-schedule-table .p4-ms-c-project,
-#p4-schedule-table .p4-ms-c-milestone {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+#p4-schedule-table .p4-ms-c-date {
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 #p4-schedule-table .p4-ms-c-brand {
   font-size: 10.5px;
   white-space: normal;
   word-break: break-word;
-}
-
-#p4-schedule-table .p4-ms-c-date {
-  white-space: nowrap;
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
 }
 
 #p4-schedule-table .p4-ms-c-pct {
@@ -727,69 +719,96 @@ select {
   white-space: nowrap;
 }
 
-#p4-schedule-table .p4-ms-c-staff .p4-badge {
-  font-size: 8.5px;
-  padding: 1px 5px;
-  max-width: 100%;
-}
-
 #p4-schedule-table .p4-ms .p4-badge {
   font-size: 8.5px;
   padding: 1px 5px;
 }
 
-/* Wide Gantt half */
-#p4-schedule-table .p4-ms-right {
-  min-width: 0;
+#p4-schedule-table .p4-ms-row-hit {
+  cursor: pointer;
+}
+
+#p4-schedule-table .p4-ms-row-hit:hover .p4-ms-left-grid,
+#p4-schedule-table .p4-ms-row-hit:hover.p4-ms-lane {
+  background: rgba(210, 212, 213, 0.28);
+}
+
+#p4-schedule-table .p4-ms-row-hit.is-active .p4-ms-left-grid,
+#p4-schedule-table .p4-ms-row-hit.is-active.p4-ms-lane {
+  background: rgba(210, 212, 213, 0.45);
+}
+
+/* Timeline */
+#p4-schedule-table .p4-ms-timeline {
+  flex: 0 0 auto;
   position: relative;
   background: #FFFFFF;
+}
+
+#p4-schedule-table .p4-ms-timeline-head {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  height: 52px;
+  background: #FFFFFF;
+  border-bottom: 1px solid rgba(188, 189, 190, 0.55);
+  box-sizing: border-box;
+}
+
+#p4-schedule-table .p4-ms-months,
+#p4-schedule-table .p4-ms-weeks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  overflow: hidden;
+}
+
+#p4-schedule-table .p4-ms-months { top: 0; }
+#p4-schedule-table .p4-ms-weeks { top: 24px; }
+
+#p4-schedule-table .p4-ms-month,
+#p4-schedule-table .p4-ms-week {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(188, 189, 190, 0.35);
+  overflow: hidden;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  padding-left: 6px;
 }
 
-#p4-schedule-table .p4-ms-axis,
-#p4-schedule-table .p4-ms-track {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  min-height: 38px;
-  background:
-    repeating-linear-gradient(
-      to right,
-      transparent,
-      transparent calc(14.28% - 1px),
-      rgba(188, 189, 190, 0.18) calc(14.28% - 1px),
-      rgba(188, 189, 190, 0.18) 14.28%
-    );
+#p4-schedule-table .p4-ms-month span {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  color: #262425;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
-#p4-schedule-table .p4-ms-axis {
-  min-height: 42px;
-  background: #FFFFFF;
+#p4-schedule-table .p4-ms-week span {
+  font-size: 9px;
+  color: #BCBDBE;
+  font-family: var(--font-body);
+  white-space: nowrap;
 }
 
-#p4-schedule-table .p4-ms-tick {
+#p4-schedule-table .p4-ms-grid-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#p4-schedule-table .p4-ms-gridline {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 0;
-  transform: translateX(-50%);
+  border-left: 1px solid rgba(188, 189, 190, 0.28);
   pointer-events: none;
-}
-
-#p4-schedule-table .p4-ms-tick:first-child { transform: translateX(0); }
-#p4-schedule-table .p4-ms-tick:last-child { transform: translateX(-100%); }
-
-#p4-schedule-table .p4-ms-tick-label {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  font-size: 9px;
-  font-family: var(--font-body);
-  color: #BCBDBE;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  line-height: 1.2;
 }
 
 #p4-schedule-table .p4-ms-today {
@@ -797,127 +816,232 @@ select {
   top: 0;
   bottom: 0;
   width: 0;
-  border-left: 1px dashed #262425;
-  opacity: 0.7;
-  z-index: 1;
+  border-left: 2px solid #262425;
+  z-index: 3;
   pointer-events: none;
 }
 
 #p4-schedule-table .p4-ms-today-label {
   position: absolute;
   top: 2px;
-  left: 3px;
+  left: 4px;
   font-size: 8px;
   font-weight: 700;
   font-family: var(--font-heading);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   color: #262425;
   white-space: nowrap;
-  opacity: 0.85;
+  background: #FFFFFF;
+  padding: 0 3px;
 }
 
-#p4-schedule-table .p4-ms-track .p4-ms-today-label {
+#p4-schedule-table .p4-ms-today--lane .p4-ms-today-label {
   display: none;
 }
 
-#p4-schedule-table .p4-ms-bar {
+#p4-schedule-table .p4-ms-lane {
+  position: relative;
+  min-height: 44px;
+  height: 44px;
+  border-bottom: 1px solid rgba(210, 212, 213, 0.45);
+  box-sizing: border-box;
+  background: #FFFFFF;
+}
+
+#p4-schedule-table .p4-ms-lane--risk {
+  background: #F0F1F1;
+}
+
+#p4-schedule-table .p4-ms-lane-grid {
   position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#p4-schedule-table .p4-ms-lane-bars {
+  position: absolute;
+  inset: 0 0 0 0;
+  z-index: 2;
+}
+
+#p4-schedule-table .p4-ms-nodates {
+  position: absolute;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  height: 14px;
-  box-sizing: border-box;
-  z-index: 2;
-  min-width: 6px;
-  border-radius: 6px;
-  background: transparent;
-  border: none;
-  overflow: visible;
+  font-size: 10px;
+  color: #BCBDBE;
 }
 
-#p4-schedule-table .p4-ms-bar--completed,
-#p4-schedule-table .p4-ms-bar[data-status="completed"] {
+/* Bars — real duration blocks, no icons/pills */
+#p4-schedule-table .p4-ms-bar {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 4px;
+  min-width: 4px;
+}
+
+/* Planned window (always; faded) — upper band */
+#p4-schedule-table .p4-ms-bar--planned {
+  top: 8px;
+  height: 10px;
+  background: rgba(210, 212, 213, 0.7);
+  border: 1px solid #D2D4D5;
+  z-index: 1;
+}
+
+/* Status / delay bars — lower band, connecting from planned end for slip */
+#p4-schedule-table .p4-ms-bar--completed {
+  top: 22px;
+  height: 12px;
   background: #262425;
   border: none;
-  overflow: hidden;
+  z-index: 2;
 }
 
-#p4-schedule-table .p4-ms-bar--in-progress,
-#p4-schedule-table .p4-ms-bar[data-status="in-progress"] {
+#p4-schedule-table .p4-ms-bar--in-progress {
+  top: 22px;
+  height: 12px;
   background: #BCBDBE;
   border: 1px solid #BCBDBE;
-  overflow: hidden;
+  z-index: 2;
 }
 
-#p4-schedule-table .p4-ms-bar-progress {
-  display: block;
-  height: 100%;
+#p4-schedule-table .p4-ms-bar--slip {
+  top: 22px;
+  height: 12px;
   background: #262425;
-  max-width: 100%;
-  opacity: 0.72;
+  border: none;
+  z-index: 2;
 }
 
-#p4-schedule-table .p4-ms-bar--overdue,
-#p4-schedule-table .p4-ms-bar[data-status="overdue"] {
-  background: #1a191a;
-  border: 2px solid #262425;
-  height: 16px;
-  overflow: visible;
-}
-
-#p4-schedule-table .p4-ms-bar-marker {
-  position: absolute;
-  right: -1px;
-  top: 50%;
-  transform: translate(55%, -50%);
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #FFFFFF;
-  border: 1.5px solid #1a191a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1a191a;
-  z-index: 3;
-}
-
-#p4-schedule-table .p4-ms-warn-icon {
-  display: block;
-}
-
-#p4-schedule-table .p4-ms-bar--not-started,
-#p4-schedule-table .p4-ms-bar[data-status="not-started"] {
-  background: rgba(210, 212, 213, 0.2);
+#p4-schedule-table .p4-ms-bar--not-started {
+  top: 22px;
+  height: 12px;
+  background: rgba(210, 212, 213, 0.15);
   border: 1px solid #BCBDBE;
-  overflow: hidden;
+  z-index: 2;
 }
 
-#p4-schedule-table .p4-ms-bar--cancelled,
-#p4-schedule-table .p4-ms-bar[data-status="cancelled"] {
+#p4-schedule-table .p4-ms-bar--cancelled {
+  top: 22px;
+  height: 12px;
   background: rgba(210, 212, 213, 0.3);
   border: 1px dashed #D2D4D5;
-  opacity: 0.7;
-  overflow: hidden;
+  opacity: 0.75;
+  z-index: 2;
 }
 
-@media (max-width: 900px) {
-  #p4-schedule-table .p4-ms-row {
-    grid-template-columns: 1fr;
-  }
+/* Detail drawer */
+.p4-ms-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(38, 36, 37, 0.28);
+  z-index: 90;
+  border: none;
+}
 
-  #p4-schedule-table .p4-ms-left {
-    border-right: none;
-    border-bottom: 1px solid rgba(210, 212, 213, 0.4);
-  }
+.p4-ms-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 92vw);
+  background: #FFFFFF;
+  border-left: 1px solid #BCBDBE;
+  z-index: 91;
+  padding: 20px 18px 24px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
 
-  #p4-schedule-table .p4-ms-right {
-    min-height: 36px;
-  }
+.p4-ms-drawer[hidden],
+.p4-ms-drawer-backdrop[hidden] {
+  display: none !important;
+}
 
-  #p4-schedule-table .p4-ms-row--head .p4-ms-right {
-    display: none;
-  }
+.p4-ms-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(188, 189, 190, 0.45);
+}
+
+.p4-ms-drawer-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #BCBDBE;
+  font-family: var(--font-heading);
+  margin-bottom: 4px;
+}
+
+.p4-ms-drawer-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: #262425;
+  line-height: 1.25;
+}
+
+.p4-ms-drawer-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #BCBDBE;
+}
+
+.p4-ms-drawer-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #BCBDBE;
+  background: #FFFFFF;
+  color: #262425;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.p4-ms-drawer-close:hover {
+  border-color: #262425;
+}
+
+.p4-ms-drawer-dl {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.p4-ms-drawer-dl > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.p4-ms-drawer-dl dt {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #BCBDBE;
+  font-family: var(--font-heading);
+}
+
+.p4-ms-drawer-dl dd {
+  margin: 0;
+  font-size: 13px;
+  color: #262425;
+  font-weight: 500;
+  word-break: break-word;
 }
 
 /* Labour Cost by Job — summary + Top 5 + detail table */
