@@ -687,6 +687,12 @@
           </div>
 
           <div class="p5-section">
+            <div class="section-title">Project Cost Rollup</div>
+            <p class="p5-oh-hint mono-l2">Live Xero_Projects totals by brand and department. Actual-Other Costs, Total Actual, and Gross Profit await Xero_Bills.</p>
+            <div id="p5-project-rollup">Loading project costs...</div>
+          </div>
+
+          <div class="p5-section">
             <div class="section-title">Department-Level Breakdown</div>
             <div id="p5-department-section">Loading department data...</div>
           </div>
@@ -1568,6 +1574,15 @@
       if (!dateStr && dateStr !== 0) return null;
       var s = String(dateStr).trim();
       if (!s) return null;
+      // Xero_Projects Date Created / Expected Completion: plain ddMMyyyy (8 digits)
+      if (/^\d{8}$/.test(s)) {
+        var dd = parseInt(s.substring(0, 2), 10);
+        var mm = parseInt(s.substring(2, 4), 10);
+        var yyyy = parseInt(s.substring(4, 8), 10);
+        if (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy > 1900) {
+          return new Date(yyyy, mm - 1, dd);
+        }
+      }
       var parts = s.split(/[\/\-\.]/);
       if (parts.length === 3) {
         var a = parseInt(parts[0], 10);
@@ -1588,6 +1603,100 @@
       }
       var d = new Date(s);
       return isNaN(d.getTime()) ? null : d;
+    }
+
+    /** Job # keys on a Xero_Projects row (header names only, never column index). */
+    function xeroProjectJobKeys(row) {
+      return [
+        col(row, 'Job #', 'Job Number', 'job_number', 'Job No', 'JobNo'),
+        col(row, 'Project ID', 'project_id', 'ProjectID'),
+        col(row, 'Xero Project J#', 'Xero Project ID', 'xero_project_id'),
+        col(row, 'Project Name', 'project_name', 'Project')
+      ].filter(function(v) { return !!String(v || '').trim(); });
+    }
+
+    /** Leading J#### prefix for Job # matching (shared across pages). */
+    function jobNumberPrefix(val) {
+      var s = String(val || '').trim().toUpperCase();
+      var m = s.match(/^(J\d+)/i);
+      return m ? m[1].toUpperCase() : '';
+    }
+
+    function jobsMatchByNumber(a, b) {
+      var sa = String(a || '').trim().toUpperCase();
+      var sb = String(b || '').trim().toUpperCase();
+      if (!sa || !sb) return false;
+      if (sa === sb) return true;
+      var pa = jobNumberPrefix(sa);
+      var pb = jobNumberPrefix(sb);
+      if (pa && pb && pa === pb) return true;
+      if (pa && sb.indexOf(pa) !== -1) return true;
+      if (pb && sa.indexOf(pb) !== -1) return true;
+      return false;
+    }
+
+    function findXeroProjectByJob(projects, jobRef) {
+      var list = projects || [];
+      if (!jobRef) return null;
+      var i, j, keys;
+      for (i = 0; i < list.length; i++) {
+        keys = xeroProjectJobKeys(list[i]);
+        for (j = 0; j < keys.length; j++) {
+          if (jobsMatchByNumber(keys[j], jobRef)) return list[i];
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Live Xero_Projects fields (safe as of sync). Incomplete columns L/N/P/Q
+     * are not treated as live numbers here.
+     */
+    function readXeroProjectLive(row) {
+      if (!row) {
+        return {
+          clientName: '', brand: '', department: '',
+          dateCreatedRaw: '', expectedCompletionRaw: '',
+          totalBudgetRaw: '', actualLabourRaw: '', actualVariationsRaw: '',
+          revenueRaw: ''
+        };
+      }
+      return {
+        clientName: String(col(row, 'Client Name', 'client_name', 'Client') || '').trim(),
+        brand: String(col(row, 'Brand', 'brand') || '').trim(),
+        department: String(col(row, 'Department', 'department') || '').trim(),
+        dateCreatedRaw: rawColByNames(row, ['Date Created', 'Created Date', 'date_created', 'Start Date']),
+        expectedCompletionRaw: rawColByNames(row, [
+          'Expected Completion', 'Expected End', 'expected_completion', 'Deadline'
+        ]),
+        totalBudgetRaw: rawColByNames(row, ['Total Budget', 'total_budget', 'Budget']),
+        actualLabourRaw: rawColByNames(row, [
+          'Actual-Labour', 'Actual Labour', 'actual_labour', 'Actual Labor'
+        ]),
+        actualVariationsRaw: rawColByNames(row, [
+          'Actual-Variations', 'Actual Variations', 'actual_variations'
+        ]),
+        revenueRaw: rawColByNames(row, ['Revenue', 'revenue', 'Total Revenue'])
+      };
+    }
+
+    /** Placeholder for columns that depend on Xero_Bills (Actual-Other Costs / Total Actual / Gross Profit). */
+    function xeroProjectsPendingLabel() {
+      return 'Awaiting Xero_Bills';
+    }
+
+    function formatXeroProjectDate(raw) {
+      var d = parseFlexibleDate(raw);
+      if (d && !isNaN(d.getTime())) return d.toLocaleDateString('en-AU');
+      var s = String(raw == null ? '' : raw).trim();
+      return s || '';
+    }
+
+    function formatLiveMoneyOrDash(raw) {
+      if (raw === '' || raw === null || raw === undefined) return '-';
+      var s = String(raw).trim();
+      if (!s || s === '-' || s === '—' || s.toLowerCase() === 'n/a') return '-';
+      return formatCurrency(parseNum(raw));
     }
 
     /** ISO week key "YYYY-Www" from a Date. */
@@ -4224,27 +4333,17 @@
           '<th>Project Name</th><th>Brand</th><th>Department</th><th>Status</th>' +
           '<th>Total Budget</th><th>Total Actual</th><th>Gross Margin %</th>' +
           '</tr></thead><tbody>';
-        var trackedCount = 0;
         projectsFiltered.forEach(function(r) {
-          var name = col(r, 'Project Name', 'project_name', 'Project') || '—';
-          var brand = col(r, 'Brand', 'brand') || '—';
-          var dept  = col(r, 'Department', 'department') || '—';
-          var st    = col(r, 'Status', 'status') || '—';
+          var name = col(r, 'Project Name', 'project_name', 'Project') || '-';
+          var brand = col(r, 'Brand', 'brand') || '-';
+          var dept  = col(r, 'Department', 'department') || '-';
+          var st    = col(r, 'Status', 'status') || '-';
           var budgetRaw = rawCol(r, 'Total Budget', 'total_budget', 'Budget');
-          var actualRaw = rawCol(r, 'Total Actual', 'total_actual', 'Actual');
-          var marginRaw = rawCol(r, 'Gross Margin %', 'Gross Margin', 'gross_margin', 'Margin %');
 
-          var budgetStr = isBlank(budgetRaw) ? '—' : formatCurrency(parseNum(budgetRaw));
-          var actualBlankOrZero = isBlank(actualRaw) || parseNum(actualRaw) === 0;
-          var actualStr, marginStr;
-          if (actualBlankOrZero) {
-            actualStr = 'Not yet tracked';
-            marginStr = 'Not yet tracked';
-          } else {
-            trackedCount++;
-            actualStr = formatCurrency(parseNum(actualRaw));
-            marginStr = isBlank(marginRaw) ? '—' : formatPct(parseNum(marginRaw));
-          }
+          var budgetStr = isBlank(budgetRaw) ? '-' : formatCurrency(parseNum(budgetRaw));
+          // Total Actual / Gross Margin depend on Actual-Other Costs (Xero_Bills) - not live yet
+          var actualStr = xeroProjectsPendingLabel();
+          var marginStr = xeroProjectsPendingLabel();
 
           budgetHtml += '<tr>' +
             '<td>' + name + '</td>' +
@@ -4257,10 +4356,8 @@
             '</tr>';
         });
         budgetHtml += '</tbody></table></div>';
-        if (trackedCount === 0) {
-          budgetHtml = '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
-            '<span>Data not yet available — project actuals have not been logged yet.</span></div>' + budgetHtml;
-        }
+        budgetHtml = '<div class="chart-placeholder" style="height:auto;padding:18px 16px;margin-bottom:12px">' +
+          '<span>Total Actual and Gross Margin await Xero_Bills (Actual-Other Costs). Live budget figures are shown below.</span></div>' + budgetHtml;
         document.getElementById('p3-budget-table').innerHTML = budgetHtml;
       } else {
         document.getElementById('p3-budget-table').innerHTML =
@@ -4640,9 +4737,7 @@
       }
 
       function p4JobPrefix(val) {
-        var s = String(val || '').trim().toUpperCase();
-        var m = s.match(/^(J\d+)/i);
-        return m ? m[1].toUpperCase() : '';
+        return jobNumberPrefix(val);
       }
 
       function p4LabourJobId(row) {
@@ -4653,16 +4748,11 @@
       }
 
       function p4JobsMatch(a, b) {
-        var sa = String(a || '').trim().toUpperCase();
-        var sb = String(b || '').trim().toUpperCase();
-        if (!sa || !sb) return false;
-        if (sa === sb) return true;
-        var pa = p4JobPrefix(sa);
-        var pb = p4JobPrefix(sb);
-        if (pa && pb && pa === pb) return true;
-        if (pa && sb.indexOf(pa) !== -1) return true;
-        if (pb && sa.indexOf(pb) !== -1) return true;
-        return false;
+        return jobsMatchByNumber(a, b);
+      }
+
+      function p4FindXeroProject(jobRef) {
+        return findXeroProjectByJob(xeroProjects || [], jobRef);
       }
 
       var projects = [];
@@ -4803,7 +4893,7 @@
         var lower = s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
         // Prefer explicit status labels so badge matches Timeline bar (not blanket late→OVERDUE)
         if (lower === 'complete' || lower === 'completed') {
-          return '<span class="p4-badge p4-badge--neutral">Completed</span>';
+          return '<span class="p4-badge p4-badge--completed">Completed</span>';
         }
         if (lower === 'cancelled' || lower === 'canceled') {
           return '<span class="p4-badge p4-badge--muted">Cancelled</span>';
@@ -5360,6 +5450,13 @@
         function drawerPayload(r) {
           var handsLabel = handsByProject[r.project] || '';
           var pctFmt = (r.pct !== null && r.pct !== undefined) ? (Math.round(r.pct) + '%') : '-';
+          var xRow = p4FindXeroProject(r.project);
+          var live = readXeroProjectLive(xRow);
+          var brandDept = p4BrandDeptLine(r);
+          if ((!brandDept || brandDept === '-') && (live.brand || live.department)) {
+            if (live.brand && live.department) brandDept = live.brand + ' / ' + live.department;
+            else brandDept = live.brand || live.department;
+          }
           return {
             project: r.project || '-',
             milestone: r.milestone || '-',
@@ -5369,7 +5466,15 @@
             plannedStart: p4FmtDate(r.startD, r.startRaw) || '-',
             plannedEnd: p4FmtDate(r.endD, r.endRaw) || '-',
             status: p4StatusDisplay(r),
-            brandDept: p4BrandDeptLine(r) || '-'
+            statusBadgeHtml: formatStatusBadge(r.status, isOverdueNorm(r)) || p4EscHtml(p4StatusDisplay(r)),
+            brandDept: brandDept || '-',
+            clientName: live.clientName || '-',
+            dateCreated: formatXeroProjectDate(live.dateCreatedRaw) || '-',
+            expectedCompletion: formatXeroProjectDate(live.expectedCompletionRaw) || '-',
+            totalBudget: formatLiveMoneyOrDash(live.totalBudgetRaw),
+            actualLabour: formatLiveMoneyOrDash(live.actualLabourRaw),
+            actualVariations: formatLiveMoneyOrDash(live.actualVariationsRaw),
+            revenue: formatLiveMoneyOrDash(live.revenueRaw)
           };
         }
 
@@ -5466,12 +5571,21 @@
           '<button type="button" class="p4-ms-drawer-close" id="p4-ms-drawer-close" aria-label="Close">x</button>' +
           '</div>' +
           '<dl class="p4-ms-drawer-dl">' +
+          '<div><dt>Client Name</dt><dd id="p4-ms-d-client">-</dd></div>' +
           '<div><dt>Brand / Dept</dt><dd id="p4-ms-d-bd">-</dd></div>' +
+          '<div><dt>Date Created</dt><dd id="p4-ms-d-created">-</dd></div>' +
+          '<div><dt>Expected Completion</dt><dd id="p4-ms-d-expected">-</dd></div>' +
           '<div><dt>Planned Start</dt><dd id="p4-ms-d-ps">-</dd></div>' +
           '<div><dt>Planned End</dt><dd id="p4-ms-d-pe">-</dd></div>' +
           '<div><dt>Staffing Status</dt><dd id="p4-ms-d-staff">-</dd></div>' +
           '<div><dt>Status</dt><dd id="p4-ms-d-status">-</dd></div>' +
           '<div><dt>Completion %</dt><dd id="p4-ms-d-pct">-</dd></div>' +
+          '<div><dt>Total Budget</dt><dd id="p4-ms-d-budget">-</dd></div>' +
+          '<div><dt>Actual-Labour</dt><dd id="p4-ms-d-actlab">-</dd></div>' +
+          '<div><dt>Actual-Variations</dt><dd id="p4-ms-d-actvar">-</dd></div>' +
+          '<div><dt>Revenue</dt><dd id="p4-ms-d-rev">-</dd></div>' +
+          '<div><dt>Total Actual</dt><dd id="p4-ms-d-totalact">' + xeroProjectsPendingLabel() + '</dd></div>' +
+          '<div><dt>Gross Profit</dt><dd id="p4-ms-d-gp">' + xeroProjectsPendingLabel() + '</dd></div>' +
           '</dl>' +
           '</aside></div>';
 
@@ -5504,7 +5618,8 @@
           // Title = full project name; sub = milestone
           document.getElementById('p4-ms-drawer-title').textContent = p.project;
           document.getElementById('p4-ms-drawer-sub').textContent = p.milestone;
-          document.getElementById('p4-ms-d-status').textContent = p.status;
+          var statusDd = document.getElementById('p4-ms-d-status');
+          statusDd.innerHTML = p.statusBadgeHtml || p4EscHtml(p.status);
           var staffDd = document.getElementById('p4-ms-d-staff');
           staffDd.textContent = p.staffing;
           if (p.staffingFull && p.staffingFull !== p.staffing) {
@@ -5516,6 +5631,15 @@
           document.getElementById('p4-ms-d-ps').textContent = p.plannedStart;
           document.getElementById('p4-ms-d-pe').textContent = p.plannedEnd;
           document.getElementById('p4-ms-d-bd').textContent = p.brandDept;
+          document.getElementById('p4-ms-d-client').textContent = p.clientName;
+          document.getElementById('p4-ms-d-created').textContent = p.dateCreated;
+          document.getElementById('p4-ms-d-expected').textContent = p.expectedCompletion;
+          document.getElementById('p4-ms-d-budget').textContent = p.totalBudget;
+          document.getElementById('p4-ms-d-actlab').textContent = p.actualLabour;
+          document.getElementById('p4-ms-d-actvar').textContent = p.actualVariations;
+          document.getElementById('p4-ms-d-rev').textContent = p.revenue;
+          document.getElementById('p4-ms-d-totalact').textContent = xeroProjectsPendingLabel();
+          document.getElementById('p4-ms-d-gp').textContent = xeroProjectsPendingLabel();
           drawer.hidden = false;
           if (backdrop) backdrop.hidden = false;
           document.querySelectorAll('#p4-schedule-table .p4-ms-row-hit').forEach(function(el) {
@@ -5679,11 +5803,19 @@
         });
 
         Object.values(labourByProject).forEach(function(p) {
-          var rev = parseNum(col(xeroProjects.find(function(x) {
-            return col(x, 'Project ID', 'project_id') === p.project;
-          }) || {}, 'Revenue', 'revenue'));
+          var xRow = p4FindXeroProject(p.project);
+          var live = readXeroProjectLive(xRow);
+          var rev = parseNum(live.revenueRaw);
           p.revenue = rev || 0;
+          p.revenueRawPresent = live.revenueRaw !== '' && live.revenueRaw != null &&
+            String(live.revenueRaw).trim() !== '';
           p.labourPct = (rev && p.cost) ? (p.cost / rev * 100) : 0;
+          p.clientName = live.clientName || '';
+          p.totalBudget = live.totalBudgetRaw;
+          p.actualLabour = live.actualLabourRaw;
+          p.actualVariations = live.actualVariationsRaw;
+          if (live.brand && !p.brand) p.brand = live.brand;
+          if (live.department && !p.department) p.department = live.department;
         });
 
         var labourRows = Object.values(labourByProject)
@@ -5726,7 +5858,7 @@
               var shortName = String(top5[0].project || 'Top job');
               if (shortName.length > 28) shortName = shortName.slice(0, 26) + '…';
               outlierNote.textContent =
-                shortName + ' is highest cost — ' + pctAbove + '% above the next job';
+                shortName + ' is highest cost - ' + pctAbove + '% above the next job';
               outlierNote.hidden = false;
             } else {
               outlierNote.hidden = true;
@@ -5760,7 +5892,7 @@
             type: 'bar',
             data: {
               labels: top5.map(function(p) {
-                var lab = String(p.project || '—');
+                var lab = String(p.project || '-');
                 return lab.length > 36 ? lab.slice(0, 34) + '…' : lab;
               }),
               datasets: [{
@@ -5815,11 +5947,15 @@
           });
         }
 
-        // Detail table — same columns; mark Top 5 rows with accent top-border when test palette
+        // Detail table — enriched with live Xero_Projects columns (Job # match)
         var th =
           '<th class="text-left">Project</th>' +
+          '<th class="text-left">Client Name</th>' +
           '<th class="text-right">Hours</th>' +
           '<th class="text-right">Labour Cost</th>' +
+          '<th class="text-right">Actual-Labour</th>' +
+          '<th class="text-right">Actual-Variations</th>' +
+          '<th class="text-right">Total Budget</th>' +
           '<th class="text-right">Revenue</th>' +
           '<th class="text-right">Labour %</th>' +
           '<th class="text-left">Brand</th>' +
@@ -5827,13 +5963,17 @@
         var trs = labourRows.map(function(p) {
           var isTop = !!top5Keys[p.project];
           return '<tr class="' + (isTop ? 'p4-labour-row-top5' : '') + '">' +
-            '<td class="text-left">' + (p.project || '—') + '</td>' +
-            '<td class="text-right">' + (p.hours ? parseFloat(p.hours).toFixed(1) + ' hrs' : '—') + '</td>' +
-            '<td class="text-right">' + (p.cost ? formatCurrency(p.cost) : '—') + '</td>' +
-            '<td class="text-right">' + (p.revenue ? formatCurrency(p.revenue) : '—') + '</td>' +
-            '<td class="text-right">' + (p.labourPct ? p.labourPct.toFixed(1) + '%' : '—') + '</td>' +
-            '<td class="text-left">' + (p.brand || '—') + '</td>' +
-            '<td class="text-left">' + (p.department || '—') + '</td>' +
+            '<td class="text-left">' + (p.project || '-') + '</td>' +
+            '<td class="text-left">' + (p.clientName || '-') + '</td>' +
+            '<td class="text-right">' + (p.hours ? parseFloat(p.hours).toFixed(1) + ' hrs' : '-') + '</td>' +
+            '<td class="text-right">' + (p.cost ? formatCurrency(p.cost) : '-') + '</td>' +
+            '<td class="text-right">' + formatLiveMoneyOrDash(p.actualLabour) + '</td>' +
+            '<td class="text-right">' + formatLiveMoneyOrDash(p.actualVariations) + '</td>' +
+            '<td class="text-right">' + formatLiveMoneyOrDash(p.totalBudget) + '</td>' +
+            '<td class="text-right">' + (p.revenue ? formatCurrency(p.revenue) : '-') + '</td>' +
+            '<td class="text-right">' + (p.labourPct ? p.labourPct.toFixed(1) + '%' : '-') + '</td>' +
+            '<td class="text-left">' + (p.brand || '-') + '</td>' +
+            '<td class="text-left">' + (p.department || '-') + '</td>' +
             '</tr>';
         }).join('');
         document.getElementById('p4-labour-table').innerHTML =
@@ -7637,9 +7777,10 @@
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; })
+          fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; })
         ]);
-        renderP5(results[0], results[1], results[2]);
+        renderP5(results[0], results[1], results[2], results[3]);
       } catch (err) {
         console.error('P5 load error:', err);
         showError('p5', 'Could not load Profitability data. Check sheet permissions.');
@@ -7676,7 +7817,7 @@
       });
     }
 
-    function renderP5(financials, invoices, overhead) {
+    function renderP5(financials, invoices, overhead, xeroProjects) {
       // Mono contrast: L1 actuals, L2 targets/support, L3 grids/borders (CSS: --mono-l1/2/3)
       var brandCharcoal = '#262425'; // L1
       var brandSoftGray = '#BCBDBE'; // L2
@@ -7696,11 +7837,28 @@
       var finFiltered = applyFilters(financials);
       var invFiltered = applyFilters(invoices);
       var ohFiltered  = applyFilters(overhead);
+      // Xero_Projects is a snapshot (not monthly P&L) - brand filter only
+      var projectsFiltered = filterByBrand(xeroProjects || [], activeBrand);
 
       setBBPageData('P5', 'P5: Profitability', {
         financials: finFiltered,
         invoices: invFiltered.slice(0, 300),
         overhead: ohFiltered,
+        xeroProjects: (projectsFiltered || []).slice(0, 300).map(function(r) {
+          var live = readXeroProjectLive(r);
+          return {
+            job: xeroProjectJobKeys(r)[0] || '',
+            clientName: live.clientName,
+            brand: live.brand,
+            department: live.department,
+            totalBudget: live.totalBudgetRaw,
+            actualLabour: live.actualLabourRaw,
+            actualVariations: live.actualVariationsRaw,
+            revenue: live.revenueRaw,
+            totalActual: xeroProjectsPendingLabel(),
+            grossProfit: xeroProjectsPendingLabel()
+          };
+        }),
         monthlyRevenue: (function() {
           var map = {};
           (finFiltered || []).forEach(function(r) {
@@ -8314,7 +8472,103 @@
       }
       document.getElementById('p5-invoices-summary').innerHTML = invSummaryHtml;
 
-      // ── Section 4 — Department breakdown ────────────────────
+      // ── Section 4 — Project cost rollup (live Xero_Projects) ─
+      var rollupEl = document.getElementById('p5-project-rollup');
+      if (rollupEl) {
+        if (!projectsFiltered.length) {
+          rollupEl.innerHTML =
+            '<p class="no-data-msg">No Xero_Projects rows for the selected brand.</p>';
+        } else {
+          function emptyAggBucket() {
+            return {
+              totalBudget: 0, actualLabour: 0, actualVariations: 0, revenue: 0, jobs: 0
+            };
+          }
+          var byBrand = {};
+          var byDept = {};
+          projectsFiltered.forEach(function(r) {
+            var live = readXeroProjectLive(r);
+            var brandKey = live.brand || String(col(r, 'Brand', 'brand') || '').trim() || 'Unknown';
+            var deptKey = live.department || String(col(r, 'Department', 'department') || '').trim() || 'Unassigned';
+            if (!byBrand[brandKey]) byBrand[brandKey] = emptyAggBucket();
+            if (!byDept[deptKey]) byDept[deptKey] = emptyAggBucket();
+            byBrand[brandKey].totalBudget += parseNum(live.totalBudgetRaw);
+            byBrand[brandKey].actualLabour += parseNum(live.actualLabourRaw);
+            byBrand[brandKey].actualVariations += parseNum(live.actualVariationsRaw);
+            byBrand[brandKey].revenue += parseNum(live.revenueRaw);
+            byBrand[brandKey].jobs += 1;
+            byDept[deptKey].totalBudget += parseNum(live.totalBudgetRaw);
+            byDept[deptKey].actualLabour += parseNum(live.actualLabourRaw);
+            byDept[deptKey].actualVariations += parseNum(live.actualVariationsRaw);
+            byDept[deptKey].revenue += parseNum(live.revenueRaw);
+            byDept[deptKey].jobs += 1;
+          });
+
+          var pending = xeroProjectsPendingLabel();
+          var brandRows = Object.keys(byBrand).sort().map(function(k) {
+            return {
+              Brand: k,
+              Jobs: byBrand[k].jobs,
+              TotalBudget: byBrand[k].totalBudget,
+              ActualLabour: byBrand[k].actualLabour,
+              ActualVariations: byBrand[k].actualVariations,
+              Revenue: byBrand[k].revenue,
+              ActualOther: pending,
+              TotalActual: pending,
+              GrossProfit: pending
+            };
+          });
+          var deptRollupRows = Object.keys(byDept).sort().map(function(k) {
+            return {
+              Department: k,
+              Jobs: byDept[k].jobs,
+              TotalBudget: byDept[k].totalBudget,
+              ActualLabour: byDept[k].actualLabour,
+              ActualVariations: byDept[k].actualVariations,
+              Revenue: byDept[k].revenue,
+              ActualOther: pending,
+              TotalActual: pending,
+              GrossProfit: pending
+            };
+          });
+
+          function moneyOrZero(v) {
+            return formatCurrency(parseNum(v));
+          }
+          function pendingCell() {
+            return pending;
+          }
+
+          var rollHtml = '';
+          rollHtml += '<div class="chart-title mono-l2" style="margin-top:4px">By Brand</div>';
+          rollHtml += buildTable(brandRows, [
+            { label: 'Brand', key: 'Brand' },
+            { label: 'Jobs', key: 'Jobs' },
+            { label: 'Total Budget', key: 'TotalBudget', format: moneyOrZero },
+            { label: 'Actual-Labour', key: 'ActualLabour', format: moneyOrZero },
+            { label: 'Actual-Variations', key: 'ActualVariations', format: moneyOrZero },
+            { label: 'Revenue', key: 'Revenue', format: moneyOrZero },
+            { label: 'Actual-Other Costs', key: 'ActualOther', format: pendingCell },
+            { label: 'Total Actual', key: 'TotalActual', format: pendingCell },
+            { label: 'Gross Profit', key: 'GrossProfit', format: pendingCell }
+          ]);
+          rollHtml += '<div class="chart-title mono-l2" style="margin-top:16px">By Department</div>';
+          rollHtml += buildTable(deptRollupRows, [
+            { label: 'Department', key: 'Department' },
+            { label: 'Jobs', key: 'Jobs' },
+            { label: 'Total Budget', key: 'TotalBudget', format: moneyOrZero },
+            { label: 'Actual-Labour', key: 'ActualLabour', format: moneyOrZero },
+            { label: 'Actual-Variations', key: 'ActualVariations', format: moneyOrZero },
+            { label: 'Revenue', key: 'Revenue', format: moneyOrZero },
+            { label: 'Actual-Other Costs', key: 'ActualOther', format: pendingCell },
+            { label: 'Total Actual', key: 'TotalActual', format: pendingCell },
+            { label: 'Gross Profit', key: 'GrossProfit', format: pendingCell }
+          ]);
+          rollupEl.innerHTML = rollHtml;
+        }
+      }
+
+      // ── Section 5 — Department breakdown (Xero_Financials) ──
       var deptRows = finSorted.filter(function(r) {
         return String(col(r, 'Department', 'department') || '').trim() !== '';
       });
@@ -8326,7 +8580,8 @@
       if (!deptRows.length && !deptInvRows.length) {
         deptEl.innerHTML = '<p class="no-data-msg">Data not available</p>' +
           '<p class="p5-dept-hint mono-l2">Department is blank in Xero_Financials / Xero_Invoices for the current range. ' +
-          'When Department is populated in the sheet, refresh to load the breakdown.</p>';
+          'See Project Cost Rollup above for department totals from Xero_Projects. ' +
+          'When Department is populated in financials, refresh to load the P&amp;L breakdown.</p>';
       } else {
         var deptAgg = {};
         deptRows.forEach(function(r) {

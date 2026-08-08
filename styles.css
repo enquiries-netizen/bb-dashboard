@@ -435,6 +435,12 @@ select {
   border: 1px solid var(--gray);
   font-weight: 600;
 }
+.p4-badge--completed {
+  background: var(--charcoal);
+  color: var(--white);
+  border: 1px solid var(--charcoal);
+  font-weight: 600;
+}
 .p4-badge--muted {
   background: transparent;
   color: var(--gray);
@@ -3672,6 +3678,12 @@ select {
   color: #FFFFFF;
 }
 
+#page-p4.p4-test-palette .p4-badge--completed {
+  background: var(--p4-action);
+  border-color: var(--p4-action);
+  color: #FFFFFF;
+}
+
 #page-p4.p4-test-palette .p4-badge--neutral {
   background: var(--p4-surface);
   border: 1px solid var(--p4-muted);
@@ -3682,6 +3694,13 @@ select {
   background: transparent;
   border: 1px solid var(--p4-muted);
   color: var(--p4-muted);
+}
+
+/* Drawer status badge inherits table status colours */
+#page-p4.p4-test-palette .p4-ms-drawer-dl .p4-badge--completed {
+  background: var(--p4-action);
+  border-color: var(--p4-action);
+  color: #FFFFFF;
 }
 
 #page-p4.p4-test-palette .p4-hands-needs {
@@ -3815,9 +3834,12 @@ select {
   background: rgba(37, 99, 235, 0.14);
 }
 
-#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--slip,
-#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--completed {
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--slip {
   background: var(--p4-accent);
+}
+
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--completed {
+  background: var(--p4-action);
 }
 
 #page-p4.p4-test-palette #p4-schedule-table .p4-ms-swatch--planned {
@@ -3840,14 +3862,17 @@ select {
   border-color: var(--p4-muted);
 }
 
-/* Planned = thin muted; delay/slip/completed = thick accent */
+/* Planned = thin muted; delay/slip = accent; completed = action blue */
 #page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--planned {
   background: rgba(107, 114, 128, 0.45);
   border-color: var(--p4-muted);
   opacity: 0.75;
 }
 
-#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--completed,
+#page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--completed {
+  background: var(--p4-action);
+}
+
 #page-p4.p4-test-palette #p4-schedule-table .p4-ms-bar--slip {
   background: var(--p4-accent);
 }
