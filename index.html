@@ -93,7 +93,7 @@
           <li class="nav-item" data-page="p8">P8: Weekly Overview</li>
           <li class="nav-item" data-page="p9">P9: Cash Flow</li>
           <li class="nav-item" data-page="p10">P10: Marketing</li>
-          <li class="nav-item" data-page="p11">P11: Quality &amp; Variations</li>
+          <li class="nav-item" data-page="p11">P11: Site Diary Exceptions</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
@@ -247,149 +247,15 @@
           </div>
         </section>
 
-        <!-- ─── P2: Sales & Pipeline (decision dashboard) ───── -->
-        <!-- p2-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <!-- ─── P2: Sales & Pipeline (placeholder - data being finalised) ─── -->
+        <!-- p2-test-palette = scoped visual tokens for consistency with other test pages -->
         <section id="page-p2" class="page p2-test-palette">
-          <div class="p2-layout">
-            <div class="p2-head">
-              <div class="page-header p2-page-header">
-                <span class="page-badge">P2</span>
-                <h1 class="page-title p2-page-title">Sales &amp; Pipeline</h1>
-              </div>
-              <p class="p2-filter-cue" id="p2-filter-cue">Filters apply to: Date Created (leads &amp; opportunities)</p>
-              <p class="p2-data-quality" id="p2-data-quality" aria-live="polite"></p>
+          <div class="p2-placeholder">
+            <div class="page-header p2-page-header">
+              <span class="page-badge">P2</span>
+              <h1 class="page-title">Sales &amp; Pipeline</h1>
             </div>
-
-            <!-- Primary KPIs (6) -->
-            <div class="p2-kpi-band" aria-label="Primary sales KPIs">
-              <div class="kpi-card card p2-kpi" data-kpi="open-pipe">
-                <div class="kpi-label">Open Pipeline Value</div>
-                <div class="kpi-value" id="kpi-p2-open">-</div>
-                <div class="kpi-sub" id="kpi-p2-open-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p2-kpi" data-kpi="weighted">
-                <div class="kpi-label">Weighted Pipeline</div>
-                <div class="kpi-value" id="kpi-p2-weighted">-</div>
-                <div class="kpi-sub" id="kpi-p2-weighted-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p2-kpi" data-kpi="coverage">
-                <div class="kpi-label">Target Coverage</div>
-                <div class="kpi-value" id="kpi-p2-coverage">-</div>
-                <div class="kpi-sub" id="kpi-p2-coverage-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p2-kpi" data-kpi="quotes-out">
-                <div class="kpi-label">Quotes Outstanding</div>
-                <div class="kpi-value" id="kpi-p2-quotes-out">-</div>
-                <div class="kpi-sub" id="kpi-p2-quotes-out-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p2-kpi" data-kpi="winrate">
-                <div class="kpi-label">Quote Win Rate</div>
-                <div class="kpi-value" id="kpi-p2-winrate">-</div>
-                <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p2-kpi p2-kpi--risk" data-kpi="stalled">
-                <div class="kpi-label">Stalled Pipeline</div>
-                <div class="kpi-value" id="kpi-p2-stalled">-</div>
-                <div class="kpi-sub" id="kpi-p2-stalled-sub">Loading...</div>
-              </div>
-            </div>
-
-            <!-- Secondary KPIs -->
-            <div class="p2-kpi-secondary" aria-label="Secondary sales metrics">
-              <div class="p2-sec-metric">
-                <span class="p2-sec-label">Avg job value (won)</span>
-                <span class="p2-sec-value" id="kpi-p2-avg-job">-</span>
-              </div>
-              <div class="p2-sec-metric">
-                <span class="p2-sec-label">Median sales cycle</span>
-                <span class="p2-sec-value" id="kpi-p2-cycle">-</span>
-              </div>
-              <div class="p2-sec-metric">
-                <span class="p2-sec-label">Pipeline added this month</span>
-                <span class="p2-sec-value" id="kpi-p2-added">-</span>
-              </div>
-              <div class="p2-sec-metric p2-sec-metric--rates">
-                <span class="p2-sec-label">Funnel rates</span>
-                <span class="p2-sec-value p2-sec-rates" id="kpi-p2-funnel-rates">-</span>
-              </div>
-            </div>
-
-            <!-- Row 2: Funnel | Revenue forecast -->
-            <div class="p2-mid-row">
-              <div class="chart-card card p2-funnel-card">
-                <div class="p2-card-head">
-                  <div class="chart-title">Pipeline Funnel</div>
-                  <div class="p2-toggle" role="group" aria-label="Funnel metric">
-                    <button type="button" class="p2-toggle-btn is-active" id="p2-funnel-mode-value" data-mode="value">Value</button>
-                    <button type="button" class="p2-toggle-btn" id="p2-funnel-mode-count" data-mode="count">Count</button>
-                  </div>
-                </div>
-                <div id="p2-funnel-rates" class="p2-funnel-rates" aria-live="polite"></div>
-                <div class="p2-chart-wrap p2-funnel-wrap">
-                  <canvas id="chart-p2-funnel" aria-label="Pipeline funnel by stage"></canvas>
-                </div>
-                <div id="p2-funnel-stage-detail" class="p2-funnel-stage-detail"></div>
-                <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden></p>
-              </div>
-              <div class="chart-card card p2-forecast-card">
-                <div class="chart-title">Revenue Forecast by Expected Close</div>
-                <p class="p2-section-hint">Stacked by stage certainty · target from Targets sheet when present</p>
-                <div class="p2-chart-wrap p2-forecast-wrap">
-                  <canvas id="chart-p2-forecast" aria-label="Revenue forecast stacked by month"></canvas>
-                </div>
-                <div id="p2-forecast-gap" class="p2-forecast-gap" aria-live="polite"></div>
-              </div>
-            </div>
-
-            <!-- Row 3: Waterfall | Source quality -->
-            <div class="p2-mid-row">
-              <div class="chart-card card p2-waterfall-card">
-                <div class="chart-title">Pipeline Movement Waterfall</div>
-                <p class="p2-section-hint">Opening to closing movement</p>
-                <div id="p2-waterfall-body" class="p2-pending-panel">
-                  <p class="p2-pending-line">Pending - movement needs period opening/closing snapshots (not in GHL_Pipeline)</p>
-                </div>
-                <div class="p2-chart-wrap p2-waterfall-wrap" hidden>
-                  <canvas id="chart-p2-waterfall" aria-label="Pipeline movement waterfall"></canvas>
-                </div>
-              </div>
-              <div class="chart-card card p2-sources-card">
-                <div class="chart-title">Source Quality</div>
-                <div id="p2-concentration" class="p2-concentration" hidden></div>
-                <div id="p2-source-table" class="p2-source-table">Loading sources...</div>
-                <div class="p2-chart-wrap p2-bubble-wrap">
-                  <canvas id="chart-p2-bubble" aria-label="Source quality bubble chart"></canvas>
-                </div>
-                <div class="p2-source-footer" id="p2-source-cpl-note"></div>
-              </div>
-            </div>
-
-            <!-- Bottom: Opportunities requiring action -->
-            <div class="section-card p2-action-card">
-              <div class="section-title-row">
-                <div class="section-title">Opportunities Requiring Action
-                  <span class="p2-section-hint" id="p2-action-hint">Exceptions first · stalled, overdue, high value</span>
-                </div>
-                <button type="button" class="p2-view-all-btn" id="p2-view-all-btn">View all opportunities</button>
-              </div>
-              <div id="p2-action-table">Loading opportunities...</div>
-            </div>
-
-            <!-- Deal ageing Gantt (top 10) -->
-            <div class="section-card p2-gantt-card">
-              <div class="section-title">Deal Ageing
-                <span class="p2-section-hint">Top 10 largest or most stalled open deals</span>
-              </div>
-              <div id="p2-gantt" class="p2-gantt">Loading...</div>
-            </div>
-
-            <!-- Campaign scorecard (secondary - full analysis on P10) -->
-            <div class="section-card p2-campaign-card">
-              <div class="section-title">Campaign Scorecard
-                <span class="p2-section-hint">Paid media snapshot · full analysis on P10 Marketing</span>
-              </div>
-              <div id="p2-campaign-scorecard" class="p2-campaign-scorecard">Loading...</div>
-            </div>
+            <p class="p2-placeholder-msg">Sales &amp; Pipeline data is being finalised, this page will be updated soon.</p>
           </div>
         </section>
 
@@ -1192,72 +1058,121 @@
           </div>
         </section>
 
-        <!-- ─── P11: Quality & Variations ─────────────────── -->
-        <section id="page-p11" class="page">
-          <div class="page-header">
-            <span class="page-badge">P11</span>
-            <h1 class="page-title">Quality &amp; Variations</h1>
-          </div>
-
-          <div class="page-filters">
-            <div class="filter-group">
-              <span class="filter-label">Department</span>
-              <select class="filter-select page-filter-select" id="p11-dept-filter">
-                <option value="ALL">All Departments</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="kpi-grid">
-            <div class="kpi-card card">
-              <div class="kpi-label">Defects Logged</div>
-              <div class="kpi-value" id="kpi-p11-defects">—</div>
-              <div class="kpi-sub" id="kpi-p11-defects-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Rework Cost</div>
-              <div class="kpi-value" id="kpi-p11-rework">—</div>
-              <div class="kpi-sub" id="kpi-p11-rework-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Variations Value</div>
-              <div class="kpi-value" id="kpi-p11-variations">—</div>
-              <div class="kpi-sub" id="kpi-p11-variations-sub">Loading...</div>
-            </div>
-            <div class="kpi-card card">
-              <div class="kpi-label">Site Diary Issues</div>
-              <div class="kpi-value" id="kpi-p11-issues">—</div>
-              <div class="kpi-sub" id="kpi-p11-issues-sub">Loading...</div>
-            </div>
-          </div>
-
-          <div class="section-card" id="p11-defects-section">
-            <div class="section-title">Defects &amp; Rework</div>
-            <div class="chart-row" id="p11-defects-chart-row" hidden>
-              <div class="chart-card card">
-                <div class="chart-title">Rework Cost by Job</div>
-                <div class="p11-chart-wrap" id="p11-defects-chart-wrap">
-                  <canvas id="chart-p11-defects" height="200"></canvas>
+        <!-- ─── P11: Site Diary Quality & Variations Exceptions ─── -->
+        <!-- p11-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p11" class="page p11-test-palette">
+          <div class="p11-layout">
+            <div class="p11-head">
+              <div class="page-header p11-page-header">
+                <span class="page-badge">P11</span>
+                <h1 class="page-title">Site Diary Quality &amp; Variations Exceptions</h1>
+              </div>
+              <p class="p11-scope-note">Diary activity, issues, photo evidence and variation completeness · not full QA, defect severity or rework quality.</p>
+              <div class="p11-filters">
+                <div class="filter-group p11-filter">
+                  <span class="filter-label">Date range</span>
+                  <span class="p11-range-label" id="p11-date-range">Global Month / Year</span>
+                </div>
+                <div class="filter-group p11-filter">
+                  <span class="filter-label">Brand</span>
+                  <span class="p11-range-label" id="p11-brand-label">ALL</span>
+                </div>
+                <div class="filter-group p11-filter">
+                  <span class="filter-label">Department</span>
+                  <select class="filter-select page-filter-select p11-select" id="p11-dept-filter" aria-label="Department">
+                    <option value="ALL">All Departments</option>
+                  </select>
+                </div>
+                <div class="filter-group p11-filter">
+                  <span class="filter-label">Job</span>
+                  <select class="filter-select page-filter-select p11-select" id="p11-job-filter" aria-label="Job">
+                    <option value="ALL">All Jobs</option>
+                  </select>
                 </div>
               </div>
+              <p class="p11-data-quality" id="p11-data-quality" aria-live="polite">Quality data confidence: checking sources...</p>
+              <p class="p11-updated" id="p11-last-updated">Last updated...</p>
             </div>
-            <div id="p11-defects-table">Loading defects data...</div>
-          </div>
 
-          <div class="section-card" id="p11-variations-section">
-            <div class="section-title">Variations Log</div>
-            <p class="p11-section-hint" id="p11-variations-hint">
-              Job # prefix matching (e.g. J1349 → J1349C) is ready for Xero projects titled with &ldquo;Variation&rdquo;.
-            </p>
-            <div id="p11-variations-table">Loading variations data...</div>
-          </div>
+            <div class="p11-kpi-row" aria-label="Site diary and variations KPIs">
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-entries">
+                <div class="kpi-label">Site Diary Entries</div>
+                <div class="kpi-value" id="kpi-p11-entries">-</div>
+                <div class="kpi-sub" id="kpi-p11-entries-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-issues">
+                <div class="kpi-label">Issues / Blockers</div>
+                <div class="kpi-value" id="kpi-p11-issues">-</div>
+                <div class="kpi-sub" id="kpi-p11-issues-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-issue-rate">
+                <div class="kpi-label">Issue Rate</div>
+                <div class="kpi-value" id="kpi-p11-issue-rate">-</div>
+                <div class="kpi-sub" id="kpi-p11-issue-rate-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-photos">
+                <div class="kpi-label">Photo Evidence</div>
+                <div class="kpi-value" id="kpi-p11-photos">-</div>
+                <div class="kpi-sub" id="kpi-p11-photos-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-defects">
+                <div class="kpi-label">Defects Logged</div>
+                <div class="kpi-value" id="kpi-p11-defects">-</div>
+                <div class="kpi-sub" id="kpi-p11-defects-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p11-kpi-card" id="p11-kpi-variations">
+                <div class="kpi-label">Variations Raised</div>
+                <div class="kpi-value" id="kpi-p11-variations">-</div>
+                <div class="kpi-sub" id="kpi-p11-variations-sub">Loading...</div>
+              </div>
+            </div>
 
-          <div class="section-card" id="p11-diaries-section">
-            <div class="section-title">Site Diary Issues</div>
-            <p class="p11-section-hint" id="p11-diaries-photo-note" hidden></p>
-            <div id="p11-diaries-table">Loading site diary issues...</div>
+            <div class="p11-main-row">
+              <div class="section-card p11-panel">
+                <div class="section-title">Weekly Diary Activity</div>
+                <p class="p11-section-hint">Entries per week · issue markers · photo coverage % (diary sheet only)</p>
+                <div class="p11-chart-wrap" id="p11-activity-chart-wrap">
+                  <canvas id="chart-p11-activity" aria-label="Weekly diary activity"></canvas>
+                </div>
+                <div id="p11-activity-empty" class="p11-empty-card" hidden>
+                  <p class="no-data-msg">No diary entries in selection.</p>
+                </div>
+              </div>
+              <div class="section-card p11-panel">
+                <div class="section-title">Issues by Job</div>
+                <p class="p11-section-hint">Sorted: Work Stopped · Safety · Issue count · Missing photos · Most recent</p>
+                <div id="p11-issues-by-job" class="p11-table-wrap">Loading...</div>
+                <div id="p11-evidence-panel" class="p11-evidence"></div>
+              </div>
+            </div>
+
+            <div class="p11-second-row">
+              <div class="section-card p11-panel">
+                <div class="section-title">Site Diary Exceptions</div>
+                <p class="p11-section-hint" id="p11-exceptions-hint">Same issue definition as Issues / Blockers KPI · expand row for full detail</p>
+                <div id="p11-exceptions-table" class="p11-table-wrap">Loading...</div>
+                <details class="p11-drill" id="p11-full-log-drill">
+                  <summary>Full diary log (export / drill-down)</summary>
+                  <div id="p11-full-log" class="p11-table-wrap p11-full-log"></div>
+                </details>
+              </div>
+              <div class="section-card p11-panel" id="p11-variations-section">
+                <div class="section-title">Variation Actions</div>
+                <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
+                <div id="p11-variations-panel">Loading...</div>
+              </div>
+            </div>
+
+            <div class="section-card p11-panel p11-completeness-panel">
+              <div class="section-title">Data Completeness</div>
+              <p class="p11-section-hint">Field coverage for this selection · missing brand/job still counted in totals</p>
+              <div id="p11-completeness-table" class="p11-table-wrap">Loading...</div>
+            </div>
           </div>
         </section>
+
+
+
 
       </main>
     </div>
@@ -1273,7 +1188,7 @@
 
     var BB_PAGE_DIRECTORY = {
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
-      P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall: Pending without opening/closing snapshots. (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value $1 display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
+      P2: 'Sales & Pipeline (placeholder). Page shows title and notice that data is being finalised. Decision-dashboard rebuild paused until Sales & Pipeline data is finalised. Answer only that the page is parked / pending data finalisation; do not invent pipeline, quote, or funnel metrics.',
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy historical only for completed jobs with final labour and material costs - else exact text that accuracy unavailable; estimator ranks only if 5+ completed jobs with data; job budget/actual on P4. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
@@ -1282,7 +1197,7 @@
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow & Forecast: 13-week rolling forecast, AR ageing (monthly cash focus, not the Sales/Capacity/Marketing week-over-week hub)',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, median first contact, channel concentration, capacity alignment. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
-      P11: 'Quality & Variations: defects/rework, variations log, site diary issues'
+      P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -5086,16 +5001,16 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P2 — SALES & PIPELINE (decision dashboard)
-    // Sources: GHL_Leads, GHL_Pipeline, Marketing_Paid, Marketing_Sources, Targets
-    // Quotes: optional soft load (was GHL_Quotes; sheet tab renamed to Quotes).
-    //   Note: CONFIG.TABS.GHL_QUOTES and CONFIG.TABS.QUOTES both resolve to "Quotes"
-    //   (P3 estimating uses the same tab). Soft-per-tab load stays as safety net.
-    //   Quote KPIs still derive from pipeline stages for now.
-    // Period filter: Date Created (leads & opportunities) - labelled on page
-    // Forecast chart: groups open deals by Expected Close Date month
-    // Stalled threshold: 14 days (confirm with Lori/Ben)
+    // P2 — SALES & PIPELINE (placeholder until data is finalised)
+    // UI parked: title + notice only (mirror P7). Soft-per-tab load,
+    // stale-banner rules, and full renderP2 body retained below so
+    // unparking is flip P2_PLACEHOLDER false without reintroducing
+    // loader fixes. CONFIG.TABS Quotes rename left in config.js.
+    // (p2_sales_pipeline_rebuild.md retained for later rebuild.)
     // ═══════════════════════════════════════════════════════════════
+    // Set false to resume soft sheet load + full decision dashboard.
+    var P2_PLACEHOLDER = true;
+
     var p2ShowAllOpps = false;
     var p2FunnelMode = 'value'; // default Value
     var _p2LastPayload = null;
@@ -5139,6 +5054,15 @@
       showLoading(true);
       removeError('p2');
       try {
+        // Parked: no sheet load; soft-load + banner code still below when unparked.
+        if (P2_PLACEHOLDER) {
+          setBBPageData('P2', 'P2: Sales & Pipeline', {
+            status: 'Placeholder',
+            note: 'Sales & Pipeline data is being finalised, this page will be updated soon. Full rebuild paused until data is finalised.'
+          });
+          return;
+        }
+
         // Critical: GHL_Leads + GHL_Pipeline. Optional: marketing/sources/targets/Quotes.
         // Never full-page fail when only an optional tab (e.g. Quotes) is missing.
         var settled = await Promise.all([
@@ -5201,6 +5125,9 @@
     }
 
     function renderP2(leads, pipeline, marketing, sources, targets, ghlQuotes) {
+      // No charts or KPI fill while parked (DOM is placeholder-only).
+      if (P2_PLACEHOLDER) return;
+
       _p2LastPayload = {
         leads: leads || [],
         pipeline: pipeline || [],
@@ -12247,13 +12174,16 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // P11 — QUALITY & VARIATIONS
-    // Sources: Defects_Rework · Variations_Log · Buildpass_Site Diaries
-    // Filters: Global Brand / Month / Year + page-level Department
-    // Sections: Defects & Rework · Variations Log · Site Diary Issues
+    // P11 — SITE DIARY QUALITY & VARIATIONS EXCEPTIONS (NOT full QA)
+    // Sources: Buildpass_Site Diaries · Variations_Log · Defects_Rework
+    // Framing: diary activity, issues, photo evidence, variation
+    //   completeness. Missing defect/rework data is not good quality.
+    // Filters: Global Brand / Month / Year + page Department + Job
     // ═══════════════════════════════════════════════════════════════
     var activeP11Dept = 'ALL';
-    var _p11DeptBound = false;
+    var activeP11Job = 'ALL';
+    var _p11FiltersBound = false;
+    var _p11LoadMeta = { defectsOk: false, variationsOk: false, diariesOk: false };
 
     /**
      * Extract leading job number prefix (e.g. J1349 from J1349C / "J1349 Variation").
@@ -12275,16 +12205,26 @@
     async function loadP11() {
       showLoading(true);
       removeError('p11');
+      _p11LoadMeta = { defectsOk: false, variationsOk: false, diariesOk: false };
       try {
         var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.DEFECTS_REWORK).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.VARIATIONS_LOG).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES).catch(function() { return []; })
+          fetchSheet(CONFIG.TABS.DEFECTS_REWORK).then(function(r) {
+            _p11LoadMeta.defectsOk = true;
+            return r || [];
+          }).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.VARIATIONS_LOG).then(function(r) {
+            _p11LoadMeta.variationsOk = true;
+            return r || [];
+          }).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES).then(function(r) {
+            _p11LoadMeta.diariesOk = true;
+            return r || [];
+          }).catch(function() { return []; })
         ]);
         renderP11(results[0], results[1], results[2]);
       } catch (err) {
         console.error('P11 load error:', err);
-        showError('p11', 'Could not load Quality & Variations data. Check sheet permissions.');
+        showError('p11', 'Could not load Site Diary Exceptions data. Check sheet permissions.');
       } finally {
         showLoading(false);
         init3DTilt();
@@ -12292,13 +12232,24 @@
     }
 
     function renderP11(defects, variations, diaries) {
-      var brandCharcoal = '#262425';
-      var brandSoftGray = '#BCBDBE';
-      var brandSilver   = '#D2D4D5';
-
       window._p11Defects    = defects    || [];
       window._p11Variations = variations || [];
       window._p11Diaries    = diaries    || [];
+
+      var cAccent = '#EA580C';
+      var cAction = '#2563EB';
+      var cMuted  = '#6B7280';
+      var cText   = '#111827';
+      var cBorder = '#E2E4E8';
+      var cGap    = '#9CA3AF';
+
+      function p11Esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
 
       function applyGlobal(rows) {
         return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
@@ -12309,29 +12260,21 @@
           return rowsMatchDept(r, activeP11Dept);
         });
       }
-      function yn(val) {
-        var s = String(val || '').trim().toLowerCase();
-        if (!s) return '—';
-        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') return 'Y';
-        if (s === 'n' || s === 'no' || s === 'false' || s === '0') return 'N';
-        return String(val).trim();
+      function diaryJobNo(r) {
+        return String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
       }
-      function isYes(val) {
-        var s = String(val || '').trim().toLowerCase();
-        return s === 'y' || s === 'yes' || s === 'true' || s === '1';
+      function filterByJob(rows) {
+        if (!activeP11Job || activeP11Job === 'ALL') return rows;
+        return (rows || []).filter(function(r) {
+          var j = diaryJobNo(r) || String(col(r, 'Job Name', 'job_name', 'Xero Project J#', 'Xero Project ID') || '').trim();
+          return j === activeP11Job || p11MatchesJobPrefix(j, activeP11Job);
+        });
       }
-      function emptyCard(msg) {
-        return '<div class="p11-empty-card">' +
-          '<p class="no-data-msg">' + msg + '</p>' +
-          '</div>';
-      }
-      function clearP11Charts() {
-        if (_charts['chart-p11-defects']) {
-          _charts['chart-p11-defects'].destroy();
-          delete _charts['chart-p11-defects'];
-        }
-      }
-      /** Issues/Blockers text only (KPI definition). Tolerates slash/space header variants. */
+
+      // ── Unified issue definition (KPI + table must match) ──
+      // Non-empty Issues/Blockers after stripping blank-like placeholders.
+      // Empty → Not recorded (never a bare dash). Placeholders do not count.
+      var P11_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
       function diaryIssuesText(r) {
         var direct = col(r,
           'Issues/Blockers', 'Issues / Blockers', 'Issues & Blockers',
@@ -12339,7 +12282,6 @@
           'issues/blockers', 'issues_blockers'
         );
         if (direct) return String(direct).trim();
-        // Fallback: fuzzy key match (header typos / NBSP / spacing around /)
         var keys = Object.keys(r || {});
         for (var i = 0; i < keys.length; i++) {
           var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -12353,14 +12295,181 @@
         return '';
       }
       function hasIssueContent(r) {
-        return diaryIssuesText(r) !== '';
+        var t = diaryIssuesText(r);
+        if (!t) return false;
+        return !P11_EMPTY_ISSUE.test(t);
+      }
+      function issueCellLabel(r) {
+        if (hasIssueContent(r)) return diaryIssuesText(r);
+        return 'Not recorded';
+      }
+
+      // Safety: Yes is a flag. No/N is NOT confirmed "no issue" - field is ambiguous.
+      function safetyState(r) {
+        var raw = col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry', 'Safety');
+        var s = String(raw || '').trim().toLowerCase();
+        if (!s) return { code: 'missing', label: 'Not recorded', isFlag: false };
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', isFlag: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'N not confirmed as no issue', isFlag: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous (' + String(raw).trim() + ')', isFlag: false };
+      }
+
+      // Work Stopped: distinguish No vs Not recorded (never raw dash for both).
+      // Column may be absent - treat as Not recorded (not "No").
+      function workStoppedState(r) {
+        // Distinguish No vs Not recorded. Missing column → Not recorded (never bare dash).
+        var keyProbe = resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', isStop: false };
+        var val = String(rawColByNames(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) || '').trim();
+        if (!val) return { code: 'missing', label: 'Not recorded', isStop: false };
+        var s = val.toLowerCase();
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', isStop: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'No', isStop: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
+      }
+
+      function photoState(r) {
+        var keyProbe = resolveRowKey(r, [
+          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
+        ]);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        var val = String(rawColByNames(r, [
+          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
+        ]) || '').trim();
+        if (!val) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        var s = val.toLowerCase();
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', hasPhoto: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'No', hasPhoto: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false };
+      }
+
+      function flagClass(kind) {
+        if (kind === 'yes') return 'p11-flag p11-flag--accent';
+        if (kind === 'missing') return 'p11-flag p11-flag--gap';
+        if (kind === 'ambiguous') return 'p11-flag p11-flag--watch';
+        return 'p11-flag p11-flag--neutral';
+      }
+
+      function emptyCard(msg) {
+        return '<div class="p11-empty-card"><p class="no-data-msg">' + p11Esc(msg) + '</p></div>';
+      }
+
+      function clearP11Charts() {
+        if (_charts['chart-p11-activity']) {
+          _charts['chart-p11-activity'].destroy();
+          delete _charts['chart-p11-activity'];
+        }
+      }
+
+      // ── Variation helpers (never invent Pending / zero) ──
+      function variationValueRaw(r) {
+        return col(r,
+          'Value ($) no tax', 'Value ($) No Tax', 'Value (no tax)',
+          'Value ($)', 'Value', 'value', 'Variation Value', 'Recorded Value'
+        );
+      }
+      function variationValueInfo(r) {
+        var keyProbe = resolveRowKey(r, [
+          'Value ($) no tax', 'Value ($) No Tax', 'Value (no tax)',
+          'Value ($)', 'Value', 'value', 'Variation Value', 'Recorded Value'
+        ]);
+        if (keyProbe === null) {
+          return { kind: 'missing', label: 'Not recorded', amount: null, unconfirmedZero: false };
+        }
+        var raw = String(rawColByNames(r, [
+          'Value ($) no tax', 'Value ($) No Tax', 'Value (no tax)',
+          'Value ($)', 'Value', 'value', 'Variation Value', 'Recorded Value'
+        ]) || '').trim();
+        if (!raw) {
+          return { kind: 'missing', label: 'Not recorded', amount: null, unconfirmedZero: false };
+        }
+        var n = parseNum(raw);
+        // Explicit $0 / 0 → unconfirmed commercial value (not genuine zero)
+        if (n === 0) {
+          return {
+            kind: 'zero',
+            label: '$0 (unconfirmed)',
+            amount: 0,
+            unconfirmedZero: true
+          };
+        }
+        return { kind: 'ok', label: formatCurrency(n), amount: n, unconfirmedZero: false };
+      }
+      function variationStatus(r) {
+        var keyProbe = resolveRowKey(r, ['Status', 'status']);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded' };
+        var raw = String(rawColByNames(r, ['Status', 'status']) || '').trim();
+        if (!raw) return { code: 'missing', label: 'Not recorded' };
+        // Only "Pending" if source literally says so - never infer
+        return { code: 'ok', label: raw };
+      }
+      function variationApproved(r) {
+        var keyProbe = resolveRowKey(r, ['Date Approved', 'date_approved']);
+        if (keyProbe === null) return 'Not recorded';
+        var raw = String(rawColByNames(r, ['Date Approved', 'date_approved']) || '').trim();
+        if (!raw) return 'Not recorded';
+        return raw;
+      }
+      function reworkCostStatus(defectRows) {
+        // Never report $0 when source empty or costs blank
+        if (!_p11LoadMeta.defectsOk) {
+          return { label: 'Unavailable, source not connected', available: false, total: null };
+        }
+        if (!(defectRows || []).length) {
+          return { label: 'Unavailable, source not connected', available: false, total: null };
+        }
+        var anyCostCell = false;
+        var total = 0;
+        (defectRows || []).forEach(function(r) {
+          var key = resolveRowKey(r, ['Rework Cost ($)', 'Rework Cost', 'rework_cost']);
+          if (key === null) return;
+          var raw = String(rawColByNames(r, ['Rework Cost ($)', 'Rework Cost', 'rework_cost']) || '').trim();
+          if (raw !== '') {
+            anyCostCell = true;
+            total += parseNum(raw);
+          }
+        });
+        if (!anyCostCell) {
+          return { label: 'Unavailable, source not connected', available: false, total: null };
+        }
+        return { label: formatCurrency(total), available: true, total: total };
       }
 
       var brandedDefects    = applyGlobal(window._p11Defects);
       var brandedVariations = applyGlobal(window._p11Variations);
       var brandedDiaries    = applyGlobal(window._p11Diaries);
 
-      // Fixed master list (same 9 used across Capacity / Labour) — not derived from P11 tabs
+      // Page header: date range + brand echo
+      var rangeEl = document.getElementById('p11-date-range');
+      if (rangeEl) {
+        var mLabel = (!activeMonths || !activeMonths.length)
+          ? 'All months'
+          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.join(', '));
+        var yLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
+        rangeEl.textContent = mLabel + ' · ' + yLabel + ' (global filters)';
+      }
+      var brandEl = document.getElementById('p11-brand-label');
+      if (brandEl) brandEl.textContent = activeBrand || 'ALL';
+      var updEl = document.getElementById('p11-last-updated');
+      if (updEl) {
+        updEl.textContent = 'Last updated ' + new Date().toLocaleString('en-AU', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      }
+
+      // Department filter (master list)
       var deptList = (CONFIG.DEPARTMENTS && CONFIG.DEPARTMENTS.length)
         ? CONFIG.DEPARTMENTS.slice()
         : [
@@ -12369,7 +12478,7 @@
           ];
       var deptSelect = document.getElementById('p11-dept-filter');
       if (deptSelect) {
-        var prev = activeP11Dept;
+        var prevD = activeP11Dept;
         deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
         deptList.forEach(function(d) {
           var opt = document.createElement('option');
@@ -12377,293 +12486,808 @@
           opt.textContent = d;
           deptSelect.appendChild(opt);
         });
-        var prevOk = prev && prev !== 'ALL' && deptList.some(function(d) {
-          return normalizeDeptKey(d) === normalizeDeptKey(prev);
+        var prevOk = prevD && prevD !== 'ALL' && deptList.some(function(d) {
+          return normalizeDeptKey(d) === normalizeDeptKey(prevD);
         });
         if (prevOk) {
           var match = deptList.filter(function(d) {
-            return normalizeDeptKey(d) === normalizeDeptKey(prev);
+            return normalizeDeptKey(d) === normalizeDeptKey(prevD);
           })[0];
-          activeP11Dept = match || prev;
+          activeP11Dept = match || prevD;
           deptSelect.value = activeP11Dept;
+        } else {
+          activeP11Dept = 'ALL';
+          deptSelect.value = 'ALL';
         }
-        else { activeP11Dept = 'ALL'; deptSelect.value = 'ALL'; }
-        if (!_p11DeptBound) {
-          _p11DeptBound = true;
+      }
+
+      // Job filter from diaries (include blanks as "No job #")
+      var deptsFilteredDiaries = filterByDept(brandedDiaries);
+      var jobSet = {};
+      deptsFilteredDiaries.forEach(function(r) {
+        var j = diaryJobNo(r);
+        if (j) jobSet[j] = true;
+      });
+      var jobList = Object.keys(jobSet).sort(function(a, b) { return a.localeCompare(b); });
+      var jobSelect = document.getElementById('p11-job-filter');
+      if (jobSelect) {
+        var prevJ = activeP11Job;
+        jobSelect.innerHTML = '<option value="ALL">All Jobs</option>';
+        jobList.forEach(function(j) {
+          var opt = document.createElement('option');
+          opt.value = j;
+          opt.textContent = j;
+          jobSelect.appendChild(opt);
+        });
+        if (prevJ && prevJ !== 'ALL' && jobSet[prevJ]) {
+          activeP11Job = prevJ;
+          jobSelect.value = prevJ;
+        } else {
+          activeP11Job = 'ALL';
+          jobSelect.value = 'ALL';
+        }
+      }
+
+      if (!_p11FiltersBound) {
+        _p11FiltersBound = true;
+        if (deptSelect) {
           deptSelect.addEventListener('change', function() {
             activeP11Dept = this.value || 'ALL';
             renderP11(window._p11Defects, window._p11Variations, window._p11Diaries);
             init3DTilt();
           });
         }
-      }
-
-      var defectsFiltered    = filterByDept(brandedDefects);
-      var variationsFiltered = filterByDept(brandedVariations);
-      var diariesFiltered    = filterByDept(brandedDiaries);
-      var issueRows = diariesFiltered.filter(hasIssueContent);
-
-      // Photo note — count diary entries with photos (do not render photos)
-      var photoCount = diariesFiltered.filter(function(r) {
-        return isYes(col(r, 'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'));
-      }).length;
-      var photoNote = document.getElementById('p11-diaries-photo-note');
-      if (photoNote) {
-        if (diariesFiltered.length > 0) {
-          photoNote.textContent = photoCount + ' of ' + diariesFiltered.length +
-            ' site diary entries in selection have photos attached (photos not shown).';
-          photoNote.removeAttribute('hidden');
-        } else {
-          photoNote.textContent = '';
-          photoNote.setAttribute('hidden', '');
+        if (jobSelect) {
+          jobSelect.addEventListener('change', function() {
+            activeP11Job = this.value || 'ALL';
+            renderP11(window._p11Defects, window._p11Variations, window._p11Diaries);
+            init3DTilt();
+          });
         }
       }
 
-      setBBPageData('P11', 'P11: Quality & Variations', {
-        defects:    defectsFiltered.slice(0, 200),
-        variations: variationsFiltered.slice(0, 200),
-        diaries:    diariesFiltered.slice(0, 200),
-        diaryIssues: issueRows.slice(0, 200),
-        photoCount: photoCount
+      // Apply dept + job. Keep diaries missing job/brand/dept in counts.
+      var defectsFiltered    = filterByJob(filterByDept(brandedDefects));
+      var variationsFiltered = filterByJob(filterByDept(brandedVariations));
+      var diariesFiltered    = filterByJob(filterByDept(brandedDiaries));
+
+      var entryCount = diariesFiltered.length;
+      var issueRows = diariesFiltered.filter(hasIssueContent);
+      var issueCount = issueRows.length;
+      var issueRate = entryCount ? (issueCount / entryCount) * 100 : null;
+
+      var photoYes = 0;
+      var photoNo = 0;
+      var photoMissing = 0;
+      diariesFiltered.forEach(function(r) {
+        var p = photoState(r);
+        if (p.hasPhoto) photoYes++;
+        else if (p.code === 'no') photoNo++;
+        else photoMissing++;
+      });
+      var noPhotoCount = entryCount - photoYes;
+      var photoPct = entryCount ? (photoYes / entryCount) * 100 : null;
+
+      var defectCount = defectsFiltered.length;
+      var reworkInfo = reworkCostStatus(defectsFiltered);
+
+      var varCount = variationsFiltered.length;
+      var varRecordedTotal = 0;
+      var varHasRecorded = false;
+      var varZeroUnconfirmed = 0;
+      var varApprovalMissing = 0;
+      var varStatusMissing = 0;
+      variationsFiltered.forEach(function(r) {
+        var vi = variationValueInfo(r);
+        if (vi.kind === 'ok') {
+          varRecordedTotal += vi.amount;
+          varHasRecorded = true;
+        }
+        if (vi.unconfirmedZero) varZeroUnconfirmed++;
+        if (variationApproved(r) === 'Not recorded') varApprovalMissing++;
+        if (variationStatus(r).code === 'missing') varStatusMissing++;
       });
 
-      // ── KPIs ────────────────────────────────────────────────
-      var totalReworkHrs = defectsFiltered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Rework Hrs Actual', 'Rework Hrs Est', 'Rework Hours', 'rework_hrs', 'Rework Hrs'));
-      }, 0);
-      var totalReworkCost = defectsFiltered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Rework Cost ($)', 'Rework Cost', 'rework_cost'));
-      }, 0);
-      var totalVarValue = variationsFiltered.reduce(function(s, r) {
-        return s + parseNum(col(r, 'Value ($)', 'Value', 'value', 'Variation Value'));
-      }, 0);
+      // Confidence banner (dynamic - never hardcode sample counts)
+      var dqBits = [];
+      var confLevel = 'Partial';
+      if (!_p11LoadMeta.diariesOk && !_p11LoadMeta.variationsOk && !_p11LoadMeta.defectsOk) {
+        confLevel = 'Unavailable';
+        dqBits.push('sheet sources not connected');
+      } else {
+        if (!_p11LoadMeta.diariesOk) dqBits.push('site diaries unavailable');
+        if (!_p11LoadMeta.variationsOk) dqBits.push('variations log unavailable');
+        if (!_p11LoadMeta.defectsOk || !reworkInfo.available) dqBits.push('rework costs unavailable');
+        if (varCount && (varApprovalMissing || varStatusMissing)) {
+          dqBits.push('variation approval incomplete');
+        }
+        if (varZeroUnconfirmed) {
+          dqBits.push(varZeroUnconfirmed + ' variation value' + (varZeroUnconfirmed === 1 ? '' : 's') + ' require confirmation');
+        }
+        if (entryCount) {
+          dqBits.push(noPhotoCount + ' of ' + entryCount + ' diary entries have no photo');
+        }
+        if (_p11LoadMeta.diariesOk && _p11LoadMeta.variationsOk && reworkInfo.available && !varApprovalMissing && !noPhotoCount) {
+          confLevel = 'Good';
+        } else if (!_p11LoadMeta.diariesOk) {
+          confLevel = 'Limited';
+        }
+      }
+      var dqEl = document.getElementById('p11-data-quality');
+      if (dqEl) {
+        dqEl.textContent = 'Quality data confidence: ' + confLevel +
+          (dqBits.length ? ' · ' + dqBits.join(' · ') : '');
+      }
 
-      setKPI('kpi-p11-defects', 'kpi-p11-defects-sub',
-        String(defectsFiltered.length),
-        defectsFiltered.length ? 'Logged defects / rework' : 'No defects in selection');
-      setKPI('kpi-p11-rework', 'kpi-p11-rework-sub',
-        defectsFiltered.length ? formatCurrency(totalReworkCost) : '—',
-        defectsFiltered.length
-          ? (totalReworkHrs ? totalReworkHrs.toFixed(1) + ' rework hours' : 'Rework cost total')
-          : 'No rework data');
-      setKPI('kpi-p11-variations', 'kpi-p11-variations-sub',
-        variationsFiltered.length ? formatCurrency(totalVarValue) : '—',
-        variationsFiltered.length
-          ? variationsFiltered.length + ' variation' + (variationsFiltered.length === 1 ? '' : 's')
-          : 'No variations in selection');
+      setBBPageData('P11', 'P11: Site Diary Quality and Variations Exceptions', {
+        diaries: diariesFiltered.slice(0, 300),
+        diaryIssues: issueRows.slice(0, 200),
+        variations: variationsFiltered.slice(0, 100),
+        defects: defectsFiltered.slice(0, 100),
+        entryCount: entryCount,
+        issueCount: issueCount,
+        photoYes: photoYes,
+        noPhotoCount: noPhotoCount,
+        defectCount: defectCount,
+        varCount: varCount,
+        rework: reworkInfo.label,
+        confidence: confLevel
+      });
+
+      // ── KPIs ──
+      setKPI('kpi-p11-entries', 'kpi-p11-entries-sub',
+        _p11LoadMeta.diariesOk ? String(entryCount) : 'Unavailable',
+        _p11LoadMeta.diariesOk
+          ? (entryCount ? 'Buildpass_Site Diaries' : '0 in selection')
+          : 'Source not connected');
+
       setKPI('kpi-p11-issues', 'kpi-p11-issues-sub',
-        String(issueRows.length),
-        issueRows.length ? 'Diary issues / blockers' : 'No diary issues in selection');
+        _p11LoadMeta.diariesOk ? String(issueCount) : 'Unavailable',
+        _p11LoadMeta.diariesOk
+          ? ('Rows with Issues/Blockers text · of ' + entryCount + ' entries')
+          : 'Source not connected');
+
+      var issueRateCard = document.getElementById('p11-kpi-issue-rate');
+      if (issueRate == null) {
+        setKPI('kpi-p11-issue-rate', 'kpi-p11-issue-rate-sub',
+          _p11LoadMeta.diariesOk ? '—' : 'Unavailable',
+          entryCount ? 'Issues ÷ entries' : 'No diary entries');
+      } else {
+        setKPI('kpi-p11-issue-rate', 'kpi-p11-issue-rate-sub',
+          issueRate.toFixed(1) + '%',
+          issueCount + ' / ' + entryCount + ' entries');
+        if (issueRateCard) {
+          issueRateCard.classList.toggle('p11-kpi--watch', issueRate >= 20 && issueRate < 40);
+          issueRateCard.classList.toggle('p11-kpi--accent', issueRate >= 40);
+        }
+      }
+
+      setKPI('kpi-p11-photos', 'kpi-p11-photos-sub',
+        _p11LoadMeta.diariesOk
+          ? (entryCount ? (photoYes + ' of ' + entryCount) : '0')
+          : 'Unavailable',
+        photoPct == null
+          ? (_p11LoadMeta.diariesOk ? 'No diary entries' : 'Source not connected')
+          : (photoPct.toFixed(0) + '% with photos · evidence completeness'));
+
+      // Defects: "N recorded" - never "No defects"
+      setKPI('kpi-p11-defects', 'kpi-p11-defects-sub',
+        _p11LoadMeta.defectsOk
+          ? (defectCount + ' recorded')
+          : 'Unavailable',
+        _p11LoadMeta.defectsOk
+          ? (reworkInfo.available
+            ? ('Rework cost ' + reworkInfo.label)
+            : 'Rework cost: Unavailable, source not connected')
+          : 'Defects_Rework not connected');
+
+      var varMain;
+      var varSub;
+      if (!_p11LoadMeta.variationsOk) {
+        varMain = 'Unavailable';
+        varSub = 'Variations_Log not connected';
+      } else if (!varCount) {
+        varMain = '0';
+        varSub = '0 recorded in selection';
+      } else {
+        varMain = String(varCount);
+        var bits = [];
+        if (varHasRecorded) bits.push(formatCurrency(varRecordedTotal) + ' recorded value');
+        if (varZeroUnconfirmed) bits.push(varZeroUnconfirmed + ' value$ unconfirmed');
+        if (!varHasRecorded && !varZeroUnconfirmed) bits.push('value Not recorded');
+        if (varZeroUnconfirmed) bits.push('Commercial value requires confirmation');
+        varSub = bits.join(' · ');
+      }
+      setKPI('kpi-p11-variations', 'kpi-p11-variations-sub', varMain, varSub);
 
       clearP11Charts();
 
-      // ── Section 1 — Defects & Rework ─────────────────────────
-      var chartRow = document.getElementById('p11-defects-chart-row');
-      var defectsEl = document.getElementById('p11-defects-table');
-
-      if (!defectsFiltered.length) {
-        if (chartRow) chartRow.setAttribute('hidden', '');
-        if (defectsEl) defectsEl.innerHTML = emptyCard('Data not available');
+      // ── Weekly diary activity chart ──
+      var chartCanvas = document.getElementById('chart-p11-activity');
+      var chartEmpty = document.getElementById('p11-activity-empty');
+      var chartWrap = document.getElementById('p11-activity-chart-wrap');
+      if (!entryCount) {
+        if (chartWrap) chartWrap.setAttribute('hidden', '');
+        if (chartEmpty) {
+          chartEmpty.removeAttribute('hidden');
+          chartEmpty.innerHTML = emptyCard(
+            _p11LoadMeta.diariesOk
+              ? 'No diary entries in selection.'
+              : 'Site diary source unavailable.'
+          );
+        }
       } else {
-        // Aggregate by job for chart + summary table
-        var byJob = {};
-        defectsFiltered.forEach(function(r) {
-          var job = col(r, 'Job Name', 'job_name', 'Job', 'Xero Project ID', 'xero_project_id') || 'Unknown';
-          var brand = col(r, 'Brand', 'brand') || '—';
-          var dept  = col(r, 'Department', 'department') || '—';
-          var key = job + '||' + brand + '||' + dept;
-          if (!byJob[key]) {
-            byJob[key] = {
-              JobName: job,
-              Brand: brand,
-              Department: dept,
-              ReworkHrs: 0,
-              ReworkCost: 0,
-              Count: 0
-            };
-          }
-          byJob[key].ReworkHrs += parseNum(col(r,
-            'Rework Hrs Actual', 'Rework Hrs Est', 'Rework Hours', 'rework_hrs', 'Rework Hrs'));
-          byJob[key].ReworkCost += parseNum(col(r, 'Rework Cost ($)', 'Rework Cost', 'rework_cost'));
-          byJob[key].Count += 1;
-        });
-        var jobRows = Object.keys(byJob).map(function(k) { return byJob[k]; })
-          .sort(function(a, b) { return b.ReworkCost - a.ReworkCost; });
+        if (chartWrap) chartWrap.removeAttribute('hidden');
+        if (chartEmpty) chartEmpty.setAttribute('hidden', '');
 
-        if (chartRow) chartRow.removeAttribute('hidden');
-        var chartLabels = jobRows.map(function(r) {
-          var n = r.JobName;
-          return n.length > 28 ? n.substring(0, 28) + '…' : n;
+        var byWeek = {};
+        diariesFiltered.forEach(function(r) {
+          var d = parseFlexibleDate(col(r, 'Date', 'date'));
+          var wk = d ? isoWeekKey(d) : 'Unknown';
+          if (!byWeek[wk]) byWeek[wk] = { entries: 0, issues: 0, photos: 0 };
+          byWeek[wk].entries += 1;
+          if (hasIssueContent(r)) byWeek[wk].issues += 1;
+          if (photoState(r).hasPhoto) byWeek[wk].photos += 1;
         });
-        var chartData = jobRows.map(function(r) { return r.ReworkCost; });
-        var wrap = document.getElementById('p11-defects-chart-wrap');
-        if (wrap) wrap.style.height = Math.max(180, Math.max(jobRows.length, 1) * 28 + 48) + 'px';
+        var weekKeys = Object.keys(byWeek).filter(function(k) { return k !== 'Unknown'; }).sort();
+        if (byWeek.Unknown) weekKeys.push('Unknown');
+        // Keep chart readable: last 16 weeks if many
+        if (weekKeys.length > 16) weekKeys = weekKeys.slice(-16);
 
-        makeChart('chart-p11-defects', {
+        var entrySeries = weekKeys.map(function(k) { return byWeek[k].entries; });
+        var issueSeries = weekKeys.map(function(k) { return byWeek[k].issues; });
+        var photoPctSeries = weekKeys.map(function(k) {
+          var e = byWeek[k].entries;
+          return e ? Math.round((byWeek[k].photos / e) * 1000) / 10 : 0;
+        });
+        var weekLabels = weekKeys.map(function(k) {
+          if (k === 'Unknown') return 'Unknown';
+          // YYYY-Www → short label
+          var m = String(k).match(/^(\d{4})-W(\d{2})$/);
+          return m ? ('W' + m[2] + ' ' + m[1].slice(2)) : k;
+        });
+
+        makeChart('chart-p11-activity', {
           type: 'bar',
           data: {
-            labels: chartLabels,
-            datasets: [{
-              label: 'Rework Cost',
-              data: chartData,
-              backgroundColor: brandCharcoal,
-              borderWidth: 0,
-              borderRadius: 0,
-              barThickness: 14
-            }]
+            labels: weekLabels,
+            datasets: [
+              {
+                type: 'bar',
+                label: 'Diary entries',
+                data: entrySeries,
+                backgroundColor: 'rgba(17, 24, 39, 0.72)',
+                borderWidth: 0,
+                borderRadius: 2,
+                yAxisID: 'y',
+                order: 2
+              },
+              {
+                type: 'bar',
+                label: 'Issues / Blockers',
+                data: issueSeries,
+                backgroundColor: cAccent,
+                borderWidth: 0,
+                borderRadius: 2,
+                yAxisID: 'y',
+                barPercentage: 0.5,
+                order: 1
+              },
+              {
+                type: 'line',
+                label: 'Photo coverage %',
+                data: photoPctSeries,
+                borderColor: cAction,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: cAction,
+                tension: 0.25,
+                yAxisID: 'y1',
+                order: 0
+              }
+            ]
           },
           options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { right: 56 } },
+            interaction: { mode: 'index', intersect: false },
             plugins: {
-              legend: { display: false },
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: { color: cMuted, boxWidth: 10, font: { size: 11 } }
+              },
               tooltip: {
                 callbacks: {
-                  label: function(ctx) { return formatCurrency(ctx.raw || 0); }
+                  label: function(ctx) {
+                    if (ctx.dataset.yAxisID === 'y1') return ctx.dataset.label + ': ' + ctx.raw + '%';
+                    return ctx.dataset.label + ': ' + ctx.raw;
+                  }
                 }
               }
             },
             scales: {
               x: {
-                beginAtZero: true,
-                grid: { color: brandSilver },
-                ticks: {
-                  color: brandSoftGray,
-                  callback: function(v) { return '$' + v; }
-                }
+                grid: { color: cBorder },
+                ticks: { color: cMuted, maxRotation: 45, font: { size: 10 } }
               },
               y: {
-                grid: { display: false },
-                ticks: { color: brandCharcoal, font: { size: 11 } }
+                beginAtZero: true,
+                position: 'left',
+                title: { display: true, text: 'Entries', color: cMuted, font: { size: 11 } },
+                ticks: { color: cMuted, precision: 0 },
+                grid: { color: cBorder }
+              },
+              y1: {
+                beginAtZero: true,
+                max: 100,
+                position: 'right',
+                title: { display: true, text: 'Photo %', color: cAction, font: { size: 11 } },
+                ticks: { color: cAction, callback: function(v) { return v + '%'; } },
+                grid: { drawOnChartArea: false }
               }
             }
           }
         });
+      }
 
-        if (defectsEl) {
-          defectsEl.innerHTML = buildTable(jobRows, [
-            { label: 'Job Name',    key: 'JobName' },
-            { label: 'Brand',       key: 'Brand' },
-            { label: 'Department',  key: 'Department' },
-            { label: 'Defects',     key: 'Count', format: function(v) { return String(v); } },
-            {
-              label: 'Rework Hours',
-              key: 'ReworkHrs',
-              format: function(v) { return parseNum(v).toFixed(1); }
-            },
-            {
-              label: 'Rework Cost',
-              key: 'ReworkCost',
-              format: function(v) { return formatCurrency(parseNum(v)); }
+      // ── Issues by Job table ──
+      var byJob = {};
+      diariesFiltered.forEach(function(r) {
+        var jn = diaryJobNo(r) || 'No job #';
+        var jname = col(r, 'Job Name', 'job_name') || jn;
+        var key = jn;
+        if (!byJob[key]) {
+          byJob[key] = {
+            job: jn,
+            name: jname,
+            entries: 0,
+            issues: 0,
+            safety: 0,
+            stopped: 0,
+            photos: 0,
+            latest: null,
+            latestTs: 0
+          };
+        }
+        var b = byJob[key];
+        b.entries += 1;
+        if (hasIssueContent(r)) b.issues += 1;
+        if (safetyState(r).isFlag) b.safety += 1;
+        if (workStoppedState(r).isStop) b.stopped += 1;
+        if (photoState(r).hasPhoto) b.photos += 1;
+        var d = parseFlexibleDate(col(r, 'Date', 'date'));
+        if (d && d.getTime() >= b.latestTs) {
+          b.latestTs = d.getTime();
+          b.latest = col(r, 'Date', 'date') || d.toLocaleDateString('en-AU');
+        } else if (!b.latest && col(r, 'Date', 'date')) {
+          b.latest = col(r, 'Date', 'date');
+        }
+      });
+      var jobRows = Object.keys(byJob).map(function(k) { return byJob[k]; });
+      jobRows.sort(function(a, b) {
+        if (b.stopped !== a.stopped) return b.stopped - a.stopped;
+        if (b.safety !== a.safety) return b.safety - a.safety;
+        if (b.issues !== a.issues) return b.issues - a.issues;
+        var am = a.entries - a.photos;
+        var bm = b.entries - b.photos;
+        if (bm !== am) return bm - am;
+        return (b.latestTs || 0) - (a.latestTs || 0);
+      });
+
+      var jobEl = document.getElementById('p11-issues-by-job');
+      if (jobEl) {
+        if (!jobRows.length) {
+          jobEl.innerHTML = emptyCard(
+            _p11LoadMeta.diariesOk ? 'No diary entries in selection.' : 'Site diaries unavailable.'
+          );
+        } else {
+          var jHtml = '<table class="data-table p11-table"><thead><tr>' +
+            '<th>Job</th><th>Entries</th><th>Issues</th><th>Safety Flags</th>' +
+            '<th>Work Stopped</th><th>Photo Coverage</th><th>Latest Entry</th>' +
+            '</tr></thead><tbody>';
+          jobRows.forEach(function(j) {
+            var cov = j.entries ? Math.round((j.photos / j.entries) * 100) : 0;
+            var stopLabel = j.stopped > 0
+              ? ('<span class="p11-flag p11-flag--accent">' + j.stopped + '</span>')
+              : '<span class="p11-flag p11-flag--gap">0 · col may be Not recorded</span>';
+            // If work stopped column entirely missing, say Not recorded rather than 0
+            var anyStopCol = diariesFiltered.some(function(r) {
+              return resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) !== null;
+            });
+            if (!anyStopCol) {
+              stopLabel = '<span class="p11-flag p11-flag--gap">Not recorded</span>';
+            } else if (j.stopped === 0) {
+              stopLabel = '<span class="p11-flag p11-flag--neutral">0</span>';
             }
-          ]);
+            var safeLabel = j.safety > 0
+              ? ('<span class="p11-flag p11-flag--accent">' + j.safety + '</span>')
+              : '<span class="p11-flag p11-flag--neutral">0</span>';
+            var jobLabel = j.job === 'No job #'
+              ? '<span class="p11-flag p11-flag--gap">No job #</span>'
+              : p11Esc(j.job);
+            if (j.name && j.name !== j.job) {
+              jobLabel += '<div class="p11-job-sub">' + p11Esc(j.name) + '</div>';
+            }
+            jHtml += '<tr>' +
+              '<td>' + jobLabel + '</td>' +
+              '<td>' + j.entries + '</td>' +
+              '<td>' + (j.issues ? ('<span class="p11-flag p11-flag--watch">' + j.issues + '</span>') : '0') + '</td>' +
+              '<td>' + safeLabel + '</td>' +
+              '<td>' + stopLabel + '</td>' +
+              '<td>' +
+                '<div class="p11-bar-line">' +
+                '<span class="p11-bar-track"><span class="p11-bar-fill p11-bar-fill--action" style="width:' + cov + '%"></span></span>' +
+                '<span class="p11-bar-pct">' + j.photos + '/' + j.entries + ' (' + cov + '%)</span>' +
+                '</div>' +
+              '</td>' +
+              '<td>' + p11Esc(j.latest || 'Not recorded') + '</td>' +
+              '</tr>';
+          });
+          jHtml += '</tbody></table>';
+          // Sum check: job issues total must equal KPI issue count
+          var jobIssueSum = jobRows.reduce(function(s, j) { return s + j.issues; }, 0);
+          jHtml += '<p class="p11-table-foot">Issues total across jobs: ' + jobIssueSum +
+            ' (matches Issues / Blockers KPI).</p>';
+          jobEl.innerHTML = jHtml;
         }
       }
 
-      // ── Section 2 — Variations Log ──────────────────────────
-      // Prefix helper ready: p11JobPrefix / p11MatchesJobPrefix link J1349 ↔ J1349C
-      // when Variations_Log or Xero projects titled "Variation" are populated.
-      var varEl = document.getElementById('p11-variations-table');
-      if (!variationsFiltered.length) {
-        if (varEl) varEl.innerHTML = emptyCard('Data not available.');
-      } else {
-        var sortedVars = variationsFiltered.slice().sort(function(a, b) {
-          var da = String(col(a, 'Date Raised', 'date_raised', 'Date') || '');
-          var db = String(col(b, 'Date Raised', 'date_raised', 'Date') || '');
-          return db.localeCompare(da);
-        });
-        // Annotate with job prefix for future Xero Variation-title matching
-        sortedVars.forEach(function(r) {
-          r._jobPrefix = p11JobPrefix(col(r,
-            'Xero Project J#', 'Xero Project ID', 'xero_project_id', 'Job Name', 'Job #'));
-        });
-        if (varEl) {
-          varEl.innerHTML = buildTable(sortedVars, [
-            { label: 'Variation ID',   key: ['Invoice #', 'Variation ID', 'Variation #', 'ID', 'id'] },
-            { label: 'Date Raised',    key: ['Date Raised', 'date_raised', 'Date'] },
-            { label: 'Date Approved',  key: ['Date Approved', 'date_approved'] },
-            { label: 'Xero Project ID', key: ['Xero Project J#', 'Xero Project ID', 'xero_project_id'] },
-            { label: 'Job Name',       key: ['Job Name', 'job_name', 'Job'] },
-            { label: 'Brand',          key: ['Brand', 'brand'] },
-            { label: 'Department',     key: ['Department', 'department'] },
-            { label: 'Client',         key: ['Client', 'client'] },
-            { label: 'Description',    key: ['Description', 'description'] },
-            {
-              label: 'Value ($)',
-              key: ['Value ($)', 'Value', 'value'],
-              format: function(v) { return formatCurrency(parseNum(v)); }
-            },
-            { label: 'Status',         key: ['Status', 'status'] },
-            {
-              label: 'Invoiced (Y/N)',
-              key: ['Invoiced (Y/N)', 'Invoiced', 'invoiced'],
-              format: function(v) { return yn(v); }
-            },
-            { label: 'Reason Category', key: ['Reason Category', 'reason_category', 'Category'] },
-            { label: 'Raised By',      key: ['Raised By', 'raised_by', 'Raised by'] }
-          ]);
-        }
-      }
+      // ── Site Diary Evidence panel ──
+      var evEl = document.getElementById('p11-evidence-panel');
+      if (evEl) {
+        if (!_p11LoadMeta.diariesOk || !entryCount) {
+          evEl.innerHTML = '';
+        } else {
+          var byPerson = {};
+          diariesFiltered.forEach(function(r) {
+            var p = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
+            if (!byPerson[p]) byPerson[p] = { n: 0, photos: 0 };
+            byPerson[p].n += 1;
+            if (photoState(r).hasPhoto) byPerson[p].photos += 1;
+          });
+          var personRows = Object.keys(byPerson).map(function(k) {
+            return { name: k, n: byPerson[k].n, photos: byPerson[k].photos };
+          }).sort(function(a, b) { return b.n - a.n; }).slice(0, 8);
 
-      // ── Section 3 — Site Diary Issues ───────────────────────
-      // Empty only when no diary rows after Brand/Month/Year/Department filters.
-      // KPI counts Issues/Blockers content; table lists all filtered diary entries.
-      var diaryEl = document.getElementById('p11-diaries-table');
-      if (!diariesFiltered.length) {
-        if (diaryEl) diaryEl.innerHTML = emptyCard('Data not available.');
-      } else {
-        // Group by Brand → Job #
-        var sortedDiaries = diariesFiltered.slice().sort(function(a, b) {
-          var ba = String(col(a, 'Brand', 'brand') || '').toUpperCase();
-          var bb = String(col(b, 'Brand', 'brand') || '').toUpperCase();
-          if (ba !== bb) return ba.localeCompare(bb);
-          var ja = String(col(a, 'Job #', 'Job Number', 'Job Name', 'job_name') || '');
-          var jb = String(col(b, 'Job #', 'Job Number', 'Job Name', 'job_name') || '');
-          if (ja !== jb) return ja.localeCompare(jb);
-          var da = String(col(a, 'Date', 'date') || '');
-          var db = String(col(b, 'Date', 'date') || '');
-          return db.localeCompare(da);
-        });
-
-        var html = '<div class="table-wrap"><table class="data-table">' +
-          '<thead><tr>' +
-          '<th>Date</th><th>Job #</th><th>Job Name</th><th>Brand</th><th>Department</th>' +
-          '<th>Issues/Blockers</th><th>Safety Entry</th><th>Work Stopped</th>' +
-          '<th>Photos</th><th>Logged By</th><th>Materials Used</th>' +
-          '</tr></thead><tbody>';
-
-        var lastGroup = '';
-        sortedDiaries.forEach(function(r) {
-          var brand = col(r, 'Brand', 'brand') || '—';
-          var jobNo = col(r, 'Job #', 'Job Number', 'job_number') || '—';
-          var groupKey = brand + ' · ' + jobNo;
-          if (groupKey !== lastGroup) {
-            html += '<tr class="p11-group-row"><td colspan="11">' + groupKey + '</td></tr>';
-            lastGroup = groupKey;
+          var ev = '<div class="p11-evidence-inner">' +
+            '<div class="p11-evidence-title">Site Diary Evidence</div>' +
+            '<p class="p11-section-hint">Evidence completeness · not a quality score</p>' +
+            '<div class="p11-evidence-stats">' +
+            '<span>' + photoYes + ' with photos</span>' +
+            '<span>' + noPhotoCount + ' without photos</span>' +
+            '<span>' + (photoPct != null ? photoPct.toFixed(0) + '%' : '—') + ' coverage</span>' +
+            '</div>';
+          ev += '<div class="p11-evidence-jobs">';
+          jobRows.slice(0, 8).forEach(function(j) {
+            var cov = j.entries ? Math.round((j.photos / j.entries) * 100) : 0;
+            ev += '<div class="p11-ev-row">' +
+              '<span class="p11-ev-name">' + p11Esc(j.job) + '</span>' +
+              '<span class="p11-bar-track"><span class="p11-bar-fill p11-bar-fill--action" style="width:' + cov + '%"></span></span>' +
+              '<span class="p11-ev-pct">' + cov + '%</span>' +
+              '</div>';
+          });
+          ev += '</div>';
+          if (personRows.length) {
+            ev += '<div class="p11-evidence-people"><span class="p11-evidence-sub">By person (top)</span><ul>';
+            personRows.forEach(function(p) {
+              var pc = p.n ? Math.round((p.photos / p.n) * 100) : 0;
+              ev += '<li>' + p11Esc(p.name) + ': ' + p.photos + '/' + p.n + ' photos (' + pc + '%)</li>';
+            });
+            ev += '</ul></div>';
           }
-          var issueDesc = diaryIssuesText(r) || '—';
-          var safety = yn(col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry'));
-          var stopped = yn(col(r, 'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped'));
-          var photos = yn(col(r, 'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos'));
-          var materials = col(r, 'Materials Used', 'materials_used', 'General Notes', 'Notes', 'notes') || '—';
-          html += '<tr>' +
-            '<td>' + (col(r, 'Date', 'date') || '—') + '</td>' +
-            '<td>' + jobNo + '</td>' +
-            '<td>' + (col(r, 'Job Name', 'job_name') || '—') + '</td>' +
-            '<td>' + brand + '</td>' +
-            '<td>' + (col(r, 'Department', 'department') || '—') + '</td>' +
-            '<td>' + issueDesc + '</td>' +
-            '<td>' + safety + '</td>' +
-            '<td>' + stopped + '</td>' +
-            '<td>' + photos + '</td>' +
-            '<td>' + (col(r, 'Logged By', 'Logged by', 'logged_by') || '—') + '</td>' +
-            '<td>' + materials + '</td>' +
+          ev += '</div>';
+          evEl.innerHTML = ev;
+        }
+      }
+
+      // ── Site Diary Exceptions table (primary) ──
+      // Exception rows: issue content OR safety flag OR work stopped
+      // Issue column text uses same hasIssueContent definition as KPI.
+      var exceptionRows = diariesFiltered.filter(function(r) {
+        return hasIssueContent(r) || safetyState(r).isFlag || workStoppedState(r).isStop;
+      }).slice().sort(function(a, b) {
+        var as = workStoppedState(a).isStop ? 1 : 0;
+        var bs = workStoppedState(b).isStop ? 1 : 0;
+        if (bs !== as) return bs - as;
+        var af = safetyState(a).isFlag ? 1 : 0;
+        var bf = safetyState(b).isFlag ? 1 : 0;
+        if (bf !== af) return bf - af;
+        var ai = hasIssueContent(a) ? 1 : 0;
+        var bi = hasIssueContent(b) ? 1 : 0;
+        if (bi !== ai) return bi - ai;
+        var da = parseFlexibleDate(col(a, 'Date', 'date'));
+        var db = parseFlexibleDate(col(b, 'Date', 'date'));
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      });
+
+      var hintEl = document.getElementById('p11-exceptions-hint');
+      if (hintEl) {
+        hintEl.textContent = issueCount + ' issues (KPI definition) · ' +
+          exceptionRows.length + ' exception row' + (exceptionRows.length === 1 ? '' : 's') +
+          ' (issues, safety flags or work stopped) · expand for full detail';
+      }
+
+      var excEl = document.getElementById('p11-exceptions-table');
+      if (excEl) {
+        if (!exceptionRows.length) {
+          excEl.innerHTML = emptyCard(
+            entryCount
+              ? 'No issues, safety flags or work-stopped entries in selection.'
+              : (_p11LoadMeta.diariesOk ? 'No diary entries in selection.' : 'Site diaries unavailable.')
+          );
+        } else {
+          var eHtml = '<table class="data-table p11-table p11-exceptions"><thead><tr>' +
+            '<th></th><th>Date</th><th>Job</th><th>Issue / Blocker</th>' +
+            '<th>Safety</th><th>Work Stopped</th><th>Photo</th><th>Logged By</th>' +
+            '</tr></thead><tbody>';
+          exceptionRows.forEach(function(r, idx) {
+            var saf = safetyState(r);
+            var stop = workStoppedState(r);
+            var pho = photoState(r);
+            var issueTxt = issueCellLabel(r);
+            var issueCls = hasIssueContent(r) ? '' : 'p11-gap-text';
+            // Truncate long issue in compact cell
+            var issueShort = issueTxt.length > 90 ? issueTxt.slice(0, 90) + '...' : issueTxt;
+            var drawerId = 'p11-ex-' + idx;
+            eHtml += '<tr class="p11-ex-row' +
+              (stop.isStop || saf.isFlag ? ' p11-ex-row--accent' : '') + '">' +
+              '<td><button type="button" class="p11-expand-btn" data-p11-ex="' + idx +
+              '" aria-expanded="false" aria-controls="' + drawerId + '">+</button></td>' +
+              '<td>' + p11Esc(col(r, 'Date', 'date') || 'Not recorded') + '</td>' +
+              '<td>' + p11Esc(diaryJobNo(r) || 'No job #') + '</td>' +
+              '<td class="' + issueCls + '">' + p11Esc(issueShort) + '</td>' +
+              '<td><span class="' + flagClass(saf.code) + '">' + p11Esc(saf.label) + '</span></td>' +
+              '<td><span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
+                p11Esc(stop.label) + '</span></td>' +
+              '<td><span class="' + flagClass(pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)) + '">' +
+                p11Esc(pho.label) + '</span></td>' +
+              '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
+              '</tr>' +
+              '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
+              '<td colspan="8">' +
+              '<div class="p11-drawer-grid">' +
+              '<div><dt>Job Name</dt><dd>' + p11Esc(col(r, 'Job Name', 'job_name') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Brand</dt><dd>' + p11Esc(col(r, 'Brand', 'brand') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Department</dt><dd>' + p11Esc(col(r, 'Department', 'department') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Materials</dt><dd>' + p11Esc(col(r, 'Materials Used', 'materials_used') || 'Not recorded') + '</dd></div>' +
+              '<div class="p11-drawer-wide"><dt>Full Issue Description</dt><dd>' +
+                p11Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') + '</dd></div>' +
+              '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
+                p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
+              '<div class="p11-drawer-wide"><dt>Photo references</dt><dd>' +
+                p11Esc(col(r, 'Photo Links', 'Photo Link', 'photo_links', 'Photos') ||
+                  (pho.hasPhoto ? 'Marked Yes · links Not recorded' : pho.label)) +
+              '</dd></div>' +
+              '</div></td></tr>';
+          });
+          eHtml += '</tbody></table>';
+          excEl.innerHTML = eHtml;
+          excEl.querySelectorAll('.p11-expand-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              var id = btn.getAttribute('aria-controls');
+              var row = id ? document.getElementById(id) : null;
+              if (!row) return;
+              var open = row.hasAttribute('hidden');
+              if (open) {
+                row.removeAttribute('hidden');
+                btn.textContent = '−';
+                btn.setAttribute('aria-expanded', 'true');
+              } else {
+                row.setAttribute('hidden', '');
+                btn.textContent = '+';
+                btn.setAttribute('aria-expanded', 'false');
+              }
+            });
+          });
+        }
+      }
+
+      // Full diary log (drill-down only - not primary view)
+      var fullEl = document.getElementById('p11-full-log');
+      if (fullEl) {
+        if (!diariesFiltered.length) {
+          fullEl.innerHTML = emptyCard('No diary entries.');
+        } else {
+          var sortedAll = diariesFiltered.slice().sort(function(a, b) {
+            var da = parseFlexibleDate(col(a, 'Date', 'date'));
+            var db = parseFlexibleDate(col(b, 'Date', 'date'));
+            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+          });
+          var fHtml = '<table class="data-table p11-table"><thead><tr>' +
+            '<th>Date</th><th>Job</th><th>Issue / Blocker</th><th>Safety</th>' +
+            '<th>Work Stopped</th><th>Photo</th><th>Logged By</th></tr></thead><tbody>';
+          sortedAll.forEach(function(r) {
+            var saf = safetyState(r);
+            var stop = workStoppedState(r);
+            var pho = photoState(r);
+            fHtml += '<tr>' +
+              '<td>' + p11Esc(col(r, 'Date', 'date') || 'Not recorded') + '</td>' +
+              '<td>' + p11Esc(diaryJobNo(r) || 'No job #') + '</td>' +
+              '<td>' + p11Esc(issueCellLabel(r)) + '</td>' +
+              '<td>' + p11Esc(saf.label) + '</td>' +
+              '<td>' + p11Esc(stop.label) + '</td>' +
+              '<td>' + p11Esc(pho.label) + '</td>' +
+              '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
+              '</tr>';
+          });
+          fHtml += '</tbody></table>';
+          fullEl.innerHTML = fHtml;
+        }
+      }
+
+      // ── Variation action cards ──
+      var varEl = document.getElementById('p11-variations-panel');
+      var varHint = document.getElementById('p11-variations-hint');
+      if (varEl) {
+        if (!_p11LoadMeta.variationsOk) {
+          if (varHint) varHint.textContent = 'Variations_Log unavailable.';
+          varEl.innerHTML = emptyCard('Variations log unavailable · Pending');
+        } else if (!variationsFiltered.length) {
+          if (varHint) varHint.textContent = 'No variations in selection.';
+          varEl.innerHTML = emptyCard('No variations recorded in selection.');
+        } else {
+          if (varHint) {
+            varHint.textContent = varCount + ' variation' + (varCount === 1 ? '' : 's') +
+              ' · action cards (not a trend chart with few rows)';
+          }
+          var sortedVars = variationsFiltered.slice().sort(function(a, b) {
+            var da = parseFlexibleDate(col(a, 'Date Raised', 'date_raised', 'Date'));
+            var db = parseFlexibleDate(col(b, 'Date Raised', 'date_raised', 'Date'));
+            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+          });
+          var vHtml = '<div class="p11-var-list">';
+          sortedVars.forEach(function(r) {
+            var vi = variationValueInfo(r);
+            var st = variationStatus(r);
+            var appr = variationApproved(r);
+            var warnings = [];
+            if (vi.unconfirmedZero || vi.kind === 'missing') {
+              warnings.push('Commercial value requires confirmation');
+            }
+            if (appr === 'Not recorded' || st.code === 'missing') {
+              warnings.push('Approval status requires completion');
+            }
+            vHtml += '<article class="p11-var-card">' +
+              '<div class="p11-var-top">' +
+              '<span class="p11-var-id">' + p11Esc(
+                col(r, 'Invoice #', 'Variation ID', 'Variation #', 'ID', 'id') || 'No ID'
+              ) + '</span>' +
+              '<span class="p11-var-status ' +
+                (st.code === 'missing' ? 'p11-flag--gap' : '') + '">' + p11Esc(st.label) + '</span>' +
+              '</div>' +
+              '<div class="p11-var-grid">' +
+              '<div><dt>Date Raised</dt><dd>' + p11Esc(col(r, 'Date Raised', 'date_raised', 'Date') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Job</dt><dd>' + p11Esc(
+                col(r, 'Xero Project J#', 'Job #', 'Job Name', 'job_name') || 'Not recorded'
+              ) + '</dd></div>' +
+              '<div><dt>Client</dt><dd>' + p11Esc(col(r, 'Client', 'client') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Dept</dt><dd>' + p11Esc(col(r, 'Department', 'department') || 'Not recorded') + '</dd></div>' +
+              '<div class="p11-drawer-wide"><dt>Description</dt><dd>' +
+                p11Esc(col(r, 'Description', 'description') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Recorded Value</dt><dd class="' +
+                (vi.unconfirmedZero || vi.kind === 'missing' ? 'p11-gap-text' : '') + '">' +
+                p11Esc(vi.label) + '</dd></div>' +
+              '<div><dt>Date Approved</dt><dd class="' +
+                (appr === 'Not recorded' ? 'p11-gap-text' : '') + '">' + p11Esc(appr) + '</dd></div>' +
+              '</div>';
+            if (warnings.length) {
+              vHtml += '<ul class="p11-var-warnings">';
+              warnings.forEach(function(w) {
+                vHtml += '<li>' + p11Esc(w) + '</li>';
+              });
+              vHtml += '</ul>';
+            }
+            vHtml += '</article>';
+          });
+          vHtml += '</div>';
+          varEl.innerHTML = vHtml;
+        }
+      }
+
+      // ── Data Completeness panel ──
+      function completenessRow(field, present, total, statusExtra) {
+        var pct = total ? Math.round((present / total) * 100) : null;
+        var status;
+        if (total === 0) status = 'No rows';
+        else if (pct === 100) status = 'Complete';
+        else if (pct === 0) status = 'Missing';
+        else status = 'Partial';
+        if (statusExtra) status = statusExtra;
+        return {
+          field: field,
+          present: present,
+          total: total,
+          pct: pct,
+          status: status
+        };
+      }
+
+      var nD = entryCount;
+      var nV = varCount;
+      var jobFilled = diariesFiltered.filter(function(r) { return !!diaryJobNo(r); }).length;
+      var brandFilled = diariesFiltered.filter(function(r) {
+        return !!String(col(r, 'Brand', 'brand') || '').trim();
+      }).length;
+      var deptFilled = diariesFiltered.filter(function(r) {
+        return !!String(col(r, 'Department', 'department') || '').trim();
+      }).length;
+      var photoFilled = photoYes + photoNo; // answered Y/N
+      var varValFilled = variationsFiltered.filter(function(r) {
+        return variationValueInfo(r).kind === 'ok';
+      }).length;
+      var varApprFilled = variationsFiltered.filter(function(r) {
+        return variationApproved(r) !== 'Not recorded';
+      }).length;
+
+      var compRows = [
+        completenessRow('Job Number', jobFilled, nD),
+        completenessRow('Brand', brandFilled, nD),
+        completenessRow('Department', deptFilled, nD),
+        completenessRow('Photo Evidence', photoFilled, nD,
+          nD ? (photoYes + ' Yes · ' + photoNo + ' No · ' + photoMissing + ' Not recorded') : 'No rows'),
+        completenessRow('Variation Value', varValFilled, nV,
+          !_p11LoadMeta.variationsOk ? 'Source not connected'
+            : (nV ? null : 'No variations')),
+        completenessRow('Variation Approval', varApprFilled, nV,
+          !_p11LoadMeta.variationsOk ? 'Source not connected'
+            : (nV ? null : 'No variations')),
+        {
+          field: 'Rework Cost',
+          present: reworkInfo.available ? 1 : 0,
+          total: 1,
+          pct: reworkInfo.available ? 100 : 0,
+          status: reworkInfo.available
+            ? reworkInfo.label
+            : 'Unavailable, source not connected'
+        }
+      ];
+      // Fix completenessRow status override
+      compRows[4] = completenessRow('Variation Value', varValFilled, nV);
+      if (!_p11LoadMeta.variationsOk) {
+        compRows[4].status = 'Unavailable, source not connected';
+        compRows[4].pct = null;
+      } else if (varZeroUnconfirmed) {
+        compRows[4].status = 'Partial · $0 requires confirmation';
+      }
+      compRows[5] = completenessRow('Variation Approval', varApprFilled, nV);
+      if (!_p11LoadMeta.variationsOk) {
+        compRows[5].status = 'Unavailable, source not connected';
+        compRows[5].pct = null;
+      }
+
+      var compEl = document.getElementById('p11-completeness-table');
+      if (compEl) {
+        var cHtml = '<table class="data-table p11-table"><thead><tr>' +
+          '<th>Field</th><th>Completeness</th><th>Status</th></tr></thead><tbody>';
+        compRows.forEach(function(row) {
+          var compLabel;
+          if (row.field === 'Rework Cost') {
+            compLabel = reworkInfo.available ? 'Connected' : '0%';
+          } else if (row.pct == null) {
+            compLabel = '—';
+          } else if (row.field === 'Photo Evidence') {
+            compLabel = row.pct + '% answered · ' + photoYes + '/' + nD + ' with photos';
+          } else {
+            compLabel = row.present + ' / ' + row.total +
+              (row.pct != null ? ' (' + row.pct + '%)' : '');
+          }
+          var statusCls = (row.status && (
+            row.status.indexOf('Unavailable') === 0 ||
+            row.status === 'Missing' ||
+            row.status.indexOf('Partial') === 0
+          )) ? 'p11-gap-text' : '';
+          cHtml += '<tr>' +
+            '<td>' + p11Esc(row.field) + '</td>' +
+            '<td>' + p11Esc(compLabel) + '</td>' +
+            '<td class="' + statusCls + '">' + p11Esc(row.status) + '</td>' +
             '</tr>';
         });
-        html += '</tbody></table></div>';
-        if (diaryEl) diaryEl.innerHTML = html;
+        cHtml += '</tbody></table>';
+        cHtml += '<p class="p11-table-foot">Rows missing job / brand / department remain in entry counts. ' +
+          'Missing defect or rework data is not evidence of good quality.</p>';
+        compEl.innerHTML = cHtml;
       }
     }
 
