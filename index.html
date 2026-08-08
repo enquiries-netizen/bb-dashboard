@@ -17176,17 +17176,18 @@
         '. Planned demand and role pending when no source. Variance shown only when both planned and actual exist.</p>';
       html += p6RenderAssignmentSummary(m);
       html += '</div>';
-      html += '<div class="p6-section-card p6-weekly-cap-card">';
-      html += '<div class="p6-section-title">Weekly Capacity</div>';
-      html += '<p class="p6-section-hint">Available vs scheduled hours by planning week (Current model / Capacity series). Max 6 weeks from selected week.</p>';
-      html += p6RenderWeeklyCapacity(m);
-      html += '</div>';
       html += '</div>';
       html += '<div class="p6-section-card p6-lower-actions">';
       html += '<div class="p6-section-title">Capacity Actions</div>';
       html += '<p class="p6-section-hint">Real exceptions only: overallocation, spare after complete timesheets, missing timesheets, unusual hours.</p>';
       html += p6RenderActions(m);
       html += '</div></div>';
+
+      html += '<div class="p6-section-card p6-weekly-cap-card">';
+      html += '<div class="p6-section-title">Weekly Capacity</div>';
+      html += '<p class="p6-section-hint">Available vs scheduled hours by planning week (Current model / Capacity series). Max 6 weeks from selected week.</p>';
+      html += p6RenderWeeklyCapacity(m);
+      html += '</div>';
 
       html += '<details class="p6-drill">';
       html += '<summary>Employee capacity detail (Week ' + m.selectedWeek + ')</summary>';

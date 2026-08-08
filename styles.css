@@ -2597,7 +2597,7 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
-/* Hybrid: Weekly Capacity bars + Assignment Summary */
+/* Hybrid: Weekly Capacity bars + Assignment Summary (legacy side-by-side) */
 #page-p6 .p6-hybrid-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
@@ -2606,10 +2606,21 @@ select {
   align-items: start;
 }
 
+/* Standalone Weekly Capacity: fill full content / column width (no half-grid gap) */
+#page-p6 .p6-weekly-cap-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 #page-p6 .p6-week-bars {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 #page-p6 .p6-week-bar-row {
