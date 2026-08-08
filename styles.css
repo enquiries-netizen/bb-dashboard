@@ -597,6 +597,363 @@ select {
 
 
 /* ═══════════════════════════════════════════════════════════════
+   P4 CRITICAL MILESTONES — GANTT (monochrome timeline overview)
+   Brand: Deep Charcoal #262425 · Soft Gray #BCBDBE · Silver #D2D4D5
+═══════════════════════════════════════════════════════════════ */
+#p4-schedule-gantt {
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.p4-gantt {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  padding: 10px 12px 12px;
+}
+
+.p4-gantt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.p4-gantt-meta {
+  font-size: 11px;
+  color: var(--gray);
+  font-family: var(--font-body);
+  line-height: 1.35;
+}
+
+.p4-gantt-toggle {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--charcoal);
+  border: 1px solid var(--gray);
+  background: var(--white);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.3;
+  transition: background var(--ease), border-color var(--ease);
+}
+
+.p4-gantt-toggle:hover {
+  background: rgba(210, 212, 213, 0.35);
+  border-color: var(--charcoal);
+}
+
+.p4-gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.p4-gantt-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--gray);
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.p4-gantt-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 8px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.p4-gantt-swatch--completed {
+  background: var(--charcoal);
+}
+
+.p4-gantt-swatch--in-progress {
+  background: var(--gray);
+  border: 1px solid var(--gray);
+}
+
+.p4-gantt-swatch--overdue {
+  background: var(--charcoal-dark);
+  border: 2px solid var(--charcoal);
+  height: 10px;
+}
+
+.p4-gantt-swatch--not-started {
+  background: transparent;
+  border: 1px solid var(--gray);
+}
+
+.p4-gantt-swatch--cancelled {
+  background: rgba(210, 212, 213, 0.45);
+  border: 1px dashed var(--silver);
+}
+
+.p4-gantt-empty {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.4;
+}
+
+.p4-gantt-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.p4-gantt-header,
+.p4-gantt-group-head,
+.p4-gantt-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 22%) 1fr;
+  gap: 0 8px;
+  align-items: stretch;
+  min-width: 520px;
+}
+
+.p4-gantt-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--white);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.p4-gantt-label-col {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--charcoal);
+  padding: 4px 6px 4px 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.p4-gantt-label-col--head {
+  font-family: var(--font-heading);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--gray);
+  padding-top: 10px;
+  padding-bottom: 2px;
+}
+
+.p4-gantt-group {
+  margin-top: 4px;
+}
+
+.p4-gantt-group-head {
+  background: rgba(210, 212, 213, 0.28);
+  border-top: 1px solid var(--border);
+}
+
+.p4-gantt-group-title {
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--charcoal);
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.p4-gantt-row {
+  border-bottom: 1px solid rgba(210, 212, 213, 0.45);
+  min-height: 26px;
+}
+
+.p4-gantt-row:last-child {
+  border-bottom: none;
+}
+
+.p4-gantt-row--risk .p4-gantt-label-col {
+  background: #F0F1F1;
+}
+
+.p4-gantt-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.p4-gantt-timeline {
+  position: relative;
+  min-height: 26px;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent calc(16.666% - 1px),
+      rgba(188, 189, 190, 0.22) calc(16.666% - 1px),
+      rgba(188, 189, 190, 0.22) 16.666%
+    );
+}
+
+.p4-gantt-timeline--axis {
+  min-height: 28px;
+  background: transparent;
+}
+
+.p4-gantt-timeline--group {
+  min-height: 0;
+  background: transparent;
+}
+
+.p4-gantt-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.p4-gantt-tick:first-child {
+  transform: translateX(0);
+}
+
+.p4-gantt-tick:last-child {
+  transform: translateX(-100%);
+}
+
+.p4-gantt-tick-label {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  font-size: 9px;
+  font-family: var(--font-body);
+  color: var(--gray);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.p4-gantt-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--charcoal);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.p4-gantt-timeline--axis .p4-gantt-today {
+  top: 0;
+  bottom: 0;
+  opacity: 0.7;
+}
+
+.p4-gantt-bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  box-sizing: border-box;
+  z-index: 2;
+  min-width: 4px;
+}
+
+/* Completed — solid Deep Charcoal, full opacity */
+.p4-gantt-bar--completed {
+  background: var(--charcoal);
+  border: none;
+  opacity: 1;
+}
+
+/* In Progress — Soft Gray track; darker fill for % Done */
+.p4-gantt-bar--in-progress {
+  background: var(--gray);
+  border: 1px solid var(--gray);
+  overflow: hidden;
+}
+
+.p4-gantt-bar-progress {
+  display: block;
+  height: 100%;
+  background: var(--charcoal-light);
+  max-width: 100%;
+}
+
+/* Overdue — darker, thicker border, end marker (distinct from Completed) */
+.p4-gantt-bar--overdue {
+  background: var(--charcoal-dark);
+  border: 2px solid var(--charcoal);
+  height: 14px;
+}
+
+.p4-gantt-bar-marker {
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translate(50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1.5px solid var(--charcoal-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--charcoal-dark);
+  z-index: 3;
+}
+
+.p4-gantt-warn-icon {
+  display: block;
+}
+
+/* Not Started — light outlined, minimal fill */
+.p4-gantt-bar--not-started {
+  background: rgba(210, 212, 213, 0.25);
+  border: 1px solid var(--gray);
+}
+
+/* Cancelled — de-emphasized, dashed */
+.p4-gantt-bar--cancelled {
+  background: rgba(210, 212, 213, 0.35);
+  border: 1px dashed var(--silver);
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .p4-gantt-header,
+  .p4-gantt-group-head,
+  .p4-gantt-row {
+    grid-template-columns: minmax(110px, 32%) 1fr;
+    min-width: 420px;
+  }
+
+  .p4-gantt-scroll {
+    max-height: 280px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
    CARD BASE — includes 3D tilt via JS
 ═══════════════════════════════════════════════════════════════ */
 .card {
