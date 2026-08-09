@@ -7444,17 +7444,67 @@ p.p8-section-hint {
 #page-p11 .p11-main-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 14px;
   margin-bottom: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
-/* Left/right stacks (P6 lower-left pattern): Activity + Exceptions / Issues + Variations */
+/*
+  Left/right wrappers dissolve so the four panels form a 2×2 grid.
+  Row 2 height is set by Variation Actions; Exceptions matches that
+  height (height:0 removes its content contribution) and scrolls inside.
+*/
 #page-p11 .p11-main-left,
 #page-p11 .p11-main-right {
+  display: contents;
+}
+
+#page-p11 .p11-main-left > .p11-panel:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Site Diary Exceptions — match Variation Actions height, internal scroll */
+#page-p11 .p11-main-left > .p11-panel:last-child {
+  grid-column: 1;
+  grid-row: 2;
+  height: 0;
+  min-height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  overflow: hidden;
+}
+
+#page-p11 .p11-main-left > .p11-panel:last-child .section-title,
+#page-p11 .p11-main-left > .p11-panel:last-child .p11-section-hint,
+#page-p11 .p11-main-left > .p11-panel:last-child .p11-drill {
+  flex-shrink: 0;
+}
+
+#page-p11 #p11-exceptions-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+#page-p11 #p11-exceptions-table .p11-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--p11-surface, #fff);
+}
+
+#page-p11 .p11-main-right > .p11-panel:first-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#page-p11 .p11-main-right > .p11-panel:last-child {
+  grid-column: 2;
+  grid-row: 2;
   min-width: 0;
 }
 
@@ -7783,8 +7833,30 @@ p.p8-section-hint {
   }
   #page-p11 .p11-main-row {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
   }
-
+  /* Stacked: restore DOM order (Activity → Exceptions → Issues → Variations) */
+  #page-p11 .p11-main-left,
+  #page-p11 .p11-main-right {
+    display: contents;
+  }
+  #page-p11 .p11-main-left > .p11-panel:first-child,
+  #page-p11 .p11-main-left > .p11-panel:last-child,
+  #page-p11 .p11-main-right > .p11-panel:first-child,
+  #page-p11 .p11-main-right > .p11-panel:last-child {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  #page-p11 .p11-main-left > .p11-panel:last-child {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  #page-p11 #p11-exceptions-table {
+    flex: none;
+    max-height: min(420px, 55vh);
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 640px) {
