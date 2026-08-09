@@ -7064,7 +7064,7 @@ p.p8-section-hint {
   align-items: start;
 }
 
-/* Right column under Funnel: Budget pacing then demand-to-capacity */
+/* Right column stack under Funnel (unused if single panel; kept for reuse) */
 .p10-col-stack {
   display: flex;
   flex-direction: column;

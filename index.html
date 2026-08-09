@@ -1056,7 +1056,7 @@
 
             <div class="p10-secondary-strip" id="p10-secondary-strip" aria-label="Secondary metrics"></div>
 
-            <!-- Row 1: Funnel | Budget pacing + demand-to-capacity (right stack) -->
+            <!-- Row 1: Funnel | Budget pacing -->
             <div class="p10-row-two">
               <div class="section-card p10-panel p10-panel--wide">
                 <div class="section-title">Commercial funnel</div>
@@ -1065,21 +1065,21 @@
                 </p>
                 <div id="p10-commercial-funnel">Loading funnel…</div>
               </div>
-              <div class="p10-col-stack">
-                <div class="section-card p10-panel">
-                  <div class="section-title">Budget pacing</div>
-                  <p class="p10-section-hint">Budget / Spend / Forecast · status uses healthy under, accent over</p>
-                  <div id="p10-budget-pacing">Loading pacing…</div>
-                  <div class="p10-chart-wrap p10-chart-wrap--sm">
-                    <canvas id="chart-p10-budget" aria-label="Budget pacing bullets"></canvas>
-                  </div>
-                </div>
-                <div class="section-card p10-panel">
-                  <div class="section-title">Demand-to-capacity alignment</div>
-                  <p class="p10-section-hint">Marketing demand vs P2 pipeline vs P6 delivery capacity. Capacity is re-used when live; never invented.</p>
-                  <div id="p10-capacity-align">Loading alignment…</div>
+              <div class="section-card p10-panel">
+                <div class="section-title">Budget pacing</div>
+                <p class="p10-section-hint">Budget / Spend / Forecast · status uses healthy under, accent over</p>
+                <div id="p10-budget-pacing">Loading pacing…</div>
+                <div class="p10-chart-wrap p10-chart-wrap--sm">
+                  <canvas id="chart-p10-budget" aria-label="Budget pacing bullets"></canvas>
                 </div>
               </div>
+            </div>
+
+            <!-- Full-width: Demand-to-capacity (not half-column under Budget pacing) -->
+            <div class="section-card p10-panel">
+              <div class="section-title">Demand-to-capacity alignment</div>
+              <p class="p10-section-hint">Marketing demand vs P2 pipeline vs P6 delivery capacity. Capacity is re-used when live; never invented.</p>
+              <div id="p10-capacity-align">Loading alignment…</div>
             </div>
 
             <!-- Row 2: Campaign matrix (full width) -->
@@ -12351,7 +12351,7 @@
         renderMixShareChart('chart-p10-mix-dept', deptMixRows);
       }
 
-      // ── Demand-to-capacity alignment (right column, under Budget pacing) ──
+      // ── Demand-to-capacity alignment (full-width panel below Budget pacing row) ──
       // Marketing demand = High/Med/Low from Marketing_Paid spend/lead share
       // Sales pipeline = soft P2 GHL_Pipeline by dept (Pending if soft-load fails)
       // Delivery capacity = p10DeptCapacityRollup (P6-compatible util hours)
