@@ -7444,9 +7444,8 @@ p.p8-section-hint {
 /*
   Two true column stacks (not display:contents 2×2).
   Left: Activity (auto) + Exceptions (flex:1 fills remaining height).
-  Right: Issues + Variations stacked naturally.
-  Columns stretch so left bottom aligns with right bottom — no gap
-  under Activity when Issues is taller than the chart.
+  Right: Issues + Variations (auto) + Full diary log (flex:1 fills rest).
+  Columns stretch so left Exceptions and right Full log bottoms align.
 */
 #page-p11 .p11-main-row {
   display: grid;
@@ -7463,6 +7462,7 @@ p.p8-section-hint {
   gap: 14px;
   min-width: 0;
   min-height: 0;
+  align-self: stretch;
 }
 
 /* Site Diary Exceptions — fill space under Activity down to column bottom */
@@ -7494,15 +7494,28 @@ p.p8-section-hint {
   background: var(--p11-surface, #fff);
 }
 
-/* Right column: panels + Full diary log stack cleanly */
+/* Right column: Issues + Variations auto; Full diary log flex-grows to match Exceptions bottom */
 #page-p11 .p11-main-right > .p11-panel,
 #page-p11 .p11-main-right > .p11-drill {
   min-width: 0;
 }
 
+#page-p11 .p11-main-right > .p11-panel {
+  flex: 0 0 auto;
+}
+
 #page-p11 .p11-main-right > .p11-drill {
   margin-top: 0;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#page-p11 .p11-main-right > .p11-drill > summary {
+  flex-shrink: 0;
 }
 
 #page-p11 .p11-panel {
@@ -7767,9 +7780,13 @@ p.p8-section-hint {
   color: var(--p11-text, #111827);
 }
 
+/* Scrollable body: grows with Full diary log drill (flex:1) */
+#page-p11 #p11-full-log,
 #page-p11 .p11-full-log {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 10px 12px 12px;
-  max-height: 320px;
+  overflow-x: auto;
   overflow-y: auto;
 }
 
@@ -7831,12 +7848,22 @@ p.p8-section-hint {
   #page-p11 .p11-main-row {
     grid-template-columns: 1fr;
   }
-  /* Stacked: Activity → Exceptions → Issues → Variations (DOM order) */
+  /* Stacked: Activity → Exceptions → Issues → Variations → Full log (DOM order) */
   #page-p11 .p11-main-left > .p11-panel:last-child {
     flex: none;
     overflow: visible;
   }
   #page-p11 #p11-exceptions-table {
+    flex: none;
+    max-height: min(420px, 55vh);
+    overflow-y: auto;
+  }
+  #page-p11 .p11-main-right > .p11-drill {
+    flex: none;
+    overflow: visible;
+  }
+  #page-p11 #p11-full-log,
+  #page-p11 .p11-full-log {
     flex: none;
     max-height: min(420px, 55vh);
     overflow-y: auto;
