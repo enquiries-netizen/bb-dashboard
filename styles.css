@@ -7049,7 +7049,15 @@ p.p8-section-hint {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: 14px;
-  align-items: stretch;
+  align-items: start;
+}
+
+/* Right column under Funnel: Budget pacing then demand-to-capacity */
+.p10-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
 .p10-panel {

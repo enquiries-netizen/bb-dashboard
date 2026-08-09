@@ -1054,7 +1054,7 @@
 
             <div class="p10-secondary-strip" id="p10-secondary-strip" aria-label="Secondary metrics"></div>
 
-            <!-- Row 1: Funnel | Budget + capacity -->
+            <!-- Row 1: Funnel | Budget pacing + demand-to-capacity (right stack) -->
             <div class="p10-row-two">
               <div class="section-card p10-panel p10-panel--wide">
                 <div class="section-title">Commercial funnel</div>
@@ -1063,12 +1063,19 @@
                 </p>
                 <div id="p10-commercial-funnel">Loading funnel…</div>
               </div>
-              <div class="section-card p10-panel">
-                <div class="section-title">Budget pacing + capacity</div>
-                <p class="p10-section-hint">Budget / Spend / Forecast · status uses healthy under, accent over</p>
-                <div id="p10-budget-pacing">Loading pacing…</div>
-                <div class="p10-chart-wrap p10-chart-wrap--sm">
-                  <canvas id="chart-p10-budget" aria-label="Budget pacing bullets"></canvas>
+              <div class="p10-col-stack">
+                <div class="section-card p10-panel">
+                  <div class="section-title">Budget pacing</div>
+                  <p class="p10-section-hint">Budget / Spend / Forecast · status uses healthy under, accent over</p>
+                  <div id="p10-budget-pacing">Loading pacing…</div>
+                  <div class="p10-chart-wrap p10-chart-wrap--sm">
+                    <canvas id="chart-p10-budget" aria-label="Budget pacing bullets"></canvas>
+                  </div>
+                </div>
+                <div class="section-card p10-panel">
+                  <div class="section-title">Demand-to-capacity alignment</div>
+                  <p class="p10-section-hint">Marketing demand vs P2 pipeline vs P6 delivery capacity. Capacity is re-used when live; never invented.</p>
+                  <div id="p10-capacity-align">Loading alignment…</div>
                 </div>
               </div>
             </div>
@@ -1088,12 +1095,6 @@
               <div class="section-title">Channel and department mix</div>
               <p class="p10-section-hint" id="p10-mix-concentration"></p>
               <div id="p10-mix-table">Loading mix…</div>
-            </div>
-
-            <div class="section-card p10-panel">
-              <div class="section-title">Demand-to-capacity alignment</div>
-              <p class="p10-section-hint">Marketing demand vs P2 pipeline vs P6 delivery capacity. Capacity is re-used when live; never invented.</p>
-              <div id="p10-capacity-align">Loading alignment…</div>
             </div>
 
             <div class="section-card p10-panel">
@@ -12348,25 +12349,43 @@
         renderMixShareChart('chart-p10-mix-dept', deptMixRows);
       }
 
-      // ── Demand-to-capacity alignment ──
-      // Marketing demand = spend share + contracted pipeline wins; delivery from Capacity util
+      // ── Demand-to-capacity alignment (right column, under Budget pacing) ──
+      // Marketing demand = High/Med/Low from Marketing_Paid spend/lead share
+      // Sales pipeline = soft P2 GHL_Pipeline by dept (Pending if soft-load fails)
+      // Delivery capacity = p10DeptCapacityRollup (P6-compatible util hours)
+      var pipeLive = !!( _p10SheetMeta.pipeline && _p10SheetMeta.pipeline.ok);
       var pipeByDept = {};
-      openPipe.forEach(function(r) {
-        var d = canonicalDeptName(col(r, 'Department', 'department')) ||
-          String(col(r, 'Department', 'department') || '').trim() || 'Unassigned';
-        var v = dealValue(r);
-        if (v > 1) pipeByDept[d] = (pipeByDept[d] || 0) + v;
-      });
+      if (pipeLive) {
+        openPipe.forEach(function(r) {
+          var d = canonicalDeptName(col(r, 'Department', 'department')) ||
+            String(col(r, 'Department', 'department') || '').trim() || 'Unassigned';
+          var v = dealValue(r);
+          if (v > 1) pipeByDept[d] = (pipeByDept[d] || 0) + v;
+        });
+      }
 
       var alignDepts = {};
       Object.keys(byDeptAgg).forEach(function(d) { alignDepts[d] = true; });
       Object.keys(pipeByDept).forEach(function(d) { alignDepts[d] = true; });
       Object.keys(deptCapMap).forEach(function(d) { alignDepts[d] = true; });
 
+      function p10DemandLevel(mkt) {
+        if (!mkt || (!(mkt.spend > 0) && !(mkt.leads > 0) && !(mkt.ql > 0))) {
+          return { label: 'No paid demand', band: 'none' };
+        }
+        var leadVol = mkt.leads || mkt.ql || 0;
+        var spendShare = totalSpend > 0 ? mkt.spend / totalSpend : 0;
+        var leadShare = totalRawLeads > 0 ? leadVol / totalRawLeads : 0;
+        var score = Math.max(spendShare, leadShare);
+        if (score >= 0.33) return { label: 'High', band: 'high' };
+        if (score >= 0.12) return { label: 'Medium', band: 'med' };
+        return { label: 'Low', band: 'low' };
+      }
+
       var alignHtml = '<div class="table-wrap"><table class="data-table p10-table"><thead><tr>' +
         '<th>Department</th><th class="text-right">Marketing Demand</th>' +
-        '<th class="text-right">Sales Pipeline (P2)</th>' +
-        '<th class="text-right">Delivery Capacity (P6)</th><th>Recommendation</th></tr></thead><tbody>';
+        '<th class="text-right">Sales Pipeline</th>' +
+        '<th class="text-right">Delivery Capacity</th><th>Recommendation</th></tr></thead><tbody>';
 
       var alignKeys = Object.keys(alignDepts).sort();
       if (!alignKeys.length) {
@@ -12376,11 +12395,18 @@
           if (_p10State.dept && _p10State.dept !== 'ALL' &&
               normalizeDeptKey(d) !== normalizeDeptKey(_p10State.dept)) return;
           var mkt = byDeptAgg[d];
-          var demandText = mkt
-            ? (p10Money(mkt.spend, 0) + ' spend · ' + Math.round(mkt.leads || mkt.ql || 0) + ' leads')
-            : 'No paid demand';
-          var pipeV = pipeByDept[d];
-          var pipeText = pipeV != null ? p10Money(pipeV, 0) : 'Pending';
+          var demand = p10DemandLevel(mkt);
+          var demandText = demand.label;
+          if (mkt && demand.band !== 'none') {
+            demandText += ' · ' + p10Money(mkt.spend, 0) + ' · ' +
+              Math.round(mkt.leads || mkt.ql || 0) + ' leads';
+          }
+          var pipeText = 'Pending';
+          var pipeV = null;
+          if (pipeLive) {
+            pipeV = pipeByDept[d];
+            pipeText = pipeV != null ? p10Money(pipeV, 0) : 'No open pipeline';
+          }
           var cap = deptCapMap[d];
           var capText = 'Pending';
           var util = null;
@@ -12391,24 +12417,20 @@
           } else if (cap && cap.available === 0) {
             capText = 'Not available';
           }
+          // Hold campaign scaling | Test additional demand | Review offer and targeting | Maintain
           var rec = 'Maintain';
-          var mktShare = mkt && totalSpend > 0 ? mkt.spend / totalSpend : 0;
-          if (util != null && util >= 100 && mktShare >= 0.25) {
-            rec = 'Hold scaling';
-          } else if (util != null && util >= 85 && mktShare >= 0.35) {
-            rec = 'Hold scaling';
-          } else if (util != null && util < 60 && mktShare < 0.15 && totalSpend > 0) {
-            rec = 'Test demand';
-          } else if (mkt && mkt.wins === 0 && mkt.spend > 0 && mkt.leads > 5) {
-            rec = 'Review offer';
-          } else if (!mkt && pipeV > 0) {
-            rec = 'Maintain';
-          } else if (cap == null) {
-            rec = 'Pending capacity';
+          if (util != null && util >= 85 && (demand.band === 'high' || demand.band === 'med')) {
+            rec = 'Hold campaign scaling';
+          } else if (util != null && util < 60 && (demand.band === 'low' || demand.band === 'none') && totalSpend > 0) {
+            rec = 'Test additional demand';
+          } else if (mkt && mkt.wins === 0 && mkt.spend > 0 && (mkt.leads || 0) > 5) {
+            rec = 'Review offer and targeting';
+          } else if (util != null && util >= 100 && demand.band === 'high') {
+            rec = 'Hold campaign scaling';
           }
-          // Capacity pressure callout class
-          var recClass = (rec === 'Hold scaling') ? 'p10-status--over' :
-            (rec === 'Review offer' ? 'p10-status--watch' : 'p10-status--healthy');
+          var recClass = (rec === 'Hold campaign scaling') ? 'p10-status--over' :
+            (rec === 'Review offer and targeting' ? 'p10-status--watch' :
+              (rec === 'Test additional demand' ? 'p10-status--watch' : 'p10-status--healthy'));
           alignHtml += '<tr><td title="' + p10Esc(d) + '">' + p10Esc(d) + '</td>' +
             '<td class="text-right">' + p10Esc(demandText) + '</td>' +
             '<td class="text-right">' + p10Esc(pipeText) + '</td>' +
@@ -12417,6 +12439,9 @@
         });
       }
       alignHtml += '</tbody></table></div>';
+      if (!pipeLive) {
+        alignHtml += '<p class="p10-pending-line">GHL_Pipeline not available. Sales Pipeline column shows Pending.</p>';
+      }
       if (!(_p10SheetMeta.capacity && _p10SheetMeta.capacity.ok)) {
         alignHtml += '<p class="p10-pending-line">Capacity sheet not available. Delivery Capacity column shows Pending.</p>';
       } else {
