@@ -7471,7 +7471,7 @@ p.p8-section-hint {
 
 #page-p11 .p11-table-wrap {
   width: 100%;
-  overflow-x: visible;
+  overflow-x: auto;
 }
 
 #page-p11 .p11-table {
@@ -7487,6 +7487,7 @@ p.p8-section-hint {
   vertical-align: top;
   word-wrap: break-word;
   overflow-wrap: anywhere;
+  overflow: hidden;
   border-bottom: 1px solid var(--p11-border, #E2E4E8);
 }
 
@@ -7544,11 +7545,13 @@ p.p8-section-hint {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 #page-p11 .p11-bar-track {
-  flex: 1;
-  min-width: 48px;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 6px;
   border-radius: 3px;
   background: #E5E7EB;
@@ -7570,7 +7573,10 @@ p.p8-section-hint {
   font-size: 11px;
   white-space: nowrap;
   color: var(--p11-muted, #6B7280);
-  min-width: 4.5rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: right;
 }
 

@@ -13504,9 +13504,8 @@
         var d = parseFlexibleDate(col(r, 'Date', 'date'));
         if (d && d.getTime() >= b.latestTs) {
           b.latestTs = d.getTime();
-          b.latest = col(r, 'Date', 'date') || d.toLocaleDateString('en-AU');
-        } else if (!b.latest && col(r, 'Date', 'date')) {
-          b.latest = col(r, 'Date', 'date');
+          // Always format from parsed Date (en-AU) — never raw sheet string
+          b.latest = d.toLocaleDateString('en-AU');
         }
       });
       var jobRows = Object.keys(byJob).map(function(k) { return byJob[k]; });
