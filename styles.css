@@ -7476,8 +7476,7 @@ p.p8-section-hint {
 }
 
 #page-p11 .p11-main-left > .p11-panel:last-child .section-title,
-#page-p11 .p11-main-left > .p11-panel:last-child .p11-section-hint,
-#page-p11 .p11-main-left > .p11-panel:last-child .p11-drill {
+#page-p11 .p11-main-left > .p11-panel:last-child .p11-section-hint {
   flex-shrink: 0;
 }
 
@@ -7495,8 +7494,15 @@ p.p8-section-hint {
   background: var(--p11-surface, #fff);
 }
 
-#page-p11 .p11-main-right > .p11-panel:last-child {
+/* Right column: panels + Full diary log stack cleanly */
+#page-p11 .p11-main-right > .p11-panel,
+#page-p11 .p11-main-right > .p11-drill {
   min-width: 0;
+}
+
+#page-p11 .p11-main-right > .p11-drill {
+  margin-top: 0;
+  flex: 0 0 auto;
 }
 
 #page-p11 .p11-panel {
