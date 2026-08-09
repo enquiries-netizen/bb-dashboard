@@ -1457,6 +1457,15 @@ select {
   min-width: 0;
 }
 
+/* Lower two-column row (Workload | Executive action) */
+.p1-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .p1-col {
   display: flex;
   flex-direction: column;
@@ -3867,6 +3876,9 @@ select {
     gap: 8px;
   }
   .p1-mid {
+    grid-template-columns: 1fr;
+  }
+  .p1-row {
     grid-template-columns: 1fr;
   }
   .p1-chart-wrap {
