@@ -7441,36 +7441,34 @@ p.p8-section-hint {
   color: var(--p11-accent, #EA580C);
 }
 
+/*
+  Two true column stacks (not display:contents 2×2).
+  Left: Activity (auto) + Exceptions (flex:1 fills remaining height).
+  Right: Issues + Variations stacked naturally.
+  Columns stretch so left bottom aligns with right bottom — no gap
+  under Activity when Issues is taller than the chart.
+*/
 #page-p11 .p11-main-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
   gap: 14px;
   margin-bottom: 14px;
   align-items: stretch;
 }
 
-/*
-  Left/right wrappers dissolve so the four panels form a 2×2 grid.
-  Row 2 height is set by Variation Actions; Exceptions matches that
-  height (height:0 removes its content contribution) and scrolls inside.
-*/
 #page-p11 .p11-main-left,
 #page-p11 .p11-main-right {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
 }
 
-#page-p11 .p11-main-left > .p11-panel:first-child {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-/* Site Diary Exceptions — match Variation Actions height, internal scroll */
+/* Site Diary Exceptions — fill space under Activity down to column bottom */
 #page-p11 .p11-main-left > .p11-panel:last-child {
-  grid-column: 1;
-  grid-row: 2;
-  height: 0;
-  min-height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -7497,14 +7495,7 @@ p.p8-section-hint {
   background: var(--p11-surface, #fff);
 }
 
-#page-p11 .p11-main-right > .p11-panel:first-child {
-  grid-column: 2;
-  grid-row: 1;
-}
-
 #page-p11 .p11-main-right > .p11-panel:last-child {
-  grid-column: 2;
-  grid-row: 2;
   min-width: 0;
 }
 
@@ -7833,23 +7824,10 @@ p.p8-section-hint {
   }
   #page-p11 .p11-main-row {
     grid-template-columns: 1fr;
-    grid-template-rows: none;
   }
-  /* Stacked: restore DOM order (Activity → Exceptions → Issues → Variations) */
-  #page-p11 .p11-main-left,
-  #page-p11 .p11-main-right {
-    display: contents;
-  }
-  #page-p11 .p11-main-left > .p11-panel:first-child,
-  #page-p11 .p11-main-left > .p11-panel:last-child,
-  #page-p11 .p11-main-right > .p11-panel:first-child,
-  #page-p11 .p11-main-right > .p11-panel:last-child {
-    grid-column: auto;
-    grid-row: auto;
-  }
+  /* Stacked: Activity → Exceptions → Issues → Variations (DOM order) */
   #page-p11 .p11-main-left > .p11-panel:last-child {
-    height: auto;
-    min-height: 0;
+    flex: none;
     overflow: visible;
   }
   #page-p11 #p11-exceptions-table {
