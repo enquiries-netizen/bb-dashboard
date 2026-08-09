@@ -7441,12 +7441,21 @@ p.p8-section-hint {
   color: var(--p11-accent, #EA580C);
 }
 
-#page-p11 .p11-main-row,
-#page-p11 .p11-second-row {
+#page-p11 .p11-main-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-bottom: 14px;
+  align-items: start;
+}
+
+/* Left/right stacks (P6 lower-left pattern): Activity + Exceptions / Issues + Variations */
+#page-p11 .p11-main-left,
+#page-p11 .p11-main-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
 #page-p11 .p11-panel {
@@ -7772,10 +7781,10 @@ p.p8-section-hint {
   #page-p11 .p11-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  #page-p11 .p11-main-row,
-  #page-p11 .p11-second-row {
+  #page-p11 .p11-main-row {
     grid-template-columns: 1fr;
   }
+
 }
 
 @media (max-width: 640px) {
