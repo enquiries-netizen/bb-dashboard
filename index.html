@@ -1280,15 +1280,17 @@
           </div>
         </section>
 
-        <!-- ─── P12: Site Diaries (crew-only week-driven reports) ─── -->
+        <!-- ─── P12: Site Diaries (staff, full-width list+detail summaries) ─── -->
         <!--
           STAFF ACCESS (temporary shared pass via CONFIG.P12_STAFF_GATE):
-          Unlock opens Site Diaries *content* for the session.
-          Nav restriction to P12 only applies only when
+          Unlock opens Site Diaries content for the session.
+          Nav restriction to P12 only applies when
           CONFIG.P12_STAFF_GATE.restrictNavToP12 is true (production crew accounts).
-          Temporary pass keeps P1–P11 fully available for admin/owner.
+          Temporary pass keeps P1-P11 fully available for admin/owner.
           "Lock this session" clears content unlock. Stale p12_only scopes are cleared on load.
-          Pure site diary reporting — no variations or financial content.
+          Full-width diary summaries (P11 list+detail pattern, no tabs).
+          Site Diary PDF from column Q / Drive only (never BuildPass photo col P).
+          Variations: description-only match by job, no dollar values.
         -->
         <section id="page-p12" class="page">
           <div class="p12-layout">
@@ -1297,7 +1299,7 @@
                 <span class="page-badge">P12</span>
                 <h1 class="page-title">Site Diaries</h1>
               </div>
-              <p class="p12-scope-note">Week-driven crew reports · pick a job or person-only entry · Site Diary PDF when available · no financial or variation content</p>
+              <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and Site Diary PDF (Drive/col Q) · variations by description only · no financial figures or BuildPass photo links</p>
             </div>
 
             <div id="p12-gate" class="p12-gate" hidden>
@@ -1310,7 +1312,7 @@
                 </p>
                 <p class="p12-gate-copy p12-gate-note">
                   Temporary shared pass lives in <code>CONFIG.P12_STAFF_GATE</code>.
-                  Admin/owner dashboard nav (P1–P11) stays available with this temporary pass.
+                  Admin/owner dashboard nav (P1-P11) stays available with this temporary pass.
                   Use &ldquo;Lock this session&rdquo; after viewing to clear crew unlock.
                 </p>
                 <form id="p12-unlock-form" class="p12-unlock-form" autocomplete="off">
@@ -1337,7 +1339,7 @@
               </div>
               <p class="p12-sources" id="p12-sources">Sources: checking…</p>
               <p class="p12-updated" id="p12-last-updated">Last updated…</p>
-              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week list drives reports · PDF-first when Site Diary PDF is on the sheet</p>
+              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week drives list · Site Diary PDF from Drive/col Q · day notes always · no photo col P</p>
 
               <div id="p12-pdf-lightbox" class="p12-pdf-lightbox" hidden role="dialog" aria-modal="true" aria-label="Site diary PDF">
                 <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
@@ -1356,17 +1358,15 @@
                 </div>
               </div>
 
-              <div class="p12-reports-layout">
-                <div class="p12-section-card p12-reports-list-card">
-                  <div class="section-title" id="p12-week-header">Reports this week</div>
-                  <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries with diary data for the selected week</p>
-                  <div id="p12-reports-list" class="p12-reports-list" role="list">Unlock to load…</div>
-                </div>
-                <div class="p12-section-card p12-report-panel-card" id="p12-report-panel" aria-live="polite">
-                  <div class="section-title" id="p12-report-title">Select a report</div>
-                  <p class="p12-section-hint" id="p12-report-sub">Choose a row from the list to open the Site Diary PDF or see availability</p>
-                  <div id="p12-report-body" class="p12-report-body">
-                    <p class="p12-muted">No report selected.</p>
+              <div class="p12-summary-section">
+                <div class="section-title" id="p12-week-header">Site diaries this week</div>
+                <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries for the selected week. Select a row for day notes and Site Diary PDF.</p>
+                <div class="p12-summary-layout">
+                  <div class="p12-summary-list-wrap" id="p12-reports-list" role="list">Unlock to load…</div>
+                  <div class="p12-summary-detail-wrap" id="p12-report-panel" aria-live="polite">
+                    <div id="p12-report-body">
+                      <p class="p12-summary-empty">Select a job or person entry to view diary notes.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1402,7 +1402,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew-only week-driven reports). Staff-gated. No Ask BB on this page. Week selector lists report entry points (Job # groups + person-only specials with no Job # such as Meli\'s Record Keeping and Fabrication and Welding). PDF-first via Site Diary PDF column into PDF.js lightbox; if no PDF show Report not yet available for this job/week plus optional real work-completed lines only. NEVER variations, dollar values, or invented narratives. Not merged with P11. No Gantt, no charts, no financials.'
+      P12: 'Site Diaries (staff full-width diary summaries). Staff-gated. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) into PDF.js lightbox or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -14625,13 +14625,14 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P12 — SITE DIARIES (crew week-driven reports · staff-gated)
-    // Source: Buildpass_Site Diaries only — pure diary reporting.
-    // No variations, no financial content, not merged with P11.
-    // PDF-first: Site Diary PDF → existing PDF.js lightbox.
+    // P12 - SITE DIARIES (staff full-width list+detail summaries)
+    // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
+    // Layout: P11-style list + day-notes detail (no tabs, full width).
+    // PDF: Site Diary PDF column Q / Drive only into PDF.js lightbox.
+    // Never BuildPass photo col P / raw CDN image URLs.
     // Auth: temporary pass unlocks P12 content only unless
     // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
-    // Admin/owner always keeps P1–P11 when restrictNavToP12 is false.
+    // Admin/owner always keeps P1-P11 when restrictNavToP12 is false.
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
     var activeP12WeekKey = null;
@@ -14642,9 +14643,10 @@
     var _p12UiBound = false;
     var _p12MemUnlocked = false;
     var _p12MemScope = null;
-    var _p12LoadMeta = { diariesOk: false };
+    var _p12LoadMeta = { diariesOk: false, variationsOk: false };
     /** Built each render: groupKey → report group object */
     var _p12ReportGroups = {};
+    var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
     var P12_GATE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.sessionKey)
       ? CONFIG.P12_STAFF_GATE.sessionKey
       : 'bb_p12_staff_unlock';
@@ -14948,7 +14950,7 @@
             var key = reportRow.getAttribute('data-p12-report-key') || '';
             if (!key) return;
             activeP12ReportKey = key;
-            p12SelectReport(key, { autoOpenPdf: true });
+            p12SelectReport(key);
             return;
           }
           var pdfBtn = ev.target.closest('[data-p12-pdf-open]');
@@ -15186,6 +15188,7 @@
         lockBtn.addEventListener('click', function() {
           p12ExitStaffSession();
           window._p12Diaries = null;
+          window._p12Variations = null;
           _p12ReportGroups = {};
           activeP12ReportKey = null;
           p12ShowGate(true);
@@ -15208,7 +15211,7 @@
       p12ShowGate(false);
       showLoading(true);
       removeError('p12');
-      _p12LoadMeta = { diariesOk: false };
+      _p12LoadMeta = { diariesOk: false, variationsOk: false };
       try {
         var diaries = await fetchSheet(
           CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES
@@ -15216,6 +15219,15 @@
           _p12LoadMeta.diariesOk = true;
           return r || [];
         }).catch(function() { return []; });
+        // Soft-load variations for description-only match on job detail (ok on fail)
+        var variations = await fetchSheet(CONFIG.TABS.VARIATIONS_LOG).then(function(r) {
+          _p12LoadMeta.variationsOk = true;
+          return r || [];
+        }).catch(function() {
+          _p12LoadMeta.variationsOk = false;
+          return [];
+        });
+        window._p12Variations = variations;
         renderP12(diaries);
       } catch (err) {
         console.error('P12 load error:', err);
@@ -15226,7 +15238,7 @@
       }
     }
 
-    /** Shared P12 helpers used by render + select (PDF-first report path). */
+    /** Shared P12 helpers used by render + select (list+detail summaries). */
     function p12Esc(s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;')
@@ -15252,7 +15264,10 @@
     }
 
     function p12DiaryWorkCompleted(r) {
-      return String(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || '').trim();
+      return String(col(r,
+        'Work Completed', 'work_completed', 'Work Description',
+        'Description of Work', 'Work completed'
+      ) || '').trim();
     }
 
     function p12DiarySummaryText(r) {
@@ -15262,6 +15277,67 @@
         'summary', 'chatgpt_summary', 'diary_summary'
       );
       return summary && String(summary).trim() ? String(summary).trim() : '';
+    }
+
+    function p12DiaryMaterials(r) {
+      return String(col(r, 'Materials Used', 'materials_used', 'Materials') || '').trim();
+    }
+
+    /** Mirror P11 diaryIssuesText (local to P12; P11 helper is not global). */
+    function p12DiaryIssuesText(r) {
+      var direct = col(r,
+        'Issues/Blockers', 'Issues / Blockers', 'Issues & Blockers',
+        'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers',
+        'issues/blockers', 'issues_blockers'
+      );
+      if (direct) return String(direct).trim();
+      var keys = Object.keys(r || {});
+      for (var i = 0; i < keys.length; i++) {
+        var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        if (norm === 'issues/blockers' || norm === 'issues / blockers' ||
+            norm === 'issues & blockers' ||
+            (norm.indexOf('issues') !== -1 && norm.indexOf('blocker') !== -1)) {
+          var v = String(r[keys[i]] || '').trim();
+          if (v) return v;
+        }
+      }
+      return '';
+    }
+
+    function p12HasIssueContent(r) {
+      var t = p12DiaryIssuesText(r);
+      if (!t) return false;
+      return !P12_EMPTY_ISSUE.test(t);
+    }
+
+    /** Mirror P11 safetyState labels. */
+    function p12SafetyState(r) {
+      var raw = col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry', 'Safety');
+      var s = String(raw || '').trim().toLowerCase();
+      if (!s) return { code: 'missing', label: 'Not recorded', isFlag: false };
+      if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+        return { code: 'yes', label: 'Yes', isFlag: true };
+      }
+      if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+        return { code: 'no', label: 'N not confirmed as no issue', isFlag: false };
+      }
+      return { code: 'ambiguous', label: 'Ambiguous (' + String(raw).trim() + ')', isFlag: false };
+    }
+
+    /** Mirror P11 workStoppedState labels. */
+    function p12WorkStoppedState(r) {
+      var keyProbe = resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']);
+      if (keyProbe === null) return { code: 'missing', label: 'Not recorded', isStop: false };
+      var val = String(rawColByNames(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) || '').trim();
+      if (!val) return { code: 'missing', label: 'Not recorded', isStop: false };
+      var s = val.toLowerCase();
+      if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+        return { code: 'yes', label: 'Yes', isStop: true };
+      }
+      if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+        return { code: 'no', label: 'No', isStop: false };
+      }
+      return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
     }
 
     function p12NormName(name) {
@@ -15310,7 +15386,7 @@
       return urls;
     }
 
-    /** Site Diary PDF URL from sheet (header names; often col Q when ETL provides it). */
+    /** Site Diary PDF URL from col Q only (Site Diary PDF / Drive). Never photo links (col P). */
     function p12DiaryPdfUrl(r) {
       var raw = String(col(r,
         'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
@@ -15398,115 +15474,182 @@
       return '<div class="p12-empty"><p class="no-data-msg">' + p12Esc(msg) + '</p></div>';
     }
 
-    /** Paint report panel for a group; optional PDF auto-open (single PDF). */
-    function p12SelectReport(key, opts) {
-      opts = opts || {};
-      var group = _p12ReportGroups[key];
-      var titleEl = document.getElementById('p12-report-title');
-      var subEl = document.getElementById('p12-report-sub');
+    function p12NormJobKey(job) {
+      return String(job || '').trim().toUpperCase().replace(/\s+/g, '');
+    }
+
+    /**
+     * Variations for a job group: description, status, id only.
+     * Prefer Date Raised in the selected week; if no week matches, show job matches.
+     * Never include dollar amounts or value fields.
+     */
+    function p12VariationsForJob(jobNo, weekKey) {
+      if (!jobNo || !_p12LoadMeta.variationsOk) return { ok: _p12LoadMeta.variationsOk, items: [] };
+      var target = p12NormJobKey(jobNo);
+      if (!target) return { ok: true, items: [] };
+      var all = [];
+      var weekOnly = [];
+      (window._p12Variations || []).forEach(function(r) {
+        var vJob = col(r,
+          'Job #', 'Job Number', 'job_number', 'Job No',
+          'Xero Project J#', 'Xero Project ID', 'xero_project_id'
+        );
+        if (p12NormJobKey(vJob) !== target) return;
+        var desc = String(col(r, 'Description', 'description', 'Variation Description', 'Scope') || '').trim();
+        if (!desc) desc = 'No description recorded';
+        // Strip accidental commercial figures if description has $ amounts
+        if (/\$/.test(desc)) {
+          desc = desc.replace(/\$[\d,]+(?:\.\d+)?/g, '[amount omitted]').trim();
+        }
+        var id = String(col(r,
+          'Invoice #', 'Variation ID', 'Variation #', 'ID', 'id', 'Var #'
+        ) || '').trim();
+        var stRaw = String(col(r, 'Status', 'status') || '').trim();
+        var raised = parseFlexibleDate(col(r, 'Date Raised', 'date_raised', 'Date', 'Created Date'));
+        var item = {
+          id: id || '',
+          status: stRaw || '',
+          desc: desc,
+          raised: raised
+        };
+        all.push(item);
+        if (weekKey && raised) {
+          var wk = p12WeekKeyFromDate(raised);
+          if (wk === weekKey) weekOnly.push(item);
+        }
+      });
+      var items = weekOnly.length ? weekOnly : all;
+      items.sort(function(a, b) {
+        return (b.raised ? b.raised.getTime() : 0) - (a.raised ? a.raised.getTime() : 0);
+      });
+      return { ok: true, items: items.slice(0, 12) };
+    }
+
+    function p12VariationsHtml(group) {
+      if (!group || group.personOnly || !group.jobNo) return '';
+      if (!_p12LoadMeta.variationsOk) {
+        return '<div class="p12-summary-variations">' +
+          '<div class="p12-summary-var-title">Variations</div>' +
+          '<p class="p12-muted p12-gap-text">Variations unavailable</p></div>';
+      }
+      var pack = p12VariationsForJob(group.jobNo, activeP12WeekKey);
+      if (!pack.items.length) return '';
+      var h = '<div class="p12-summary-variations">';
+      h += '<div class="p12-summary-var-title">Variations</div>';
+      h += '<ul class="p12-summary-var-list">';
+      pack.items.forEach(function(it) {
+        var metaBits = [];
+        if (it.id) metaBits.push(it.id);
+        if (it.status) metaBits.push(it.status);
+        if (it.raised) metaBits.push(p12DateLabel(it.raised));
+        h += '<li class="p12-summary-var-item">';
+        if (metaBits.length) {
+          h += '<span class="p12-summary-var-meta">' + p12Esc(metaBits.join(' · ')) + '</span>';
+        }
+        h += '<span class="p12-summary-var-desc">' + p12Esc(it.desc) + '</span>';
+        h += '</li>';
+      });
+      h += '</ul></div>';
+      return h;
+    }
+
+    /** Paint detail panel: day-by-day notes (newest first) + PDF from col Q only. */
+    function p12SelectReport(key) {
+      var group = key ? _p12ReportGroups[key] : null;
       var bodyEl = document.getElementById('p12-report-body');
       var listEl = document.getElementById('p12-reports-list');
 
       if (listEl) {
-        listEl.querySelectorAll('.p12-report-row').forEach(function(row) {
+        listEl.querySelectorAll('.p12-summary-row').forEach(function(row) {
           var on = row.getAttribute('data-p12-report-key') === key;
           row.classList.toggle('is-selected', on);
           row.setAttribute('aria-selected', on ? 'true' : 'false');
         });
       }
 
-      if (!group) {
-        if (titleEl) titleEl.textContent = 'Select a report';
-        if (subEl) subEl.textContent = 'Choose a row from the list to open the Site Diary PDF or see availability';
-        if (bodyEl) bodyEl.innerHTML = '<p class="p12-muted">No report selected.</p>';
+      if (!group || !group.rows || !group.rows.length) {
+        if (bodyEl) {
+          bodyEl.innerHTML =
+            '<p class="p12-summary-empty">Select a job or person entry to view diary notes.</p>';
+        }
         return;
       }
 
-      var headLabel = group.personOnly
-        ? group.jobName
-        : (group.jobNo + (group.jobName && group.jobName !== group.jobNo ? ' · ' + group.jobName : ''));
-      if (titleEl) titleEl.textContent = headLabel;
-      if (subEl) {
-        var workers = group.workers.length ? group.workers.join(', ') : 'Worker not recorded';
-        var entryN = group.rows.length;
-        subEl.textContent = (group.personOnly ? 'Person-only · ' : 'Job · ') +
-          workers + ' · ' + entryN + ' diary day' + (entryN === 1 ? '' : 's') +
-          (group.pdfs.length
-            ? ' · ' + group.pdfs.length + ' PDF' + (group.pdfs.length === 1 ? '' : 's')
-            : ' · no PDF yet');
-      }
+      var titleJob = group.personOnly
+        ? ('No job # · ' + group.jobName)
+        : (group.jobNo + (group.jobName && group.jobName !== group.jobNo
+          ? (' · ' + group.jobName) : ''));
 
-      var html = '';
-      if (group.pdfs.length) {
-        html += '<div class="p12-pdf-panel">';
-        if (group.pdfs.length === 1) {
-          var only = group.pdfs[0];
-          html += '<p class="p12-report-lead">Site Diary PDF for ' + p12Esc(only.dateLabel) + '.</p>';
-          html += '<div class="p12-pdf-actions">';
-          html += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
-            p12Esc(only.url) + '">View site diary PDF</button>';
-          html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(only.url) +
-            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
-          html += '</div>';
+      var rowsSorted = group.rows.slice().sort(function(a, b) {
+        var da = p12DiaryDate(a);
+        var db = p12DiaryDate(b);
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      });
+
+      var h = '<div class="p12-summary-detail-inner">';
+      h += '<div class="p12-summary-detail-head">';
+      h += '<div class="p12-summary-detail-title">' + p12Esc(titleJob) + '</div>';
+      if (group.workers && group.workers.length) {
+        h += '<div class="p12-summary-detail-workers">' + p12Esc(group.workers.join(', ')) + '</div>';
+      }
+      h += '<div class="p12-summary-detail-count">' + rowsSorted.length + ' entr' +
+        (rowsSorted.length === 1 ? 'y' : 'ies') + ' this week</div>';
+      h += '</div>';
+
+      rowsSorted.forEach(function(r) {
+        var d = p12DiaryDate(r);
+        var dLabel = p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Not recorded');
+        var work = p12DiaryWorkCompleted(r);
+        var sum = p12DiarySummaryText(r);
+        var issues = p12DiaryIssuesText(r);
+        var mats = p12DiaryMaterials(r);
+        var saf = p12SafetyState(r);
+        var stop = p12WorkStoppedState(r);
+        var logged = p12DiaryPerson(r) || 'Not recorded';
+        var pdfUrl = p12DiaryPdfUrl(r);
+
+        h += '<article class="p12-summary-day">';
+        h += '<div class="p12-summary-day-date"><strong>' + p12Esc(dLabel) + '</strong>';
+        h += '<span class="p12-summary-day-by"> · ' + p12Esc(logged) + '</span></div>';
+
+        if (work) {
+          h += '<p class="p12-summary-day-body">' + p12Esc(work) + '</p>';
         } else {
-          html += '<p class="p12-report-lead">' + group.pdfs.length +
-            ' Site Diary PDFs for this week (often one per diary day).</p>';
-          html += '<ul class="p12-pdf-list">';
-          group.pdfs.forEach(function(pdf, idx) {
-            html += '<li class="p12-pdf-list-item">';
-            html += '<span class="p12-pdf-list-meta">' + p12Esc(pdf.dateLabel) +
-              ' · ' + p12Esc(pdf.person) +
-              (idx === 0 ? ' · latest' : '') + '</span>';
-            html += '<div class="p12-pdf-actions">';
-            html += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
-              p12Esc(pdf.url) + '">View PDF</button>';
-            html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdf.url) +
-              '" target="_blank" rel="noopener noreferrer">New tab</a>';
-            html += '</div></li>';
-          });
-          html += '</ul>';
+          h += '<p class="p12-summary-day-body p12-gap-text">No work completed text recorded for this day.</p>';
         }
-        html += '</div>';
-      } else {
-        html += '<div class="p12-no-report">';
-        html += '<p class="p12-no-report-msg">Report not yet available for this job/week</p>';
-        html += '<p class="p12-muted">No Site Diary PDF is attached on the diary rows for this selection.</p>';
-        html += '</div>';
-
-        // Lightweight real-field hints only — never invent narrative.
-        var lines = [];
-        group.rows.slice().sort(function(a, b) {
-          var da = p12DiaryDate(a);
-          var db = p12DiaryDate(b);
-          return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
-        }).forEach(function(r) {
-          var work = p12DiaryWorkCompleted(r);
-          var sum = p12DiarySummaryText(r);
-          var line = sum || work;
-          if (!line) return;
-          var d = p12DiaryDate(r);
-          lines.push({
-            dateLabel: p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Undated'),
-            text: line
-          });
-        });
-        if (lines.length) {
-          html += '<div class="p12-day-snippets">';
-          html += '<div class="p12-detail-label">Diary day notes (from sheet)</div>';
-          html += '<ul class="p12-snippet-list">';
-          lines.forEach(function(ln) {
-            html += '<li><span class="p12-snippet-date">' + p12Esc(ln.dateLabel) +
-              '</span> ' + p12Esc(ln.text) + '</li>';
-          });
-          html += '</ul></div>';
+        if (sum && sum !== work) {
+          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Summary</span> ' +
+            p12Esc(sum) + '</div>';
         }
-      }
+        if (issues && p12HasIssueContent(r)) {
+          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Issues / blockers</span> ' +
+            p12Esc(issues) + '</div>';
+        }
+        if (mats) {
+          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Materials</span> ' +
+            p12Esc(mats) + '</div>';
+        }
+        h += '<div class="p12-summary-day-flags">';
+        h += '<span>Safety: ' + p12Esc(saf.label) + '</span>';
+        h += '<span>Work stopped: ' + p12Esc(stop.label) + '</span>';
+        h += '</div>';
 
-      if (bodyEl) bodyEl.innerHTML = html;
+        if (pdfUrl) {
+          h += '<div class="p12-summary-day-pdf p12-pdf-actions">';
+          h += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
+            p12Esc(pdfUrl) + '">View Site Diary PDF</button>';
+          h += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdfUrl) +
+            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
+          h += '</div>';
+        } else {
+          h += '<div class="p12-summary-day-pdf p12-gap-text">Site Diary PDF unavailable</div>';
+        }
+        h += '</article>';
+      });
 
-      if (opts.autoOpenPdf && group.pdfs.length === 1) {
-        p12OpenPdfViewer(group.pdfs[0].url);
-      }
+      h += p12VariationsHtml(group);
+      h += '</div>';
+      if (bodyEl) bodyEl.innerHTML = h;
     }
 
     function renderP12(diaries) {
@@ -15637,7 +15780,7 @@
 
       var weekHeader = document.getElementById('p12-week-header');
       if (weekHeader) {
-        weekHeader.textContent = 'Reports · ' + p12WeekLabelFromKey(activeP12WeekKey);
+        weekHeader.textContent = 'Site diaries · ' + p12WeekLabelFromKey(activeP12WeekKey);
       }
 
       var withPdf = groupKeys.filter(function(k) { return _p12ReportGroups[k].pdfs.length > 0; }).length;
@@ -15646,10 +15789,13 @@
         if (!_p12LoadMeta.diariesOk) {
           srcEl.textContent = 'Sources · Buildpass_Site Diaries: Unavailable';
         } else {
+          var varSrc = _p12LoadMeta.variationsOk
+            ? 'Variations_Log: Live (description only)'
+            : 'Variations_Log: Unavailable';
           srcEl.textContent = 'Sources · Buildpass_Site Diaries: Live (' +
             diariesFiltered.length + ' diary rows · ' + groupKeys.length +
-            ' report' + (groupKeys.length === 1 ? '' : 's') +
-            ' · ' + withPdf + ' with PDF)';
+            ' group' + (groupKeys.length === 1 ? '' : 's') +
+            ' · ' + withPdf + ' with PDF) · ' + varSrc;
         }
       }
 
@@ -15660,9 +15806,9 @@
         } else if (!groupKeys.length) {
           hintEl.textContent = 'No diary jobs or person-only entries for this week';
         } else {
-          hintEl.textContent = groupKeys.length + ' report entr' +
-            (groupKeys.length === 1 ? 'y' : 'ies') +
-            ' · open a row for the Site Diary PDF when available';
+          hintEl.textContent = groupKeys.length + ' job/person group' +
+            (groupKeys.length === 1 ? '' : 's') +
+            ' · select a row for day notes and Site Diary PDF';
         }
       }
 
@@ -15670,46 +15816,58 @@
       if (listEl) {
         if (!_p12LoadMeta.diariesOk) {
           listEl.innerHTML = p12EmptyCard('Site diaries unavailable');
+          activeP12ReportKey = null;
+          p12SelectReport(null);
         } else if (!groupKeys.length) {
           listEl.innerHTML = p12EmptyCard('No diary data for this week.');
+          activeP12ReportKey = null;
+          p12SelectReport(null);
         } else {
-          var listHtml = '';
+          if (!activeP12ReportKey || !_p12ReportGroups[activeP12ReportKey]) {
+            activeP12ReportKey = groupKeys[0];
+          }
+          var listHtml = '<div class="p12-summary-list" role="list">';
           groupKeys.forEach(function(k) {
             var g = _p12ReportGroups[k];
             var hasPdf = g.pdfs.length > 0;
-            var jobPart = g.personOnly
-              ? '<span class="p12-report-job-no p12-report-job-no--special">Person-only</span>'
-              : '<span class="p12-report-job-no">' + p12Esc(g.jobNo) + '</span>';
-            var namePart = '<span class="p12-report-job-name">' + p12Esc(g.jobName) + '</span>';
-            var workersPart = g.workers.length
-              ? g.workers.map(function(w) { return p12Esc(w); }).join(', ')
+            var selected = k === activeP12ReportKey;
+            var workers = g.workers.length
+              ? g.workers.join(', ')
               : 'Worker not recorded';
-            var pdfBadge = hasPdf
-              ? '<span class="p12-chip p12-chip--ok">PDF ready' +
-                (g.pdfs.length > 1 ? ' · ' + g.pdfs.length : '') + '</span>'
-              : '<span class="p12-chip p12-chip--gap">No PDF yet</span>';
-            var typeBadge = g.personOnly
-              ? '<span class="p12-chip p12-chip--special">' +
-                p12Esc(g.isSpecial ? g.jobName : 'No job #') + '</span>'
-              : '';
+            var nameLine = g.personOnly
+              ? g.jobName
+              : (g.jobName && g.jobName !== g.jobNo ? g.jobName : '');
 
-            listHtml += '<button type="button" class="p12-report-row' +
-              (hasPdf ? ' p12-report-row--pdf' : '') +
-              (g.personOnly ? ' p12-report-row--person' : '') +
-              '" data-p12-report-key="' + p12Esc(k) +
-              '" role="listitem" aria-selected="false">';
-            listHtml += '<div class="p12-report-row-main">' + jobPart + namePart + '</div>';
-            listHtml += '<div class="p12-report-row-meta">';
-            listHtml += '<span class="p12-report-workers">' + workersPart + '</span>';
-            listHtml += typeBadge + pdfBadge;
+            listHtml += '<button type="button" class="p12-summary-row' +
+              (g.personOnly ? ' p12-summary-row--person' : '') +
+              (selected ? ' is-selected' : '') +
+              '" role="listitem" data-p12-report-key="' + p12Esc(k) +
+              '" aria-selected="' + (selected ? 'true' : 'false') + '">';
+            listHtml += '<div class="p12-summary-row-main">';
+            if (g.personOnly) {
+              listHtml += '<span class="p12-summary-badge">Person-only</span>';
+            } else {
+              listHtml += '<span class="p12-summary-jobno">' + p12Esc(g.jobNo) + '</span>';
+            }
+            if (nameLine) {
+              listHtml += '<span class="p12-summary-jobname">' + p12Esc(nameLine) + '</span>';
+            }
+            listHtml += '</div>';
+            listHtml += '<div class="p12-summary-row-meta">';
+            listHtml += '<span class="p12-summary-workers">' + p12Esc(workers) + '</span>';
+            listHtml += '<span class="p12-summary-count">' + g.rows.length + ' entr' +
+              (g.rows.length === 1 ? 'y' : 'ies') + '</span>';
+            if (hasPdf) {
+              listHtml += '<span class="p12-summary-pdf-hint">PDF available</span>';
+            }
             listHtml += '</div></button>';
           });
+          listHtml += '</div>';
           listEl.innerHTML = listHtml;
+          p12SelectReport(activeP12ReportKey);
         }
-      }
-
-      if (activeP12ReportKey && _p12ReportGroups[activeP12ReportKey]) {
-        p12SelectReport(activeP12ReportKey, { autoOpenPdf: false });
+      } else if (activeP12ReportKey && _p12ReportGroups[activeP12ReportKey]) {
+        p12SelectReport(activeP12ReportKey);
       } else {
         activeP12ReportKey = null;
         p12SelectReport(null);
