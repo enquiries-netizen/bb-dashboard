@@ -1172,7 +1172,10 @@
                 <div class="kpi-value" id="kpi-p11-entries">-</div>
                 <div class="kpi-sub" id="kpi-p11-entries-sub">Loading...</div>
               </div>
-              <div class="kpi-card card p11-kpi-card" id="p11-kpi-issues">
+              <div class="kpi-card card p11-kpi-card p11-kpi-card--jump" id="p11-kpi-issues"
+                role="button" tabindex="0" data-p11-jump="exceptions"
+                title="Go to Exceptions"
+                aria-label="Issues and Blockers, go to Exceptions">
                 <div class="kpi-label">Issues / Blockers</div>
                 <div class="kpi-value" id="kpi-p11-issues">-</div>
                 <div class="kpi-sub" id="kpi-p11-issues-sub">Loading...</div>
@@ -1192,7 +1195,10 @@
                 <div class="kpi-value" id="kpi-p11-defects">-</div>
                 <div class="kpi-sub" id="kpi-p11-defects-sub">Loading...</div>
               </div>
-              <div class="kpi-card card p11-kpi-card" id="p11-kpi-variations">
+              <div class="kpi-card card p11-kpi-card p11-kpi-card--jump" id="p11-kpi-variations"
+                role="button" tabindex="0" data-p11-jump="variations"
+                title="Go to Variation Actions"
+                aria-label="Variations Raised, go to Variation Actions">
                 <div class="kpi-label">Variations Raised</div>
                 <div class="kpi-value" id="kpi-p11-variations">-</div>
                 <div class="kpi-sub" id="kpi-p11-variations-sub">Loading...</div>
@@ -12987,6 +12993,75 @@
     var _p11SummaryGroups = {};
     var _p11SummaryTabBound = false;
     var _p11FiltersBound = false;
+    var _p11KpiJumpBound = false;
+
+    function p11ApplyDetailTab() {
+      var panel = document.getElementById('p11-detail-tabs-panel');
+      if (!panel) return;
+      var active = activeP11DetailTab === 'summary' ? 'summary' : 'exceptions';
+      panel.querySelectorAll('button[data-p11-tab]').forEach(function(btn) {
+        var on = (btn.getAttribute('data-p11-tab') || '') === active;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      var exPanel = document.getElementById('p11-tabpanel-exceptions');
+      var sumPanel = document.getElementById('p11-tabpanel-summary');
+      if (exPanel) {
+        if (active === 'summary') exPanel.setAttribute('hidden', '');
+        else exPanel.removeAttribute('hidden');
+        exPanel.classList.toggle('is-active', active === 'exceptions');
+      }
+      if (sumPanel) {
+        if (active === 'summary') sumPanel.removeAttribute('hidden');
+        else sumPanel.setAttribute('hidden', '');
+        sumPanel.classList.toggle('is-active', active === 'summary');
+      }
+    }
+
+    function p11ScrollToEl(el) {
+      if (!el) return;
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) {
+        el.scrollIntoView(true);
+      }
+    }
+
+    function p11HandleKpiJump(jump) {
+      if (jump === 'exceptions') {
+        activeP11DetailTab = 'exceptions';
+        p11ApplyDetailTab();
+        p11ScrollToEl(document.getElementById('p11-detail-tabs-panel'));
+        return;
+      }
+      if (jump === 'variations') {
+        p11ScrollToEl(document.getElementById('p11-variations-section'));
+      }
+    }
+
+    function p11BindKpiJumpsOnce() {
+      if (_p11KpiJumpBound) return;
+      var page = document.getElementById('page-p11');
+      if (!page) return;
+      _p11KpiJumpBound = true;
+      page.addEventListener('click', function(ev) {
+        var card = ev.target && ev.target.closest
+          ? ev.target.closest('[data-p11-jump]')
+          : null;
+        if (!card || !page.contains(card)) return;
+        ev.preventDefault();
+        p11HandleKpiJump(card.getAttribute('data-p11-jump') || '');
+      });
+      page.addEventListener('keydown', function(ev) {
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        var card = ev.target && ev.target.closest
+          ? ev.target.closest('[data-p11-jump]')
+          : null;
+        if (!card || !page.contains(card)) return;
+        ev.preventDefault();
+        p11HandleKpiJump(card.getAttribute('data-p11-jump') || '');
+      });
+    }
     var _p11LoadMeta = { defectsOk: false, variationsOk: false, diariesOk: false };
 
     // ── Single shared photo lightbox (page-level; photo URLs only, not PDF) ──
@@ -14413,30 +14488,8 @@
         });
       }
 
-      function p11ApplyDetailTab() {
-        var panel = document.getElementById('p11-detail-tabs-panel');
-        if (!panel) return;
-        var active = activeP11DetailTab === 'summary' ? 'summary' : 'exceptions';
-        panel.querySelectorAll('button[data-p11-tab]').forEach(function(btn) {
-          var on = (btn.getAttribute('data-p11-tab') || '') === active;
-          btn.classList.toggle('is-active', on);
-          btn.setAttribute('aria-selected', on ? 'true' : 'false');
-        });
-        var exPanel = document.getElementById('p11-tabpanel-exceptions');
-        var sumPanel = document.getElementById('p11-tabpanel-summary');
-        if (exPanel) {
-          if (active === 'summary') exPanel.setAttribute('hidden', '');
-          else exPanel.removeAttribute('hidden');
-          exPanel.classList.toggle('is-active', active === 'exceptions');
-        }
-        if (sumPanel) {
-          if (active === 'summary') sumPanel.removeAttribute('hidden');
-          else sumPanel.setAttribute('hidden', '');
-          sumPanel.classList.toggle('is-active', active === 'summary');
-        }
-      }
-
       p11BindSummaryTabsOnce();
+      p11BindKpiJumpsOnce();
 
       var summaryGroups = p11BuildSummaryGroups(diariesFiltered);
       _p11SummaryGroups = {};
