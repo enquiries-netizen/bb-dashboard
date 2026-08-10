@@ -1260,7 +1260,7 @@
           </div>
         </section>
 
-        <!-- ─── P12: Site Diaries (crew-only summary / endorsement) ─── -->
+        <!-- ─── P12: Site Diaries (crew-only week-driven reports) ─── -->
         <!--
           STAFF ACCESS (temporary shared pass via CONFIG.P12_STAFF_GATE):
           Unlock opens Site Diaries *content* for the session.
@@ -1268,6 +1268,7 @@
           CONFIG.P12_STAFF_GATE.restrictNavToP12 is true (production crew accounts).
           Temporary pass keeps P1–P11 fully available for admin/owner.
           "Lock this session" clears content unlock. Stale p12_only scopes are cleared on load.
+          Pure site diary reporting — no variations or financial content.
         -->
         <section id="page-p12" class="page">
           <div class="p12-layout">
@@ -1276,10 +1277,9 @@
                 <span class="page-badge">P12</span>
                 <h1 class="page-title">Site Diaries</h1>
               </div>
-              <p class="p12-scope-note">Crew handoff · one job per day when possible · issues &amp; safety in full · variations without dollar values</p>
+              <p class="p12-scope-note">Week-driven crew reports · pick a job or person-only entry · Site Diary PDF when available · no financial or variation content</p>
             </div>
 
-            <!-- Shown until staff unlock for this browser session -->
             <div id="p12-gate" class="p12-gate" hidden>
               <div class="p12-gate-card">
                 <h2 class="p12-gate-title">Staff unlock</h2>
@@ -1317,9 +1317,8 @@
               </div>
               <p class="p12-sources" id="p12-sources">Sources: checking…</p>
               <p class="p12-updated" id="p12-last-updated">Last updated…</p>
-              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · Emily line: Job#, name, person, summary · dollar values never shown on variations</p>
+              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week list drives reports · PDF-first when Site Diary PDF is on the sheet</p>
 
-              <!-- P12 site diary PDF page viewer (PDF.js, lazy-loaded) -->
               <div id="p12-pdf-lightbox" class="p12-pdf-lightbox" hidden role="dialog" aria-modal="true" aria-label="Site diary PDF">
                 <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
                 <div class="p12-pdf-shell">
@@ -1337,35 +1336,23 @@
                 </div>
               </div>
 
-              <!--
-                Horizontal body (P1/P4/P6/P9-style):
-                primary = Diary summaries (main scroll),
-                side = Meli + Variations (supporting cards stacked).
-              -->
-              <div class="p12-main-row">
-                <div class="p12-main-primary">
-                  <div class="p12-section-card p12-diary-card">
-                    <div class="section-title">Diary summaries</div>
-                    <p class="p12-section-hint" id="p12-diary-hint">Grouped by date then job · no job # still listed (fab / welding / general)</p>
-                    <div id="p12-diary-feed" class="p12-diary-feed">Unlock to load…</div>
+              <div class="p12-reports-layout">
+                <div class="p12-section-card p12-reports-list-card">
+                  <div class="section-title" id="p12-week-header">Reports this week</div>
+                  <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries with diary data for the selected week</p>
+                  <div id="p12-reports-list" class="p12-reports-list" role="list">Unlock to load…</div>
+                </div>
+                <div class="p12-section-card p12-report-panel-card" id="p12-report-panel" aria-live="polite">
+                  <div class="section-title" id="p12-report-title">Select a report</div>
+                  <p class="p12-section-hint" id="p12-report-sub">Choose a row from the list to open the Site Diary PDF or see availability</p>
+                  <div id="p12-report-body" class="p12-report-body">
+                    <p class="p12-muted">No report selected.</p>
                   </div>
                 </div>
-                <aside class="p12-main-side" aria-label="Supporting diary panels">
-                  <div class="p12-section-card p12-meli" id="p12-meli">
-                    <div class="section-title">Meli&rsquo;s weekly record</div>
-                    <p class="p12-section-hint" id="p12-meli-hint">From Buildpass_Site Diaries · Job Name &ldquo;Meli&rsquo;s Record Keeping&rdquo;</p>
-                    <div id="p12-meli-feed" class="p12-meli-feed">Unlock to load…</div>
-                  </div>
-                  <div class="p12-section-card p12-variations-card">
-                    <div class="section-title">Variations</div>
-                    <p class="p12-section-hint">Description and status only · never dollar values</p>
-                    <div id="p12-variations-feed" class="p12-var-feed">Unlock to load…</div>
-                  </div>
-                  <p class="p12-lock-row">
-                    <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
-                  </p>
-                </aside>
               </div>
+              <p class="p12-lock-row">
+                <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
+              </p>
             </div>
           </div>
         </section>
@@ -1395,7 +1382,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew-only handoff). Staff-gated. No Ask BB on this page. Emily summary line per entry: Job#, Job name, person, then Summary text (or Summary not yet available until ChatGPT). Issues/Blockers and Safety chips expand inline to free-text detail. Site Diary PDF page viewer (PDF.js canvas, prev/next pages) or No PDF attached. Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record from Job Name Meli\'s Record Keeping for selected week. Not merged with P11 quality dashboard. No Gantt, no charts, no financials.'
+      P12: 'Site Diaries (crew-only week-driven reports). Staff-gated. No Ask BB on this page. Week selector lists report entry points (Job # groups + person-only specials with no Job # such as Meli\'s Record Keeping and Fabrication and Welding). PDF-first via Site Diary PDF column into PDF.js lightbox; if no PDF show Report not yet available for this job/week plus optional real work-completed lines only. NEVER variations, dollar values, or invented narratives. Not merged with P11. No Gantt, no charts, no financials.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -14490,21 +14477,26 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P12 — SITE DIARIES (crew handoff · staff-gated)
-    // Sources: Buildpass_Site Diaries · Variations_Log (description/status only)
-    // Never dollar values. Not merged with P11 quality dashboard.
+    // P12 — SITE DIARIES (crew week-driven reports · staff-gated)
+    // Source: Buildpass_Site Diaries only — pure diary reporting.
+    // No variations, no financial content, not merged with P11.
+    // PDF-first: Site Diary PDF → existing PDF.js lightbox.
     // Auth: temporary pass unlocks P12 content only unless
     // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
     // Admin/owner always keeps P1–P11 when restrictNavToP12 is false.
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
     var activeP12WeekKey = null;
+    /** Selected report group key for the week entry list */
+    var activeP12ReportKey = null;
     var _p12FiltersBound = false;
     var _p12GateBound = false;
     var _p12UiBound = false;
     var _p12MemUnlocked = false;
     var _p12MemScope = null;
-    var _p12LoadMeta = { diariesOk: false, variationsOk: false };
+    var _p12LoadMeta = { diariesOk: false };
+    /** Built each render: groupKey → report group object */
+    var _p12ReportGroups = {};
     var P12_GATE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.sessionKey)
       ? CONFIG.P12_STAFF_GATE.sessionKey
       : 'bb_p12_staff_unlock';
@@ -14692,7 +14684,6 @@
           2.5
         );
         if (!isFinite(scale) || scale <= 0) scale = 1;
-        // Prefer sharper canvas on high-DPI screens
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
         var viewport = page.getViewport({ scale: scale * dpr });
         var ctx = canvas.getContext('2d');
@@ -14766,7 +14757,6 @@
 
       p12LoadPdfJs().then(function(pdfjsLib) {
         if (token !== _p12PdfLoadToken) return null;
-        // disableStream / disableAutoFetch: better behaviour for some Drive/CORS hosts
         var loadingTask = pdfjsLib.getDocument({
           url: safe,
           withCredentials: false,
@@ -14797,36 +14787,20 @@
       });
     }
 
-    /** One-time click handlers for P12 expand chips + PDF lightbox (delegation). */
+    /** One-time click handlers for P12 report rows + PDF lightbox (delegation). */
     function p12BindUiOnce() {
       if (_p12UiBound) return;
       _p12UiBound = true;
       var content = document.getElementById('p12-content');
       if (content) {
         content.addEventListener('click', function(ev) {
-          var revealBtn = ev.target.closest('[data-p12-reveal]');
-          if (revealBtn) {
+          var reportRow = ev.target.closest('[data-p12-report-key]');
+          if (reportRow) {
             ev.preventDefault();
-            var panelId = revealBtn.getAttribute('aria-controls');
-            var panel = panelId ? document.getElementById(panelId) : null;
-            if (!panel) return;
-            var open = panel.hasAttribute('hidden');
-            // Close sibling reveals in the same entry
-            var entry = revealBtn.closest('.p12-entry');
-            if (entry) {
-              entry.querySelectorAll('.p12-reveal-panel').forEach(function(p) {
-                p.setAttribute('hidden', '');
-              });
-              entry.querySelectorAll('[data-p12-reveal]').forEach(function(b) {
-                b.setAttribute('aria-expanded', 'false');
-                b.classList.remove('is-open');
-              });
-            }
-            if (open) {
-              panel.removeAttribute('hidden');
-              revealBtn.setAttribute('aria-expanded', 'true');
-              revealBtn.classList.add('is-open');
-            }
+            var key = reportRow.getAttribute('data-p12-report-key') || '';
+            if (!key) return;
+            activeP12ReportKey = key;
+            p12SelectReport(key, { autoOpenPdf: true });
             return;
           }
           var pdfBtn = ev.target.closest('[data-p12-pdf-open]');
@@ -14935,7 +14909,6 @@
           sessionStorage.setItem(P12_SCOPE_SESSION_KEY, P12_STAFF_SCOPE);
         } catch (e2) { /* private mode */ }
       } else {
-        // Content unlock must never trap the admin dashboard
         p12ClearNavRestriction();
       }
       p12SyncAccessChrome();
@@ -14969,7 +14942,6 @@
           li.removeAttribute('tabindex');
         }
       });
-      // Hide global Month/Year only in true crew-only mode
       ['month-select', 'year-select'].forEach(function(id) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -15066,7 +15038,8 @@
         lockBtn.addEventListener('click', function() {
           p12ExitStaffSession();
           window._p12Diaries = null;
-          window._p12Variations = null;
+          _p12ReportGroups = {};
+          activeP12ReportKey = null;
           p12ShowGate(true);
           showPage('p12');
         });
@@ -15087,19 +15060,15 @@
       p12ShowGate(false);
       showLoading(true);
       removeError('p12');
-      _p12LoadMeta = { diariesOk: false, variationsOk: false };
+      _p12LoadMeta = { diariesOk: false };
       try {
-        var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES).then(function(r) {
-            _p12LoadMeta.diariesOk = true;
-            return r || [];
-          }).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.VARIATIONS_LOG).then(function(r) {
-            _p12LoadMeta.variationsOk = true;
-            return r || [];
-          }).catch(function() { return []; })
-        ]);
-        renderP12(results[0], results[1]);
+        var diaries = await fetchSheet(
+          CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES
+        ).then(function(r) {
+          _p12LoadMeta.diariesOk = true;
+          return r || [];
+        }).catch(function() { return []; });
+        renderP12(diaries);
       } catch (err) {
         console.error('P12 load error:', err);
         showError('p12', 'Could not load Site Diaries. Check sheet permissions.');
@@ -15109,409 +15078,307 @@
       }
     }
 
-    function renderP12(diaries, variations) {
+    /** Shared P12 helpers used by render + select (PDF-first report path). */
+    function p12Esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function p12DiaryDate(r) {
+      return parseFlexibleDate(col(r, 'Date', 'date', 'Diary Date', 'Entry Date', 'Work Date'));
+    }
+
+    function p12DiaryJobNo(r) {
+      return String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
+    }
+
+    function p12DiaryJobName(r) {
+      return String(col(r, 'Job Name', 'job_name') || '').trim();
+    }
+
+    function p12DiaryPerson(r) {
+      return String(col(r, 'Logged By', 'Logged by', 'logged_by') || '').trim();
+    }
+
+    function p12DiaryWorkCompleted(r) {
+      return String(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || '').trim();
+    }
+
+    function p12DiarySummaryText(r) {
+      var summary = col(r,
+        'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
+        'AI Summary', 'Plain English Summary', 'Endorsement Summary',
+        'summary', 'chatgpt_summary', 'diary_summary'
+      );
+      return summary && String(summary).trim() ? String(summary).trim() : '';
+    }
+
+    function p12NormName(name) {
+      return String(name || '')
+        .toLowerCase()
+        .replace(/['\u2018\u2019\u0060\u00B4]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    function p12IsKnownPersonSpecial(name) {
+      var n = p12NormName(name);
+      return n === 'melis record keeping' ||
+        n === 'fabrication and welding' ||
+        n === 'fabrication & welding' ||
+        n === 'fab and welding' ||
+        n === 'fab welding';
+    }
+
+    function p12PersonSpecialLabel(name) {
+      var n = p12NormName(name);
+      if (n === 'melis record keeping') return "Meli's Record Keeping";
+      if (n === 'fabrication and welding' || n === 'fabrication & welding' ||
+          n === 'fab and welding' || n === 'fab welding') {
+        return 'Fabrication and Welding';
+      }
+      return String(name || '').trim() || 'Person-only entry';
+    }
+
+    function p12ExtractUrlsFromCell(raw) {
+      var s = String(raw || '').trim();
+      if (!s) return [];
+      var urls = [];
+      var m = s.match(/https?:\/\/[^\s,;|]+/gi);
+      if (m && m.length) {
+        m.forEach(function(u) {
+          var clean = String(u).replace(/[)\].,]+$/g, '');
+          if (clean && urls.indexOf(clean) === -1) urls.push(clean);
+        });
+        return urls;
+      }
+      s.split(/[,;|]+/).forEach(function(p) {
+        var t = String(p || '').trim();
+        if (/^https?:\/\//i.test(t) && urls.indexOf(t) === -1) urls.push(t);
+      });
+      return urls;
+    }
+
+    /** Site Diary PDF URL from sheet (header names; often col Q when ETL provides it). */
+    function p12DiaryPdfUrl(r) {
+      var raw = String(col(r,
+        'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
+        'PDF', 'Buildpass PDF', 'pdf_link', 'site_diary_pdf'
+      ) || '').trim();
+      if (!raw) return '';
+      var found = p12ExtractUrlsFromCell(raw);
+      return found.length ? found[0] : '';
+    }
+
+    function p12DateLabel(d, fallback) {
+      if (d && !isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-AU', {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+        });
+      }
+      return fallback || 'Date not recorded';
+    }
+
+    function p12CollectPdfs(rows) {
+      var list = [];
+      var seen = {};
+      (rows || []).forEach(function(r) {
+        var url = p12DiaryPdfUrl(r);
+        if (!url || seen[url]) return;
+        seen[url] = true;
+        var d = p12DiaryDate(r);
+        list.push({
+          url: url,
+          date: d,
+          dateLabel: p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Undated'),
+          person: p12DiaryPerson(r) || 'Not recorded'
+        });
+      });
+      list.sort(function(a, b) {
+        return (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0);
+      });
+      return list;
+    }
+
+    function p12UniqueWorkers(rows) {
+      var out = [];
+      var seen = {};
+      (rows || []).forEach(function(r) {
+        var p = p12DiaryPerson(r);
+        if (!p) return;
+        var k = p.toLowerCase();
+        if (seen[k]) return;
+        seen[k] = true;
+        out.push(p);
+      });
+      return out;
+    }
+
+    function p12ReportGroupKey(r) {
+      var jn = p12DiaryJobNo(r);
+      if (jn) return 'job:' + jn.toUpperCase();
+      var name = p12DiaryJobName(r);
+      var label = p12IsKnownPersonSpecial(name)
+        ? p12PersonSpecialLabel(name)
+        : (name || 'General (no job #)');
+      return 'person:' + p12NormName(label || 'general no job');
+    }
+
+    function p12BuildReportGroup(r) {
+      var jn = p12DiaryJobNo(r);
+      var name = p12DiaryJobName(r);
+      var personOnly = !jn;
+      var displayName = personOnly
+        ? (p12IsKnownPersonSpecial(name) ? p12PersonSpecialLabel(name) : (name || 'General (no job #)'))
+        : (name || jn);
+      return {
+        key: p12ReportGroupKey(r),
+        jobNo: jn,
+        jobName: displayName,
+        personOnly: personOnly,
+        isSpecial: personOnly && p12IsKnownPersonSpecial(name),
+        rows: [],
+        pdfs: [],
+        workers: []
+      };
+    }
+
+    function p12EmptyCard(msg) {
+      return '<div class="p12-empty"><p class="no-data-msg">' + p12Esc(msg) + '</p></div>';
+    }
+
+    /** Paint report panel for a group; optional PDF auto-open (single PDF). */
+    function p12SelectReport(key, opts) {
+      opts = opts || {};
+      var group = _p12ReportGroups[key];
+      var titleEl = document.getElementById('p12-report-title');
+      var subEl = document.getElementById('p12-report-sub');
+      var bodyEl = document.getElementById('p12-report-body');
+      var listEl = document.getElementById('p12-reports-list');
+
+      if (listEl) {
+        listEl.querySelectorAll('.p12-report-row').forEach(function(row) {
+          var on = row.getAttribute('data-p12-report-key') === key;
+          row.classList.toggle('is-selected', on);
+          row.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+      }
+
+      if (!group) {
+        if (titleEl) titleEl.textContent = 'Select a report';
+        if (subEl) subEl.textContent = 'Choose a row from the list to open the Site Diary PDF or see availability';
+        if (bodyEl) bodyEl.innerHTML = '<p class="p12-muted">No report selected.</p>';
+        return;
+      }
+
+      var headLabel = group.personOnly
+        ? group.jobName
+        : (group.jobNo + (group.jobName && group.jobName !== group.jobNo ? ' · ' + group.jobName : ''));
+      if (titleEl) titleEl.textContent = headLabel;
+      if (subEl) {
+        var workers = group.workers.length ? group.workers.join(', ') : 'Worker not recorded';
+        var entryN = group.rows.length;
+        subEl.textContent = (group.personOnly ? 'Person-only · ' : 'Job · ') +
+          workers + ' · ' + entryN + ' diary day' + (entryN === 1 ? '' : 's') +
+          (group.pdfs.length
+            ? ' · ' + group.pdfs.length + ' PDF' + (group.pdfs.length === 1 ? '' : 's')
+            : ' · no PDF yet');
+      }
+
+      var html = '';
+      if (group.pdfs.length) {
+        html += '<div class="p12-pdf-panel">';
+        if (group.pdfs.length === 1) {
+          var only = group.pdfs[0];
+          html += '<p class="p12-report-lead">Site Diary PDF for ' + p12Esc(only.dateLabel) + '.</p>';
+          html += '<div class="p12-pdf-actions">';
+          html += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
+            p12Esc(only.url) + '">View site diary PDF</button>';
+          html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(only.url) +
+            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
+          html += '</div>';
+        } else {
+          html += '<p class="p12-report-lead">' + group.pdfs.length +
+            ' Site Diary PDFs for this week (often one per diary day).</p>';
+          html += '<ul class="p12-pdf-list">';
+          group.pdfs.forEach(function(pdf, idx) {
+            html += '<li class="p12-pdf-list-item">';
+            html += '<span class="p12-pdf-list-meta">' + p12Esc(pdf.dateLabel) +
+              ' · ' + p12Esc(pdf.person) +
+              (idx === 0 ? ' · latest' : '') + '</span>';
+            html += '<div class="p12-pdf-actions">';
+            html += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
+              p12Esc(pdf.url) + '">View PDF</button>';
+            html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdf.url) +
+              '" target="_blank" rel="noopener noreferrer">New tab</a>';
+            html += '</div></li>';
+          });
+          html += '</ul>';
+        }
+        html += '</div>';
+      } else {
+        html += '<div class="p12-no-report">';
+        html += '<p class="p12-no-report-msg">Report not yet available for this job/week</p>';
+        html += '<p class="p12-muted">No Site Diary PDF is attached on the diary rows for this selection.</p>';
+        html += '</div>';
+
+        // Lightweight real-field hints only — never invent narrative.
+        var lines = [];
+        group.rows.slice().sort(function(a, b) {
+          var da = p12DiaryDate(a);
+          var db = p12DiaryDate(b);
+          return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+        }).forEach(function(r) {
+          var work = p12DiaryWorkCompleted(r);
+          var sum = p12DiarySummaryText(r);
+          var line = sum || work;
+          if (!line) return;
+          var d = p12DiaryDate(r);
+          lines.push({
+            dateLabel: p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Undated'),
+            text: line
+          });
+        });
+        if (lines.length) {
+          html += '<div class="p12-day-snippets">';
+          html += '<div class="p12-detail-label">Diary day notes (from sheet)</div>';
+          html += '<ul class="p12-snippet-list">';
+          lines.forEach(function(ln) {
+            html += '<li><span class="p12-snippet-date">' + p12Esc(ln.dateLabel) +
+              '</span> ' + p12Esc(ln.text) + '</li>';
+          });
+          html += '</ul></div>';
+        }
+      }
+
+      if (bodyEl) bodyEl.innerHTML = html;
+
+      if (opts.autoOpenPdf && group.pdfs.length === 1) {
+        p12OpenPdfViewer(group.pdfs[0].url);
+      }
+    }
+
+    function renderP12(diaries) {
       window._p12Diaries = diaries || [];
-      window._p12Variations = variations || [];
+      _p12ReportGroups = {};
 
-      function p12Esc(s) {
-        return String(s == null ? '' : s)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-      }
-
-      function diaryDate(r) {
-        return parseFlexibleDate(col(r, 'Date', 'date', 'Diary Date', 'Entry Date', 'Work Date'));
-      }
-
-      function variationDate(r) {
-        return parseFlexibleDate(col(r, 'Date Raised', 'date_raised', 'Date', 'date'));
-      }
-
-      // Brand only — week filter is local to P12 (not global Month/Year)
       function applyBrand(rows) {
         return filterByBrand(rows || [], activeBrand);
       }
 
       function inSelectedWeek(d) {
-        if (!d || isNaN(d.getTime())) return true; // undated stays visible for crew
+        if (!d || isNaN(d.getTime())) return true; // undated stays for crew visibility
         var key = p12WeekKeyFromDate(d);
         return key === activeP12WeekKey;
       }
 
-      function diaryJobNo(r) {
-        return String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
-      }
-
-      function diaryPerson(r) {
-        return String(col(r, 'Logged By', 'Logged by', 'logged_by') || '').trim() || 'Not recorded';
-      }
-
-      var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
-
-      function diaryIssuesText(r) {
-        var direct = col(r,
-          'Issues/Blockers', 'Issues / Blockers', 'Issues & Blockers',
-          'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers',
-          'issues/blockers', 'issues_blockers'
-        );
-        if (direct) return String(direct).trim();
-        var keys = Object.keys(r || {});
-        for (var i = 0; i < keys.length; i++) {
-          var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-          if (norm === 'issues/blockers' || norm === 'issues / blockers' ||
-              norm === 'issues & blockers' ||
-              (norm.indexOf('issues') !== -1 && norm.indexOf('blocker') !== -1)) {
-            var v = String(r[keys[i]] || '').trim();
-            if (v) return v;
-          }
-        }
-        return '';
-      }
-
-      function hasIssueContent(r) {
-        var t = diaryIssuesText(r);
-        if (!t) return false;
-        return !P12_EMPTY_ISSUE.test(t);
-      }
-
-      // Emily line: "J1349 Byarda, David, [summary]."
-      // ChatGPT Summary when live; never invent that text. Work Completed stays a separate field.
-      function diaryJobName(r) {
-        return String(col(r, 'Job Name', 'job_name') || '').trim();
-      }
-
-      function diarySummaryInfo(r) {
-        var summary = col(r,
-          'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
-          'AI Summary', 'Plain English Summary', 'Endorsement Summary',
-          'summary', 'chatgpt_summary', 'diary_summary'
-        );
-        var job = diaryJobNo(r) || 'No job #';
-        var jname = diaryJobName(r);
-        var person = diaryPerson(r);
-        var head = job;
-        if (jname && jname !== job) head += ' ' + jname;
-        head += ', ' + person;
-
-        if (summary && String(summary).trim()) {
-          var sumText = String(summary).trim();
-          if (!/[.!?]$/.test(sumText)) sumText += '.';
-          return {
-            kind: 'summary',
-            label: 'Summary',
-            text: head + ', ' + sumText
-          };
-        }
-        // Expected until BuildPass/ChatGPT summary generation is live
-        return {
-          kind: 'missing',
-          label: 'Summary not yet available',
-          text: head + ', Summary not yet available.'
-        };
-      }
-
-      function diaryWorkCompleted(r) {
-        return String(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || '').trim();
-      }
-
-      function safetyState(r) {
-        var raw = col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry', 'Safety');
-        var s = String(raw || '').trim().toLowerCase();
-        if (!s) return { code: 'missing', label: 'Not recorded', isFlag: false };
-        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-          return { code: 'yes', label: 'Yes', isFlag: true };
-        }
-        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
-          return { code: 'no', label: 'N not confirmed as no issue', isFlag: false };
-        }
-        return { code: 'ambiguous', label: 'Ambiguous (' + String(raw).trim() + ')', isFlag: false };
-      }
-
-      // Free-text safety notes when the sheet carries them (not only Y/N).
-      function diarySafetyText(r) {
-        var direct = col(r,
-          'Safety Notes', 'Safety Detail', 'Safety Details', 'Safety Description',
-          'Safety Issues', 'Safety Comments', 'Safety Comment', 'safety_notes',
-          'safety_detail', 'safety_details'
-        );
-        if (direct && String(direct).trim()) return String(direct).trim();
-        var keys = Object.keys(r || {});
-        for (var i = 0; i < keys.length; i++) {
-          var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-          if (norm === 'safety entry (y/n)' || norm === 'safety entry' || norm === 'safety') continue;
-          if (norm.indexOf('safety') !== -1 &&
-              (norm.indexOf('note') !== -1 || norm.indexOf('detail') !== -1 ||
-               norm.indexOf('desc') !== -1 || norm.indexOf('comment') !== -1 ||
-               norm.indexOf('issue') !== -1)) {
-            var v = String(r[keys[i]] || '').trim();
-            if (v && !P12_EMPTY_ISSUE.test(v)) return v;
-          }
-        }
-        return '';
-      }
-
-      function safetyDetailDisplay(r) {
-        var saf = safetyState(r);
-        var notes = diarySafetyText(r);
-        if (notes) {
-          return {
-            alert: !!saf.isFlag,
-            text: (saf.isFlag ? 'Safety entry: Yes. ' : '') + notes
-          };
-        }
-        if (saf.code === 'yes') {
-          return {
-            alert: true,
-            text: 'Safety entry marked Yes. Detail text not recorded in sheet for this entry.'
-          };
-        }
-        if (saf.code === 'no') {
-          return { alert: false, text: saf.label };
-        }
-        if (saf.code === 'ambiguous') {
-          return { alert: false, text: saf.label };
-        }
-        return { alert: false, text: 'Not recorded' };
-      }
-
-      function workStoppedState(r) {
-        var keyProbe = resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']);
-        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', isStop: false };
-        var val = String(rawColByNames(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) || '').trim();
-        if (!val) return { code: 'missing', label: 'Not recorded', isStop: false };
-        var s = val.toLowerCase();
-        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-          return { code: 'yes', label: 'Yes', isStop: true };
-        }
-        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
-          return { code: 'no', label: 'No', isStop: false };
-        }
-        return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
-      }
-
-      function photoState(r) {
-        // P12 media is Site Diary PDF first — not raw Photo Links for browsing
-        var pdf = diaryPdfUrl(r);
-        if (pdf) {
-          return { code: 'yes', label: 'PDF attached', hasPhoto: true, hasPdf: true };
-        }
-        var keyProbe = resolveRowKey(r, [
-          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
-        ]);
-        if (keyProbe === null) return { code: 'missing', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
-        var val = String(rawColByNames(r, [
-          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
-        ]) || '').trim();
-        if (!val) return { code: 'missing', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
-        var s = val.toLowerCase();
-        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-          // Photos flagged Yes but no Site Diary PDF URL yet
-          return { code: 'yes', label: 'No PDF attached', hasPhoto: true, hasPdf: false };
-        }
-        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
-          return { code: 'no', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
-        }
-        return { code: 'ambiguous', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
-      }
-
-      // URLs from sheet only (never invent). Kept for utilities; P12 UI deprioritises them.
-      function extractUrlsFromCell(raw) {
-        var s = String(raw || '').trim();
-        if (!s) return [];
-        var urls = [];
-        var m = s.match(/https?:\/\/[^\s,;|]+/gi);
-        if (m && m.length) {
-          m.forEach(function(u) {
-            var clean = String(u).replace(/[)\].,]+$/g, '');
-            if (clean && urls.indexOf(clean) === -1) urls.push(clean);
-          });
-          return urls;
-        }
-        s.split(/[,;|]+/).forEach(function(p) {
-          var t = String(p || '').trim();
-          if (/^https?:\/\//i.test(t) && urls.indexOf(t) === -1) urls.push(t);
-        });
-        return urls;
-      }
-
-      function photoLinks(r) {
-        var urls = [];
-        function addFrom() {
-          var names = Array.prototype.slice.call(arguments);
-          var raw = col.apply(null, [r].concat(names));
-          extractUrlsFromCell(raw).forEach(function(u) {
-            if (urls.indexOf(u) === -1) urls.push(u);
-          });
-        }
-        addFrom(
-          'Google Drive Photo Links', 'Drive Photo Links', 'Drive Links',
-          'Google Drive Links', 'google_drive_photo_links'
-        );
-        addFrom(
-          'Photo Links', 'Photo Link', 'photo_links',
-          'Buildpass Photo URLs', 'BuildPass Photo URLs', 'Buildpass Photos',
-          'BuildPass Photos', 'BuildPass Link', 'Photo URL', 'Photo URLs', 'Photos URL'
-        );
-        return urls;
-      }
-
-      // Site Diary PDF (preferred media for P12; named header, often col Q when ETL provides it)
-      function diaryPdfUrl(r) {
-        var raw = String(col(r,
-          'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
-          'PDF', 'Buildpass PDF', 'pdf_link', 'site_diary_pdf'
-        ) || '').trim();
-        if (!raw) return '';
-        var found = extractUrlsFromCell(raw);
-        return found.length ? found[0] : '';
-      }
-
-      /** Job-name match for Meli's Record Keeping (flexible apostrophes / spacing). */
-      function isMeliRecordKeeping(r) {
-        var name = String(diaryJobName(r) || '')
-          .toLowerCase()
-          .replace(/['\u2018\u2019\u0060\u00B4]/g, '')
-          .replace(/[^a-z0-9]+/g, ' ')
-          .trim();
-        return name === 'melis record keeping';
-      }
-
-      // Variation helpers — description + status only. Value columns never rendered.
-      function variationStatus(r) {
-        var keyProbe = resolveRowKey(r, ['Status', 'status']);
-        if (keyProbe === null) return { code: 'missing', label: 'Not recorded' };
-        var raw = String(rawColByNames(r, ['Status', 'status']) || '').trim();
-        if (!raw) return { code: 'missing', label: 'Not recorded' };
-        return { code: 'ok', label: raw };
-      }
-
-      function variationDescription(r) {
-        var d = col(r, 'Description', 'description', 'Variation Description', 'Details');
-        return d && String(d).trim() ? String(d).trim() : 'Not recorded';
-      }
-
-      function emptyCard(msg) {
-        return '<div class="p12-empty"><p class="no-data-msg">' + p12Esc(msg) + '</p></div>';
-      }
-
-      function chipClass(kind) {
-        if (kind === 'yes' || kind === 'stop') return 'p12-chip p12-chip--alert';
-        if (kind === 'missing' || kind === 'ambiguous') return 'p12-chip p12-chip--gap';
-        if (kind === 'interim') return 'p12-chip p12-chip--interim';
-        if (kind === 'summary') return 'p12-chip p12-chip--ok';
-        return 'p12-chip';
-      }
-
-      var _p12EntrySeq = 0;
-
-      /** One diary entry: Emily line, work done, click-to-reveal issues/safety, PDF link. */
-      function renderP12EntryHtml(r) {
-        _p12EntrySeq += 1;
-        var uid = 'p12-e' + _p12EntrySeq;
-        var sum = diarySummaryInfo(r);
-        var saf = safetyState(r);
-        var safDetail = safetyDetailDisplay(r);
-        var stop = workStoppedState(r);
-        var pho = photoState(r);
-        var pdf = diaryPdfUrl(r);
-        var brand = String(col(r, 'Brand', 'brand') || '').trim();
-        var type = String(col(r, 'Type', 'type') || '').trim();
-        var dept = String(col(r, 'Department', 'department') || '').trim();
-        var mats = String(col(r, 'Materials Used', 'materials_used') || '').trim();
-        var people = diaryPerson(r);
-        var workDone = diaryWorkCompleted(r);
-        var hasIssues = hasIssueContent(r);
-        var issuesText = hasIssues ? diaryIssuesText(r) : 'Not recorded';
-        var issuesChipKind = hasIssues ? 'yes' : 'missing';
-        var issuesChipLabel = hasIssues ? 'Issues: Yes · view detail' : 'Issues: Not recorded';
-        var safChipKind = saf.code === 'yes' ? 'yes' : saf.code;
-        var safChipLabel = 'Safety: ' + saf.label + (safDetail.text ? ' · view detail' : '');
-
-        var html = '';
-        html += '<div class="p12-entry">';
-        html += '<div class="p12-entry-meta">';
-        html += '<span>' + p12Esc(people) + '</span>';
-        if (brand) html += '<span>' + p12Esc(brand) + '</span>';
-        if (type) html += '<span>' + p12Esc(type) + '</span>';
-        if (dept) html += '<span>' + p12Esc(dept) + '</span>';
-        html += '</div>';
-
-        html += '<div class="p12-summary-block">';
-        html += '<span class="' + chipClass(sum.kind) + '">' + p12Esc(sum.label) + '</span>';
-        html += '<p class="p12-summary-text">' + p12Esc(sum.text) + '</p>';
-        html += '</div>';
-
-        if (workDone) {
-          html += '<div class="p12-detail-block">';
-          html += '<div class="p12-detail-label">Work completed</div>';
-          html += '<p class="p12-detail-text">' + p12Esc(workDone) + '</p></div>';
-        }
-
-        // Click-to-reveal chips (P11-style expand, inline under the row)
-        html += '<div class="p12-flags">';
-        html += '<button type="button" class="' + chipClass(issuesChipKind) + ' p12-chip-btn' +
-          (hasIssues ? '' : '') +
-          '" data-p12-reveal aria-expanded="false" aria-controls="' + uid + '-issues">' +
-          p12Esc(issuesChipLabel) + '</button>';
-        html += '<button type="button" class="' + chipClass(safChipKind) + ' p12-chip-btn' +
-          '" data-p12-reveal aria-expanded="false" aria-controls="' + uid + '-safety">' +
-          p12Esc(safChipLabel) + '</button>';
-        html += '<span class="' + chipClass(stop.isStop ? 'stop' : stop.code) +
-          '">Work stopped: ' + p12Esc(stop.label) + '</span>';
-        html += '<span class="p12-chip">' + p12Esc(pho.hasPdf ? 'PDF: Attached' : 'PDF: No PDF attached') + '</span>';
-        html += '</div>';
-
-        html += '<div id="' + uid + '-issues" class="p12-reveal-panel p12-detail-block' +
-          (hasIssues ? ' p12-detail-block--issue' : '') + '" hidden>';
-        html += '<div class="p12-detail-label">Issues &amp; blockers</div>';
-        html += '<p class="p12-detail-text">' + p12Esc(issuesText) + '</p></div>';
-
-        html += '<div id="' + uid + '-safety" class="p12-reveal-panel p12-detail-block' +
-          (safDetail.alert ? ' p12-detail-block--issue' : '') + '" hidden>';
-        html += '<div class="p12-detail-label">Safety</div>';
-        html += '<p class="p12-detail-text">' + p12Esc(safDetail.text) + '</p></div>';
-
-        // Site Diary PDF primary media path (no Photo Links browsing on P12)
-        html += '<div class="p12-photos">';
-        html += '<div class="p12-detail-label">Site diary PDF</div>';
-        if (pdf) {
-          html += '<div class="p12-pdf-actions">';
-          html += '<button type="button" class="p12-photo-link p12-pdf-btn" data-p12-pdf-open="' +
-            p12Esc(pdf) + '">View site diary PDF</button>';
-          html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdf) +
-            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
-          html += '</div>';
-        } else {
-          html += '<p class="p12-detail-text p12-muted">No PDF attached</p>';
-        }
-        html += '</div>';
-
-        if (mats) {
-          html += '<div class="p12-detail-block"><div class="p12-detail-label">Materials</div>';
-          html += '<p class="p12-detail-text">' + p12Esc(mats) + '</p></div>';
-        }
-
-        var subs = String(col(r, 'Subcontractors on Site', 'Subcontractor Details') || '').trim();
-        var subDet = String(col(r, 'Subcontractor Details') || '').trim();
-        if (subs || subDet) {
-          html += '<div class="p12-detail-block"><div class="p12-detail-label">Subcontractors</div>';
-          html += '<p class="p12-detail-text">' +
-            p12Esc([subs, subDet].filter(Boolean).join(' · ')) + '</p></div>';
-        }
-
-        html += '</div>'; // entry
-        return html;
-      }
-
-      // Default week = current ISO week
       if (!activeP12WeekKey) activeP12WeekKey = p12CurrentWeekKey();
 
       var brandAllDiaries = applyBrand(window._p12Diaries);
-      var brandAllVariations = applyBrand(window._p12Variations);
 
-      // Week options: rolling 16 weeks + any week present in branded diary data
       var weekKeySet = {};
       var curWk = p12CurrentWeekKey();
       for (var wi = 0; wi < 16; wi++) {
@@ -15521,7 +15388,7 @@
         if (wk) weekKeySet[wk] = true;
       }
       brandAllDiaries.forEach(function(r) {
-        var dk = p12WeekKeyFromDate(diaryDate(r));
+        var dk = p12WeekKeyFromDate(p12DiaryDate(r));
         if (dk) weekKeySet[dk] = true;
       });
       if (curWk) weekKeySet[curWk] = true;
@@ -15550,11 +15417,8 @@
         }
       }
 
-      var brandedDiaries = brandAllDiaries.filter(function(r) {
-        return inSelectedWeek(diaryDate(r));
-      });
-      var brandedVariations = brandAllVariations.filter(function(r) {
-        return inSelectedWeek(variationDate(r));
+      var diariesFiltered = brandAllDiaries.filter(function(r) {
+        return inSelectedWeek(p12DiaryDate(r));
       });
 
       var brandEl = document.getElementById('p12-brand-label');
@@ -15571,208 +15435,136 @@
         if (weekSelect) {
           weekSelect.addEventListener('change', function() {
             activeP12WeekKey = this.value || p12CurrentWeekKey();
-            renderP12(window._p12Diaries, window._p12Variations);
+            activeP12ReportKey = null;
+            renderP12(window._p12Diaries);
           });
         }
       }
 
-      // Week + brand only (job/person remain visible on rows, not as filters)
-      var diariesFiltered = brandedDiaries;
-      var variationsFiltered = brandedVariations;
-
-      // Meli's Record Keeping — dedicated weekly card (same sheet / week as main feed)
-      var meliRows = diariesFiltered.filter(isMeliRecordKeeping).slice().sort(function(a, b) {
-        var da = diaryDate(a);
-        var db = diaryDate(b);
-        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      diariesFiltered.forEach(function(r) {
+        var key = p12ReportGroupKey(r);
+        if (!_p12ReportGroups[key]) {
+          _p12ReportGroups[key] = p12BuildReportGroup(r);
+        }
+        var g = _p12ReportGroups[key];
+        g.rows.push(r);
+        var jn = p12DiaryJobNo(r);
+        var name = p12DiaryJobName(r);
+        if (!g.personOnly && name && (!g.jobName || g.jobName === g.jobNo)) {
+          g.jobName = name;
+        }
+        if (g.personOnly && name) {
+          g.jobName = p12IsKnownPersonSpecial(name)
+            ? p12PersonSpecialLabel(name)
+            : name;
+          g.isSpecial = p12IsKnownPersonSpecial(name);
+        }
+        if (jn && !g.jobNo) g.jobNo = jn;
       });
 
+      Object.keys(_p12ReportGroups).forEach(function(k) {
+        var g = _p12ReportGroups[k];
+        g.pdfs = p12CollectPdfs(g.rows);
+        g.workers = p12UniqueWorkers(g.rows);
+        g.latestTs = 0;
+        g.rows.forEach(function(r) {
+          var d = p12DiaryDate(r);
+          var ts = d ? d.getTime() : 0;
+          if (ts > g.latestTs) g.latestTs = ts;
+        });
+      });
+
+      var groupKeys = Object.keys(_p12ReportGroups).sort(function(a, b) {
+        var ga = _p12ReportGroups[a];
+        var gb = _p12ReportGroups[b];
+        if (ga.personOnly !== gb.personOnly) return ga.personOnly ? 1 : -1;
+        if (ga.personOnly && gb.personOnly && ga.isSpecial !== gb.isSpecial) {
+          return ga.isSpecial ? -1 : 1;
+        }
+        if (!ga.personOnly && !gb.personOnly) {
+          return String(ga.jobNo || '').localeCompare(String(gb.jobNo || ''), undefined, { numeric: true });
+        }
+        return String(ga.jobName || '').localeCompare(String(gb.jobName || ''));
+      });
+
+      var weekHeader = document.getElementById('p12-week-header');
+      if (weekHeader) {
+        weekHeader.textContent = 'Reports · ' + p12WeekLabelFromKey(activeP12WeekKey);
+      }
+
+      var withPdf = groupKeys.filter(function(k) { return _p12ReportGroups[k].pdfs.length > 0; }).length;
       var srcEl = document.getElementById('p12-sources');
       if (srcEl) {
-        var dSrc = !_p12LoadMeta.diariesOk
-          ? 'Buildpass_Site Diaries: Unavailable'
-          : ('Buildpass_Site Diaries: Live (' + diariesFiltered.length + ' in selection)');
-        var vSrc = !_p12LoadMeta.variationsOk
-          ? 'Variations_Log: Unavailable'
-          : ('Variations_Log: Live (' + variationsFiltered.length + ' · $ hidden)');
-        var meliSrc = !_p12LoadMeta.diariesOk
-          ? 'Meli weekly: Unavailable'
-          : ('Meli weekly: ' + meliRows.length + ' entr' + (meliRows.length === 1 ? 'y' : 'ies') +
-            ' (Job Name = Meli\'s Record Keeping)');
-        srcEl.textContent = 'Sources · ' + dSrc + ' · ' + vSrc + ' · ' + meliSrc;
-      }
-
-      var meliCard = document.getElementById('p12-meli');
-      if (meliCard) {
-        meliCard.classList.toggle('p12-meli--live', meliRows.length > 0);
-        meliCard.classList.toggle('p12-meli--empty', _p12LoadMeta.diariesOk && meliRows.length === 0);
-      }
-      var meliHint = document.getElementById('p12-meli-hint');
-      if (meliHint) {
         if (!_p12LoadMeta.diariesOk) {
-          meliHint.textContent = 'Buildpass_Site Diaries unavailable';
-        } else if (!meliRows.length) {
-          meliHint.textContent = 'No Meli\'s Record Keeping diaries for ' +
-            p12WeekLabelFromKey(activeP12WeekKey) + ' · Job Name match only';
+          srcEl.textContent = 'Sources · Buildpass_Site Diaries: Unavailable';
         } else {
-          meliHint.textContent = meliRows.length + ' entr' +
-            (meliRows.length === 1 ? 'y' : 'ies') +
-            ' this week · Logged work from Buildpass_Site Diaries';
+          srcEl.textContent = 'Sources · Buildpass_Site Diaries: Live (' +
+            diariesFiltered.length + ' diary rows · ' + groupKeys.length +
+            ' report' + (groupKeys.length === 1 ? '' : 's') +
+            ' · ' + withPdf + ' with PDF)';
         }
       }
-      var meliFeed = document.getElementById('p12-meli-feed');
-      if (meliFeed) {
+
+      var hintEl = document.getElementById('p12-reports-hint');
+      if (hintEl) {
         if (!_p12LoadMeta.diariesOk) {
-          meliFeed.innerHTML = emptyCard('Site diaries unavailable');
-        } else if (!meliRows.length) {
-          meliFeed.innerHTML = emptyCard(
-            'No Meli\'s Record Keeping entries for this week.'
-          );
+          hintEl.textContent = 'Site diaries unavailable';
+        } else if (!groupKeys.length) {
+          hintEl.textContent = 'No diary jobs or person-only entries for this week';
         } else {
-          var mHtml = '';
-          meliRows.forEach(function(r) {
-            var dObj = diaryDate(r);
-            var dLabel = dObj
-              ? dObj.toLocaleDateString('en-AU', {
-                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-                })
-              : (String(col(r, 'Date', 'date') || '').trim() || 'Date not recorded');
-            mHtml += '<article class="p12-job-card p12-meli-card">';
-            mHtml += '<header class="p12-job-head">';
-            mHtml += '<div class="p12-job-id">' + p12Esc(dLabel) + '</div>';
-            mHtml += '<div class="p12-job-name">' + p12Esc(diaryJobName(r) || 'Meli\'s Record Keeping') + '</div>';
-            mHtml += '</header>';
-            mHtml += renderP12EntryHtml(r);
-            mHtml += '</article>';
-          });
-          meliFeed.innerHTML = mHtml;
+          hintEl.textContent = groupKeys.length + ' report entr' +
+            (groupKeys.length === 1 ? 'y' : 'ies') +
+            ' · open a row for the Site Diary PDF when available';
         }
       }
 
-      var hasSummaryCol = (window._p12Diaries || []).some(function(r) {
-        return resolveRowKey(r, [
-          'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
-          'AI Summary', 'Plain English Summary', 'Endorsement Summary',
-          'summary', 'chatgpt_summary', 'diary_summary'
-        ]) !== null;
-      });
-
-      var diaryHint = document.getElementById('p12-diary-hint');
-      if (diaryHint) {
-        diaryHint.textContent = diariesFiltered.length + ' entr' +
-          (diariesFiltered.length === 1 ? 'y' : 'ies') +
-          ' · grouped by date then job · no job # kept' +
-          (hasSummaryCol
-            ? ' · Summary field ready (Emily line: Job#, name, person, summary)'
-            : ' · Summary field Pending · shows "Summary not yet available" until ChatGPT fills it');
-      }
-
-      // Group by date (desc), then job
-      var byDate = {};
-      diariesFiltered.forEach(function(r) {
-        var dObj = parseFlexibleDate(col(r, 'Date', 'date'));
-        var dKey = dObj
-          ? (dObj.getFullYear() + '-' + String(dObj.getMonth() + 1).padStart(2, '0') + '-' +
-            String(dObj.getDate()).padStart(2, '0'))
-          : 'unknown';
-        var dLabel = dObj
-          ? dObj.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-          : (String(col(r, 'Date', 'date') || '').trim() || 'Date not recorded');
-        if (!byDate[dKey]) byDate[dKey] = { key: dKey, label: dLabel, ts: dObj ? dObj.getTime() : 0, jobs: {} };
-        var jn = diaryJobNo(r) || 'No job #';
-        var jname = diaryJobName(r);
-        if (!byDate[dKey].jobs[jn]) {
-          byDate[dKey].jobs[jn] = { job: jn, name: jname, rows: [] };
-        }
-        byDate[dKey].jobs[jn].rows.push(r);
-      });
-
-      var dateKeys = Object.keys(byDate).sort(function(a, b) {
-        if (a === 'unknown') return 1;
-        if (b === 'unknown') return -1;
-        return (byDate[b].ts || 0) - (byDate[a].ts || 0);
-      });
-
-      var feedEl = document.getElementById('p12-diary-feed');
-      if (feedEl) {
+      var listEl = document.getElementById('p12-reports-list');
+      if (listEl) {
         if (!_p12LoadMeta.diariesOk) {
-          feedEl.innerHTML = emptyCard('Site diaries unavailable · Pending');
-        } else if (!dateKeys.length) {
-          feedEl.innerHTML = emptyCard('No diary entries in selection.');
+          listEl.innerHTML = p12EmptyCard('Site diaries unavailable');
+        } else if (!groupKeys.length) {
+          listEl.innerHTML = p12EmptyCard('No diary data for this week.');
         } else {
-          var html = '';
-          dateKeys.forEach(function(dk) {
-            var day = byDate[dk];
-            html += '<section class="p12-day" aria-label="' + p12Esc(day.label) + '">';
-            html += '<h3 class="p12-day-title">' + p12Esc(day.label) + '</h3>';
-            var jobKeys = Object.keys(day.jobs).sort(function(a, b) {
-              if (a === 'No job #') return 1;
-              if (b === 'No job #') return -1;
-              return a.localeCompare(b);
-            });
-            jobKeys.forEach(function(jk) {
-              var g = day.jobs[jk];
-              html += '<article class="p12-job-card">';
-              html += '<header class="p12-job-head">';
-              html += '<div class="p12-job-id">' +
-                (g.job === 'No job #'
-                  ? '<span class="p12-chip p12-chip--gap">No job #</span>'
-                  : p12Esc(g.job)) +
-                '</div>';
-              if (g.name && g.name !== g.job) {
-                html += '<div class="p12-job-name">' + p12Esc(g.name) + '</div>';
-              }
-              html += '</header>';
+          var listHtml = '';
+          groupKeys.forEach(function(k) {
+            var g = _p12ReportGroups[k];
+            var hasPdf = g.pdfs.length > 0;
+            var jobPart = g.personOnly
+              ? '<span class="p12-report-job-no p12-report-job-no--special">Person-only</span>'
+              : '<span class="p12-report-job-no">' + p12Esc(g.jobNo) + '</span>';
+            var namePart = '<span class="p12-report-job-name">' + p12Esc(g.jobName) + '</span>';
+            var workersPart = g.workers.length
+              ? g.workers.map(function(w) { return p12Esc(w); }).join(', ')
+              : 'Worker not recorded';
+            var pdfBadge = hasPdf
+              ? '<span class="p12-chip p12-chip--ok">PDF ready' +
+                (g.pdfs.length > 1 ? ' · ' + g.pdfs.length : '') + '</span>'
+              : '<span class="p12-chip p12-chip--gap">No PDF yet</span>';
+            var typeBadge = g.personOnly
+              ? '<span class="p12-chip p12-chip--special">' +
+                p12Esc(g.isSpecial ? g.jobName : 'No job #') + '</span>'
+              : '';
 
-              g.rows.forEach(function(r) {
-                html += renderP12EntryHtml(r);
-              });
-
-              html += '</article>';
-            });
-            html += '</section>';
+            listHtml += '<button type="button" class="p12-report-row' +
+              (hasPdf ? ' p12-report-row--pdf' : '') +
+              (g.personOnly ? ' p12-report-row--person' : '') +
+              '" data-p12-report-key="' + p12Esc(k) +
+              '" role="listitem" aria-selected="false">';
+            listHtml += '<div class="p12-report-row-main">' + jobPart + namePart + '</div>';
+            listHtml += '<div class="p12-report-row-meta">';
+            listHtml += '<span class="p12-report-workers">' + workersPart + '</span>';
+            listHtml += typeBadge + pdfBadge;
+            listHtml += '</div></button>';
           });
-          feedEl.innerHTML = html;
+          listEl.innerHTML = listHtml;
         }
       }
 
-      // Variations — description + status only; strip any $ columns from render path
-      var varEl = document.getElementById('p12-variations-feed');
-      if (varEl) {
-        if (!_p12LoadMeta.variationsOk) {
-          varEl.innerHTML = emptyCard('Variations log unavailable · Pending');
-        } else if (!variationsFiltered.length) {
-          varEl.innerHTML = emptyCard('No variations in selection.');
-        } else {
-          var sortedVars = variationsFiltered.slice().sort(function(a, b) {
-            var da = parseFlexibleDate(col(a, 'Date Raised', 'date_raised', 'Date'));
-            var db = parseFlexibleDate(col(b, 'Date Raised', 'date_raised', 'Date'));
-            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
-          });
-          var vHtml = '';
-          sortedVars.forEach(function(r) {
-            var st = variationStatus(r);
-            var jobLabel = String(col(r, 'Xero Project J#', 'Job #', 'Job Name') || '').trim() || 'No job #';
-            var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
-            vHtml += '<article class="p12-var-card">';
-            vHtml += '<div class="p12-var-top">';
-            vHtml += '<span class="p12-var-id">' + p12Esc(
-              col(r, 'Invoice #', 'Variation ID', 'Variation #', 'ID') || 'Variation'
-            ) + '</span>';
-            vHtml += '<span class="' + chipClass(st.code === 'missing' ? 'missing' : 'summary') +
-              '">' + p12Esc(st.label) + '</span>';
-            vHtml += '</div>';
-            vHtml += '<div class="p12-var-job">' + p12Esc(jobLabel) +
-              (jname && jname !== jobLabel ? ' · ' + p12Esc(jname) : '') + '</div>';
-            vHtml += '<p class="p12-var-desc">' + p12Esc(variationDescription(r)) + '</p>';
-            var raised = String(col(r, 'Date Raised', 'date_raised', 'Date') || '').trim();
-            if (raised) {
-              vHtml += '<div class="p12-var-meta">Raised ' + p12Esc(raised) + '</div>';
-            }
-            vHtml += '</article>';
-          });
-          varEl.innerHTML = vHtml;
-        }
+      if (activeP12ReportKey && _p12ReportGroups[activeP12ReportKey]) {
+        p12SelectReport(activeP12ReportKey, { autoOpenPdf: false });
+      } else {
+        activeP12ReportKey = null;
+        p12SelectReport(null);
       }
 
       // P12: no BB AI context (crew diary data not sent to Ask BB)
