@@ -1345,12 +1345,13 @@
                 <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
                 <div class="p12-pdf-shell">
                   <button type="button" class="p12-pdf-close" data-p12-pdf-close aria-label="Close PDF viewer">&times;</button>
-                  <button type="button" class="p12-pdf-nav p12-pdf-prev" data-p12-pdf-prev aria-label="Previous page" disabled>&#8249;</button>
+                  <button type="button" class="p12-pdf-nav p12-pdf-prev" data-p12-pdf-prev aria-label="Previous PDF" disabled>&#8249;</button>
                   <div class="p12-pdf-stage">
                     <div id="p12-pdf-status" class="p12-pdf-status" hidden></div>
-                    <canvas id="p12-pdf-canvas" class="p12-pdf-canvas" aria-label="PDF page"></canvas>
+                    <iframe id="p12-pdf-frame" class="p12-pdf-frame" title="Site diary PDF preview" hidden allow="autoplay" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    <canvas id="p12-pdf-canvas" class="p12-pdf-canvas" aria-label="PDF page" hidden></canvas>
                   </div>
-                  <button type="button" class="p12-pdf-nav p12-pdf-next" data-p12-pdf-next aria-label="Next page" disabled>&#8250;</button>
+                  <button type="button" class="p12-pdf-nav p12-pdf-next" data-p12-pdf-next aria-label="Next PDF" disabled>&#8250;</button>
                   <div class="p12-pdf-footer">
                     <a id="p12-pdf-open-tab" class="p12-pdf-open-tab" href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a>
                     <span id="p12-pdf-counter" class="p12-pdf-counter" aria-live="polite">1 of 1</span>
@@ -1402,7 +1403,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (staff full-width diary summaries). Staff-gated. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) into PDF.js lightbox or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (staff full-width diary summaries). Staff-gated. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) via Drive /preview iframe lightbox (multi-PDF arrows per group) or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -14628,7 +14629,7 @@
     // P12 - SITE DIARIES (staff full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
-    // PDF: Site Diary PDF column Q / Drive only into PDF.js lightbox.
+    // PDF: Site Diary PDF column Q / Drive via embed /preview iframe lightbox.
     // Never BuildPass photo col P / raw CDN image URLs.
     // Auth: temporary pass unlocks P12 content only unless
     // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
@@ -14657,20 +14658,49 @@
       ? CONFIG.P12_STAFF_GATE.staffScope
       : 'p12_only';
 
-    // ── P12 Site Diary PDF page viewer (PDF.js, lazy CDN load) ──
-    // Pinned: pdf.js 3.11.174 via cdnjs (classic UMD global pdfjsLib).
+    // ── P12 Site Diary PDF viewer (Drive /preview iframe + multi-PDF set) ──
+    // Pinned: pdf.js 3.11.174 via cdnjs for non-Drive URLs only.
     var P12_PDFJS_VERSION = '3.11.174';
     var P12_PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + P12_PDFJS_VERSION;
     var P12_PDFJS_SCRIPT = P12_PDFJS_CDN + '/pdf.min.js';
     var P12_PDFJS_WORKER = P12_PDFJS_CDN + '/pdf.worker.min.js';
+    var _p12PdfUrls = [];
+    var _p12PdfIndex = 0;
+    var _p12PdfMode = ''; // 'drive' | 'pdfjs' | ''
     var _p12PdfDoc = null;
     var _p12PdfPage = 1;
     var _p12PdfNumPages = 0;
-    var _p12PdfUrl = '';
     var _p12PdfRenderTask = null;
     var _p12PdfLoadToken = 0;
     var _p12PdfJsPromise = null;
     var _p12PdfTouchX = null;
+
+    /** Extract Google Drive file id from /d/ID/ or open?id= / uc?id= forms. */
+    function p12DriveFileId(url) {
+      var s = String(url || '').trim();
+      if (!s) return '';
+      var m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) return m[1];
+      m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) return m[1];
+      m = s.match(/[?&#]id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) return m[1];
+      return '';
+    }
+
+    /** Embed-friendly Drive preview URL, or '' if not a Drive file link. */
+    function p12DrivePreviewUrl(url) {
+      var id = p12DriveFileId(url);
+      return id ? ('https://drive.google.com/file/d/' + id + '/preview') : '';
+    }
+
+    /** Prefer original Drive link for new-tab; fall back to /view when only an id is known. */
+    function p12DriveOpenTabUrl(url) {
+      var s = String(url || '').trim();
+      if (s && /^https?:\/\//i.test(s)) return s;
+      var id = p12DriveFileId(s);
+      return id ? ('https://drive.google.com/file/d/' + id + '/view') : s;
+    }
 
     function p12PdfLightboxIsOpen() {
       var root = document.getElementById('p12-pdf-lightbox');
@@ -14681,6 +14711,7 @@
       return {
         root: document.getElementById('p12-pdf-lightbox'),
         canvas: document.getElementById('p12-pdf-canvas'),
+        frame: document.getElementById('p12-pdf-frame'),
         status: document.getElementById('p12-pdf-status'),
         counter: document.getElementById('p12-pdf-counter'),
         openTab: document.getElementById('p12-pdf-open-tab'),
@@ -14702,37 +14733,87 @@
       canvas.style.height = '';
     }
 
+    function p12PdfClearFrame() {
+      var frame = document.getElementById('p12-pdf-frame');
+      if (!frame) return;
+      try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
+      frame.setAttribute('hidden', '');
+    }
+
+    /** mode: 'iframe' | 'canvas' | 'none' */
+    function p12PdfSetDisplayMode(mode) {
+      var canvas = document.getElementById('p12-pdf-canvas');
+      var frame = document.getElementById('p12-pdf-frame');
+      if (mode === 'iframe') {
+        if (canvas) canvas.setAttribute('hidden', '');
+        if (frame) frame.removeAttribute('hidden');
+      } else if (mode === 'canvas') {
+        if (frame) {
+          try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
+          frame.setAttribute('hidden', '');
+        }
+        if (canvas) canvas.removeAttribute('hidden');
+      } else {
+        if (canvas) canvas.setAttribute('hidden', '');
+        if (frame) {
+          try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
+          frame.setAttribute('hidden', '');
+        }
+      }
+    }
+
     function p12PdfSetStatus(msg, isError) {
       var status = document.getElementById('p12-pdf-status');
-      var canvas = document.getElementById('p12-pdf-canvas');
       if (!status) return;
       if (!msg) {
         status.setAttribute('hidden', '');
         status.textContent = '';
         status.classList.remove('is-error');
-        if (canvas) canvas.removeAttribute('hidden');
         return;
       }
       status.removeAttribute('hidden');
       status.textContent = msg;
       status.classList.toggle('is-error', !!isError);
-      if (canvas) {
-        if (isError) canvas.setAttribute('hidden', '');
-        else canvas.removeAttribute('hidden');
-      }
     }
 
     function p12PdfUpdateChrome() {
       var els = p12PdfEls();
-      var n = _p12PdfNumPages || 0;
-      var page = n ? _p12PdfPage : 0;
+      var setN = _p12PdfUrls.length;
+      var setIdx = setN ? (_p12PdfIndex + 1) : 0;
+      var multiSet = setN > 1;
+      var pageN = _p12PdfNumPages || 0;
+      var page = pageN ? _p12PdfPage : 0;
+
       if (els.counter) {
-        els.counter.textContent = n ? (page + ' of ' + n) : '—';
+        if (multiSet) {
+          els.counter.textContent = setIdx + ' of ' + setN;
+        } else if (_p12PdfMode === 'pdfjs' && pageN > 1) {
+          els.counter.textContent = page + ' of ' + pageN;
+        } else if (setN) {
+          els.counter.textContent = '1 of 1';
+        } else {
+          els.counter.textContent = '-';
+        }
       }
-      if (els.prev) els.prev.disabled = !n || page <= 1;
-      if (els.next) els.next.disabled = !n || page >= n;
-      if (els.canvas && n) {
-        els.canvas.setAttribute('aria-label', 'PDF page ' + page + ' of ' + n);
+
+      if (multiSet) {
+        if (els.prev) els.prev.disabled = _p12PdfIndex <= 0;
+        if (els.next) els.next.disabled = _p12PdfIndex >= setN - 1;
+      } else if (_p12PdfMode === 'pdfjs' && pageN > 1) {
+        if (els.prev) els.prev.disabled = page <= 1;
+        if (els.next) els.next.disabled = page >= pageN;
+      } else {
+        if (els.prev) els.prev.disabled = true;
+        if (els.next) els.next.disabled = true;
+      }
+
+      if (els.frame && multiSet) {
+        els.frame.setAttribute('title', 'Site diary PDF ' + setIdx + ' of ' + setN);
+      } else if (els.frame) {
+        els.frame.setAttribute('title', 'Site diary PDF preview');
+      }
+      if (els.canvas && _p12PdfMode === 'pdfjs' && pageN) {
+        els.canvas.setAttribute('aria-label', 'PDF page ' + page + ' of ' + pageN);
       }
     }
 
@@ -14799,12 +14880,16 @@
       _p12PdfLoadToken += 1;
       p12PdfDestroyDoc();
       p12PdfClearCanvas();
+      p12PdfClearFrame();
+      p12PdfSetDisplayMode('none');
       p12PdfSetStatus('');
       var els = p12PdfEls();
       if (els.openTab) els.openTab.setAttribute('href', '#');
       if (els.root) els.root.setAttribute('hidden', '');
       document.body.classList.remove('p12-pdf-lightbox-open');
-      _p12PdfUrl = '';
+      _p12PdfUrls = [];
+      _p12PdfIndex = 0;
+      _p12PdfMode = '';
       p12PdfUpdateChrome();
     }
 
@@ -14819,6 +14904,7 @@
       var canvas = document.getElementById('p12-pdf-canvas');
       if (!canvas) return Promise.resolve();
       var token = _p12PdfLoadToken;
+      p12PdfSetDisplayMode('canvas');
 
       return _p12PdfDoc.getPage(pageNum).then(function(page) {
         if (token !== _p12PdfLoadToken || !p12PdfLightboxIsOpen()) return null;
@@ -14854,56 +14940,64 @@
         if (token !== _p12PdfLoadToken) return;
         if (err && err.name === 'RenderingCancelledException') return;
         p12PdfSetStatus(
-          'Could not render this page. Use “Open PDF in new tab” below.',
+          'Could not render this page. Use "Open PDF in new tab" below.',
           true
         );
       });
     }
 
-    function p12PdfStep(delta) {
-      if (!p12PdfLightboxIsOpen() || !_p12PdfDoc || _p12PdfNumPages <= 1) return;
-      var next = _p12PdfPage + (delta || 0);
-      if (next < 1 || next > _p12PdfNumPages) return;
-      p12PdfRenderPage(next);
-    }
-
     function p12PdfShowCorsFallback(url, reason) {
       p12PdfDestroyDoc();
       p12PdfClearCanvas();
+      p12PdfClearFrame();
+      p12PdfSetDisplayMode('none');
+      _p12PdfMode = '';
       p12PdfUpdateChrome();
       var detail = reason ? (' ' + reason) : '';
       p12PdfSetStatus(
         'This PDF cannot be previewed here (often blocked by cross-origin rules).' +
         detail +
-        ' Use “Open PDF in new tab” to view the full document.',
+        ' Use "Open PDF in new tab" to view the full document.',
         true
       );
       var openTab = document.getElementById('p12-pdf-open-tab');
-      if (openTab && url) openTab.setAttribute('href', url);
+      var openUrl = p12DriveOpenTabUrl(url);
+      if (openTab && openUrl) openTab.setAttribute('href', openUrl);
     }
 
-    function p12OpenPdfViewer(url) {
-      var safe = String(url || '').trim();
-      if (!safe || !/^https?:\/\//i.test(safe)) return;
-
+    function p12PdfLoadDrivePreview(url) {
+      var preview = p12DrivePreviewUrl(url);
+      var openUrl = p12DriveOpenTabUrl(url);
       var els = p12PdfEls();
-      if (!els.root) return;
-
-      _p12PdfLoadToken += 1;
-      var token = _p12PdfLoadToken;
+      if (!preview || !els.frame) {
+        p12PdfShowCorsFallback(url, '');
+        return;
+      }
+      _p12PdfMode = 'drive';
       p12PdfDestroyDoc();
       p12PdfClearCanvas();
-      _p12PdfUrl = safe;
-
-      if (els.openTab) els.openTab.setAttribute('href', safe);
+      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
       p12PdfSetStatus('Loading PDF…', false);
+      p12PdfSetDisplayMode('iframe');
       p12PdfUpdateChrome();
-      els.root.removeAttribute('hidden');
-      document.body.classList.add('p12-pdf-lightbox-open');
-      var closeBtn = els.root.querySelector('.p12-pdf-close');
-      if (closeBtn) {
-        try { closeBtn.focus({ preventScroll: true }); } catch (e) { closeBtn.focus(); }
-      }
+      els.frame.onload = function() {
+        if (!p12PdfLightboxIsOpen() || _p12PdfMode !== 'drive') return;
+        p12PdfSetStatus('');
+      };
+      els.frame.src = preview;
+    }
+
+    function p12PdfLoadPdfJs(url) {
+      var safe = String(url || '').trim();
+      var openUrl = p12DriveOpenTabUrl(safe);
+      var els = p12PdfEls();
+      var token = _p12PdfLoadToken;
+      _p12PdfMode = 'pdfjs';
+      p12PdfClearFrame();
+      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
+      p12PdfSetStatus('Loading PDF…', false);
+      p12PdfSetDisplayMode('canvas');
+      p12PdfUpdateChrome();
 
       p12LoadPdfJs().then(function(pdfjsLib) {
         if (token !== _p12PdfLoadToken) return null;
@@ -14937,6 +15031,110 @@
       });
     }
 
+    function p12PdfLoadAt(index) {
+      if (!_p12PdfUrls.length || !p12PdfLightboxIsOpen()) return;
+      var n = _p12PdfUrls.length;
+      index = Math.max(0, Math.min(n - 1, index | 0));
+      _p12PdfIndex = index;
+      _p12PdfLoadToken += 1;
+      p12PdfDestroyDoc();
+      p12PdfClearCanvas();
+
+      var url = _p12PdfUrls[_p12PdfIndex];
+      var openUrl = p12DriveOpenTabUrl(url);
+      var els = p12PdfEls();
+      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
+
+      if (p12DrivePreviewUrl(url)) {
+        p12PdfLoadDrivePreview(url);
+      } else {
+        p12PdfLoadPdfJs(url);
+      }
+    }
+
+    /**
+     * Open PDF lightbox for one or more diary PDF URLs (column Q / Drive).
+     * urls: string | string[]; startIndex selects which diary PDF to show first.
+     * Arrows step between set items (different row PDFs), not Drive page flips.
+     */
+    function p12OpenPdfViewer(urls, startIndex) {
+      var list = [];
+      if (typeof urls === 'string') {
+        var one = String(urls || '').trim();
+        if (one && /^https?:\/\//i.test(one)) list = [one];
+      } else if (Array.isArray(urls)) {
+        var seen = {};
+        urls.forEach(function(u) {
+          var s = String(u || '').trim();
+          if (!s || !/^https?:\/\//i.test(s) || seen[s]) return;
+          seen[s] = true;
+          list.push(s);
+        });
+      }
+      if (!list.length) return;
+
+      var els = p12PdfEls();
+      if (!els.root) return;
+
+      var idx = (typeof startIndex === 'number' && isFinite(startIndex)) ? (startIndex | 0) : 0;
+      if (idx < 0 || idx >= list.length) idx = 0;
+
+      _p12PdfUrls = list;
+      _p12PdfIndex = idx;
+      _p12PdfMode = '';
+      p12PdfDestroyDoc();
+      p12PdfClearCanvas();
+      p12PdfClearFrame();
+
+      els.root.removeAttribute('hidden');
+      document.body.classList.add('p12-pdf-lightbox-open');
+      p12PdfUpdateChrome();
+      var closeBtn = els.root.querySelector('.p12-pdf-close');
+      if (closeBtn) {
+        try { closeBtn.focus({ preventScroll: true }); } catch (e) { closeBtn.focus(); }
+      }
+      p12PdfLoadAt(idx);
+    }
+
+    function p12PdfStep(delta) {
+      if (!p12PdfLightboxIsOpen()) return;
+      var d = delta || 0;
+      if (_p12PdfUrls.length > 1) {
+        var next = _p12PdfIndex + d;
+        if (next < 0 || next >= _p12PdfUrls.length) return;
+        p12PdfLoadAt(next);
+        return;
+      }
+      if (_p12PdfMode === 'pdfjs' && _p12PdfDoc && _p12PdfNumPages > 1) {
+        var nextPage = _p12PdfPage + d;
+        if (nextPage < 1 || nextPage > _p12PdfNumPages) return;
+        p12PdfRenderPage(nextPage);
+      }
+    }
+
+    /** Resolve PDF set for the active report group, opening at clicked URL. */
+    function p12OpenPdfFromDay(clickedUrl) {
+      var safe = String(clickedUrl || '').trim();
+      if (!safe || !/^https?:\/\//i.test(safe)) return;
+      var urls = [safe];
+      var start = 0;
+      var group = (activeP12ReportKey && _p12ReportGroups)
+        ? _p12ReportGroups[activeP12ReportKey]
+        : null;
+      if (group && group.rows && group.rows.length) {
+        var collected = p12CollectPdfs(group.rows).map(function(p) { return p.url; });
+        if (collected.length) {
+          urls = collected;
+          start = urls.indexOf(safe);
+          if (start < 0) {
+            urls = [safe].concat(collected.filter(function(u) { return u !== safe; }));
+            start = 0;
+          }
+        }
+      }
+      p12OpenPdfViewer(urls, start);
+    }
+
     /** One-time click handlers for P12 report rows + PDF lightbox (delegation). */
     function p12BindUiOnce() {
       if (_p12UiBound) return;
@@ -14957,7 +15155,7 @@
           if (pdfBtn) {
             ev.preventDefault();
             var pdfUrl = pdfBtn.getAttribute('data-p12-pdf-open') || pdfBtn.getAttribute('href') || '';
-            p12OpenPdfViewer(pdfUrl);
+            p12OpenPdfFromDay(pdfUrl);
           }
         });
       }
@@ -15635,10 +15833,11 @@
         h += '</div>';
 
         if (pdfUrl) {
+          var openTabUrl = p12DriveOpenTabUrl(pdfUrl) || pdfUrl;
           h += '<div class="p12-summary-day-pdf p12-pdf-actions">';
           h += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
             p12Esc(pdfUrl) + '">View Site Diary PDF</button>';
-          h += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdfUrl) +
+          h += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(openTabUrl) +
             '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
           h += '</div>';
         } else {
