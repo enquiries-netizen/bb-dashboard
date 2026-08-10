@@ -1242,6 +1242,22 @@
               <div id="p11-completeness-table" class="p11-table-wrap">Loading...</div>
             </div>
           </div>
+
+          <!-- Single shared photo lightbox for P11 photo links -->
+          <div id="p11-lightbox" class="p11-lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+            <div class="p11-lightbox-backdrop" data-p11-lb-close tabindex="-1"></div>
+            <div class="p11-lightbox-shell">
+              <button type="button" class="p11-lightbox-close" data-p11-lb-close aria-label="Close photo viewer">&times;</button>
+              <button type="button" class="p11-lightbox-nav p11-lightbox-prev" data-p11-lb-prev aria-label="Previous photo">&#8249;</button>
+              <div class="p11-lightbox-stage">
+                <img class="p11-lightbox-img" id="p11-lightbox-img" alt="" decoding="async" referrerpolicy="no-referrer" />
+              </div>
+              <button type="button" class="p11-lightbox-nav p11-lightbox-next" data-p11-lb-next aria-label="Next photo">&#8250;</button>
+              <div class="p11-lightbox-footer">
+                <span id="p11-lightbox-counter" class="p11-lightbox-counter">1 of 1</span>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ─── P12: Site Diaries (crew-only summary / endorsement) ─── -->
@@ -1297,19 +1313,6 @@
                 <div class="filter-group p12-filter">
                   <span class="filter-label">Brand</span>
                   <span class="p12-range-label" id="p12-brand-label">ALL</span>
-                </div>
-                <div class="filter-group p12-filter p12-filter--multi">
-                  <span class="filter-label">Job <span class="p12-multi-hint">(multi)</span></span>
-                  <select class="filter-select page-filter-select p12-select p12-select--multi" id="p12-job-filter" aria-label="Jobs" multiple size="5">
-                    <option value="__NO_JOB__">No job #</option>
-                  </select>
-                  <span class="p12-multi-cue">Ctrl/Cmd multi-select · none = All Jobs</span>
-                </div>
-                <div class="filter-group p12-filter p12-filter--multi">
-                  <span class="filter-label">Person <span class="p12-multi-hint">(multi)</span></span>
-                  <select class="filter-select page-filter-select p12-select p12-select--multi" id="p12-person-filter" aria-label="People" multiple size="5">
-                  </select>
-                  <span class="p12-multi-cue">Ctrl/Cmd multi-select · none = All People</span>
                 </div>
               </div>
               <p class="p12-sources" id="p12-sources">Sources: checking…</p>
@@ -12954,6 +12957,161 @@
     var _p11FiltersBound = false;
     var _p11LoadMeta = { defectsOk: false, variationsOk: false, diariesOk: false };
 
+    // ── Single shared photo lightbox (page-level; photo URLs only, not PDF) ──
+    var _p11LightboxBound = false;
+    var _p11LbUrls = [];
+    var _p11LbIndex = 0;
+    var _p11LbTouchX = null;
+
+    function p11LightboxEls() {
+      return {
+        root: document.getElementById('p11-lightbox'),
+        img: document.getElementById('p11-lightbox-img'),
+        counter: document.getElementById('p11-lightbox-counter')
+      };
+    }
+
+    function p11LightboxIsOpen() {
+      var root = document.getElementById('p11-lightbox');
+      return !!(root && !root.hasAttribute('hidden'));
+    }
+
+    function p11LightboxShowAt(index) {
+      if (!_p11LbUrls.length) return;
+      var n = _p11LbUrls.length;
+      _p11LbIndex = ((index % n) + n) % n;
+      var els = p11LightboxEls();
+      if (els.img) {
+        els.img.src = _p11LbUrls[_p11LbIndex];
+        els.img.alt = 'Photo ' + (_p11LbIndex + 1) + ' of ' + n;
+      }
+      if (els.counter) {
+        els.counter.textContent = (_p11LbIndex + 1) + ' of ' + n;
+      }
+      var root = els.root;
+      if (root) {
+        var prev = root.querySelector('[data-p11-lb-prev]');
+        var next = root.querySelector('[data-p11-lb-next]');
+        if (prev) prev.disabled = n <= 1;
+        if (next) next.disabled = n <= 1;
+      }
+    }
+
+    function p11OpenLightbox(urls, startIndex) {
+      var list = (urls || []).filter(function(u) { return !!u; });
+      if (!list.length) return;
+      p11BindLightboxOnce();
+      _p11LbUrls = list;
+      var els = p11LightboxEls();
+      if (!els.root) return;
+      els.root.removeAttribute('hidden');
+      document.body.classList.add('p11-lightbox-open');
+      p11LightboxShowAt(typeof startIndex === 'number' ? startIndex : 0);
+      var closeBtn = els.root.querySelector('.p11-lightbox-close');
+      if (closeBtn) {
+        try { closeBtn.focus({ preventScroll: true }); } catch (e) { closeBtn.focus(); }
+      }
+    }
+
+    function p11CloseLightbox() {
+      if (!p11LightboxIsOpen()) return;
+      var els = p11LightboxEls();
+      if (els.root) els.root.setAttribute('hidden', '');
+      if (els.img) {
+        els.img.removeAttribute('src');
+        els.img.alt = '';
+      }
+      document.body.classList.remove('p11-lightbox-open');
+      _p11LbUrls = [];
+      _p11LbIndex = 0;
+      _p11LbTouchX = null;
+    }
+
+    function p11LightboxStep(delta) {
+      if (!p11LightboxIsOpen() || _p11LbUrls.length <= 1) return;
+      p11LightboxShowAt(_p11LbIndex + delta);
+    }
+
+    function p11BindLightboxOnce() {
+      if (_p11LightboxBound) return;
+      _p11LightboxBound = true;
+      var page = document.getElementById('page-p11');
+      var root = document.getElementById('p11-lightbox');
+
+      if (page) {
+        page.addEventListener('click', function(ev) {
+          var item = ev.target && ev.target.closest ? ev.target.closest('a.p11-photo-item') : null;
+          if (!item || !page.contains(item)) return;
+          // PDF links are separate (.p11-pdf-link) — only intercept photo thumbs
+          var grid = item.closest('.p11-photo-grid');
+          if (!grid) return;
+          ev.preventDefault();
+          var urls = [];
+          Array.prototype.forEach.call(grid.querySelectorAll('a.p11-photo-item'), function(a) {
+            var href = a.getAttribute('href');
+            if (href) urls.push(href);
+          });
+          var idx = parseInt(item.getAttribute('data-p11-lb-index'), 10);
+          if (isNaN(idx)) idx = Math.max(0, urls.indexOf(item.getAttribute('href')));
+          p11OpenLightbox(urls, idx);
+        });
+      }
+
+      if (root) {
+        root.addEventListener('click', function(ev) {
+          if (ev.target.closest('[data-p11-lb-close]')) {
+            p11CloseLightbox();
+            return;
+          }
+          if (ev.target.closest('[data-p11-lb-prev]')) {
+            p11LightboxStep(-1);
+            return;
+          }
+          if (ev.target.closest('[data-p11-lb-next]')) {
+            p11LightboxStep(1);
+          }
+        });
+
+        // Optional swipe navigation on the stage/image
+        root.addEventListener('touchstart', function(ev) {
+          if (!p11LightboxIsOpen() || !ev.changedTouches || !ev.changedTouches.length) return;
+          _p11LbTouchX = ev.changedTouches[0].clientX;
+        }, { passive: true });
+        root.addEventListener('touchend', function(ev) {
+          if (_p11LbTouchX == null || !ev.changedTouches || !ev.changedTouches.length) {
+            _p11LbTouchX = null;
+            return;
+          }
+          var dx = ev.changedTouches[0].clientX - _p11LbTouchX;
+          _p11LbTouchX = null;
+          if (Math.abs(dx) < 48) return;
+          if (dx > 0) p11LightboxStep(-1);
+          else p11LightboxStep(1);
+        }, { passive: true });
+      }
+
+      document.addEventListener('keydown', function(ev) {
+        if (!p11LightboxIsOpen()) return;
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          p11CloseLightbox();
+        } else if (ev.key === 'ArrowLeft') {
+          ev.preventDefault();
+          p11LightboxStep(-1);
+        } else if (ev.key === 'ArrowRight') {
+          ev.preventDefault();
+          p11LightboxStep(1);
+        }
+      });
+    }
+
+    // Ensure lightbox handlers exist even before first photo click
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', p11BindLightboxOnce);
+    } else {
+      p11BindLightboxOnce();
+    }
+
     /**
      * Extract leading job number prefix (e.g. J1349 from J1349C / "J1349 Variation").
      * Used to link Variations_Log rows to Xero projects titled with "Variation".
@@ -13161,7 +13319,7 @@
         return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false, linkCount: 0 };
       }
 
-      /** Clickable photo thumbs + PDF for drawers / evidence (new tab). */
+      /** Clickable photo thumbs (lightbox) + PDF (new tab) for drawers / evidence. */
       function p11MediaLinksHtml(r) {
         var links = photoLinks(r);
         var pdf = diaryPdfUrl(r);
@@ -13174,7 +13332,7 @@
           links.forEach(function(u, i) {
             var n = i + 1;
             h += '<a class="p11-photo-item" href="' + p11Esc(u) +
-              '" target="_blank" rel="noopener noreferrer" title="Open photo ' + n + '">' +
+              '" data-p11-lb-index="' + i + '" role="button" title="View photo ' + n + '">' +
               '<img class="p11-photo-thumb" src="' + p11Esc(u) + '" alt="Photo ' + n +
               '" loading="lazy" referrerpolicy="no-referrer" ' +
               'onerror="this.classList.add(\'is-broken\')" />' +
@@ -14260,8 +14418,6 @@
     // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
     // Admin/owner always keeps P1–P11 when restrictNavToP12 is false.
     // ═══════════════════════════════════════════════════════════════
-    var activeP12Job = [];
-    var activeP12Person = [];
     /** ISO week key YYYY-Www; null = default to current week on first render */
     var activeP12WeekKey = null;
     var _p12FiltersBound = false;
@@ -14418,18 +14574,6 @@
       var left = mon.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
       var right = sun.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
       return left + ' – ' + right + ' · ' + weekKey;
-    }
-
-    function p12JobPrefix(val) {
-      var s = String(val || '').trim().toUpperCase();
-      var m = s.match(/^(J\d+)/i);
-      return m ? m[1].toUpperCase() : '';
-    }
-
-    function p12MatchesJobPrefix(a, b) {
-      var pa = p12JobPrefix(a);
-      var pb = p12JobPrefix(b);
-      return !!(pa && pb && pa === pb);
     }
 
     function p12ShowGate(showGate) {
@@ -14870,67 +15014,6 @@
         }) + ' · BuildPass typically syncs ~4am / 6pm';
       }
 
-      // Job + person filter options (include missing job # as viewable "No job #")
-      var jobSet = {};
-      var personSet = {};
-      brandedDiaries.forEach(function(r) {
-        var j = diaryJobNo(r);
-        if (j) jobSet[j] = true;
-        personSet[diaryPerson(r)] = true;
-      });
-      var jobList = Object.keys(jobSet).sort(function(a, b) { return a.localeCompare(b); });
-      var personList = Object.keys(personSet).sort(function(a, b) {
-        if (a === 'Not recorded') return 1;
-        if (b === 'Not recorded') return -1;
-        return a.localeCompare(b);
-      });
-
-      var jobSelect = document.getElementById('p12-job-filter');
-      if (jobSelect) {
-        var prevJobs = Array.isArray(activeP12Job) ? activeP12Job.slice() : [];
-        jobSelect.innerHTML = '<option value="__NO_JOB__">No job #</option>';
-        jobList.forEach(function(j) {
-          var opt = document.createElement('option');
-          opt.value = j;
-          opt.textContent = j;
-          jobSelect.appendChild(opt);
-        });
-        // Restore multi selection (empty array = All Jobs)
-        var keepJobs = prevJobs.filter(function(v) {
-          return v === '__NO_JOB__' || jobSet[v];
-        });
-        activeP12Job = keepJobs;
-        Array.prototype.forEach.call(jobSelect.options, function(opt) {
-          opt.selected = keepJobs.indexOf(opt.value) !== -1;
-        });
-      }
-
-      var personSelect = document.getElementById('p12-person-filter');
-      if (personSelect) {
-        var prevPeople = Array.isArray(activeP12Person) ? activeP12Person.slice() : [];
-        personSelect.innerHTML = '';
-        personList.forEach(function(p) {
-          var opt = document.createElement('option');
-          opt.value = p;
-          opt.textContent = p;
-          personSelect.appendChild(opt);
-        });
-        var keepPeople = prevPeople.filter(function(v) { return personSet[v]; });
-        activeP12Person = keepPeople;
-        Array.prototype.forEach.call(personSelect.options, function(opt) {
-          opt.selected = keepPeople.indexOf(opt.value) !== -1;
-        });
-      }
-
-      function p12SelectedValues(selectEl) {
-        if (!selectEl) return [];
-        var out = [];
-        Array.prototype.forEach.call(selectEl.selectedOptions || [], function(opt) {
-          if (opt && opt.value != null && opt.value !== '') out.push(opt.value);
-        });
-        return out;
-      }
-
       if (!_p12FiltersBound) {
         _p12FiltersBound = true;
         if (weekSelect) {
@@ -14939,58 +15022,11 @@
             renderP12(window._p12Diaries, window._p12Variations);
           });
         }
-        if (jobSelect) {
-          jobSelect.addEventListener('change', function() {
-            activeP12Job = p12SelectedValues(jobSelect);
-            renderP12(window._p12Diaries, window._p12Variations);
-          });
-        }
-        if (personSelect) {
-          personSelect.addEventListener('change', function() {
-            activeP12Person = p12SelectedValues(personSelect);
-            renderP12(window._p12Diaries, window._p12Variations);
-          });
-        }
       }
 
-      function p12JobSelected(j) {
-        var sels = Array.isArray(activeP12Job) ? activeP12Job : [];
-        if (!sels.length) return true; // default All
-        return sels.some(function(sel) {
-          if (sel === '__NO_JOB__') return !j;
-          return j === sel || p12MatchesJobPrefix(j, sel);
-        });
-      }
-
-      function p12PersonSelected(person) {
-        var sels = Array.isArray(activeP12Person) ? activeP12Person : [];
-        if (!sels.length) return true; // default All
-        return sels.indexOf(person) !== -1;
-      }
-
-      function filterDiaries(rows) {
-        return (rows || []).filter(function(r) {
-          if (!p12JobSelected(diaryJobNo(r))) return false;
-          if (!p12PersonSelected(diaryPerson(r))) return false;
-          return true;
-        });
-      }
-
-      function filterVariations(rows) {
-        return (rows || []).filter(function(r) {
-          var sels = Array.isArray(activeP12Job) ? activeP12Job : [];
-          if (!sels.length) return true;
-          var j = String(col(r, 'Xero Project J#', 'Job #', 'Job Number', 'Job Name', 'job_name') || '').trim();
-          return sels.some(function(sel) {
-            if (sel === '__NO_JOB__') return !j;
-            return j === sel || p12MatchesJobPrefix(j, sel) ||
-              String(col(r, 'Job Name', 'job_name') || '').indexOf(sel) !== -1;
-          });
-        });
-      }
-
-      var diariesFiltered = filterDiaries(brandedDiaries);
-      var variationsFiltered = filterVariations(brandedVariations);
+      // Week + brand only (job/person remain visible on rows, not as filters)
+      var diariesFiltered = brandedDiaries;
+      var variationsFiltered = brandedVariations;
 
       var srcEl = document.getElementById('p12-sources');
       if (srcEl) {
