@@ -1230,7 +1230,7 @@
                   <div id="p11-variations-panel">Loading...</div>
                 </div>
                 <details class="p11-drill" id="p11-full-log-drill">
-                  <summary>Full diary log (export / drill-down)</summary>
+                  <summary>Site Diary Summary</summary>
                   <div id="p11-full-log" class="p11-table-wrap p11-full-log"></div>
                 </details>
               </div>
@@ -13880,15 +13880,18 @@
       }
 
       // ── Issues by Job table ──
+      // Group by Job #; when Job # is blank, group by Job Name so person-only rows
+      // (e.g. Meli's Record Keeping, Fabrication and Welding) stay separate live rows.
       var byJob = {};
       diariesFiltered.forEach(function(r) {
-        var jn = diaryJobNo(r) || 'No job #';
-        var jname = col(r, 'Job Name', 'job_name') || jn;
-        var key = jn;
+        var jnRaw = diaryJobNo(r);
+        var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
+        var jn = jnRaw || 'No job #';
+        var key = jnRaw ? jn : ('No job #|' + (jname || 'Unnamed'));
         if (!byJob[key]) {
           byJob[key] = {
             job: jn,
-            name: jname,
+            name: jname || jn,
             entries: 0,
             issues: 0,
             safety: 0,
@@ -13901,6 +13904,7 @@
         }
         var b = byJob[key];
         b.entries += 1;
+        if (jname && (!b.name || b.name === jn)) b.name = jname;
         if (hasIssueContent(r)) b.issues += 1;
         if (safetyState(r).isFlag) b.safety += 1;
         if (hasIssueContent(r) || safetyState(r).isFlag) b.detailRows.push(r);
@@ -14268,7 +14272,7 @@
         }
       }
 
-      // Full diary log (drill-down only - not primary view)
+      // Site Diary Summary (full entry table · drill-down, not primary overview)
       var fullEl = document.getElementById('p11-full-log');
       if (fullEl) {
         if (!diariesFiltered.length) {

@@ -6530,7 +6530,7 @@ p.p8-section-hint {
 /*
   Two true column stacks (not display:contents 2×2).
   Left: Activity (auto) + Exceptions (flex:1 fills remaining height).
-  Right: Issues + Variations (auto) + Full diary log (flex:1 fills rest).
+  Right: Issues + Variations (auto) + Site Diary Summary (flex:1 fills rest).
   Columns stretch so left Exceptions and right Full log bottoms align.
 */
 #page-p11 .p11-main-row {
@@ -6577,7 +6577,7 @@ p.p8-section-hint {
   background: var(--p11-surface, #fff);
 }
 
-/* Right column: Issues + Variations auto; Full diary log flex-grows to match Exceptions bottom */
+/* Right column: Issues + Variations auto; Site Diary Summary flex-grows to match Exceptions bottom */
 #page-p11 .p11-main-right > .p11-panel,
 #page-p11 .p11-main-right > .p11-drill {
   min-width: 0;
@@ -7156,7 +7156,7 @@ body.p11-lightbox-open {
   color: var(--p11-text, #111827);
 }
 
-/* Scrollable body: grows with Full diary log drill (flex:1) */
+/* Scrollable body: grows with Site Diary Summary drill (flex:1) */
 #page-p11 #p11-full-log,
 #page-p11 .p11-full-log {
   flex: 1 1 auto;
