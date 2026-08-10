@@ -64,6 +64,17 @@ const CONFIG = {
     VARIATIONS_LOG:      'Variations_Log',
     DEFECTS_REWORK:      'Defects_Rework',
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
+  },
+
+  // ─── P12 staff unlock (crew Site Diaries only) ─────────────
+  // Practical reversible local gate — NOT production enterprise auth.
+  // Lori/Ben must confirm before go-live: per-person BB email login
+  // vs shared staff pass (and whether apprentices without BB email get access).
+  // sessionStorage flag is set only for the browser tab/session after unlock.
+  P12_STAFF_GATE: {
+    sessionKey: 'bb_p12_staff_unlock',
+    // Change freely; temporary shared crew unlock for local/Lori review.
+    pass: 'bbcrew'
   }
 
 };

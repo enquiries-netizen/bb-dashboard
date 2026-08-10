@@ -94,6 +94,8 @@
           <li class="nav-item" data-page="p9">P9: Cash Flow</li>
           <li class="nav-item" data-page="p10">P10: Marketing</li>
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
+          <!-- Crew-only Site Diaries (staff gate separate from dashboard access) -->
+          <li class="nav-item" data-page="p12">P12: Site Diaries</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
@@ -1253,7 +1255,98 @@
           </div>
         </section>
 
+        <!-- ─── P12: Site Diaries (crew-only summary / endorsement) ─── -->
+        <!--
+          STAFF ACCESS (temporary, reversible):
+          P12 uses a lightweight client gate (CONFIG.P12_STAFF_GATE + sessionStorage).
+          NOT enterprise auth. Separate purpose from P1–P11 management dashboards.
+          Lori/Ben must confirm production mechanism (per-person vs shared staff login)
+          before go-live. Apprentices without BB email may not have access until decided.
+          When unlocked: condenses Buildpass_Site Diaries + Variation description/status
+          only (never $). Do not merge UI with P11 quality exceptions dashboard.
+        -->
+        <section id="page-p12" class="page">
+          <div class="p12-layout">
+            <div class="p12-head">
+              <div class="page-header p12-page-header">
+                <span class="page-badge">P12</span>
+                <h1 class="page-title">Site Diaries</h1>
+              </div>
+              <p class="p12-scope-note">Crew handoff · one job per day when possible · issues &amp; safety in full · variations without dollar values</p>
+            </div>
 
+            <!-- Shown until staff unlock for this browser session -->
+            <div id="p12-gate" class="p12-gate" hidden>
+              <div class="p12-gate-card">
+                <h2 class="p12-gate-title">Staff unlock</h2>
+                <p class="p12-gate-copy">
+                  Site Diaries are for crew (not general dashboard access).
+                  Enter the temporary staff pass to view this session.
+                  Production login method (per-person vs shared) is still with Lori/Ben.
+                </p>
+                <p class="p12-gate-copy p12-gate-note">
+                  Temporary shared pass lives in <code>CONFIG.P12_STAFF_GATE</code>.
+                  Apprentices without BB email may need access decided separately.
+                </p>
+                <form id="p12-unlock-form" class="p12-unlock-form" autocomplete="off">
+                  <label class="p12-unlock-label" for="p12-pass-input">Staff pass</label>
+                  <input type="password" id="p12-pass-input" class="p12-pass-input" name="p12_staff_pass" autocomplete="current-password" required>
+                  <button type="submit" class="p12-unlock-btn">Unlock Site Diaries</button>
+                </form>
+                <p id="p12-gate-error" class="p12-gate-error" role="alert" hidden>Pass not recognised. Check with your supervisor.</p>
+              </div>
+            </div>
+
+            <div id="p12-content" class="p12-content" hidden>
+              <div class="p12-filters">
+                <div class="filter-group p12-filter">
+                  <span class="filter-label">Period</span>
+                  <span class="p12-range-label" id="p12-date-range">Global Month / Year</span>
+                </div>
+                <div class="filter-group p12-filter">
+                  <span class="filter-label">Brand</span>
+                  <span class="p12-range-label" id="p12-brand-label">ALL</span>
+                </div>
+                <div class="filter-group p12-filter">
+                  <span class="filter-label">Job</span>
+                  <select class="filter-select page-filter-select p12-select" id="p12-job-filter" aria-label="Job">
+                    <option value="ALL">All Jobs</option>
+                  </select>
+                </div>
+                <div class="filter-group p12-filter">
+                  <span class="filter-label">Person</span>
+                  <select class="filter-select page-filter-select p12-select" id="p12-person-filter" aria-label="Person">
+                    <option value="ALL">All People</option>
+                  </select>
+                </div>
+              </div>
+              <p class="p12-sources" id="p12-sources">Sources: checking…</p>
+              <p class="p12-updated" id="p12-last-updated">Last updated…</p>
+              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · summaries when ChatGPT field is live</p>
+
+              <div class="p12-section-card p12-meli" id="p12-meli">
+                <div class="section-title">Meli&rsquo;s weekly record</div>
+                <p class="p12-section-hint">Pending · awaiting BuildPass data source</p>
+              </div>
+
+              <div class="p12-section-card">
+                <div class="section-title">Diary summaries</div>
+                <p class="p12-section-hint" id="p12-diary-hint">Grouped by date then job · no job # still listed (fab / welding / general)</p>
+                <div id="p12-diary-feed" class="p12-diary-feed">Unlock to load…</div>
+              </div>
+
+              <div class="p12-section-card">
+                <div class="section-title">Variations</div>
+                <p class="p12-section-hint">Description and status only · never dollar values</p>
+                <div id="p12-variations-feed" class="p12-var-feed">Unlock to load…</div>
+              </div>
+
+              <p class="p12-lock-row">
+                <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
+              </p>
+            </div>
+          </div>
+        </section>
 
 
       </main>
@@ -1279,7 +1372,8 @@
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
-      P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.'
+      P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
+      P12: 'Site Diaries (crew-only handoff). Staff-gated (temporary session unlock — Lori/Ben must confirm per-person vs shared before production). Condensed job-day summaries from Buildpass_Site Diaries; full Issues/Blockers and safety text; Photo Links list when URLs exist; Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record Pending. Not merged with P11 quality dashboard. No Gantt, no financials. Answer only from live page data when unlocked.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -2239,7 +2333,7 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11 };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12 };
       var placeholders = {};
       var fn = loaders[pageId];
       if (fn) {
@@ -13933,6 +14027,658 @@
           'Missing defect or rework data is not evidence of good quality.</p>';
         compEl.innerHTML = cHtml;
       }
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // P12 — SITE DIARIES (crew handoff · staff-gated)
+    // Sources: Buildpass_Site Diaries · Variations_Log (description/status only)
+    // Never dollar values. Not merged with P11 quality dashboard.
+    // Auth: temporary CONFIG.P12_STAFF_GATE + sessionStorage — Lori/Ben to confirm
+    //   production mechanism (per-person vs shared) before go-live.
+    // ═══════════════════════════════════════════════════════════════
+    var activeP12Job = 'ALL';
+    var activeP12Person = 'ALL';
+    var _p12FiltersBound = false;
+    var _p12GateBound = false;
+    var _p12MemUnlocked = false;
+    var _p12LoadMeta = { diariesOk: false, variationsOk: false };
+    var P12_GATE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.sessionKey)
+      ? CONFIG.P12_STAFF_GATE.sessionKey
+      : 'bb_p12_staff_unlock';
+
+    function p12IsUnlocked() {
+      if (_p12MemUnlocked) return true;
+      try {
+        return sessionStorage.getItem(P12_GATE_SESSION_KEY) === '1';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function p12SetUnlocked(on) {
+      _p12MemUnlocked = !!on;
+      try {
+        if (on) sessionStorage.setItem(P12_GATE_SESSION_KEY, '1');
+        else sessionStorage.removeItem(P12_GATE_SESSION_KEY);
+      } catch (e) { /* private mode: memory flag still holds for this tab */ }
+    }
+
+    function p12JobPrefix(val) {
+      var s = String(val || '').trim().toUpperCase();
+      var m = s.match(/^(J\d+)/i);
+      return m ? m[1].toUpperCase() : '';
+    }
+
+    function p12MatchesJobPrefix(a, b) {
+      var pa = p12JobPrefix(a);
+      var pb = p12JobPrefix(b);
+      return !!(pa && pb && pa === pb);
+    }
+
+    function p12ShowGate(showGate) {
+      var gate = document.getElementById('p12-gate');
+      var content = document.getElementById('p12-content');
+      if (gate) {
+        if (showGate) gate.removeAttribute('hidden');
+        else gate.setAttribute('hidden', '');
+      }
+      if (content) {
+        if (showGate) content.setAttribute('hidden', '');
+        else content.removeAttribute('hidden');
+      }
+    }
+
+    function p12BindGateOnce() {
+      if (_p12GateBound) return;
+      _p12GateBound = true;
+      var form = document.getElementById('p12-unlock-form');
+      var errEl = document.getElementById('p12-gate-error');
+      var lockBtn = document.getElementById('p12-lock-btn');
+      if (form) {
+        form.addEventListener('submit', function(ev) {
+          ev.preventDefault();
+          var input = document.getElementById('p12-pass-input');
+          var expected = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.pass != null)
+            ? String(CONFIG.P12_STAFF_GATE.pass)
+            : '';
+          var given = input ? String(input.value || '') : '';
+          if (expected && given === expected) {
+            p12SetUnlocked(true);
+            if (errEl) errEl.setAttribute('hidden', '');
+            if (input) input.value = '';
+            loadP12();
+          } else {
+            if (errEl) errEl.removeAttribute('hidden');
+          }
+        });
+      }
+      if (lockBtn) {
+        lockBtn.addEventListener('click', function() {
+          p12SetUnlocked(false);
+          window._p12Diaries = null;
+          window._p12Variations = null;
+          p12ShowGate(true);
+          setBBPageData('P12', 'P12: Site Diaries', { unlocked: false });
+        });
+      }
+    }
+
+    async function loadP12() {
+      p12BindGateOnce();
+      if (!p12IsUnlocked()) {
+        p12ShowGate(true);
+        showLoading(false);
+        setBBPageData('P12', 'P12: Site Diaries', {
+          unlocked: false,
+          note: 'Staff unlock required. Temporary shared pass pending Lori/Ben production decision.'
+        });
+        return;
+      }
+      p12ShowGate(false);
+      showLoading(true);
+      removeError('p12');
+      _p12LoadMeta = { diariesOk: false, variationsOk: false };
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES).then(function(r) {
+            _p12LoadMeta.diariesOk = true;
+            return r || [];
+          }).catch(function() { return []; }),
+          fetchSheet(CONFIG.TABS.VARIATIONS_LOG).then(function(r) {
+            _p12LoadMeta.variationsOk = true;
+            return r || [];
+          }).catch(function() { return []; })
+        ]);
+        renderP12(results[0], results[1]);
+      } catch (err) {
+        console.error('P12 load error:', err);
+        showError('p12', 'Could not load Site Diaries. Check sheet permissions.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP12(diaries, variations) {
+      window._p12Diaries = diaries || [];
+      window._p12Variations = variations || [];
+
+      function p12Esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function applyGlobal(rows) {
+        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      }
+
+      function diaryJobNo(r) {
+        return String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
+      }
+
+      function diaryPerson(r) {
+        return String(col(r, 'Logged By', 'Logged by', 'logged_by') || '').trim() || 'Not recorded';
+      }
+
+      var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
+
+      function diaryIssuesText(r) {
+        var direct = col(r,
+          'Issues/Blockers', 'Issues / Blockers', 'Issues & Blockers',
+          'Issues & Notes', 'Issue Description', 'Issues', 'Issue', 'Blockers',
+          'issues/blockers', 'issues_blockers'
+        );
+        if (direct) return String(direct).trim();
+        var keys = Object.keys(r || {});
+        for (var i = 0; i < keys.length; i++) {
+          var norm = String(keys[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+          if (norm === 'issues/blockers' || norm === 'issues / blockers' ||
+              norm === 'issues & blockers' ||
+              (norm.indexOf('issues') !== -1 && norm.indexOf('blocker') !== -1)) {
+            var v = String(r[keys[i]] || '').trim();
+            if (v) return v;
+          }
+        }
+        return '';
+      }
+
+      function hasIssueContent(r) {
+        var t = diaryIssuesText(r);
+        if (!t) return false;
+        return !P12_EMPTY_ISSUE.test(t);
+      }
+
+      // Prefer ChatGPT / summary columns when present (buildpass_chatgpt_project_brief);
+      // live sheet currently has Work Completed + Issues only → interim condensed fields.
+      function diarySummaryInfo(r) {
+        var summary = col(r,
+          'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
+          'AI Summary', 'Plain English Summary', 'Endorsement Summary',
+          'summary', 'chatgpt_summary', 'diary_summary'
+        );
+        if (summary && String(summary).trim()) {
+          return { kind: 'summary', label: 'Summary', text: String(summary).trim() };
+        }
+        var work = String(col(r, 'Work Completed', 'work_completed') || '').trim();
+        var issues = hasIssueContent(r) ? diaryIssuesText(r) : '';
+        var bits = [];
+        if (work) bits.push(work);
+        if (issues) bits.push('Issues: ' + issues);
+        if (!bits.length) {
+          return {
+            kind: 'missing',
+            label: 'Summary not yet available',
+            text: 'No work description or issues recorded for this entry.'
+          };
+        }
+        return {
+          kind: 'interim',
+          label: 'Condensed fields (summary Pending · ChatGPT not live)',
+          text: bits.join(' · ')
+        };
+      }
+
+      function safetyState(r) {
+        var raw = col(r, 'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry', 'Safety');
+        var s = String(raw || '').trim().toLowerCase();
+        if (!s) return { code: 'missing', label: 'Not recorded', isFlag: false };
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', isFlag: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'N not confirmed as no issue', isFlag: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous (' + String(raw).trim() + ')', isFlag: false };
+      }
+
+      function workStoppedState(r) {
+        var keyProbe = resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', isStop: false };
+        var val = String(rawColByNames(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) || '').trim();
+        if (!val) return { code: 'missing', label: 'Not recorded', isStop: false };
+        var s = val.toLowerCase();
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', isStop: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'No', isStop: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
+      }
+
+      function photoState(r) {
+        var keyProbe = resolveRowKey(r, [
+          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
+        ]);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        var val = String(rawColByNames(r, [
+          'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
+        ]) || '').trim();
+        if (!val) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        var s = val.toLowerCase();
+        if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
+          return { code: 'yes', label: 'Yes', hasPhoto: true };
+        }
+        if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+          return { code: 'no', label: 'No', hasPhoto: false };
+        }
+        return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false };
+      }
+
+      // URLs only from link-ish fields — never invent BuildPass links.
+      function photoLinks(r) {
+        var raw = String(col(r,
+          'Photo Links', 'Photo Link', 'photo_links', 'Photo URL', 'Photo URLs',
+          'BuildPass Photos', 'BuildPass Link', 'Photos URL'
+        ) || '').trim();
+        if (!raw) return [];
+        var parts = raw.split(/[\s,;|]+/).map(function(p) { return p.trim(); }).filter(Boolean);
+        var urls = [];
+        parts.forEach(function(p) {
+          if (/^https?:\/\//i.test(p)) urls.push(p);
+        });
+        // Entire cell may be one URL with spaces stripped poorly
+        if (!urls.length && /^https?:\/\//i.test(raw)) urls.push(raw);
+        return urls;
+      }
+
+      // Variation helpers — description + status only. Value columns never rendered.
+      function variationStatus(r) {
+        var keyProbe = resolveRowKey(r, ['Status', 'status']);
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded' };
+        var raw = String(rawColByNames(r, ['Status', 'status']) || '').trim();
+        if (!raw) return { code: 'missing', label: 'Not recorded' };
+        return { code: 'ok', label: raw };
+      }
+
+      function variationDescription(r) {
+        var d = col(r, 'Description', 'description', 'Variation Description', 'Details');
+        return d && String(d).trim() ? String(d).trim() : 'Not recorded';
+      }
+
+      function emptyCard(msg) {
+        return '<div class="p12-empty"><p class="no-data-msg">' + p12Esc(msg) + '</p></div>';
+      }
+
+      function chipClass(kind) {
+        if (kind === 'yes' || kind === 'stop') return 'p12-chip p12-chip--alert';
+        if (kind === 'missing' || kind === 'ambiguous') return 'p12-chip p12-chip--gap';
+        if (kind === 'interim') return 'p12-chip p12-chip--interim';
+        if (kind === 'summary') return 'p12-chip p12-chip--ok';
+        return 'p12-chip';
+      }
+
+      var brandedDiaries = applyGlobal(window._p12Diaries);
+      var brandedVariations = applyGlobal(window._p12Variations);
+
+      // Header echo
+      var rangeEl = document.getElementById('p12-date-range');
+      if (rangeEl) {
+        var mLabel = (!activeMonths || !activeMonths.length)
+          ? 'All months'
+          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.join(', '));
+        var yLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
+        rangeEl.textContent = mLabel + ' · ' + yLabel;
+      }
+      var brandEl = document.getElementById('p12-brand-label');
+      if (brandEl) brandEl.textContent = activeBrand || 'ALL';
+      var updEl = document.getElementById('p12-last-updated');
+      if (updEl) {
+        updEl.textContent = 'Last updated ' + new Date().toLocaleString('en-AU', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) + ' · BuildPass typically syncs ~4am / 6pm';
+      }
+
+      // Job + person filter options (include missing job # as viewable "No job #")
+      var jobSet = {};
+      var personSet = {};
+      brandedDiaries.forEach(function(r) {
+        var j = diaryJobNo(r);
+        if (j) jobSet[j] = true;
+        personSet[diaryPerson(r)] = true;
+      });
+      var jobList = Object.keys(jobSet).sort(function(a, b) { return a.localeCompare(b); });
+      var personList = Object.keys(personSet).sort(function(a, b) {
+        if (a === 'Not recorded') return 1;
+        if (b === 'Not recorded') return -1;
+        return a.localeCompare(b);
+      });
+
+      var jobSelect = document.getElementById('p12-job-filter');
+      if (jobSelect) {
+        var prevJ = activeP12Job;
+        jobSelect.innerHTML = '<option value="ALL">All Jobs</option>' +
+          '<option value="__NO_JOB__">No job #</option>';
+        jobList.forEach(function(j) {
+          var opt = document.createElement('option');
+          opt.value = j;
+          opt.textContent = j;
+          jobSelect.appendChild(opt);
+        });
+        if (prevJ === 'ALL' || prevJ === '__NO_JOB__' || jobSet[prevJ]) {
+          activeP12Job = prevJ;
+          jobSelect.value = prevJ;
+        } else {
+          activeP12Job = 'ALL';
+          jobSelect.value = 'ALL';
+        }
+      }
+
+      var personSelect = document.getElementById('p12-person-filter');
+      if (personSelect) {
+        var prevP = activeP12Person;
+        personSelect.innerHTML = '<option value="ALL">All People</option>';
+        personList.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          personSelect.appendChild(opt);
+        });
+        if (prevP === 'ALL' || personSet[prevP]) {
+          activeP12Person = prevP;
+          personSelect.value = prevP;
+        } else {
+          activeP12Person = 'ALL';
+          personSelect.value = 'ALL';
+        }
+      }
+
+      if (!_p12FiltersBound) {
+        _p12FiltersBound = true;
+        if (jobSelect) {
+          jobSelect.addEventListener('change', function() {
+            activeP12Job = this.value || 'ALL';
+            renderP12(window._p12Diaries, window._p12Variations);
+          });
+        }
+        if (personSelect) {
+          personSelect.addEventListener('change', function() {
+            activeP12Person = this.value || 'ALL';
+            renderP12(window._p12Diaries, window._p12Variations);
+          });
+        }
+      }
+
+      function filterDiaries(rows) {
+        return (rows || []).filter(function(r) {
+          var j = diaryJobNo(r);
+          if (activeP12Job && activeP12Job !== 'ALL') {
+            if (activeP12Job === '__NO_JOB__') {
+              if (j) return false;
+            } else if (!(j === activeP12Job || p12MatchesJobPrefix(j, activeP12Job))) {
+              return false;
+            }
+          }
+          if (activeP12Person && activeP12Person !== 'ALL') {
+            if (diaryPerson(r) !== activeP12Person) return false;
+          }
+          return true;
+        });
+      }
+
+      function filterVariations(rows) {
+        return (rows || []).filter(function(r) {
+          if (!activeP12Job || activeP12Job === 'ALL') return true;
+          var j = String(col(r, 'Xero Project J#', 'Job #', 'Job Number', 'Job Name', 'job_name') || '').trim();
+          if (activeP12Job === '__NO_JOB__') return !j;
+          return j === activeP12Job || p12MatchesJobPrefix(j, activeP12Job) ||
+            String(col(r, 'Job Name', 'job_name') || '').indexOf(activeP12Job) !== -1;
+        });
+      }
+
+      var diariesFiltered = filterDiaries(brandedDiaries);
+      var variationsFiltered = filterVariations(brandedVariations);
+
+      var srcEl = document.getElementById('p12-sources');
+      if (srcEl) {
+        var dSrc = !_p12LoadMeta.diariesOk
+          ? 'Buildpass_Site Diaries: Unavailable'
+          : ('Buildpass_Site Diaries: Live (' + diariesFiltered.length + ' in selection)');
+        var vSrc = !_p12LoadMeta.variationsOk
+          ? 'Variations_Log: Unavailable'
+          : ('Variations_Log: Live (' + variationsFiltered.length + ' · $ hidden)');
+        srcEl.textContent = 'Sources · ' + dSrc + ' · ' + vSrc +
+          ' · Meli weekly: Pending · awaiting BuildPass data source';
+      }
+
+      var hasSummaryCol = (window._p12Diaries || []).some(function(r) {
+        return resolveRowKey(r, [
+          'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
+          'AI Summary', 'Plain English Summary', 'Endorsement Summary',
+          'summary', 'chatgpt_summary', 'diary_summary'
+        ]) !== null;
+      });
+
+      var diaryHint = document.getElementById('p12-diary-hint');
+      if (diaryHint) {
+        diaryHint.textContent = diariesFiltered.length + ' entr' +
+          (diariesFiltered.length === 1 ? 'y' : 'ies') +
+          ' · grouped by date then job · no job # kept' +
+          (hasSummaryCol
+            ? ' · ChatGPT/plain summary field live when populated'
+            : ' · summary field Pending · showing Work Completed / Issues');
+      }
+
+      // Group by date (desc), then job
+      var byDate = {};
+      diariesFiltered.forEach(function(r) {
+        var dObj = parseFlexibleDate(col(r, 'Date', 'date'));
+        var dKey = dObj
+          ? (dObj.getFullYear() + '-' + String(dObj.getMonth() + 1).padStart(2, '0') + '-' +
+            String(dObj.getDate()).padStart(2, '0'))
+          : 'unknown';
+        var dLabel = dObj
+          ? dObj.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+          : (String(col(r, 'Date', 'date') || '').trim() || 'Date not recorded');
+        if (!byDate[dKey]) byDate[dKey] = { key: dKey, label: dLabel, ts: dObj ? dObj.getTime() : 0, jobs: {} };
+        var jn = diaryJobNo(r) || 'No job #';
+        var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
+        if (!byDate[dKey].jobs[jn]) {
+          byDate[dKey].jobs[jn] = { job: jn, name: jname, rows: [] };
+        }
+        byDate[dKey].jobs[jn].rows.push(r);
+      });
+
+      var dateKeys = Object.keys(byDate).sort(function(a, b) {
+        if (a === 'unknown') return 1;
+        if (b === 'unknown') return -1;
+        return (byDate[b].ts || 0) - (byDate[a].ts || 0);
+      });
+
+      var feedEl = document.getElementById('p12-diary-feed');
+      if (feedEl) {
+        if (!_p12LoadMeta.diariesOk) {
+          feedEl.innerHTML = emptyCard('Site diaries unavailable · Pending');
+        } else if (!dateKeys.length) {
+          feedEl.innerHTML = emptyCard('No diary entries in selection.');
+        } else {
+          var html = '';
+          dateKeys.forEach(function(dk) {
+            var day = byDate[dk];
+            html += '<section class="p12-day" aria-label="' + p12Esc(day.label) + '">';
+            html += '<h3 class="p12-day-title">' + p12Esc(day.label) + '</h3>';
+            var jobKeys = Object.keys(day.jobs).sort(function(a, b) {
+              if (a === 'No job #') return 1;
+              if (b === 'No job #') return -1;
+              return a.localeCompare(b);
+            });
+            jobKeys.forEach(function(jk) {
+              var g = day.jobs[jk];
+              html += '<article class="p12-job-card">';
+              html += '<header class="p12-job-head">';
+              html += '<div class="p12-job-id">' +
+                (g.job === 'No job #'
+                  ? '<span class="p12-chip p12-chip--gap">No job #</span>'
+                  : p12Esc(g.job)) +
+                '</div>';
+              if (g.name && g.name !== g.job) {
+                html += '<div class="p12-job-name">' + p12Esc(g.name) + '</div>';
+              }
+              html += '</header>';
+
+              g.rows.forEach(function(r) {
+                var sum = diarySummaryInfo(r);
+                var saf = safetyState(r);
+                var stop = workStoppedState(r);
+                var pho = photoState(r);
+                var links = photoLinks(r);
+                var brand = String(col(r, 'Brand', 'brand') || '').trim();
+                var type = String(col(r, 'Type', 'type') || '').trim();
+                var mats = String(col(r, 'Materials Used', 'materials_used') || '').trim();
+                var people = diaryPerson(r);
+
+                html += '<div class="p12-entry">';
+                html += '<div class="p12-entry-meta">';
+                html += '<span>' + p12Esc(people) + '</span>';
+                if (brand) html += '<span>' + p12Esc(brand) + '</span>';
+                if (type) html += '<span>' + p12Esc(type) + '</span>';
+                html += '</div>';
+
+                html += '<div class="p12-summary-block">';
+                html += '<span class="' + chipClass(sum.kind) + '">' + p12Esc(sum.label) + '</span>';
+                html += '<p class="p12-summary-text">' + p12Esc(sum.text) + '</p>';
+                html += '</div>';
+
+                // Full issues text for next crew (not counts)
+                html += '<div class="p12-detail-block' + (hasIssueContent(r) ? ' p12-detail-block--issue' : '') + '">';
+                html += '<div class="p12-detail-label">Issues &amp; blockers</div>';
+                html += '<p class="p12-detail-text">' +
+                  p12Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') +
+                  '</p></div>';
+
+                html += '<div class="p12-flags">';
+                html += '<span class="' + chipClass(saf.code === 'yes' ? 'yes' : saf.code) +
+                  '">Safety: ' + p12Esc(saf.label) + '</span>';
+                html += '<span class="' + chipClass(stop.isStop ? 'stop' : stop.code) +
+                  '">Work stopped: ' + p12Esc(stop.label) + '</span>';
+                html += '<span class="p12-chip">Photos: ' + p12Esc(pho.label) + '</span>';
+                html += '</div>';
+
+                // Photos — simple link list; slideshow deferred
+                html += '<div class="p12-photos">';
+                html += '<div class="p12-detail-label">Photos</div>';
+                if (links.length) {
+                  html += '<ul class="p12-photo-list">';
+                  links.forEach(function(u, i) {
+                    html += '<li><a class="p12-photo-link" href="' + p12Esc(u) +
+                      '" target="_blank" rel="noopener noreferrer">Open photo ' +
+                      (links.length > 1 ? (i + 1) : '') + ' / BuildPass</a></li>';
+                  });
+                  html += '</ul>';
+                } else if (pho.hasPhoto) {
+                  html += '<p class="p12-detail-text p12-muted">Marked Yes · photo URLs not recorded in sheet · open BuildPass for this job</p>';
+                } else {
+                  html += '<p class="p12-detail-text p12-muted">' +
+                    p12Esc(pho.code === 'no' ? 'No photos attached' : 'Photo links not recorded') +
+                    '</p>';
+                }
+                html += '</div>';
+
+                if (mats) {
+                  html += '<div class="p12-detail-block"><div class="p12-detail-label">Materials</div>';
+                  html += '<p class="p12-detail-text">' + p12Esc(mats) + '</p></div>';
+                }
+
+                var subs = String(col(r, 'Subcontractors on Site', 'Subcontractor Details') || '').trim();
+                var subDet = String(col(r, 'Subcontractor Details') || '').trim();
+                if (subs || subDet) {
+                  html += '<div class="p12-detail-block"><div class="p12-detail-label">Subcontractors</div>';
+                  html += '<p class="p12-detail-text">' +
+                    p12Esc([subs, subDet].filter(Boolean).join(' — ')) + '</p></div>';
+                }
+
+                html += '</div>'; // entry
+              });
+
+              html += '</article>';
+            });
+            html += '</section>';
+          });
+          feedEl.innerHTML = html;
+        }
+      }
+
+      // Variations — description + status only; strip any $ columns from render path
+      var varEl = document.getElementById('p12-variations-feed');
+      if (varEl) {
+        if (!_p12LoadMeta.variationsOk) {
+          varEl.innerHTML = emptyCard('Variations log unavailable · Pending');
+        } else if (!variationsFiltered.length) {
+          varEl.innerHTML = emptyCard('No variations in selection.');
+        } else {
+          var sortedVars = variationsFiltered.slice().sort(function(a, b) {
+            var da = parseFlexibleDate(col(a, 'Date Raised', 'date_raised', 'Date'));
+            var db = parseFlexibleDate(col(b, 'Date Raised', 'date_raised', 'Date'));
+            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+          });
+          var vHtml = '';
+          sortedVars.forEach(function(r) {
+            var st = variationStatus(r);
+            var jobLabel = String(col(r, 'Xero Project J#', 'Job #', 'Job Name') || '').trim() || 'No job #';
+            var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
+            vHtml += '<article class="p12-var-card">';
+            vHtml += '<div class="p12-var-top">';
+            vHtml += '<span class="p12-var-id">' + p12Esc(
+              col(r, 'Invoice #', 'Variation ID', 'Variation #', 'ID') || 'Variation'
+            ) + '</span>';
+            vHtml += '<span class="' + chipClass(st.code === 'missing' ? 'missing' : 'summary') +
+              '">' + p12Esc(st.label) + '</span>';
+            vHtml += '</div>';
+            vHtml += '<div class="p12-var-job">' + p12Esc(jobLabel) +
+              (jname && jname !== jobLabel ? ' · ' + p12Esc(jname) : '') + '</div>';
+            vHtml += '<p class="p12-var-desc">' + p12Esc(variationDescription(r)) + '</p>';
+            var raised = String(col(r, 'Date Raised', 'date_raised', 'Date') || '').trim();
+            if (raised) {
+              vHtml += '<div class="p12-var-meta">Raised ' + p12Esc(raised) + '</div>';
+            }
+            vHtml += '</article>';
+          });
+          varEl.innerHTML = vHtml;
+        }
+      }
+
+      setBBPageData('P12', 'P12: Site Diaries', {
+        unlocked: true,
+        diaries: diariesFiltered.slice(0, 200),
+        variations: variationsFiltered.slice(0, 100).map(function(r) {
+          // Explicit strip of value fields from AI context
+          return {
+            id: col(r, 'Invoice #', 'Variation ID', 'Variation #', 'ID'),
+            job: col(r, 'Xero Project J#', 'Job #', 'Job Name'),
+            description: variationDescription(r),
+            status: variationStatus(r).label,
+            dateRaised: col(r, 'Date Raised', 'date_raised', 'Date')
+          };
+        }),
+        entryCount: diariesFiltered.length,
+        variationCount: variationsFiltered.length,
+        hasSummaryColumn: hasSummaryCol,
+        meli: 'Pending · awaiting BuildPass data source'
+      });
     }
 
 
