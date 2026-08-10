@@ -111,8 +111,7 @@
         </div>
 
         <!-- ─── P1: Executive Snapshot (decision cockpit) ──────── -->
-        <!-- p1-test-palette = scoped visual tokens (CSS/JS only for this page) -->
-        <section id="page-p1" class="page active p1-test-palette">
+        <section id="page-p1" class="page active">
           <div class="p1-layout">
             <div class="p1-head">
               <div class="page-header p1-page-header">
@@ -252,8 +251,7 @@
         </section>
 
         <!-- ─── P2: Sales & Pipeline (placeholder - data being finalised) ─── -->
-        <!-- p2-test-palette = scoped visual tokens for consistency with other test pages -->
-        <section id="page-p2" class="page p2-test-palette">
+        <section id="page-p2" class="page">
           <div class="p2-placeholder">
             <div class="page-header p2-page-header">
               <span class="page-badge">P2</span>
@@ -264,8 +262,7 @@
         </section>
 
         <!-- ─── P3: Quoting & Estimating (production control) ── -->
-        <!-- p3-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p3" class="page p3-test-palette">
+        <section id="page-p3" class="page">
           <div class="p3-layout">
             <div class="p3-head">
               <div class="page-header p3-page-header">
@@ -392,8 +389,7 @@
           </div>
         </section>
         <!-- ─── P4: Job Performance ────────────────────────── -->
-        <!-- p4-test-palette = scoped Concrete & Safety Orange visual test (CSS/JS only for this page) -->
-        <section id="page-p4" class="page p4-test-palette">
+        <section id="page-p4" class="page">
           <div class="page-header">
             <span class="page-badge">P4</span>
             <h1 class="page-title">Job Performance</h1>
@@ -535,8 +531,7 @@
 
         <!-- ─── P5: Profitability ─────────────────────────── -->
         <!-- ─── P5: Profitability (exception-led financials) ── -->
-        <!-- p5-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p5" class="page p5-test-palette">
+        <section id="page-p5" class="page">
           <div class="p5-layout">
             <div class="p5-head">
               <div class="page-header p5-page-header">
@@ -691,16 +686,14 @@
         </section>
 
         <!-- ─── P6: Capacity & Labour (workforce planning) ─── -->
-        <!-- p6-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p6" class="page p6-test-palette">
+        <section id="page-p6" class="page">
           <div id="p6-content">
             <p class="no-data-msg">Loading capacity &amp; labour data...</p>
           </div>
         </section>
 
         <!-- ─── P7: Client Satisfaction (placeholder - full rebuild paused) ─── -->
-        <!-- p7-test-palette = scoped visual tokens for consistency with other test pages -->
-        <section id="page-p7" class="page p7-test-palette">
+        <section id="page-p7" class="page">
           <div class="p7-placeholder">
             <div class="page-header p7-page-header">
               <span class="page-badge">P7</span>
@@ -711,8 +704,7 @@
         </section>
 
         <!-- ─── P8: Weekly Overview (management meeting) ─── -->
-        <!-- p8-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p8" class="page p8-test-palette">
+        <section id="page-p8" class="page">
           <div class="p8-layout">
             <div class="p8-head">
               <div class="page-header p8-page-header">
@@ -850,8 +842,7 @@
         </section>
 
         <!-- ─── P9: Cash Flow (13-week liquidity control) ─── -->
-        <!-- p9-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p9" class="page p9-test-palette">
+        <section id="page-p9" class="page">
           <div class="p9-layout">
             <div class="p9-head">
               <div class="page-header p9-page-header">
@@ -984,8 +975,7 @@
         </section>
 
         <!-- ─── P10: Marketing (profitable demand) ─────────── -->
-        <!-- p10-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p10" class="page p10-test-palette">
+        <section id="page-p10" class="page">
           <div class="p10-layout">
             <div class="p10-head">
               <div class="page-header p10-page-header">
@@ -1141,8 +1131,7 @@
         </section>
 
         <!-- ─── P11: Site Diary Quality & Variations Exceptions ─── -->
-        <!-- p11-test-palette = scoped visual test (CSS/JS only for this page) -->
-        <section id="page-p11" class="page p11-test-palette">
+        <section id="page-p11" class="page">
           <div class="p11-layout">
             <div class="p11-head">
               <div class="page-header p11-page-header">
@@ -1964,7 +1953,7 @@
     }
 
     // ── Shared "this week" pulse helpers (P2 / P6 / P10 light signals; P8 = full WoW) ──
-    var WEEK_PULSE_CHARCOAL = '#262425';
+    var WEEK_PULSE_CHARCOAL = '#111827';
 
     /**
      * Unwrap sheet cells that arrived as stringified JSON objects from Make/GHL
@@ -2454,7 +2443,7 @@
         labour: labour, ghlPipeline: ghlPipeline, weeklySummary: weeklySummary
       };
 
-      // Test palette tokens for charts (scoped to P1 only)
+      // Chart tokens: permanent Concrete & Safety Orange palette
       var P1 = {
         canvas: '#F8FAFC', surface: '#FFFFFF', text: '#111827', muted: '#6B7280',
         border: '#E2E4E8', accent: '#EA580C', watch: '#F59E0B', action: '#2563EB'
@@ -8830,15 +8819,13 @@
       window._p4LabourRows = labour;
       window._p4XeroProjects = xeroProjects;
 
-      // P4 chart tokens: test palette when .p4-test-palette is on #page-p4 only
-      var p4PaletteEl = document.getElementById('page-p4');
-      var p4UseTestPalette = !!(p4PaletteEl && p4PaletteEl.classList.contains('p4-test-palette'));
-      var brandCharcoal = p4UseTestPalette ? '#111827' : '#262425';
-      var brandSoftGray = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
-      var brandSilver = p4UseTestPalette ? '#E5E7EB' : '#D2D4D5';
-      var brandAccent = p4UseTestPalette ? '#EA580C' : brandCharcoal;
+      // P4 chart tokens: permanent Concrete & Safety Orange palette
+      var brandCharcoal = '#111827';
+      var brandSoftGray = '#6B7280';
+      var brandSilver = '#E5E7EB';
+      var brandAccent = '#EA580C';
       var brandAmber = '#F59E0B';
-      var brandMuted = p4UseTestPalette ? '#6B7280' : '#BCBDBE';
+      var brandMuted = '#6B7280';
 
       var ph = buildProjectHealthRollups(schedule, labour, xeroProjects, {
         brand: activeBrand,
