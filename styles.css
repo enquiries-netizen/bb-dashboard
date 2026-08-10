@@ -7437,7 +7437,7 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   --p12-alert-soft: rgba(168, 43, 43, 0.1);
   --p12-gap: #6b6a6b;
   --p12-card-edge: rgba(38, 36, 37, 0.08);
-  max-width: 920px;
+  max-width: 1180px;
 }
 #page-p12 .p12-layout {
   display: flex;
@@ -7576,10 +7576,24 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 #page-p12 .p12-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+/* Two-column body (diary feed | supporting cards) — matches P1/P6/P11 row patterns */
+#page-p12 .p12-main-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+  gap: 14px;
+  align-items: start;
+}
+#page-p12 .p12-main-primary,
+#page-p12 .p12-main-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 #page-p12 .p12-section-card {
-  padding: 16px 18px;
+  padding: 14px 16px;
   background: var(--card-bg);
   border: 1px solid var(--p12-card-edge);
   border-radius: var(--radius);
@@ -7587,6 +7601,11 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 }
 #page-p12 .p12-section-card .section-title {
   margin-bottom: 4px;
+}
+#page-p12 .p12-diary-card {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
 }
 #page-p12 .p12-meli {
   border-left: 3px solid var(--gray);
@@ -7597,10 +7616,16 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   background: linear-gradient(90deg, var(--p12-accent-soft), transparent);
 }
 #page-p12 .p12-meli-feed {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+}
+#page-p12 .p12-variations-card .p12-var-feed {
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
 }
 #page-p12 .p12-chip-btn {
   cursor: pointer;
@@ -7839,10 +7864,18 @@ body.p12-pdf-lightbox-open {
 }
 #page-p12 .p12-diary-feed,
 #page-p12 .p12-var-feed {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
+}
+/* Diary summaries = page's main scroll surface */
+#page-p12 .p12-diary-feed {
+  flex: 1 1 auto;
+  min-height: 200px;
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 #page-p12 .p12-day-title {
   font-family: var(--font-heading);
@@ -8038,7 +8071,7 @@ body.p12-pdf-lightbox-open {
   border: 1px dashed var(--border-strong);
 }
 #page-p12 .p12-lock-row {
-  margin: 4px 0 12px;
+  margin: 0;
 }
 #page-p12 .p12-lock-btn {
   font-size: 12px;
@@ -8051,6 +8084,25 @@ body.p12-pdf-lightbox-open {
 }
 #page-p12 .p12-lock-btn:hover {
   color: var(--charcoal);
+}
+@media (max-width: 960px) {
+  #page-p12 .p12-main-row {
+    grid-template-columns: 1fr;
+  }
+  /* Diary list remains the lead content; side cards stack below */
+  #page-p12 .p12-main-primary {
+    order: 1;
+  }
+  #page-p12 .p12-main-side {
+    order: 2;
+  }
+  #page-p12 .p12-diary-feed {
+    max-height: none;
+  }
+  #page-p12 .p12-meli-feed,
+  #page-p12 .p12-variations-card .p12-var-feed {
+    max-height: min(36vh, 280px);
+  }
 }
 @media (max-width: 640px) {
   #page-p12 .p12-filters {
@@ -8069,5 +8121,8 @@ body.p12-pdf-lightbox-open {
   }
   #page-p12 .p12-gate-card {
     padding: var(--space-2);
+  }
+  #page-p12 .p12-section-card {
+    padding: 12px 14px;
   }
 }

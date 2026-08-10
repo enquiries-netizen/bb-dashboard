@@ -1319,12 +1319,6 @@
               <p class="p12-updated" id="p12-last-updated">Last updated…</p>
               <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · Emily line: Job#, name, person, summary · dollar values never shown on variations</p>
 
-              <div class="p12-section-card p12-meli" id="p12-meli">
-                <div class="section-title">Meli&rsquo;s weekly record</div>
-                <p class="p12-section-hint" id="p12-meli-hint">From Buildpass_Site Diaries · Job Name &ldquo;Meli&rsquo;s Record Keeping&rdquo;</p>
-                <div id="p12-meli-feed" class="p12-meli-feed">Unlock to load…</div>
-              </div>
-
               <!-- P12 site diary PDF page viewer (PDF.js, lazy-loaded) -->
               <div id="p12-pdf-lightbox" class="p12-pdf-lightbox" hidden role="dialog" aria-modal="true" aria-label="Site diary PDF">
                 <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
@@ -1343,21 +1337,35 @@
                 </div>
               </div>
 
-              <div class="p12-section-card">
-                <div class="section-title">Diary summaries</div>
-                <p class="p12-section-hint" id="p12-diary-hint">Grouped by date then job · no job # still listed (fab / welding / general)</p>
-                <div id="p12-diary-feed" class="p12-diary-feed">Unlock to load…</div>
+              <!--
+                Horizontal body (P1/P4/P6/P9-style):
+                primary = Diary summaries (main scroll),
+                side = Meli + Variations (supporting cards stacked).
+              -->
+              <div class="p12-main-row">
+                <div class="p12-main-primary">
+                  <div class="p12-section-card p12-diary-card">
+                    <div class="section-title">Diary summaries</div>
+                    <p class="p12-section-hint" id="p12-diary-hint">Grouped by date then job · no job # still listed (fab / welding / general)</p>
+                    <div id="p12-diary-feed" class="p12-diary-feed">Unlock to load…</div>
+                  </div>
+                </div>
+                <aside class="p12-main-side" aria-label="Supporting diary panels">
+                  <div class="p12-section-card p12-meli" id="p12-meli">
+                    <div class="section-title">Meli&rsquo;s weekly record</div>
+                    <p class="p12-section-hint" id="p12-meli-hint">From Buildpass_Site Diaries · Job Name &ldquo;Meli&rsquo;s Record Keeping&rdquo;</p>
+                    <div id="p12-meli-feed" class="p12-meli-feed">Unlock to load…</div>
+                  </div>
+                  <div class="p12-section-card p12-variations-card">
+                    <div class="section-title">Variations</div>
+                    <p class="p12-section-hint">Description and status only · never dollar values</p>
+                    <div id="p12-variations-feed" class="p12-var-feed">Unlock to load…</div>
+                  </div>
+                  <p class="p12-lock-row">
+                    <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
+                  </p>
+                </aside>
               </div>
-
-              <div class="p12-section-card">
-                <div class="section-title">Variations</div>
-                <p class="p12-section-hint">Description and status only · never dollar values</p>
-                <div id="p12-variations-feed" class="p12-var-feed">Unlock to load…</div>
-              </div>
-
-              <p class="p12-lock-row">
-                <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
-              </p>
             </div>
           </div>
         </section>
@@ -14003,7 +14011,7 @@
                   '<div class="p11-job-detail-issue"><dt>Issue / Blocker</dt><dd>' +
                     p11Esc(issueTxt) + '</dd></div>' +
                   '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
-                    p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
+                    p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || 'Not recorded') + '</dd></div>' +
                   p11MediaLinksHtml(r) +
                   '</div>';
               });
@@ -14190,10 +14198,10 @@
               '<div><dt>Brand</dt><dd>' + p11Esc(col(r, 'Brand', 'brand') || 'Not recorded') + '</dd></div>' +
               '<div><dt>Department</dt><dd>' + p11Esc(col(r, 'Department', 'department') || 'Not recorded') + '</dd></div>' +
               '<div><dt>Materials</dt><dd>' + p11Esc(col(r, 'Materials Used', 'materials_used') || 'Not recorded') + '</dd></div>' +
+              '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
+                p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || 'Not recorded') + '</dd></div>' +
               '<div class="p11-drawer-wide"><dt>Full Issue Description</dt><dd>' +
                 p11Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') + '</dd></div>' +
-              '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
-                p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
               '<div class="p11-drawer-wide"><dt>Photos &amp; PDF</dt><dd>' +
                 p11MediaLinksHtml(r) +
               '</dd></div>' +
