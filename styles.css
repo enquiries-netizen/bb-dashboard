@@ -7205,9 +7205,6 @@ body.p11-lightbox-open {
   border: 1px dashed var(--p11-border, #E2E4E8);
   border-radius: 6px;
 }
-#page-p11 .p11-completeness-panel {
-  margin-bottom: 8px;
-}
 @media (max-width: 1100px) {
   #page-p11 .p11-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
