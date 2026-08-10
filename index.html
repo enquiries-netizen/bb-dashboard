@@ -1258,12 +1258,11 @@
         <!-- ─── P12: Site Diaries (crew-only summary / endorsement) ─── -->
         <!--
           STAFF ACCESS (temporary shared pass via CONFIG.P12_STAFF_GATE):
-          Unlock sets sessionStorage flag + access scope p12_only.
-          showPage / loadCurrentPage / management loaders enforce P12 only
-          (nav hide is cosmetic; route level blocks P1–P11).
-          Production BB-email staff auth must set the same scope.
-          Condenses Buildpass_Site Diaries + Variation description/status only (never $).
-          Week selector is local to P12 (not global Month/Year).
+          Unlock opens Site Diaries *content* for the session.
+          Nav restriction to P12 only applies only when
+          CONFIG.P12_STAFF_GATE.restrictNavToP12 is true (production crew accounts).
+          Temporary pass keeps P1–P11 fully available for admin/owner.
+          "Lock this session" clears content unlock. Stale p12_only scopes are cleared on load.
         -->
         <section id="page-p12" class="page">
           <div class="p12-layout">
@@ -1286,8 +1285,8 @@
                 </p>
                 <p class="p12-gate-copy p12-gate-note">
                   Temporary shared pass lives in <code>CONFIG.P12_STAFF_GATE</code>.
-                  An unlocked staff session is limited to this page only.
-                  Apprentices without BB email may need access decided separately.
+                  Admin/owner dashboard nav (P1–P11) stays available with this temporary pass.
+                  Use &ldquo;Lock this session&rdquo; after viewing to clear crew unlock.
                 </p>
                 <form id="p12-unlock-form" class="p12-unlock-form" autocomplete="off">
                   <label class="p12-unlock-label" for="p12-pass-input">Staff pass</label>
@@ -14161,8 +14160,9 @@
     // P12 — SITE DIARIES (crew handoff · staff-gated)
     // Sources: Buildpass_Site Diaries · Variations_Log (description/status only)
     // Never dollar values. Not merged with P11 quality dashboard.
-    // Auth: CONFIG.P12_STAFF_GATE unlock sets access scope p12_only (blocks P1–P11).
-    // Production BB-email staff must set the same scope. ADMIN confirms login method.
+    // Auth: temporary pass unlocks P12 content only unless
+    // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
+    // Admin/owner always keeps P1–P11 when restrictNavToP12 is false.
     // ═══════════════════════════════════════════════════════════════
     var activeP12Job = [];
     var activeP12Person = [];
@@ -14183,6 +14183,10 @@
       ? CONFIG.P12_STAFF_GATE.staffScope
       : 'p12_only';
 
+    function p12RestrictNavEnabled() {
+      return !!(CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.restrictNavToP12 === true);
+    }
+
     function p12IsUnlocked() {
       if (_p12MemUnlocked) return true;
       try {
@@ -14192,7 +14196,13 @@
       }
     }
 
+    /**
+     * Nav/loader restriction to P12 only.
+     * Temporary shared pass never sets this (restrictNavToP12 false).
+     * Production staff login should set restrictNavToP12 true and enter staff session.
+     */
     function p12IsP12OnlyAccess() {
+      if (!p12RestrictNavEnabled()) return false;
       if (_p12MemScope === P12_STAFF_SCOPE) return true;
       try {
         return sessionStorage.getItem(P12_SCOPE_SESSION_KEY) === P12_STAFF_SCOPE;
@@ -14201,13 +14211,33 @@
       }
     }
 
+    /** Clear any sticky nav-scope left from older code that set scope on temp unlock. */
+    function p12ClearNavRestriction() {
+      _p12MemScope = null;
+      try {
+        sessionStorage.removeItem(P12_SCOPE_SESSION_KEY);
+      } catch (e) { /* private mode */ }
+      p12SyncAccessChrome();
+    }
+
+    /**
+     * Content unlock for P12. Nav restriction only if restrictNavToP12 is true
+     * (production crew accounts — not the temporary shared admin-review pass).
+     */
     function p12EnterStaffSession() {
       _p12MemUnlocked = true;
-      _p12MemScope = P12_STAFF_SCOPE;
       try {
         sessionStorage.setItem(P12_GATE_SESSION_KEY, '1');
-        sessionStorage.setItem(P12_SCOPE_SESSION_KEY, P12_STAFF_SCOPE);
       } catch (e) { /* private mode */ }
+      if (p12RestrictNavEnabled()) {
+        _p12MemScope = P12_STAFF_SCOPE;
+        try {
+          sessionStorage.setItem(P12_SCOPE_SESSION_KEY, P12_STAFF_SCOPE);
+        } catch (e2) { /* private mode */ }
+      } else {
+        // Content unlock must never trap the admin dashboard
+        p12ClearNavRestriction();
+      }
       p12SyncAccessChrome();
     }
 
@@ -14239,7 +14269,7 @@
           li.removeAttribute('tabindex');
         }
       });
-      // Hide global Month/Year for crew (P12 has its own week selector). Leave Brand.
+      // Hide global Month/Year only in true crew-only mode
       ['month-select', 'year-select'].forEach(function(id) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -14250,6 +14280,10 @@
         }
       });
     }
+
+    // Immediately untrap any admin session still holding a stale p12_only scope
+    // from the prior temporary-pass bug (restrictNav was always on).
+    p12ClearNavRestriction();
 
     function p12MondayOf(d) {
       if (!d || isNaN(d.getTime())) return null;
