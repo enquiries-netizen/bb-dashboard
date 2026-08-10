@@ -13069,6 +13069,17 @@
 
       if (page) {
         page.addEventListener('click', function(ev) {
+          // Exception table Photo counts → same lightbox as evidence thumbs
+          var countBtn = ev.target && ev.target.closest
+            ? ev.target.closest('button[data-p11-photo-set]')
+            : null;
+          if (countBtn && page.contains(countBtn)) {
+            ev.preventDefault();
+            var setKey = countBtn.getAttribute('data-p11-photo-set');
+            var setUrls = (setKey && _p11PhotoSets[setKey]) ? _p11PhotoSets[setKey] : [];
+            p11OpenLightbox(setUrls, 0);
+            return;
+          }
           var item = ev.target && ev.target.closest ? ev.target.closest('a.p11-photo-item') : null;
           if (!item || !page.contains(item)) return;
           // PDF links are separate (.p11-pdf-link) — only intercept photo thumbs
@@ -14181,15 +14192,36 @@
             '<th></th><th>Date</th><th>Job</th><th>Issue / Blocker</th>' +
             '<th>Safety</th><th>Work Stopped</th><th>Photo</th><th>Logged By</th>' +
             '</tr></thead><tbody>';
+          // Fresh map per render so stale keys cannot open wrong photos
+          _p11PhotoSets = {};
           exceptionRows.forEach(function(r, idx) {
             var saf = safetyState(r);
             var stop = workStoppedState(r);
             var pho = photoState(r);
+            var rowPhotoLinks = photoLinks(r);
             var issueTxt = issueCellLabel(r);
             var issueCls = hasIssueContent(r) ? '' : 'p11-gap-text';
             // Truncate long issue in compact cell
             var issueShort = issueTxt.length > 90 ? issueTxt.slice(0, 90) + '...' : issueTxt;
             var drawerId = 'p11-ex-' + idx;
+            var photoFlagCls = flagClass(
+              pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)
+            );
+            var photoLabel = p11Esc(pho.label) +
+              (rowPhotoLinks.length ? (' · ' + rowPhotoLinks.length) : '');
+            // Clickable when column P has URLs; plain text for No / Not recorded / Yes without links
+            var photoCell;
+            if (rowPhotoLinks.length) {
+              var setKey = 'ex-' + idx;
+              _p11PhotoSets[setKey] = rowPhotoLinks.slice();
+              photoCell = '<button type="button" class="p11-expand-btn p11-job-count-btn ' +
+                photoFlagCls + '" data-p11-photo-set="' + setKey +
+                '" title="View ' + rowPhotoLinks.length + ' photo' +
+                (rowPhotoLinks.length === 1 ? '' : 's') + '">' +
+                photoLabel + '</button>';
+            } else {
+              photoCell = '<span class="' + photoFlagCls + '">' + photoLabel + '</span>';
+            }
             eHtml += '<tr class="p11-ex-row' +
               (stop.isStop || saf.isFlag ? ' p11-ex-row--accent' : '') + '">' +
               '<td><button type="button" class="p11-expand-btn" data-p11-ex="' + idx +
@@ -14200,10 +14232,7 @@
               '<td><span class="' + flagClass(saf.code) + '">' + p11Esc(saf.label) + '</span></td>' +
               '<td><span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
                 p11Esc(stop.label) + '</span></td>' +
-              '<td><span class="' + flagClass(pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)) + '">' +
-                p11Esc(pho.label) +
-                (pho.linkCount ? (' · ' + pho.linkCount) : '') +
-                '</span></td>' +
+              '<td>' + photoCell + '</td>' +
               '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
               '</tr>' +
               '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
