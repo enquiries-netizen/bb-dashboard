@@ -6608,19 +6608,32 @@ p.p8-section-hint {
   display: block;
 }
 
-/* Full Summary list + detail */
+/* Full Summary list + detail — independent scroll panes (all entries reachable) */
+#page-p11 #p11-tabpanel-summary {
+  min-height: 0;
+}
 #page-p11 .p11-summary-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.35fr);
   gap: 12px;
-  min-height: 320px;
-  max-height: min(58vh, 560px);
+  /* Fixed height so child overflow:auto activates (max-height alone was clipping without scroll) */
+  height: min(62vh, 620px);
+  min-height: 360px;
+  max-height: min(62vh, 620px);
+  overflow: hidden;
+  align-items: stretch;
 }
 #page-p11 .p11-summary-list-wrap,
 #page-p11 .p11-summary-detail-wrap {
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
   border: 1px solid var(--p11-border, #E2E4E8);
   border-radius: 6px;
   background: #fff;
@@ -6630,6 +6643,8 @@ p.p8-section-hint {
   flex-direction: column;
   gap: 0;
   padding: 6px;
+  /* Pad end of list so last job card is fully scroll-reachable */
+  padding-bottom: 12px;
 }
 #page-p11 .p11-summary-row {
   appearance: none;
@@ -6645,6 +6660,7 @@ p.p8-section-hint {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex-shrink: 0;
 }
 #page-p11 .p11-summary-row:hover,
 #page-p11 .p11-summary-row:focus-visible {
@@ -6679,6 +6695,8 @@ p.p8-section-hint {
 #page-p11 .p11-summary-jobname {
   font-size: 12px;
   color: var(--p11-muted, #6B7280);
+  overflow-wrap: normal;
+  word-break: normal;
 }
 #page-p11 .p11-summary-row-meta {
   display: flex;
@@ -6690,10 +6708,10 @@ p.p8-section-hint {
 }
 #page-p11 .p11-summary-workers {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  flex: 1 1 8rem;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
 }
 #page-p11 .p11-summary-count {
   flex-shrink: 0;
@@ -6701,7 +6719,12 @@ p.p8-section-hint {
   color: var(--p11-text, #111827);
 }
 #page-p11 .p11-summary-detail-wrap {
-  padding: 12px 14px;
+  padding: 12px 14px 20px;
+  box-sizing: border-box;
+}
+#page-p11 .p11-summary-detail-inner {
+  /* Extra bottom space so last day card is fully reachable when scrolled */
+  padding-bottom: 8px;
 }
 #page-p11 .p11-summary-empty {
   margin: 24px 8px;
@@ -6713,16 +6736,25 @@ p.p8-section-hint {
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--p11-border, #E2E4E8);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
 }
 #page-p11 .p11-summary-detail-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--p11-text, #111827);
+  overflow-wrap: normal;
+  word-break: normal;
 }
 #page-p11 .p11-summary-detail-workers {
   margin-top: 4px;
   font-size: 12px;
   color: var(--p11-muted, #6B7280);
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 #page-p11 .p11-summary-detail-count {
   margin-top: 4px;
@@ -6736,6 +6768,7 @@ p.p8-section-hint {
 }
 #page-p11 .p11-summary-day:last-child {
   border-bottom: none;
+  padding-bottom: 4px;
 }
 #page-p11 .p11-summary-day-date {
   font-size: 12px;
@@ -6763,6 +6796,8 @@ p.p8-section-hint {
   line-height: 1.45;
   margin: 0 0 6px;
   color: var(--p11-text, #111827);
+  overflow-wrap: normal;
+  word-break: normal;
 }
 #page-p11 .p11-summary-meta-label {
   font-weight: 600;
@@ -7474,13 +7509,20 @@ body.p11-lightbox-open {
   }
   #page-p11 .p11-summary-layout {
     grid-template-columns: 1fr;
+    height: auto;
     max-height: none;
+    min-height: 0;
+    overflow: visible;
   }
   #page-p11 .p11-summary-list-wrap {
-    max-height: 240px;
+    height: auto;
+    max-height: min(36vh, 280px);
+    min-height: 140px;
   }
   #page-p11 .p11-summary-detail-wrap {
-    max-height: min(420px, 55vh);
+    height: auto;
+    max-height: min(50vh, 440px);
+    min-height: 200px;
   }
   #page-p11 #p11-exceptions-table {
     max-height: min(420px, 55vh);
