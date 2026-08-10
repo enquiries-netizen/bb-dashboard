@@ -1373,7 +1373,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew-only handoff). Staff-gated (temporary session unlock — Lori/Ben must confirm per-person vs shared before production). Condensed job-day summaries from Buildpass_Site Diaries; full Issues/Blockers and safety text; Photo Links list when URLs exist; Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record Pending. Not merged with P11 quality dashboard. No Gantt, no financials. Answer only from live page data when unlocked.'
+      P12: 'Site Diaries (crew-only handoff). Staff-gated. No Ask BB on this page. Condensed job-day summaries from Buildpass_Site Diaries; full Issues/Blockers and safety text; photo links when URLs exist; Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record Pending. Not merged with P11 quality dashboard. No Gantt, no financials.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -1528,7 +1528,39 @@
     }
 
     // Accumulate visited-page data for BB (updates only this key; never clears others).
+    // P12 crew page: do not feed diary content to Ask BB.
+    function isBbAiDisabledPage(pageId) {
+      return pageId === 'p12' || pageId === 'P12';
+    }
+
+    function getActivePageId() {
+      var active = document.querySelector('.nav-item.active');
+      return active ? active.dataset.page : '';
+    }
+
+    function setBbAiVisibleForPage(pageId) {
+      var fab = document.getElementById('ai-fab');
+      var p = document.getElementById('ai-panel');
+      var off = isBbAiDisabledPage(pageId);
+      document.body.classList.toggle('bb-ai-off', !!off);
+      if (fab) {
+        fab.style.display = off ? 'none' : '';
+        fab.setAttribute('aria-hidden', off ? 'true' : 'false');
+        if (off) fab.classList.remove('is-open');
+      }
+      if (p && off) {
+        p.style.display = 'none';
+        p.classList.add('is-hidden');
+      }
+      if (off && window._allPagesData) {
+        try { delete window._allPagesData.P12; delete window._allPagesData.p12; } catch (e) { /* ignore */ }
+      }
+    }
+
     function setBBPageData(key, name, data) {
+      if (isBbAiDisabledPage(key) || isBbAiDisabledPage(String(key || '').toLowerCase())) {
+        return;
+      }
       var payload = data || {};
       var insights = computeBBInsights(key, payload);
       payload.bbInsights = insights;
@@ -1549,6 +1581,7 @@
     /** Surface 1–2 page insights when BB is open and the user is identified. */
     function maybeShowBbProactiveInsights(force) {
       if (typeof force === 'undefined') force = false;
+      if (isBbAiDisabledPage(getActivePageId())) return;
       if (!isBbPanelOpen()) return;
       if (!localStorage.getItem('bb_name')) return;
       var out = getBbAnswerEl();
@@ -1814,6 +1847,7 @@
       var nav  = document.querySelector('[data-page="' + pageId + '"]');
       if (page) page.classList.add('active');
       if (nav)  nav.classList.add('active');
+      if (typeof setBbAiVisibleForPage === 'function') setBbAiVisibleForPage(pageId);
     }
 
     navItems.forEach(function(item) {
@@ -14119,20 +14153,18 @@
           window._p12Diaries = null;
           window._p12Variations = null;
           p12ShowGate(true);
-          setBBPageData('P12', 'P12: Site Diaries', { unlocked: false });
+          // P12: no BB AI context
         });
       }
     }
 
     async function loadP12() {
       p12BindGateOnce();
+      setBbAiVisibleForPage('p12');
       if (!p12IsUnlocked()) {
         p12ShowGate(true);
         showLoading(false);
-        setBBPageData('P12', 'P12: Site Diaries', {
-          unlocked: false,
-          note: 'Staff unlock required. Temporary shared pass pending Lori/Ben production decision.'
-        });
+        // P12: no BB AI context
         return;
       }
       p12ShowGate(false);
@@ -14661,24 +14693,7 @@
         }
       }
 
-      setBBPageData('P12', 'P12: Site Diaries', {
-        unlocked: true,
-        diaries: diariesFiltered.slice(0, 200),
-        variations: variationsFiltered.slice(0, 100).map(function(r) {
-          // Explicit strip of value fields from AI context
-          return {
-            id: col(r, 'Invoice #', 'Variation ID', 'Variation #', 'ID'),
-            job: col(r, 'Xero Project J#', 'Job #', 'Job Name'),
-            description: variationDescription(r),
-            status: variationStatus(r).label,
-            dateRaised: col(r, 'Date Raised', 'date_raised', 'Date')
-          };
-        }),
-        entryCount: diariesFiltered.length,
-        variationCount: variationsFiltered.length,
-        hasSummaryColumn: hasSummaryCol,
-        meli: 'Pending · awaiting BuildPass data source'
-      });
+      // P12: no BB AI context (crew diary data not sent to Ask BB)
     }
 
 
@@ -19136,7 +19151,9 @@
       showBbNameStep();
     }
 
+    /** Hide Ask BB on P12 (crew Site Diaries). */
     function toggleAI() {
+      if (isBbAiDisabledPage(getActivePageId())) return;
       var p = document.getElementById('ai-panel');
       var fab = document.getElementById('ai-fab');
       var opening = p.style.display === 'none' || p.classList.contains('is-hidden');
@@ -19160,6 +19177,7 @@
     });
 
     refreshBbPanel();
+    setBbAiVisibleForPage(getActivePageId());
 
     function playGeminiPcm(base64) {
       var binary = atob(base64);
@@ -19208,6 +19226,7 @@
     }
 
     function askAI(speak) {
+      if (isBbAiDisabledPage(getActivePageId())) return;
       var q = document.getElementById('ai-q').value.trim();
       if (!q) return;
       var name = localStorage.getItem('bb_name') || '';

@@ -3623,6 +3623,14 @@ select {
 #ai-panel.is-hidden {
   display: none !important;
 }
+
+/* P12 crew Site Diaries: hide Ask BB entirely */
+body.bb-ai-off #ai-fab,
+body.bb-ai-off #ai-panel {
+  display: none !important;
+  pointer-events: none;
+  visibility: hidden;
+}
   .p5-inv-grids { grid-template-columns: 1fr; }
 }
 
