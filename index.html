@@ -1213,7 +1213,7 @@
                 <button type="button" class="p11-tab is-active" role="tab" id="p11-tab-exceptions"
                   aria-selected="true" aria-controls="p11-tabpanel-exceptions" data-p11-tab="exceptions">Exceptions</button>
                 <button type="button" class="p11-tab" role="tab" id="p11-tab-summary"
-                  aria-selected="false" aria-controls="p11-tabpanel-summary" data-p11-tab="summary">Full Summary</button>
+                  aria-selected="false" aria-controls="p11-tabpanel-summary" data-p11-tab="summary">Site Diary Summaries</button>
               </div>
               <div class="p11-tab-panels">
                 <div class="p11-tab-panel is-active" role="tabpanel" id="p11-tabpanel-exceptions"
@@ -12979,11 +12979,11 @@
     // ═══════════════════════════════════════════════════════════════
     var activeP11Dept = 'ALL';
     var activeP11Job = 'ALL';
-    /** Tab for Exceptions / Full Summary panel · preserved across re-renders and filter changes. */
+    /** Tab for Exceptions / Site Diary Summaries panel · preserved across re-renders and filter changes. */
     var activeP11DetailTab = 'exceptions';
-    /** Selected job/person key on Full Summary list · preserved when data still contains it. */
+    /** Selected job/person key on Site Diary Summaries list · preserved when data still contains it. */
     var activeP11SummaryKey = '';
-    /** Full Summary groups keyed for detail panel. */
+    /** Site Diary Summaries groups keyed for detail panel. */
     var _p11SummaryGroups = {};
     var _p11SummaryTabBound = false;
     var _p11FiltersBound = false;
@@ -14260,7 +14260,7 @@
         }
       }
 
-      // ── Full Summary tab (list + day detail · same diariesFiltered filters) ──
+      // ── Site Diary Summaries tab (list + day detail · same diariesFiltered filters) ──
       function p11DiaryGroupKey(r) {
         var jnRaw = diaryJobNo(r);
         var jname = String(col(r, 'Job Name', 'job_name') || '').trim();

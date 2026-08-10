@@ -6529,7 +6529,7 @@ p.p8-section-hint {
 
 /*
   Layout order:
-  KPI → Issues by Job (full width) → Exceptions/Full Summary tabs →
+  KPI → Issues by Job (full width) → Exceptions/Site Diary Summaries tabs →
   Weekly Diary Activity + Variation Actions (side by side).
 */
 #page-p11 .p11-jobs-row {
@@ -6592,7 +6592,7 @@ p.p8-section-hint {
   background: var(--p11-surface, #fff);
 }
 
-/* Exceptions + Full Summary tabs (one cohesive panel) */
+/* Exceptions + Site Diary Summaries tabs (one cohesive panel) */
 #page-p11 .p11-detail-tabs-panel {
   margin-bottom: 14px;
   padding-top: 0;
@@ -6636,7 +6636,7 @@ p.p8-section-hint {
   display: block;
 }
 
-/* Full Summary list + detail — independent scroll panes (all entries reachable) */
+/* Site Diary Summaries list + detail — independent scroll panes (all entries reachable) */
 #page-p11 #p11-tabpanel-summary {
   min-height: 0;
 }
