@@ -12989,6 +12989,8 @@
     var _p11LbUrls = [];
     var _p11LbIndex = 0;
     var _p11LbTouchX = null;
+    /** Exception Photo column sets for count clicks (keyed by data-p11-photo-set). */
+    var _p11PhotoSets = {};
 
     function p11LightboxEls() {
       return {
@@ -13931,9 +13933,14 @@
             _p11LoadMeta.diariesOk ? 'No diary entries in selection.' : 'Site diaries unavailable.'
           );
         } else {
-          var jHtml = '<table class="data-table p11-table"><thead><tr>' +
-            '<th>Job</th><th>Entries</th><th>Issues</th><th>Safety Flags</th>' +
-            '<th>Work Stopped</th><th>Photo Coverage</th><th>Latest Entry</th>' +
+          var jHtml = '<table class="data-table p11-table p11-issues-job-table"><thead><tr>' +
+            '<th scope="col">Job</th>' +
+            '<th scope="col">Entries</th>' +
+            '<th scope="col">Issues</th>' +
+            '<th scope="col">Safety Flag</th>' +
+            '<th scope="col">Work Stopped</th>' +
+            '<th scope="col">Photo Coverage</th>' +
+            '<th scope="col">Latest Entry</th>' +
             '</tr></thead><tbody>';
           jobRows.forEach(function(j, jIdx) {
             var cov = j.entries ? Math.round((j.photos / j.entries) * 100) : 0;
@@ -13998,20 +14005,28 @@
                 '</div>';
               detailList.forEach(function(r) {
                 var saf = safetyState(r);
+                var stop = workStoppedState(r);
                 var dLabel = col(r, 'Date', 'date') || 'Not recorded';
                 var issueTxt = hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded';
                 var by = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
+                var workDone = col(r, 'Work Completed', 'work_completed', 'Work Description',
+                  'Description of Work', 'Work completed') || 'Not recorded';
                 jHtml += '<div class="p11-job-detail-card">' +
                   '<div class="p11-job-detail-meta">' +
                   '<span>' + p11Esc(dLabel) + '</span>' +
-                  '<span class="' + flagClass(saf.isFlag ? 'yes' : (saf.code === 'missing' ? 'missing' : 'neutral')) + '">' +
-                    p11Esc(saf.label) + '</span>' +
                   '<span>Logged by ' + p11Esc(by) + '</span>' +
                   '</div>' +
+                  /* Order: Work Completed (col G narrative), Work Stopped flag, Issue/Safety, Photo/PDF */
+                  '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
+                    p11Esc(workDone) + '</dd></div>' +
+                  '<div class="p11-job-detail-stop"><dt>Work Stopped</dt><dd>' +
+                    '<span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
+                    p11Esc(stop.label) + '</span></dd></div>' +
                   '<div class="p11-job-detail-issue"><dt>Issue / Blocker</dt><dd>' +
                     p11Esc(issueTxt) + '</dd></div>' +
-                  '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
-                    p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || 'Not recorded') + '</dd></div>' +
+                  '<div class="p11-job-detail-safety"><dt>Safety Flag</dt><dd>' +
+                    '<span class="' + flagClass(saf.isFlag ? 'yes' : (saf.code === 'missing' ? 'missing' : 'neutral')) + '">' +
+                    p11Esc(saf.label) + '</span></dd></div>' +
                   p11MediaLinksHtml(r) +
                   '</div>';
               });
@@ -14022,7 +14037,7 @@
           // Sum check: job issues total must equal KPI issue count
           var jobIssueSum = jobRows.reduce(function(s, j) { return s + j.issues; }, 0);
           jHtml += '<p class="p11-table-foot">Issues total across jobs: ' + jobIssueSum +
-            ' (matches Issues / Blockers KPI). Click Issues or Safety Flags counts to expand detail.</p>';
+            ' (matches Issues / Blockers KPI). Click Issues or Safety Flag counts to expand detail.</p>';
           jobEl.innerHTML = jHtml;
           // Same expand/collapse pattern as Site Diary Exceptions (+)
           jobEl.querySelectorAll('.p11-job-count-btn').forEach(function(btn) {
@@ -14194,22 +14209,30 @@
               '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
               '<td colspan="8">' +
               '<div class="p11-drawer-grid">' +
-              '<div><dt>Job Name</dt><dd>' + p11Esc(col(r, 'Job Name', 'job_name') || 'Not recorded') + '</dd></div>' +
-              '<div><dt>Brand</dt><dd>' + p11Esc(col(r, 'Brand', 'brand') || 'Not recorded') + '</dd></div>' +
-              '<div><dt>Department</dt><dd>' + p11Esc(col(r, 'Department', 'department') || 'Not recorded') + '</dd></div>' +
-              '<div><dt>Materials</dt><dd>' + p11Esc(col(r, 'Materials Used', 'materials_used') || 'Not recorded') + '</dd></div>' +
+              /* Order: Work Completed (col G narrative), Work Stopped flag, Issue/Safety, Photo/PDF */
               '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
-                p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description', 'Description of Work') || 'Not recorded') + '</dd></div>' +
+                p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description',
+                  'Description of Work', 'Work completed') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Work Stopped</dt><dd>' +
+                '<span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
+                p11Esc(stop.label) + '</span></dd></div>' +
+              '<div><dt>Safety Flag</dt><dd>' +
+                '<span class="' + flagClass(saf.code) + '">' + p11Esc(saf.label) + '</span></dd></div>' +
               '<div class="p11-drawer-wide"><dt>Full Issue Description</dt><dd>' +
                 p11Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') + '</dd></div>' +
               '<div class="p11-drawer-wide"><dt>Photos &amp; PDF</dt><dd>' +
                 p11MediaLinksHtml(r) +
               '</dd></div>' +
+              '<div><dt>Job Name</dt><dd>' + p11Esc(col(r, 'Job Name', 'job_name') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Brand</dt><dd>' + p11Esc(col(r, 'Brand', 'brand') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Department</dt><dd>' + p11Esc(col(r, 'Department', 'department') || 'Not recorded') + '</dd></div>' +
+              '<div><dt>Materials</dt><dd>' + p11Esc(col(r, 'Materials Used', 'materials_used') || 'Not recorded') + '</dd></div>' +
               '</div></td></tr>';
           });
           eHtml += '</tbody></table>';
           excEl.innerHTML = eHtml;
-          excEl.querySelectorAll('.p11-expand-btn').forEach(function(btn) {
+          // Only row expand controls — photo count buttons share p11-job-count-btn styles, not expand
+          excEl.querySelectorAll('.p11-expand-btn[data-p11-ex]').forEach(function(btn) {
             btn.addEventListener('click', function() {
               var id = btn.getAttribute('aria-controls');
               var row = id ? document.getElementById(id) : null;

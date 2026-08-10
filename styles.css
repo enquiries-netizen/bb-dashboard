@@ -6535,7 +6535,8 @@ p.p8-section-hint {
 */
 #page-p11 .p11-main-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Widen Issues by Job (right) so multi-word headers can wrap fully */
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.22fr);
   gap: 14px;
   margin-bottom: 14px;
   align-items: stretch;
@@ -6629,8 +6630,11 @@ p.p8-section-hint {
   vertical-align: top;
   word-wrap: break-word;
   overflow-wrap: anywhere;
-  overflow: hidden;
   border-bottom: 1px solid var(--p11-border, #E2E4E8);
+}
+/* Body cells may still clip long content; headers must never truncate */
+#page-p11 .p11-table td {
+  overflow: hidden;
 }
 #page-p11 .p11-table th {
   font-size: 10px;
@@ -6639,7 +6643,35 @@ p.p8-section-hint {
   font-weight: 600;
   color: var(--p11-muted, #6B7280);
   text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+  vertical-align: bottom;
+  hyphens: manual;
 }
+/* Issues by Job: full multi-word headers (wrap on two lines when tight) */
+#page-p11 #p11-issues-by-job .p11-table {
+  min-width: 640px;
+}
+#page-p11 #p11-issues-by-job .p11-table th,
+#page-p11 #p11-issues-by-job .data-table th {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+  vertical-align: bottom;
+  padding: 8px 6px;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(1) { width: 14%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(2) { width: 9%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(3) { width: 9%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(4) { width: 12%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(5) { width: 13%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(6) { width: 16%; }
+#page-p11 #p11-issues-by-job .p11-table th:nth-child(7) { width: 13%; }
 #page-p11 .p11-job-sub {
   font-size: 11px;
   color: var(--p11-muted, #6B7280);
@@ -6811,7 +6843,9 @@ p.p8-section-hint {
   color: var(--p11-muted, #6B7280);
 }
 #page-p11 .p11-job-detail-issue dt,
-#page-p11 .p11-job-detail-work dt {
+#page-p11 .p11-job-detail-work dt,
+#page-p11 .p11-job-detail-stop dt,
+#page-p11 .p11-job-detail-safety dt {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -6820,7 +6854,9 @@ p.p8-section-hint {
   font-weight: 600;
 }
 #page-p11 .p11-job-detail-issue dd,
-#page-p11 .p11-job-detail-work dd {
+#page-p11 .p11-job-detail-work dd,
+#page-p11 .p11-job-detail-stop dd,
+#page-p11 .p11-job-detail-safety dd {
   margin: 0 0 6px;
   font-size: 13px;
   color: var(--p11-text, #111827);
