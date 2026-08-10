@@ -1310,17 +1310,18 @@
                   <span class="filter-label">Brand</span>
                   <span class="p12-range-label" id="p12-brand-label">ALL</span>
                 </div>
-                <div class="filter-group p12-filter">
-                  <span class="filter-label">Job</span>
-                  <select class="filter-select page-filter-select p12-select" id="p12-job-filter" aria-label="Job">
-                    <option value="ALL">All Jobs</option>
+                <div class="filter-group p12-filter p12-filter--multi">
+                  <span class="filter-label">Job <span class="p12-multi-hint">(multi)</span></span>
+                  <select class="filter-select page-filter-select p12-select p12-select--multi" id="p12-job-filter" aria-label="Jobs" multiple size="5">
+                    <option value="__NO_JOB__">No job #</option>
                   </select>
+                  <span class="p12-multi-cue">Ctrl/Cmd multi-select · none = All Jobs</span>
                 </div>
-                <div class="filter-group p12-filter">
-                  <span class="filter-label">Person</span>
-                  <select class="filter-select page-filter-select p12-select" id="p12-person-filter" aria-label="Person">
-                    <option value="ALL">All People</option>
+                <div class="filter-group p12-filter p12-filter--multi">
+                  <span class="filter-label">Person <span class="p12-multi-hint">(multi)</span></span>
+                  <select class="filter-select page-filter-select p12-select p12-select--multi" id="p12-person-filter" aria-label="People" multiple size="5">
                   </select>
+                  <span class="p12-multi-cue">Ctrl/Cmd multi-select · none = All People</span>
                 </div>
               </div>
               <p class="p12-sources" id="p12-sources">Sources: checking…</p>
@@ -13648,13 +13649,15 @@
             stopped: 0,
             photos: 0,
             latest: null,
-            latestTs: 0
+            latestTs: 0,
+            detailRows: []
           };
         }
         var b = byJob[key];
         b.entries += 1;
         if (hasIssueContent(r)) b.issues += 1;
         if (safetyState(r).isFlag) b.safety += 1;
+        if (hasIssueContent(r) || safetyState(r).isFlag) b.detailRows.push(r);
         if (workStoppedState(r).isStop) b.stopped += 1;
         if (photoState(r).hasPhoto) b.photos += 1;
         var d = parseFlexibleDate(col(r, 'Date', 'date'));
@@ -13686,7 +13689,7 @@
             '<th>Job</th><th>Entries</th><th>Issues</th><th>Safety Flags</th>' +
             '<th>Work Stopped</th><th>Photo Coverage</th><th>Latest Entry</th>' +
             '</tr></thead><tbody>';
-          jobRows.forEach(function(j) {
+          jobRows.forEach(function(j, jIdx) {
             var cov = j.entries ? Math.round((j.photos / j.entries) * 100) : 0;
             var stopLabel = j.stopped > 0
               ? ('<span class="p11-flag p11-flag--accent">' + j.stopped + '</span>')
@@ -13700,20 +13703,32 @@
             } else if (j.stopped === 0) {
               stopLabel = '<span class="p11-flag p11-flag--neutral">0</span>';
             }
-            var safeLabel = j.safety > 0
-              ? ('<span class="p11-flag p11-flag--accent">' + j.safety + '</span>')
-              : '<span class="p11-flag p11-flag--neutral">0</span>';
+            var drawerId = 'p11-job-drawer-' + jIdx;
+            var canExpand = (j.detailRows && j.detailRows.length > 0);
+            function countBtn(n, toneCls, label) {
+              if (!canExpand || !n) {
+                return n
+                  ? ('<span class="p11-flag ' + toneCls + '">' + n + '</span>')
+                  : '<span class="p11-flag p11-flag--neutral">0</span>';
+              }
+              return '<button type="button" class="p11-expand-btn p11-job-count-btn ' + toneCls +
+                '" data-p11-job-drawer="' + drawerId +
+                '" aria-expanded="false" aria-controls="' + drawerId +
+                '" title="Show ' + label + ' for this job">' + n + '</button>';
+            }
+            var issuesCell = countBtn(j.issues, 'p11-flag--watch', 'issues');
+            var safetyCell = countBtn(j.safety, 'p11-flag--accent', 'safety flags');
             var jobLabel = j.job === 'No job #'
               ? '<span class="p11-flag p11-flag--gap">No job #</span>'
               : p11Esc(j.job);
             if (j.name && j.name !== j.job) {
               jobLabel += '<div class="p11-job-sub">' + p11Esc(j.name) + '</div>';
             }
-            jHtml += '<tr>' +
+            jHtml += '<tr class="p11-job-row">' +
               '<td>' + jobLabel + '</td>' +
               '<td>' + j.entries + '</td>' +
-              '<td>' + (j.issues ? ('<span class="p11-flag p11-flag--watch">' + j.issues + '</span>') : '0') + '</td>' +
-              '<td>' + safeLabel + '</td>' +
+              '<td>' + issuesCell + '</td>' +
+              '<td>' + safetyCell + '</td>' +
               '<td>' + stopLabel + '</td>' +
               '<td>' +
                 '<div class="p11-bar-line">' +
@@ -13723,13 +13738,64 @@
               '</td>' +
               '<td>' + p11Esc(j.latest || 'Not recorded') + '</td>' +
               '</tr>';
+            if (canExpand) {
+              var detailList = j.detailRows.slice().sort(function(a, b) {
+                var da = parseFlexibleDate(col(a, 'Date', 'date'));
+                var db = parseFlexibleDate(col(b, 'Date', 'date'));
+                return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+              });
+              jHtml += '<tr class="p11-ex-drawer p11-job-drawer" id="' + drawerId + '" hidden>' +
+                '<td colspan="7"><div class="p11-job-drawer-inner">' +
+                '<div class="p11-job-drawer-title">' + p11Esc(j.job) +
+                ' · ' + j.issues + ' issue' + (j.issues === 1 ? '' : 's') +
+                ' · ' + j.safety + ' safety flag' + (j.safety === 1 ? '' : 's') +
+                '</div>';
+              detailList.forEach(function(r) {
+                var saf = safetyState(r);
+                var dLabel = col(r, 'Date', 'date') || 'Not recorded';
+                var issueTxt = hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded';
+                var by = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
+                jHtml += '<div class="p11-job-detail-card">' +
+                  '<div class="p11-job-detail-meta">' +
+                  '<span>' + p11Esc(dLabel) + '</span>' +
+                  '<span class="' + flagClass(saf.isFlag ? 'yes' : (saf.code === 'missing' ? 'missing' : 'neutral')) + '">' +
+                    p11Esc(saf.label) + '</span>' +
+                  '<span>Logged by ' + p11Esc(by) + '</span>' +
+                  '</div>' +
+                  '<div class="p11-job-detail-issue"><dt>Issue / Blocker</dt><dd>' +
+                    p11Esc(issueTxt) + '</dd></div>' +
+                  '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
+                    p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
+                  '</div>';
+              });
+              jHtml += '</div></td></tr>';
+            }
           });
           jHtml += '</tbody></table>';
           // Sum check: job issues total must equal KPI issue count
           var jobIssueSum = jobRows.reduce(function(s, j) { return s + j.issues; }, 0);
           jHtml += '<p class="p11-table-foot">Issues total across jobs: ' + jobIssueSum +
-            ' (matches Issues / Blockers KPI).</p>';
+            ' (matches Issues / Blockers KPI). Click Issues or Safety Flags counts to expand detail.</p>';
           jobEl.innerHTML = jHtml;
+          // Same expand/collapse pattern as Site Diary Exceptions (+)
+          jobEl.querySelectorAll('.p11-job-count-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              var id = btn.getAttribute('aria-controls') || btn.getAttribute('data-p11-job-drawer');
+              var row = id ? document.getElementById(id) : null;
+              if (!row) return;
+              var open = row.hasAttribute('hidden');
+              if (open) {
+                row.removeAttribute('hidden');
+              } else {
+                row.setAttribute('hidden', '');
+              }
+              // Sync all buttons that control this same drawer
+              jobEl.querySelectorAll('.p11-job-count-btn[aria-controls="' + id + '"]').forEach(function(b) {
+                b.setAttribute('aria-expanded', open ? 'true' : 'false');
+                b.classList.toggle('is-open', open);
+              });
+            });
+          });
         }
       }
 
@@ -14098,8 +14164,8 @@
     // Auth: CONFIG.P12_STAFF_GATE unlock sets access scope p12_only (blocks P1–P11).
     // Production BB-email staff must set the same scope. ADMIN confirms login method.
     // ═══════════════════════════════════════════════════════════════
-    var activeP12Job = 'ALL';
-    var activeP12Person = 'ALL';
+    var activeP12Job = [];
+    var activeP12Person = [];
     /** ISO week key YYYY-Www; null = default to current week on first render */
     var activeP12WeekKey = null;
     var _p12FiltersBound = false;
@@ -14585,41 +14651,48 @@
 
       var jobSelect = document.getElementById('p12-job-filter');
       if (jobSelect) {
-        var prevJ = activeP12Job;
-        jobSelect.innerHTML = '<option value="ALL">All Jobs</option>' +
-          '<option value="__NO_JOB__">No job #</option>';
+        var prevJobs = Array.isArray(activeP12Job) ? activeP12Job.slice() : [];
+        jobSelect.innerHTML = '<option value="__NO_JOB__">No job #</option>';
         jobList.forEach(function(j) {
           var opt = document.createElement('option');
           opt.value = j;
           opt.textContent = j;
           jobSelect.appendChild(opt);
         });
-        if (prevJ === 'ALL' || prevJ === '__NO_JOB__' || jobSet[prevJ]) {
-          activeP12Job = prevJ;
-          jobSelect.value = prevJ;
-        } else {
-          activeP12Job = 'ALL';
-          jobSelect.value = 'ALL';
-        }
+        // Restore multi selection (empty array = All Jobs)
+        var keepJobs = prevJobs.filter(function(v) {
+          return v === '__NO_JOB__' || jobSet[v];
+        });
+        activeP12Job = keepJobs;
+        Array.prototype.forEach.call(jobSelect.options, function(opt) {
+          opt.selected = keepJobs.indexOf(opt.value) !== -1;
+        });
       }
 
       var personSelect = document.getElementById('p12-person-filter');
       if (personSelect) {
-        var prevP = activeP12Person;
-        personSelect.innerHTML = '<option value="ALL">All People</option>';
+        var prevPeople = Array.isArray(activeP12Person) ? activeP12Person.slice() : [];
+        personSelect.innerHTML = '';
         personList.forEach(function(p) {
           var opt = document.createElement('option');
           opt.value = p;
           opt.textContent = p;
           personSelect.appendChild(opt);
         });
-        if (prevP === 'ALL' || personSet[prevP]) {
-          activeP12Person = prevP;
-          personSelect.value = prevP;
-        } else {
-          activeP12Person = 'ALL';
-          personSelect.value = 'ALL';
-        }
+        var keepPeople = prevPeople.filter(function(v) { return personSet[v]; });
+        activeP12Person = keepPeople;
+        Array.prototype.forEach.call(personSelect.options, function(opt) {
+          opt.selected = keepPeople.indexOf(opt.value) !== -1;
+        });
+      }
+
+      function p12SelectedValues(selectEl) {
+        if (!selectEl) return [];
+        var out = [];
+        Array.prototype.forEach.call(selectEl.selectedOptions || [], function(opt) {
+          if (opt && opt.value != null && opt.value !== '') out.push(opt.value);
+        });
+        return out;
       }
 
       if (!_p12FiltersBound) {
@@ -14632,42 +14705,51 @@
         }
         if (jobSelect) {
           jobSelect.addEventListener('change', function() {
-            activeP12Job = this.value || 'ALL';
+            activeP12Job = p12SelectedValues(jobSelect);
             renderP12(window._p12Diaries, window._p12Variations);
           });
         }
         if (personSelect) {
           personSelect.addEventListener('change', function() {
-            activeP12Person = this.value || 'ALL';
+            activeP12Person = p12SelectedValues(personSelect);
             renderP12(window._p12Diaries, window._p12Variations);
           });
         }
       }
 
+      function p12JobSelected(j) {
+        var sels = Array.isArray(activeP12Job) ? activeP12Job : [];
+        if (!sels.length) return true; // default All
+        return sels.some(function(sel) {
+          if (sel === '__NO_JOB__') return !j;
+          return j === sel || p12MatchesJobPrefix(j, sel);
+        });
+      }
+
+      function p12PersonSelected(person) {
+        var sels = Array.isArray(activeP12Person) ? activeP12Person : [];
+        if (!sels.length) return true; // default All
+        return sels.indexOf(person) !== -1;
+      }
+
       function filterDiaries(rows) {
         return (rows || []).filter(function(r) {
-          var j = diaryJobNo(r);
-          if (activeP12Job && activeP12Job !== 'ALL') {
-            if (activeP12Job === '__NO_JOB__') {
-              if (j) return false;
-            } else if (!(j === activeP12Job || p12MatchesJobPrefix(j, activeP12Job))) {
-              return false;
-            }
-          }
-          if (activeP12Person && activeP12Person !== 'ALL') {
-            if (diaryPerson(r) !== activeP12Person) return false;
-          }
+          if (!p12JobSelected(diaryJobNo(r))) return false;
+          if (!p12PersonSelected(diaryPerson(r))) return false;
           return true;
         });
       }
 
       function filterVariations(rows) {
         return (rows || []).filter(function(r) {
-          if (!activeP12Job || activeP12Job === 'ALL') return true;
+          var sels = Array.isArray(activeP12Job) ? activeP12Job : [];
+          if (!sels.length) return true;
           var j = String(col(r, 'Xero Project J#', 'Job #', 'Job Number', 'Job Name', 'job_name') || '').trim();
-          if (activeP12Job === '__NO_JOB__') return !j;
-          return j === activeP12Job || p12MatchesJobPrefix(j, activeP12Job) ||
-            String(col(r, 'Job Name', 'job_name') || '').indexOf(activeP12Job) !== -1;
+          return sels.some(function(sel) {
+            if (sel === '__NO_JOB__') return !j;
+            return j === sel || p12MatchesJobPrefix(j, sel) ||
+              String(col(r, 'Job Name', 'job_name') || '').indexOf(sel) !== -1;
+          });
         });
       }
 
