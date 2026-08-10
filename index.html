@@ -13118,23 +13118,98 @@
         return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
       }
 
+      function photoLinks(r) {
+        // Column P: comma-separated BuildPass image URLs (never invent)
+        var raw = String(col(r,
+          'Photo Links', 'Photo Link', 'photo_links', 'Photo URL', 'Photo URLs',
+          'BuildPass Photos', 'BuildPass Link', 'Photos URL'
+        ) || '').trim();
+        if (!raw) return [];
+        var urls = [];
+        // Prefer regex extraction so spaces inside encoded URLs still work
+        var m = raw.match(/https?:\/\/[^\s,;|]+/gi);
+        if (m && m.length) {
+          m.forEach(function(u) {
+            var clean = String(u).replace(/[)\].,]+$/g, '');
+            if (clean && urls.indexOf(clean) === -1) urls.push(clean);
+          });
+          return urls;
+        }
+        raw.split(/[,;|]+/).forEach(function(p) {
+          var t = String(p || '').trim();
+          if (/^https?:\/\//i.test(t) && urls.indexOf(t) === -1) urls.push(t);
+        });
+        return urls;
+      }
+
+      function diaryPdfUrl(r) {
+        var raw = String(col(r,
+          'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
+          'PDF', 'Buildpass PDF', 'pdf_link', 'site_diary_pdf'
+        ) || '').trim();
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw)) return raw.split(/[\s,;|]+/)[0];
+        var m = raw.match(/https?:\/\/[^\s,;|]+/i);
+        return m ? m[0].replace(/[)\].,]+$/g, '') : '';
+      }
+
       function photoState(r) {
+        var links = photoLinks(r);
+        if (links.length) return { code: 'yes', label: 'Yes', hasPhoto: true, linkCount: links.length };
         var keyProbe = resolveRowKey(r, [
           'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
         ]);
-        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', hasPhoto: false, linkCount: 0 };
         var val = String(rawColByNames(r, [
           'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
         ]) || '').trim();
-        if (!val) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        if (!val) return { code: 'missing', label: 'Not recorded', hasPhoto: false, linkCount: 0 };
         var s = val.toLowerCase();
         if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-          return { code: 'yes', label: 'Yes', hasPhoto: true };
+          return { code: 'yes', label: 'Yes', hasPhoto: true, linkCount: 0 };
         }
         if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
-          return { code: 'no', label: 'No', hasPhoto: false };
+          return { code: 'no', label: 'No', hasPhoto: false, linkCount: 0 };
         }
-        return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false };
+        return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false, linkCount: 0 };
+      }
+
+      /** Clickable photo thumbs + PDF for drawers / evidence (new tab). */
+      function p11MediaLinksHtml(r) {
+        var links = photoLinks(r);
+        var pdf = diaryPdfUrl(r);
+        var pho = photoState(r);
+        var h = '';
+        if (links.length) {
+          h += '<div class="p11-media-block">';
+          h += '<div class="p11-media-label">Photos (' + links.length + ')</div>';
+          h += '<div class="p11-photo-grid">';
+          links.forEach(function(u, i) {
+            var n = i + 1;
+            h += '<a class="p11-photo-item" href="' + p11Esc(u) +
+              '" target="_blank" rel="noopener noreferrer" title="Open photo ' + n + '">' +
+              '<img class="p11-photo-thumb" src="' + p11Esc(u) + '" alt="Photo ' + n +
+              '" loading="lazy" referrerpolicy="no-referrer" ' +
+              'onerror="this.classList.add(\'is-broken\')" />' +
+              '<span class="p11-photo-link-text">View photo ' + n + '</span>' +
+              '</a>';
+          });
+          h += '</div></div>';
+        } else if (pho.hasPhoto) {
+          h += '<div class="p11-media-block p11-muted-note">Photos marked Yes · URLs not in Photo Links column · open BuildPass</div>';
+        } else {
+          h += '<div class="p11-media-block p11-muted-note">' +
+            p11Esc(pho.code === 'no' ? 'No photos attached' : 'No photos attached') +
+            '</div>';
+        }
+        if (pdf) {
+          h += '<div class="p11-media-block">' +
+            '<div class="p11-media-label">Site Diary PDF</div>' +
+            '<a class="p11-pdf-link" href="' + p11Esc(pdf) +
+            '" target="_blank" rel="noopener noreferrer">Open site diary PDF</a>' +
+            '</div>';
+        }
+        return h;
       }
 
       function flagClass(kind) {
@@ -13765,6 +13840,7 @@
                     p11Esc(issueTxt) + '</dd></div>' +
                   '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
                     p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
+                  p11MediaLinksHtml(r) +
                   '</div>';
               });
               jHtml += '</div></td></tr>';
@@ -13815,13 +13891,24 @@
             return { name: k, n: byPerson[k].n, photos: byPerson[k].photos };
           }).sort(function(a, b) { return b.n - a.n; }).slice(0, 8);
 
+          var linkedEntries = diariesFiltered.filter(function(r) {
+            return photoLinks(r).length > 0 || diaryPdfUrl(r);
+          }).slice().sort(function(a, b) {
+            var da = parseFlexibleDate(col(a, 'Date', 'date'));
+            var db = parseFlexibleDate(col(b, 'Date', 'date'));
+            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+          });
+          var linkCount = 0;
+          diariesFiltered.forEach(function(r) { linkCount += photoLinks(r).length; });
+
           var ev = '<div class="p11-evidence-inner">' +
             '<div class="p11-evidence-title">Site Diary Evidence</div>' +
-            '<p class="p11-section-hint">Evidence completeness · not a quality score</p>' +
+            '<p class="p11-section-hint">Evidence completeness · not a quality score · Photo Links from column P</p>' +
             '<div class="p11-evidence-stats">' +
             '<span>' + photoYes + ' with photos</span>' +
             '<span>' + noPhotoCount + ' without photos</span>' +
             '<span>' + (photoPct != null ? photoPct.toFixed(0) + '%' : '—') + ' coverage</span>' +
+            '<span>' + linkCount + ' photo URL' + (linkCount === 1 ? '' : 's') + ' live</span>' +
             '</div>';
           ev += '<div class="p11-evidence-jobs">';
           jobRows.slice(0, 8).forEach(function(j) {
@@ -13840,6 +13927,27 @@
               ev += '<li>' + p11Esc(p.name) + ': ' + p.photos + '/' + p.n + ' photos (' + pc + '%)</li>';
             });
             ev += '</ul></div>';
+          }
+          // Clickable links per recent diary that has Photo Links / PDF
+          if (linkedEntries.length) {
+            ev += '<div class="p11-evidence-links">';
+            ev += '<span class="p11-evidence-sub">Recent entries with photo / PDF links</span>';
+            linkedEntries.slice(0, 12).forEach(function(r) {
+              var jn = diaryJobNo(r) || 'No job #';
+              var dLabel = col(r, 'Date', 'date') || 'Not recorded';
+              ev += '<div class="p11-ev-entry">' +
+                '<div class="p11-ev-entry-head">' + p11Esc(jn) + ' · ' + p11Esc(dLabel) + '</div>' +
+                p11MediaLinksHtml(r) +
+                '</div>';
+            });
+            if (linkedEntries.length > 12) {
+              ev += '<p class="p11-section-hint">Showing 12 of ' + linkedEntries.length +
+                ' entries with links · expand exception/job drawers for the rest.</p>';
+            }
+            ev += '</div>';
+          } else {
+            ev += '<p class="p11-section-hint">No Photo Links URLs in the current filter. ' +
+              'If Y/N says Yes but no links, check column P export.</p>';
           }
           ev += '</div>';
           evEl.innerHTML = ev;
@@ -13906,7 +14014,9 @@
               '<td><span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
                 p11Esc(stop.label) + '</span></td>' +
               '<td><span class="' + flagClass(pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)) + '">' +
-                p11Esc(pho.label) + '</span></td>' +
+                p11Esc(pho.label) +
+                (pho.linkCount ? (' · ' + pho.linkCount) : '') +
+                '</span></td>' +
               '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
               '</tr>' +
               '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
@@ -13920,9 +14030,8 @@
                 p11Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') + '</dd></div>' +
               '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
                 p11Esc(col(r, 'Work Completed', 'work_completed') || 'Not recorded') + '</dd></div>' +
-              '<div class="p11-drawer-wide"><dt>Photo references</dt><dd>' +
-                p11Esc(col(r, 'Photo Links', 'Photo Link', 'photo_links', 'Photos') ||
-                  (pho.hasPhoto ? 'Marked Yes · links Not recorded' : pho.label)) +
+              '<div class="p11-drawer-wide"><dt>Photos &amp; PDF</dt><dd>' +
+                p11MediaLinksHtml(r) +
               '</dd></div>' +
               '</div></td></tr>';
           });
