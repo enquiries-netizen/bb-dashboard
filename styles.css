@@ -7094,10 +7094,16 @@ p.p8-section-hint {
   text-overflow: ellipsis;
   text-align: right;
 }
+#page-p11 .p11-evidence-section {
+  margin-bottom: 8px;
+}
+#page-p11 .p11-evidence-section[hidden] {
+  display: none !important;
+}
 #page-p11 .p11-evidence {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--p11-border, #E2E4E8);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 #page-p11 .p11-evidence-title {
   font-family: var(--font-heading);

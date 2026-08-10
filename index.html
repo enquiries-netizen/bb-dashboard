@@ -1210,7 +1210,6 @@
                 <div class="section-title">Issues by Job</div>
                 <p class="p11-section-hint">Sorted: Work Stopped · Safety · Issue count · Missing photos · Most recent</p>
                 <div id="p11-issues-by-job" class="p11-table-wrap">Loading...</div>
-                <div id="p11-evidence-panel" class="p11-evidence"></div>
               </div>
             </div>
 
@@ -1256,6 +1255,10 @@
                 <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
                 <div id="p11-variations-panel">Loading...</div>
               </div>
+            </div>
+
+            <div class="section-card p11-panel p11-evidence-section" id="p11-evidence-section">
+              <div id="p11-evidence-panel" class="p11-evidence"></div>
             </div>
 
           </div>
@@ -14156,12 +14159,15 @@
         }
       }
 
-      // ── Site Diary Evidence panel ──
+      // ── Site Diary Evidence panel (last section on P11) ──
       var evEl = document.getElementById('p11-evidence-panel');
+      var evSection = document.getElementById('p11-evidence-section');
       if (evEl) {
         if (!_p11LoadMeta.diariesOk || !entryCount) {
           evEl.innerHTML = '';
+          if (evSection) evSection.setAttribute('hidden', '');
         } else {
+          if (evSection) evSection.removeAttribute('hidden');
           var byPerson = {};
           diariesFiltered.forEach(function(r) {
             var p = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
