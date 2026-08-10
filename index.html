@@ -1211,11 +1211,6 @@
                     <p class="no-data-msg">No diary entries in selection.</p>
                   </div>
                 </div>
-                <div class="section-card p11-panel">
-                  <div class="section-title">Site Diary Exceptions</div>
-                  <p class="p11-section-hint" id="p11-exceptions-hint">Same issue definition as Issues / Blockers KPI · expand row for full detail</p>
-                  <div id="p11-exceptions-table" class="p11-table-wrap">Loading...</div>
-                </div>
               </div>
               <div class="p11-main-right">
                 <div class="section-card p11-panel">
@@ -1224,16 +1219,39 @@
                   <div id="p11-issues-by-job" class="p11-table-wrap">Loading...</div>
                   <div id="p11-evidence-panel" class="p11-evidence"></div>
                 </div>
-                <div class="section-card p11-panel" id="p11-variations-section">
-                  <div class="section-title">Variation Actions</div>
-                  <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
-                  <div id="p11-variations-panel">Loading...</div>
-                </div>
-                <details class="p11-drill" id="p11-full-log-drill">
-                  <summary>Site Diary Summary</summary>
-                  <div id="p11-full-log" class="p11-table-wrap p11-full-log"></div>
-                </details>
               </div>
+            </div>
+
+            <div class="section-card p11-panel p11-detail-tabs-panel" id="p11-detail-tabs-panel">
+              <div class="p11-tab-bar" role="tablist" aria-label="Diary detail views">
+                <button type="button" class="p11-tab is-active" role="tab" id="p11-tab-exceptions"
+                  aria-selected="true" aria-controls="p11-tabpanel-exceptions" data-p11-tab="exceptions">Exceptions</button>
+                <button type="button" class="p11-tab" role="tab" id="p11-tab-summary"
+                  aria-selected="false" aria-controls="p11-tabpanel-summary" data-p11-tab="summary">Full Summary</button>
+              </div>
+              <div class="p11-tab-panels">
+                <div class="p11-tab-panel is-active" role="tabpanel" id="p11-tabpanel-exceptions"
+                  aria-labelledby="p11-tab-exceptions" data-p11-tabpanel="exceptions">
+                  <p class="p11-section-hint" id="p11-exceptions-hint">Same issue definition as Issues / Blockers KPI · expand row for full detail</p>
+                  <div id="p11-exceptions-table" class="p11-table-wrap">Loading...</div>
+                </div>
+                <div class="p11-tab-panel" role="tabpanel" id="p11-tabpanel-summary" hidden
+                  aria-labelledby="p11-tab-summary" data-p11-tabpanel="summary">
+                  <p class="p11-section-hint" id="p11-summary-hint">Jobs and person-only entries in the current date range · select a job for day notes and photos</p>
+                  <div class="p11-summary-layout">
+                    <div class="p11-summary-list-wrap" id="p11-summary-list">Loading...</div>
+                    <div class="p11-summary-detail-wrap" id="p11-summary-detail">
+                      <p class="p11-summary-empty">Select a job or person entry to view diary notes.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card p11-panel" id="p11-variations-section">
+              <div class="section-title">Variation Actions</div>
+              <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
+              <div id="p11-variations-panel">Loading...</div>
             </div>
 
           </div>
@@ -12963,6 +12981,13 @@
     // ═══════════════════════════════════════════════════════════════
     var activeP11Dept = 'ALL';
     var activeP11Job = 'ALL';
+    /** Tab for Exceptions / Full Summary panel · preserved across re-renders and filter changes. */
+    var activeP11DetailTab = 'exceptions';
+    /** Selected job/person key on Full Summary list · preserved when data still contains it. */
+    var activeP11SummaryKey = '';
+    /** Full Summary groups keyed for detail panel. */
+    var _p11SummaryGroups = {};
+    var _p11SummaryTabBound = false;
     var _p11FiltersBound = false;
     var _p11LoadMeta = { defectsOk: false, variationsOk: false, diariesOk: false };
 
@@ -14237,57 +14262,238 @@
         }
       }
 
-      // Site Diary Summary (full entry table · drill-down, not primary overview)
-      var fullEl = document.getElementById('p11-full-log');
-      if (fullEl) {
-        if (!diariesFiltered.length) {
-          fullEl.innerHTML = emptyCard('No diary entries.');
-        } else {
-          var sortedAll = diariesFiltered.slice().sort(function(a, b) {
+      // ── Full Summary tab (list + day detail · same diariesFiltered filters) ──
+      function p11DiaryGroupKey(r) {
+        var jnRaw = diaryJobNo(r);
+        var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
+        if (jnRaw) return jnRaw;
+        return 'No job #|' + (jname || 'Unnamed');
+      }
+
+      function p11BuildSummaryGroups(rows) {
+        var map = {};
+        (rows || []).forEach(function(r) {
+          var key = p11DiaryGroupKey(r);
+          var jnRaw = diaryJobNo(r);
+          var jname = String(col(r, 'Job Name', 'job_name') || '').trim();
+          if (!map[key]) {
+            map[key] = {
+              key: key,
+              job: jnRaw || 'No job #',
+              name: jname || (jnRaw || 'Unnamed'),
+              isPersonOnly: !jnRaw,
+              workers: {},
+              entries: []
+            };
+          }
+          var g = map[key];
+          g.entries.push(r);
+          if (jname && (g.name === g.job || !g.name)) g.name = jname;
+          var w = String(col(r, 'Logged By', 'Logged by', 'logged_by') || '').trim();
+          if (w) g.workers[w] = true;
+        });
+        return Object.keys(map).map(function(k) {
+          var g = map[k];
+          g.workerList = Object.keys(g.workers).sort(function(a, b) {
+            return a.localeCompare(b);
+          });
+          g.entries.sort(function(a, b) {
             var da = parseFlexibleDate(col(a, 'Date', 'date'));
             var db = parseFlexibleDate(col(b, 'Date', 'date'));
             return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
           });
-          var fHtml = '<table class="data-table p11-table p11-summary-table"><thead><tr>' +
-            '<th>Date</th><th>Job</th><th>Issue / Blocker</th><th>Safety</th>' +
-            '<th>Work Stopped</th><th>Photo</th><th>Logged By</th></tr></thead><tbody>';
-          sortedAll.forEach(function(r, sIdx) {
-            var saf = safetyState(r);
-            var stop = workStoppedState(r);
-            var pho = photoState(r);
-            var sumLinks = photoLinks(r);
-            var phoFlagCls = flagClass(
-              pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)
-            );
-            // Column P URLs only (same lightbox as Exceptions). No PDF / col Q here.
-            var sumPhotoCell;
-            if (sumLinks.length) {
-              var sumKey = 'sum-' + sIdx;
-              _p11PhotoSets[sumKey] = sumLinks.slice();
-              var sumLabel = p11Esc(pho.label) +
-                (sumLinks.length ? (' · ' + sumLinks.length) : '');
-              sumPhotoCell = '<button type="button" class="p11-expand-btn p11-job-count-btn ' +
-                phoFlagCls + '" data-p11-photo-set="' + sumKey +
-                '" title="View ' + sumLinks.length + ' photo' +
-                (sumLinks.length === 1 ? '' : 's') + '">' +
-                sumLabel + '</button>';
-            } else {
-              sumPhotoCell = '<span class="' + phoFlagCls + '">' + p11Esc(pho.label) + '</span>';
-            }
-            fHtml += '<tr>' +
-              '<td>' + p11Esc(col(r, 'Date', 'date') || 'Not recorded') + '</td>' +
-              '<td>' + p11Esc(diaryJobNo(r) || 'No job #') + '</td>' +
-              '<td>' + p11Esc(issueCellLabel(r)) + '</td>' +
-              '<td>' + p11Esc(saf.label) + '</td>' +
-              '<td>' + p11Esc(stop.label) + '</td>' +
-              '<td class="p11-ex-col-photo">' + sumPhotoCell + '</td>' +
-              '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
-              '</tr>';
-          });
-          fHtml += '</tbody></table>';
-          fullEl.innerHTML = fHtml;
+          return g;
+        }).sort(function(a, b) {
+          if (a.isPersonOnly !== b.isPersonOnly) return a.isPersonOnly ? 1 : -1;
+          var an = (a.job + ' ' + a.name).toLowerCase();
+          var bn = (b.job + ' ' + b.name).toLowerCase();
+          return an.localeCompare(bn);
+        });
+      }
+
+      function p11RenderSummaryDetail(group) {
+        var detailEl = document.getElementById('p11-summary-detail');
+        if (!detailEl) return;
+        if (!group || !group.entries || !group.entries.length) {
+          detailEl.innerHTML = '<p class="p11-summary-empty">Select a job or person entry to view diary notes.</p>';
+          return;
+        }
+        var titleJob = group.isPersonOnly
+          ? ('No job # · ' + group.name)
+          : (group.job + (group.name && group.name !== group.job ? (' · ' + group.name) : ''));
+        var h = '<div class="p11-summary-detail-inner">';
+        h += '<div class="p11-summary-detail-head">';
+        h += '<div class="p11-summary-detail-title">' + p11Esc(titleJob) + '</div>';
+        if (group.workerList && group.workerList.length) {
+          h += '<div class="p11-summary-detail-workers">' + p11Esc(group.workerList.join(', ')) + '</div>';
+        }
+        h += '<div class="p11-summary-detail-count">' + group.entries.length + ' entr' +
+          (group.entries.length === 1 ? 'y' : 'ies') + ' in selection</div>';
+        h += '</div>';
+
+        group.entries.forEach(function(r, eIdx) {
+          var dRaw = col(r, 'Date', 'date') || 'Not recorded';
+          var dParsed = parseFlexibleDate(dRaw);
+          var dLabel = dParsed ? dParsed.toLocaleDateString('en-AU', {
+            weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+          }) : dRaw;
+          var work = col(r,
+            'Work Completed', 'work_completed', 'Work Description',
+            'Description of Work', 'Work completed'
+          );
+          var issues = diaryIssuesText(r);
+          var mats = col(r, 'Materials Used', 'materials_used');
+          var saf = safetyState(r);
+          var stop = workStoppedState(r);
+          var logged = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
+          var rowLinks = photoLinks(r);
+          var dayKey = 'sumday-' + group.key.replace(/[^a-zA-Z0-9_-]/g, '_') + '-' + eIdx;
+
+          h += '<article class="p11-summary-day">';
+          h += '<div class="p11-summary-day-date"><strong>' + p11Esc(dLabel) + '</strong>';
+          h += '<span class="p11-summary-day-by"> · ' + p11Esc(logged) + '</span></div>';
+
+          if (work && String(work).trim()) {
+            h += '<p class="p11-summary-day-body">' + p11Esc(String(work).trim()) + '</p>';
+          } else {
+            h += '<p class="p11-summary-day-body p11-gap-text">No work completed text recorded for this day.</p>';
+          }
+          if (issues && String(issues).trim() && hasIssueContent(r)) {
+            h += '<div class="p11-summary-day-meta"><span class="p11-summary-meta-label">Issues / blockers</span> ' +
+              p11Esc(String(issues).trim()) + '</div>';
+          }
+          if (mats && String(mats).trim()) {
+            h += '<div class="p11-summary-day-meta"><span class="p11-summary-meta-label">Materials</span> ' +
+              p11Esc(String(mats).trim()) + '</div>';
+          }
+          h += '<div class="p11-summary-day-flags">';
+          h += '<span>Safety: ' + p11Esc(saf.label) + '</span>';
+          h += '<span>Work stopped: ' + p11Esc(stop.label) + '</span>';
+          h += '</div>';
+          if (rowLinks.length) {
+            _p11PhotoSets[dayKey] = rowLinks.slice();
+            h += '<div class="p11-summary-day-photos">';
+            h += '<button type="button" class="p11-expand-btn p11-job-count-btn" data-p11-photo-set="' +
+              dayKey + '" title="View photos">Photos · ' + rowLinks.length + '</button>';
+            h += p11MediaLinksHtml(r);
+            h += '</div>';
+          } else {
+            h += '<div class="p11-summary-day-photos p11-gap-text">No photos attached</div>';
+          }
+          h += '</article>';
+        });
+        h += '</div>';
+        detailEl.innerHTML = h;
+      }
+
+      function p11BindSummaryTabsOnce() {
+        if (_p11SummaryTabBound) return;
+        var panel = document.getElementById('p11-detail-tabs-panel');
+        if (!panel) return;
+        _p11SummaryTabBound = true;
+        panel.addEventListener('click', function(ev) {
+          var tabBtn = ev.target && ev.target.closest
+            ? ev.target.closest('button[data-p11-tab]')
+            : null;
+          if (tabBtn && panel.contains(tabBtn)) {
+            var tab = tabBtn.getAttribute('data-p11-tab') || 'exceptions';
+            activeP11DetailTab = tab === 'summary' ? 'summary' : 'exceptions';
+            p11ApplyDetailTab();
+            return;
+          }
+          var listBtn = ev.target && ev.target.closest
+            ? ev.target.closest('button[data-p11-summary-key]')
+            : null;
+          if (listBtn && panel.contains(listBtn)) {
+            var rawKey = listBtn.getAttribute('data-p11-summary-key') || '';
+            try { activeP11SummaryKey = decodeURIComponent(rawKey); } catch (e) { activeP11SummaryKey = rawKey; }
+            panel.querySelectorAll('button[data-p11-summary-key]').forEach(function(b) {
+              b.classList.toggle('is-selected', b === listBtn);
+            });
+            p11RenderSummaryDetail(_p11SummaryGroups[activeP11SummaryKey]);
+          }
+        });
+      }
+
+      function p11ApplyDetailTab() {
+        var panel = document.getElementById('p11-detail-tabs-panel');
+        if (!panel) return;
+        var active = activeP11DetailTab === 'summary' ? 'summary' : 'exceptions';
+        panel.querySelectorAll('button[data-p11-tab]').forEach(function(btn) {
+          var on = (btn.getAttribute('data-p11-tab') || '') === active;
+          btn.classList.toggle('is-active', on);
+          btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        var exPanel = document.getElementById('p11-tabpanel-exceptions');
+        var sumPanel = document.getElementById('p11-tabpanel-summary');
+        if (exPanel) {
+          if (active === 'summary') exPanel.setAttribute('hidden', '');
+          else exPanel.removeAttribute('hidden');
+          exPanel.classList.toggle('is-active', active === 'exceptions');
+        }
+        if (sumPanel) {
+          if (active === 'summary') sumPanel.removeAttribute('hidden');
+          else sumPanel.setAttribute('hidden', '');
+          sumPanel.classList.toggle('is-active', active === 'summary');
         }
       }
+
+      p11BindSummaryTabsOnce();
+
+      var summaryGroups = p11BuildSummaryGroups(diariesFiltered);
+      _p11SummaryGroups = {};
+      summaryGroups.forEach(function(g) { _p11SummaryGroups[g.key] = g; });
+
+      var listEl = document.getElementById('p11-summary-list');
+      if (listEl) {
+        if (!summaryGroups.length) {
+          listEl.innerHTML = emptyCard(
+            _p11LoadMeta.diariesOk ? 'No diary entries in selection.' : 'Site diaries unavailable.'
+          );
+          p11RenderSummaryDetail(null);
+        } else {
+          if (!activeP11SummaryKey || !_p11SummaryGroups[activeP11SummaryKey]) {
+            activeP11SummaryKey = summaryGroups[0].key;
+          }
+          var lHtml = '<div class="p11-summary-list" role="list">';
+          summaryGroups.forEach(function(g) {
+            var workers = g.workerList.length
+              ? g.workerList.join(', ')
+              : 'Worker not recorded';
+            var selected = g.key === activeP11SummaryKey;
+            var nameLine = g.isPersonOnly
+              ? p11Esc(g.name)
+              : (g.name && g.name !== g.job ? p11Esc(g.name) : '');
+            lHtml += '<button type="button" class="p11-summary-row' +
+              (g.isPersonOnly ? ' p11-summary-row--person' : '') +
+              (selected ? ' is-selected' : '') +
+              '" role="listitem" data-p11-summary-key="' + encodeURIComponent(g.key) + '">' +
+              '<div class="p11-summary-row-main">' +
+              (g.isPersonOnly
+                ? '<span class="p11-summary-badge">Person-only</span>'
+                : '<span class="p11-summary-jobno">' + p11Esc(g.job) + '</span>') +
+              (nameLine ? '<span class="p11-summary-jobname">' + nameLine + '</span>' : '') +
+              '</div>' +
+              '<div class="p11-summary-row-meta">' +
+              '<span class="p11-summary-workers">' + p11Esc(workers) + '</span>' +
+              '<span class="p11-summary-count">' + g.entries.length + ' entr' +
+              (g.entries.length === 1 ? 'y' : 'ies') + '</span>' +
+              '</div></button>';
+          });
+          lHtml += '</div>';
+          listEl.innerHTML = lHtml;
+          p11RenderSummaryDetail(_p11SummaryGroups[activeP11SummaryKey]);
+        }
+      }
+
+      var sumHint = document.getElementById('p11-summary-hint');
+      if (sumHint) {
+        sumHint.textContent = summaryGroups.length + ' job/person group' +
+          (summaryGroups.length === 1 ? '' : 's') +
+          ' · driven by Date range, Brand, Department and Job filters above';
+      }
+
+      p11ApplyDetailTab();
 
       // ── Variation action cards ──
       var varEl = document.getElementById('p11-variations-panel');
