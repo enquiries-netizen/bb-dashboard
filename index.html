@@ -13051,7 +13051,7 @@
 
       if (page) {
         page.addEventListener('click', function(ev) {
-          // Exception table Photo counts → same lightbox as evidence thumbs
+          // Exception + Site Diary Summary Photo counts → same lightbox (column P URLs)
           var countBtn = ev.target && ev.target.closest
             ? ev.target.closest('button[data-p11-photo-set]')
             : null;
@@ -14075,19 +14075,12 @@
             return { name: k, n: byPerson[k].n, photos: byPerson[k].photos };
           }).sort(function(a, b) { return b.n - a.n; }).slice(0, 8);
 
-          var linkedEntries = diariesFiltered.filter(function(r) {
-            return photoLinks(r).length > 0 || diaryPdfUrl(r);
-          }).slice().sort(function(a, b) {
-            var da = parseFlexibleDate(col(a, 'Date', 'date'));
-            var db = parseFlexibleDate(col(b, 'Date', 'date'));
-            return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
-          });
           var linkCount = 0;
           diariesFiltered.forEach(function(r) { linkCount += photoLinks(r).length; });
 
           var ev = '<div class="p11-evidence-inner">' +
             '<div class="p11-evidence-title">Site Diary Evidence</div>' +
-            '<p class="p11-section-hint">Evidence completeness · not a quality score · Photo Links from column P</p>' +
+            '<p class="p11-section-hint">Evidence completeness · not a quality score · open photos from the Exceptions Photo count</p>' +
             '<div class="p11-evidence-stats">' +
             '<span>' + photoYes + ' with photos</span>' +
             '<span>' + noPhotoCount + ' without photos</span>' +
@@ -14111,27 +14104,6 @@
               ev += '<li>' + p11Esc(p.name) + ': ' + p.photos + '/' + p.n + ' photos (' + pc + '%)</li>';
             });
             ev += '</ul></div>';
-          }
-          // Clickable links per recent diary that has Photo Links / PDF
-          if (linkedEntries.length) {
-            ev += '<div class="p11-evidence-links">';
-            ev += '<span class="p11-evidence-sub">Recent entries with photo / PDF links</span>';
-            linkedEntries.slice(0, 12).forEach(function(r) {
-              var jn = diaryJobNo(r) || 'No job #';
-              var dLabel = col(r, 'Date', 'date') || 'Not recorded';
-              ev += '<div class="p11-ev-entry">' +
-                '<div class="p11-ev-entry-head">' + p11Esc(jn) + ' · ' + p11Esc(dLabel) + '</div>' +
-                p11MediaLinksHtml(r) +
-                '</div>';
-            });
-            if (linkedEntries.length > 12) {
-              ev += '<p class="p11-section-hint">Showing 12 of ' + linkedEntries.length +
-                ' entries with links · expand exception/job drawers for the rest.</p>';
-            }
-            ev += '</div>';
-          } else {
-            ev += '<p class="p11-section-hint">No Photo Links URLs in the current filter. ' +
-              'If Y/N says Yes but no links, check column P export.</p>';
           }
           ev += '</div>';
           evEl.innerHTML = ev;
@@ -14186,9 +14158,7 @@
             var pho = photoState(r);
             var rowPhotoLinks = photoLinks(r);
             var issueTxt = issueCellLabel(r);
-            var issueCls = hasIssueContent(r) ? '' : 'p11-gap-text';
-            // Truncate long issue in compact cell
-            var issueShort = issueTxt.length > 90 ? issueTxt.slice(0, 90) + '...' : issueTxt;
+            var issueCls = (hasIssueContent(r) ? '' : 'p11-gap-text ') + 'p11-issue-cell';
             var drawerId = 'p11-ex-' + idx;
             var photoFlagCls = flagClass(
               pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)
@@ -14214,12 +14184,12 @@
               '" aria-expanded="false" aria-controls="' + drawerId + '">+</button></td>' +
               '<td>' + p11Esc(col(r, 'Date', 'date') || 'Not recorded') + '</td>' +
               '<td>' + p11Esc(diaryJobNo(r) || 'No job #') + '</td>' +
-              '<td class="' + issueCls + '">' + p11Esc(issueShort) + '</td>' +
-              '<td><span class="' + flagClass(saf.code) + '">' + p11Esc(saf.label) + '</span></td>' +
-              '<td><span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
+              '<td class="p11-ex-col-issue"><div class="' + issueCls.trim() + '">' + p11Esc(issueTxt) + '</div></td>' +
+              '<td class="p11-ex-col-flag"><span class="' + flagClass(saf.code) + '">' + p11Esc(saf.label) + '</span></td>' +
+              '<td class="p11-ex-col-flag"><span class="' + flagClass(stop.code === 'yes' ? 'yes' : (stop.code === 'no' ? 'neutral' : stop.code)) + '">' +
                 p11Esc(stop.label) + '</span></td>' +
-              '<td>' + photoCell + '</td>' +
-              '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
+              '<td class="p11-ex-col-photo">' + photoCell + '</td>' +
+              '<td class="p11-ex-col-person">' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
               '</tr>' +
               '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
               '<td colspan="8">' +
@@ -14278,20 +14248,39 @@
             var db = parseFlexibleDate(col(b, 'Date', 'date'));
             return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
           });
-          var fHtml = '<table class="data-table p11-table"><thead><tr>' +
+          var fHtml = '<table class="data-table p11-table p11-summary-table"><thead><tr>' +
             '<th>Date</th><th>Job</th><th>Issue / Blocker</th><th>Safety</th>' +
             '<th>Work Stopped</th><th>Photo</th><th>Logged By</th></tr></thead><tbody>';
-          sortedAll.forEach(function(r) {
+          sortedAll.forEach(function(r, sIdx) {
             var saf = safetyState(r);
             var stop = workStoppedState(r);
             var pho = photoState(r);
+            var sumLinks = photoLinks(r);
+            var phoFlagCls = flagClass(
+              pho.code === 'yes' ? 'neutral' : (pho.code === 'no' ? 'watch' : pho.code)
+            );
+            // Column P URLs only (same lightbox as Exceptions). No PDF / col Q here.
+            var sumPhotoCell;
+            if (sumLinks.length) {
+              var sumKey = 'sum-' + sIdx;
+              _p11PhotoSets[sumKey] = sumLinks.slice();
+              var sumLabel = p11Esc(pho.label) +
+                (sumLinks.length ? (' · ' + sumLinks.length) : '');
+              sumPhotoCell = '<button type="button" class="p11-expand-btn p11-job-count-btn ' +
+                phoFlagCls + '" data-p11-photo-set="' + sumKey +
+                '" title="View ' + sumLinks.length + ' photo' +
+                (sumLinks.length === 1 ? '' : 's') + '">' +
+                sumLabel + '</button>';
+            } else {
+              sumPhotoCell = '<span class="' + phoFlagCls + '">' + p11Esc(pho.label) + '</span>';
+            }
             fHtml += '<tr>' +
               '<td>' + p11Esc(col(r, 'Date', 'date') || 'Not recorded') + '</td>' +
               '<td>' + p11Esc(diaryJobNo(r) || 'No job #') + '</td>' +
               '<td>' + p11Esc(issueCellLabel(r)) + '</td>' +
               '<td>' + p11Esc(saf.label) + '</td>' +
               '<td>' + p11Esc(stop.label) + '</td>' +
-              '<td>' + p11Esc(pho.label) + '</td>' +
+              '<td class="p11-ex-col-photo">' + sumPhotoCell + '</td>' +
               '<td>' + p11Esc(col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded') + '</td>' +
               '</tr>';
           });

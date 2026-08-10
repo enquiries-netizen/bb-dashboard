@@ -6628,13 +6628,105 @@ p.p8-section-hint {
 #page-p11 .p11-table td {
   padding: 8px 8px;
   vertical-align: top;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
   border-bottom: 1px solid var(--p11-border, #E2E4E8);
 }
 /* Body cells may still clip long content; headers must never truncate */
 #page-p11 .p11-table td {
   overflow: hidden;
+}
+
+/* Site Diary Exceptions: readable columns, no mid-word ladder wrap */
+#page-p11 #p11-exceptions-table .p11-exceptions {
+  min-width: 1000px;
+  table-layout: fixed;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th,
+#page-p11 #p11-exceptions-table .p11-exceptions td {
+  padding: 11px 10px;
+  vertical-align: middle;
+  overflow-wrap: normal;
+  word-break: normal;
+  word-wrap: normal;
+  hyphens: none;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(1),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(1) {
+  width: 2.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(2),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(2) {
+  width: 5.75rem;
+  white-space: nowrap;
+  text-align: left;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(3),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(3) {
+  width: 4.75rem;
+  white-space: nowrap;
+  text-align: left;
+}
+/* Issue / Blocker: primary text column, 2-line clamp in collapsed row */
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(4),
+#page-p11 #p11-exceptions-table .p11-exceptions td.p11-ex-col-issue {
+  width: auto;
+  min-width: 16rem;
+  text-align: left;
+  vertical-align: top;
+  overflow: hidden;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions .p11-issue-cell {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.4;
+  max-height: 2.8em;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(5),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(5) {
+  width: 8.5rem;
+  min-width: 7.5rem;
+  white-space: nowrap;
+  text-align: left;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(6),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(6) {
+  width: 7.25rem;
+  min-width: 6.5rem;
+  white-space: nowrap;
+  text-align: left;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(7),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(7) {
+  width: 5.5rem;
+  min-width: 5rem;
+  white-space: nowrap;
+  text-align: center;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions th:nth-child(8),
+#page-p11 #p11-exceptions-table .p11-exceptions td:nth-child(8) {
+  width: 7.5rem;
+  min-width: 6.5rem;
+  white-space: nowrap;
+  text-align: left;
+}
+#page-p11 #p11-exceptions-table .p11-exceptions td.p11-ex-col-flag,
+#page-p11 #p11-exceptions-table .p11-exceptions td.p11-ex-col-photo,
+#page-p11 #p11-exceptions-table .p11-exceptions td.p11-ex-col-person {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #page-p11 .p11-table th {
   font-size: 10px;
@@ -7083,24 +7175,6 @@ body.p11-lightbox-open {
   }
 }
 
-#page-p11 .p11-evidence-links {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-#page-p11 .p11-ev-entry {
-  border: 1px solid var(--p11-border, #E2E4E8);
-  border-radius: 4px;
-  padding: 8px 10px;
-  background: #fff;
-}
-#page-p11 .p11-ev-entry-head {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--p11-text, #111827);
-  margin-bottom: 4px;
-}
 #page-p11 .p11-ex-row--accent td:first-child {
   box-shadow: inset 3px 0 0 var(--p11-accent, #EA580C);
 }
