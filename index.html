@@ -1257,13 +1257,13 @@
 
         <!-- ─── P12: Site Diaries (crew-only summary / endorsement) ─── -->
         <!--
-          STAFF ACCESS (temporary, reversible):
-          P12 uses a lightweight client gate (CONFIG.P12_STAFF_GATE + sessionStorage).
-          NOT enterprise auth. Separate purpose from P1–P11 management dashboards.
-          Lori/Ben must confirm production mechanism (per-person vs shared staff login)
-          before go-live. Apprentices without BB email may not have access until decided.
-          When unlocked: condenses Buildpass_Site Diaries + Variation description/status
-          only (never $). Do not merge UI with P11 quality exceptions dashboard.
+          STAFF ACCESS (temporary shared pass via CONFIG.P12_STAFF_GATE):
+          Unlock sets sessionStorage flag + access scope p12_only.
+          showPage / loadCurrentPage / management loaders enforce P12 only
+          (nav hide is cosmetic; route level blocks P1–P11).
+          Production BB-email staff auth must set the same scope.
+          Condenses Buildpass_Site Diaries + Variation description/status only (never $).
+          Week selector is local to P12 (not global Month/Year).
         -->
         <section id="page-p12" class="page">
           <div class="p12-layout">
@@ -1286,6 +1286,7 @@
                 </p>
                 <p class="p12-gate-copy p12-gate-note">
                   Temporary shared pass lives in <code>CONFIG.P12_STAFF_GATE</code>.
+                  An unlocked staff session is limited to this page only.
                   Apprentices without BB email may need access decided separately.
                 </p>
                 <form id="p12-unlock-form" class="p12-unlock-form" autocomplete="off">
@@ -1300,8 +1301,10 @@
             <div id="p12-content" class="p12-content" hidden>
               <div class="p12-filters">
                 <div class="filter-group p12-filter">
-                  <span class="filter-label">Period</span>
-                  <span class="p12-range-label" id="p12-date-range">Global Month / Year</span>
+                  <span class="filter-label">Week</span>
+                  <select class="filter-select page-filter-select p12-select" id="p12-week-select" aria-label="Week">
+                    <option value="">Loading weeks...</option>
+                  </select>
                 </div>
                 <div class="filter-group p12-filter">
                   <span class="filter-label">Brand</span>
@@ -1841,6 +1844,10 @@
     var pages    = document.querySelectorAll('.page');
 
     function showPage(pageId) {
+      // Staff (P12-only) sessions: route-level block, not just sidebar hide
+      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && pageId !== 'p12') {
+        pageId = 'p12';
+      }
       pages.forEach(function(p) { p.classList.remove('active'); });
       navItems.forEach(function(n) { n.classList.remove('active'); });
       var page = document.getElementById('page-' + pageId);
@@ -1848,11 +1855,19 @@
       if (page) page.classList.add('active');
       if (nav)  nav.classList.add('active');
       if (typeof setBbAiVisibleForPage === 'function') setBbAiVisibleForPage(pageId);
+      if (typeof p12SyncAccessChrome === 'function') p12SyncAccessChrome();
     }
 
     navItems.forEach(function(item) {
       item.addEventListener('click', function() {
-        showPage(item.dataset.page);
+        var target = item.dataset.page;
+        if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && target !== 'p12') {
+          // Route-level block: crew may not enter management pages
+          showPage('p12');
+          loadP12();
+          return;
+        }
+        showPage(target);
         loadCurrentPage();
         init3DTilt();
       });
@@ -2367,9 +2382,21 @@
       var active = document.querySelector('.nav-item.active');
       if (!active) return;
       var pageId = active.dataset.page;
+      // P12-only staff: never load management pages (P1–P11)
+      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess()) {
+        if (pageId !== 'p12') {
+          showPage('p12');
+          pageId = 'p12';
+        }
+      }
       var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12 };
       var placeholders = {};
       var fn = loaders[pageId];
+      // Belt and braces: refuse management loaders under p12_only
+      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && pageId !== 'p12') {
+        fn = loadP12;
+        pageId = 'p12';
+      }
       if (fn) {
         fn();
       } else if (placeholders[pageId]) {
@@ -14068,18 +14095,27 @@
     // P12 — SITE DIARIES (crew handoff · staff-gated)
     // Sources: Buildpass_Site Diaries · Variations_Log (description/status only)
     // Never dollar values. Not merged with P11 quality dashboard.
-    // Auth: temporary CONFIG.P12_STAFF_GATE + sessionStorage — Lori/Ben to confirm
-    //   production mechanism (per-person vs shared) before go-live.
+    // Auth: CONFIG.P12_STAFF_GATE unlock sets access scope p12_only (blocks P1–P11).
+    // Production BB-email staff must set the same scope. ADMIN confirms login method.
     // ═══════════════════════════════════════════════════════════════
     var activeP12Job = 'ALL';
     var activeP12Person = 'ALL';
+    /** ISO week key YYYY-Www; null = default to current week on first render */
+    var activeP12WeekKey = null;
     var _p12FiltersBound = false;
     var _p12GateBound = false;
     var _p12MemUnlocked = false;
+    var _p12MemScope = null;
     var _p12LoadMeta = { diariesOk: false, variationsOk: false };
     var P12_GATE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.sessionKey)
       ? CONFIG.P12_STAFF_GATE.sessionKey
       : 'bb_p12_staff_unlock';
+    var P12_SCOPE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.scopeKey)
+      ? CONFIG.P12_STAFF_GATE.scopeKey
+      : 'bb_access_scope';
+    var P12_STAFF_SCOPE = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.staffScope)
+      ? CONFIG.P12_STAFF_GATE.staffScope
+      : 'p12_only';
 
     function p12IsUnlocked() {
       if (_p12MemUnlocked) return true;
@@ -14090,12 +14126,102 @@
       }
     }
 
-    function p12SetUnlocked(on) {
-      _p12MemUnlocked = !!on;
+    function p12IsP12OnlyAccess() {
+      if (_p12MemScope === P12_STAFF_SCOPE) return true;
       try {
-        if (on) sessionStorage.setItem(P12_GATE_SESSION_KEY, '1');
-        else sessionStorage.removeItem(P12_GATE_SESSION_KEY);
-      } catch (e) { /* private mode: memory flag still holds for this tab */ }
+        return sessionStorage.getItem(P12_SCOPE_SESSION_KEY) === P12_STAFF_SCOPE;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function p12EnterStaffSession() {
+      _p12MemUnlocked = true;
+      _p12MemScope = P12_STAFF_SCOPE;
+      try {
+        sessionStorage.setItem(P12_GATE_SESSION_KEY, '1');
+        sessionStorage.setItem(P12_SCOPE_SESSION_KEY, P12_STAFF_SCOPE);
+      } catch (e) { /* private mode */ }
+      p12SyncAccessChrome();
+    }
+
+    function p12ExitStaffSession() {
+      _p12MemUnlocked = false;
+      _p12MemScope = null;
+      try {
+        sessionStorage.removeItem(P12_GATE_SESSION_KEY);
+        sessionStorage.removeItem(P12_SCOPE_SESSION_KEY);
+      } catch (e) { /* private mode */ }
+      p12SyncAccessChrome();
+    }
+
+    function p12SetUnlocked(on) {
+      if (on) p12EnterStaffSession();
+      else p12ExitStaffSession();
+    }
+
+    function p12SyncAccessChrome() {
+      var only = p12IsP12OnlyAccess();
+      document.body.classList.toggle('p12-only-access', !!only);
+      document.querySelectorAll('.nav-item').forEach(function(li) {
+        var pg = li.getAttribute('data-page') || '';
+        if (only && pg && pg !== 'p12') {
+          li.setAttribute('aria-hidden', 'true');
+          li.setAttribute('tabindex', '-1');
+        } else {
+          li.removeAttribute('aria-hidden');
+          li.removeAttribute('tabindex');
+        }
+      });
+      // Hide global Month/Year for crew (P12 has its own week selector). Leave Brand.
+      ['month-select', 'year-select'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var group = el.closest('.filter-group');
+        if (group) {
+          if (only) group.classList.add('p12-hide-for-staff');
+          else group.classList.remove('p12-hide-for-staff');
+        }
+      });
+    }
+
+    function p12MondayOf(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var day = x.getDay();
+      var diff = day === 0 ? -6 : 1 - day;
+      x.setDate(x.getDate() + diff);
+      x.setHours(0, 0, 0, 0);
+      return x;
+    }
+
+    function p12CurrentWeekKey() {
+      return isoWeekKey(p12MondayOf(new Date())) || isoWeekKey(new Date());
+    }
+
+    function p12WeekKeyFromDate(d) {
+      var mon = p12MondayOf(d);
+      return mon ? isoWeekKey(mon) : null;
+    }
+
+    function p12WeekLabelFromKey(weekKey) {
+      if (!weekKey) return 'Week';
+      var parts = String(weekKey).match(/^(\d{4})-W(\d{1,2})$/i);
+      if (!parts) return String(weekKey);
+      var y = parseInt(parts[1], 10);
+      var w = parseInt(parts[2], 10);
+      var mon = (typeof p8WeekMonday === 'function')
+        ? p8WeekMonday(y, w)
+        : (function() {
+            var simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
+            return p12MondayOf(new Date(simple.getUTCFullYear(), simple.getUTCMonth(), simple.getUTCDate()));
+          })();
+      if (!mon || isNaN(mon.getTime())) return String(weekKey);
+      var sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      var left = mon.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+      var right = sun.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      return left + ' – ' + right + ' · ' + weekKey;
     }
 
     function p12JobPrefix(val) {
@@ -14138,9 +14264,10 @@
             : '';
           var given = input ? String(input.value || '') : '';
           if (expected && given === expected) {
-            p12SetUnlocked(true);
+            p12EnterStaffSession();
             if (errEl) errEl.setAttribute('hidden', '');
             if (input) input.value = '';
+            showPage('p12');
             loadP12();
           } else {
             if (errEl) errEl.removeAttribute('hidden');
@@ -14149,24 +14276,25 @@
       }
       if (lockBtn) {
         lockBtn.addEventListener('click', function() {
-          p12SetUnlocked(false);
+          p12ExitStaffSession();
           window._p12Diaries = null;
           window._p12Variations = null;
           p12ShowGate(true);
-          // P12: no BB AI context
+          showPage('p12');
         });
       }
     }
 
     async function loadP12() {
       p12BindGateOnce();
+      p12SyncAccessChrome();
       setBbAiVisibleForPage('p12');
       if (!p12IsUnlocked()) {
         p12ShowGate(true);
         showLoading(false);
-        // P12: no BB AI context
         return;
       }
+      if (!p12IsP12OnlyAccess()) p12EnterStaffSession();
       p12ShowGate(false);
       showLoading(true);
       removeError('p12');
@@ -14204,8 +14332,23 @@
           .replace(/"/g, '&quot;');
       }
 
-      function applyGlobal(rows) {
-        return filterByMonths(filterByYear(filterByBrand(rows || [], activeBrand), activeYear), activeMonths);
+      function diaryDate(r) {
+        return parseFlexibleDate(col(r, 'Date', 'date', 'Diary Date', 'Entry Date', 'Work Date'));
+      }
+
+      function variationDate(r) {
+        return parseFlexibleDate(col(r, 'Date Raised', 'date_raised', 'Date', 'date'));
+      }
+
+      // Brand only — week filter is local to P12 (not global Month/Year)
+      function applyBrand(rows) {
+        return filterByBrand(rows || [], activeBrand);
+      }
+
+      function inSelectedWeek(d) {
+        if (!d || isNaN(d.getTime())) return true; // undated stays visible for crew
+        var key = p12WeekKeyFromDate(d);
+        return key === activeP12WeekKey;
       }
 
       function diaryJobNo(r) {
@@ -14364,18 +14507,58 @@
         return 'p12-chip';
       }
 
-      var brandedDiaries = applyGlobal(window._p12Diaries);
-      var brandedVariations = applyGlobal(window._p12Variations);
+      // Default week = current ISO week
+      if (!activeP12WeekKey) activeP12WeekKey = p12CurrentWeekKey();
 
-      // Header echo
-      var rangeEl = document.getElementById('p12-date-range');
-      if (rangeEl) {
-        var mLabel = (!activeMonths || !activeMonths.length)
-          ? 'All months'
-          : (activeMonths.length === 1 ? activeMonths[0] : activeMonths.join(', '));
-        var yLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
-        rangeEl.textContent = mLabel + ' · ' + yLabel;
+      var brandAllDiaries = applyBrand(window._p12Diaries);
+      var brandAllVariations = applyBrand(window._p12Variations);
+
+      // Week options: rolling 16 weeks + any week present in branded diary data
+      var weekKeySet = {};
+      var curWk = p12CurrentWeekKey();
+      for (var wi = 0; wi < 16; wi++) {
+        var dProbe = new Date();
+        dProbe.setDate(dProbe.getDate() - wi * 7);
+        var wk = p12WeekKeyFromDate(dProbe);
+        if (wk) weekKeySet[wk] = true;
       }
+      brandAllDiaries.forEach(function(r) {
+        var dk = p12WeekKeyFromDate(diaryDate(r));
+        if (dk) weekKeySet[dk] = true;
+      });
+      if (curWk) weekKeySet[curWk] = true;
+      if (activeP12WeekKey) weekKeySet[activeP12WeekKey] = true;
+      var weekKeys = Object.keys(weekKeySet).sort().reverse();
+
+      var weekSelect = document.getElementById('p12-week-select');
+      if (weekSelect) {
+        var prevW = activeP12WeekKey;
+        weekSelect.innerHTML = '';
+        weekKeys.forEach(function(wk) {
+          var opt = document.createElement('option');
+          opt.value = wk;
+          opt.textContent = p12WeekLabelFromKey(wk) + (wk === curWk ? ' (this week)' : '');
+          weekSelect.appendChild(opt);
+        });
+        if (prevW && weekKeySet[prevW]) {
+          activeP12WeekKey = prevW;
+          weekSelect.value = prevW;
+        } else if (curWk && weekKeySet[curWk]) {
+          activeP12WeekKey = curWk;
+          weekSelect.value = curWk;
+        } else if (weekKeys.length) {
+          activeP12WeekKey = weekKeys[0];
+          weekSelect.value = weekKeys[0];
+        }
+      }
+
+      var brandedDiaries = brandAllDiaries.filter(function(r) {
+        return inSelectedWeek(diaryDate(r));
+      });
+      var brandedVariations = brandAllVariations.filter(function(r) {
+        return inSelectedWeek(variationDate(r));
+      });
+
       var brandEl = document.getElementById('p12-brand-label');
       if (brandEl) brandEl.textContent = activeBrand || 'ALL';
       var updEl = document.getElementById('p12-last-updated');
@@ -14441,6 +14624,12 @@
 
       if (!_p12FiltersBound) {
         _p12FiltersBound = true;
+        if (weekSelect) {
+          weekSelect.addEventListener('change', function() {
+            activeP12WeekKey = this.value || p12CurrentWeekKey();
+            renderP12(window._p12Diaries, window._p12Variations);
+          });
+        }
         if (jobSelect) {
           jobSelect.addEventListener('change', function() {
             activeP12Job = this.value || 'ALL';
@@ -19033,7 +19222,12 @@
     // INITIALISE
     // ═══════════════════════════════════════════════════════════
     init3DTilt();
-    loadP1();
+    if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess()) {
+      showPage('p12');
+      loadP12();
+    } else {
+      loadP1();
+    }
 
   </script>
 

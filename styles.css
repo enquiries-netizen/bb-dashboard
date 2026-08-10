@@ -8109,6 +8109,19 @@ p.p8-section-hint {
    Brand feel via root charcoal / silver / status accents.
    NOT a p*-test-palette (orange) page.
 =============================================================== */
+
+/* Staff p12_only session: hide management nav + period chrome (hide ≠ full block;
+   loaders/showPage still enforce P12 only) */
+body.p12-only-access .nav-item:not([data-page="p12"]) {
+  display: none !important;
+}
+body.p12-only-access .sidebar-section-label {
+  visibility: hidden;
+}
+body.p12-only-access .filter-group.p12-hide-for-staff {
+  display: none !important;
+}
+
 #page-p12 {
   --p12-accent: #3d6b5a;
   --p12-accent-soft: rgba(61, 107, 90, 0.12);

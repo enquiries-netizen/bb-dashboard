@@ -68,12 +68,18 @@ const CONFIG = {
 
   // ─── P12 staff unlock (crew Site Diaries only) ─────────────
   // Practical reversible local gate — NOT production enterprise auth.
-  // Lori/Ben must confirm before go-live: per-person BB email login
-  // vs shared staff pass (and whether apprentices without BB email get access).
-  // sessionStorage flag is set only for the browser tab/session after unlock.
+  // When unlocked, access scope is p12_only: route/page loaders block P1–P11
+  // (not sidebar hide alone). Production BB-email staff logins must set the
+  // same scopeKey to 'p12_only' (or call the same enter helpers) so crew
+  // accounts never see management pages, even by direct showPage/load calls.
+  // ADMIN must confirm: per-person BB email vs shared pass before go-live.
   P12_STAFF_GATE: {
     sessionKey: 'bb_p12_staff_unlock',
-    // Change freely; temporary shared crew unlock for local/Lori review.
+    /** sessionStorage key for access scope after staff auth */
+    scopeKey: 'bb_access_scope',
+    /** value stored when staff session is active */
+    staffScope: 'p12_only',
+    // Change freely; temporary shared crew unlock for local review.
     pass: 'bbcrew'
   }
 
