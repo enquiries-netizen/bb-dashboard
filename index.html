@@ -1321,7 +1321,23 @@
 
               <div class="p12-section-card p12-meli" id="p12-meli">
                 <div class="section-title">Meli&rsquo;s weekly record</div>
-                <p class="p12-section-hint">Pending · awaiting BuildPass data source</p>
+                <p class="p12-section-hint" id="p12-meli-hint">From Buildpass_Site Diaries · Job Name &ldquo;Meli&rsquo;s Record Keeping&rdquo;</p>
+                <div id="p12-meli-feed" class="p12-meli-feed">Unlock to load…</div>
+              </div>
+
+              <!-- P12 site diary PDF preview (no page counter without PDF.js) -->
+              <div id="p12-pdf-lightbox" class="p12-pdf-lightbox" hidden role="dialog" aria-modal="true" aria-label="Site diary PDF">
+                <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
+                <div class="p12-pdf-shell">
+                  <button type="button" class="p12-pdf-close" data-p12-pdf-close aria-label="Close PDF viewer">&times;</button>
+                  <div class="p12-pdf-stage">
+                    <iframe id="p12-pdf-frame" class="p12-pdf-frame" title="Site diary PDF" loading="lazy"></iframe>
+                  </div>
+                  <div class="p12-pdf-footer">
+                    <a id="p12-pdf-open-tab" class="p12-pdf-open-tab" href="#" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+                    <span class="p12-pdf-note">Page slider needs PDF.js (not loaded)</span>
+                  </div>
+                </div>
               </div>
 
               <div class="p12-section-card">
@@ -1368,7 +1384,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew-only handoff). Staff-gated. No Ask BB on this page. Emily summary line per entry: Job#, Job name, person, then Summary text (or Summary not yet available until ChatGPT). Full Issues/Blockers free text and Safety free text (never bare counts). Photo links from Google Drive Photo Links / Photo Links / Buildpass Photo URLs and Site Diary PDF when present. Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record Pending. Not merged with P11 quality dashboard. No Gantt, no charts, no financials.'
+      P12: 'Site Diaries (crew-only handoff). Staff-gated. No Ask BB on this page. Emily summary line per entry: Job#, Job name, person, then Summary text (or Summary not yet available until ChatGPT). Issues/Blockers and Safety chips expand inline to free-text detail. Site Diary PDF link (or No PDF attached); full page-sliding PDF viewer needs PDF.js approval. Variations description+status only NEVER dollar values. Entries without job # stay. Meli weekly record from Job Name Meli\'s Record Keeping for selected week. Not merged with P11 quality dashboard. No Gantt, no charts, no financials.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -14422,6 +14438,7 @@
     var activeP12WeekKey = null;
     var _p12FiltersBound = false;
     var _p12GateBound = false;
+    var _p12UiBound = false;
     var _p12MemUnlocked = false;
     var _p12MemScope = null;
     var _p12LoadMeta = { diariesOk: false, variationsOk: false };
@@ -14434,6 +14451,87 @@
     var P12_STAFF_SCOPE = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.staffScope)
       ? CONFIG.P12_STAFF_GATE.staffScope
       : 'p12_only';
+
+    function p12ClosePdfViewer() {
+      var lb = document.getElementById('p12-pdf-lightbox');
+      var frame = document.getElementById('p12-pdf-frame');
+      var openTab = document.getElementById('p12-pdf-open-tab');
+      if (frame) frame.removeAttribute('src');
+      if (openTab) openTab.setAttribute('href', '#');
+      if (lb) lb.setAttribute('hidden', '');
+    }
+
+    function p12OpenPdfViewer(url) {
+      var safe = String(url || '').trim();
+      if (!safe || !/^https?:\/\//i.test(safe)) return;
+      var lb = document.getElementById('p12-pdf-lightbox');
+      var frame = document.getElementById('p12-pdf-frame');
+      var openTab = document.getElementById('p12-pdf-open-tab');
+      if (openTab) {
+        openTab.setAttribute('href', safe);
+      }
+      if (frame) {
+        // Embed URL when browser can render PDF; always keep new-tab fallback
+        frame.setAttribute('src', safe);
+      }
+      if (lb) lb.removeAttribute('hidden');
+    }
+
+    /** One-time click handlers for P12 expand chips + PDF lightbox (delegation). */
+    function p12BindUiOnce() {
+      if (_p12UiBound) return;
+      _p12UiBound = true;
+      var content = document.getElementById('p12-content');
+      if (content) {
+        content.addEventListener('click', function(ev) {
+          var revealBtn = ev.target.closest('[data-p12-reveal]');
+          if (revealBtn) {
+            ev.preventDefault();
+            var panelId = revealBtn.getAttribute('aria-controls');
+            var panel = panelId ? document.getElementById(panelId) : null;
+            if (!panel) return;
+            var open = panel.hasAttribute('hidden');
+            // Close sibling reveals in the same entry
+            var entry = revealBtn.closest('.p12-entry');
+            if (entry) {
+              entry.querySelectorAll('.p12-reveal-panel').forEach(function(p) {
+                p.setAttribute('hidden', '');
+              });
+              entry.querySelectorAll('[data-p12-reveal]').forEach(function(b) {
+                b.setAttribute('aria-expanded', 'false');
+                b.classList.remove('is-open');
+              });
+            }
+            if (open) {
+              panel.removeAttribute('hidden');
+              revealBtn.setAttribute('aria-expanded', 'true');
+              revealBtn.classList.add('is-open');
+            }
+            return;
+          }
+          var pdfBtn = ev.target.closest('[data-p12-pdf-open]');
+          if (pdfBtn) {
+            ev.preventDefault();
+            var pdfUrl = pdfBtn.getAttribute('data-p12-pdf-open') || pdfBtn.getAttribute('href') || '';
+            p12OpenPdfViewer(pdfUrl);
+          }
+        });
+      }
+      var lb = document.getElementById('p12-pdf-lightbox');
+      if (lb) {
+        lb.addEventListener('click', function(ev) {
+          if (ev.target.closest('[data-p12-pdf-close]')) {
+            p12ClosePdfViewer();
+          }
+        });
+        document.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Escape') {
+            var root = document.getElementById('p12-pdf-lightbox');
+            if (root && !root.hasAttribute('hidden')) p12ClosePdfViewer();
+          }
+        });
+      }
+    }
 
     function p12RestrictNavEnabled() {
       return !!(CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.restrictNavToP12 === true);
@@ -14627,6 +14725,7 @@
 
     async function loadP12() {
       p12BindGateOnce();
+      p12BindUiOnce();
       p12SyncAccessChrome();
       setBbAiVisibleForPage('p12');
       if (!p12IsUnlocked()) {
@@ -14843,38 +14942,31 @@
       }
 
       function photoState(r) {
-        var links = photoLinks(r);
+        // P12 media is Site Diary PDF first — not raw Photo Links for browsing
         var pdf = diaryPdfUrl(r);
-        if (links.length || pdf) {
-          return {
-            code: 'yes',
-            label: 'Yes',
-            hasPhoto: true,
-            linkCount: links.length + (pdf ? 1 : 0)
-          };
+        if (pdf) {
+          return { code: 'yes', label: 'PDF attached', hasPhoto: true, hasPdf: true };
         }
         var keyProbe = resolveRowKey(r, [
           'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
         ]);
-        if (keyProbe === null) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        if (keyProbe === null) return { code: 'missing', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
         var val = String(rawColByNames(r, [
           'Photos Attached (Y/N)', 'Photos Attached', 'Photos', 'photos', 'Has Photos'
         ]) || '').trim();
-        if (!val) return { code: 'missing', label: 'Not recorded', hasPhoto: false };
+        if (!val) return { code: 'missing', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
         var s = val.toLowerCase();
         if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-          return { code: 'yes', label: 'Yes', hasPhoto: true };
+          // Photos flagged Yes but no Site Diary PDF URL yet
+          return { code: 'yes', label: 'No PDF attached', hasPhoto: true, hasPdf: false };
         }
         if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
-          return { code: 'no', label: 'No', hasPhoto: false };
+          return { code: 'no', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
         }
-        return { code: 'ambiguous', label: 'Ambiguous', hasPhoto: false };
+        return { code: 'ambiguous', label: 'No PDF attached', hasPhoto: false, hasPdf: false };
       }
 
-      // URLs from sheet only (never invent). Supports:
-      // - Photo Links / Buildpass Photo URLs (often col P)
-      // - Google Drive Photo Links (often col Q · folder 16GMGue3r7-QnOKpkCJuyMDrHowNwya63)
-      // Comma / semicolon separated; extract http(s) like P11.
+      // URLs from sheet only (never invent). Kept for utilities; P12 UI deprioritises them.
       function extractUrlsFromCell(raw) {
         var s = String(raw || '').trim();
         if (!s) return [];
@@ -14903,7 +14995,6 @@
             if (urls.indexOf(u) === -1) urls.push(u);
           });
         }
-        // Drive first (staff-friendly shareable links), then BuildPass / generic photo cols
         addFrom(
           'Google Drive Photo Links', 'Drive Photo Links', 'Drive Links',
           'Google Drive Links', 'google_drive_photo_links'
@@ -14916,7 +15007,7 @@
         return urls;
       }
 
-      // Site Diary PDF when present (col Q naming in some sheet layouts)
+      // Site Diary PDF (preferred media for P12; named header, often col Q when ETL provides it)
       function diaryPdfUrl(r) {
         var raw = String(col(r,
           'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
@@ -14925,6 +15016,16 @@
         if (!raw) return '';
         var found = extractUrlsFromCell(raw);
         return found.length ? found[0] : '';
+      }
+
+      /** Job-name match for Meli's Record Keeping (flexible apostrophes / spacing). */
+      function isMeliRecordKeeping(r) {
+        var name = String(diaryJobName(r) || '')
+          .toLowerCase()
+          .replace(/['\u2018\u2019\u0060\u00B4]/g, '')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+        return name === 'melis record keeping';
       }
 
       // Variation helpers — description + status only. Value columns never rendered.
@@ -14951,6 +15052,107 @@
         if (kind === 'interim') return 'p12-chip p12-chip--interim';
         if (kind === 'summary') return 'p12-chip p12-chip--ok';
         return 'p12-chip';
+      }
+
+      var _p12EntrySeq = 0;
+
+      /** One diary entry: Emily line, work done, click-to-reveal issues/safety, PDF link. */
+      function renderP12EntryHtml(r) {
+        _p12EntrySeq += 1;
+        var uid = 'p12-e' + _p12EntrySeq;
+        var sum = diarySummaryInfo(r);
+        var saf = safetyState(r);
+        var safDetail = safetyDetailDisplay(r);
+        var stop = workStoppedState(r);
+        var pho = photoState(r);
+        var pdf = diaryPdfUrl(r);
+        var brand = String(col(r, 'Brand', 'brand') || '').trim();
+        var type = String(col(r, 'Type', 'type') || '').trim();
+        var dept = String(col(r, 'Department', 'department') || '').trim();
+        var mats = String(col(r, 'Materials Used', 'materials_used') || '').trim();
+        var people = diaryPerson(r);
+        var workDone = diaryWorkCompleted(r);
+        var hasIssues = hasIssueContent(r);
+        var issuesText = hasIssues ? diaryIssuesText(r) : 'Not recorded';
+        var issuesChipKind = hasIssues ? 'yes' : 'missing';
+        var issuesChipLabel = hasIssues ? 'Issues: Yes · view detail' : 'Issues: Not recorded';
+        var safChipKind = saf.code === 'yes' ? 'yes' : saf.code;
+        var safChipLabel = 'Safety: ' + saf.label + (safDetail.text ? ' · view detail' : '');
+
+        var html = '';
+        html += '<div class="p12-entry">';
+        html += '<div class="p12-entry-meta">';
+        html += '<span>' + p12Esc(people) + '</span>';
+        if (brand) html += '<span>' + p12Esc(brand) + '</span>';
+        if (type) html += '<span>' + p12Esc(type) + '</span>';
+        if (dept) html += '<span>' + p12Esc(dept) + '</span>';
+        html += '</div>';
+
+        html += '<div class="p12-summary-block">';
+        html += '<span class="' + chipClass(sum.kind) + '">' + p12Esc(sum.label) + '</span>';
+        html += '<p class="p12-summary-text">' + p12Esc(sum.text) + '</p>';
+        html += '</div>';
+
+        if (workDone) {
+          html += '<div class="p12-detail-block">';
+          html += '<div class="p12-detail-label">Work completed</div>';
+          html += '<p class="p12-detail-text">' + p12Esc(workDone) + '</p></div>';
+        }
+
+        // Click-to-reveal chips (P11-style expand, inline under the row)
+        html += '<div class="p12-flags">';
+        html += '<button type="button" class="' + chipClass(issuesChipKind) + ' p12-chip-btn' +
+          (hasIssues ? '' : '') +
+          '" data-p12-reveal aria-expanded="false" aria-controls="' + uid + '-issues">' +
+          p12Esc(issuesChipLabel) + '</button>';
+        html += '<button type="button" class="' + chipClass(safChipKind) + ' p12-chip-btn' +
+          '" data-p12-reveal aria-expanded="false" aria-controls="' + uid + '-safety">' +
+          p12Esc(safChipLabel) + '</button>';
+        html += '<span class="' + chipClass(stop.isStop ? 'stop' : stop.code) +
+          '">Work stopped: ' + p12Esc(stop.label) + '</span>';
+        html += '<span class="p12-chip">' + p12Esc(pho.hasPdf ? 'PDF: Attached' : 'PDF: No PDF attached') + '</span>';
+        html += '</div>';
+
+        html += '<div id="' + uid + '-issues" class="p12-reveal-panel p12-detail-block' +
+          (hasIssues ? ' p12-detail-block--issue' : '') + '" hidden>';
+        html += '<div class="p12-detail-label">Issues &amp; blockers</div>';
+        html += '<p class="p12-detail-text">' + p12Esc(issuesText) + '</p></div>';
+
+        html += '<div id="' + uid + '-safety" class="p12-reveal-panel p12-detail-block' +
+          (safDetail.alert ? ' p12-detail-block--issue' : '') + '" hidden>';
+        html += '<div class="p12-detail-label">Safety</div>';
+        html += '<p class="p12-detail-text">' + p12Esc(safDetail.text) + '</p></div>';
+
+        // Site Diary PDF primary media path (no Photo Links browsing on P12)
+        html += '<div class="p12-photos">';
+        html += '<div class="p12-detail-label">Site diary PDF</div>';
+        if (pdf) {
+          html += '<div class="p12-pdf-actions">';
+          html += '<button type="button" class="p12-photo-link p12-pdf-btn" data-p12-pdf-open="' +
+            p12Esc(pdf) + '">View site diary PDF</button>';
+          html += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(pdf) +
+            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
+          html += '</div>';
+        } else {
+          html += '<p class="p12-detail-text p12-muted">No PDF attached</p>';
+        }
+        html += '</div>';
+
+        if (mats) {
+          html += '<div class="p12-detail-block"><div class="p12-detail-label">Materials</div>';
+          html += '<p class="p12-detail-text">' + p12Esc(mats) + '</p></div>';
+        }
+
+        var subs = String(col(r, 'Subcontractors on Site', 'Subcontractor Details') || '').trim();
+        var subDet = String(col(r, 'Subcontractor Details') || '').trim();
+        if (subs || subDet) {
+          html += '<div class="p12-detail-block"><div class="p12-detail-label">Subcontractors</div>';
+          html += '<p class="p12-detail-text">' +
+            p12Esc([subs, subDet].filter(Boolean).join(' · ')) + '</p></div>';
+        }
+
+        html += '</div>'; // entry
+        return html;
       }
 
       // Default week = current ISO week
@@ -15028,6 +15230,13 @@
       var diariesFiltered = brandedDiaries;
       var variationsFiltered = brandedVariations;
 
+      // Meli's Record Keeping — dedicated weekly card (same sheet / week as main feed)
+      var meliRows = diariesFiltered.filter(isMeliRecordKeeping).slice().sort(function(a, b) {
+        var da = diaryDate(a);
+        var db = diaryDate(b);
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      });
+
       var srcEl = document.getElementById('p12-sources');
       if (srcEl) {
         var dSrc = !_p12LoadMeta.diariesOk
@@ -15036,8 +15245,58 @@
         var vSrc = !_p12LoadMeta.variationsOk
           ? 'Variations_Log: Unavailable'
           : ('Variations_Log: Live (' + variationsFiltered.length + ' · $ hidden)');
-        srcEl.textContent = 'Sources · ' + dSrc + ' · ' + vSrc +
-          ' · Meli weekly: Pending · awaiting BuildPass data source';
+        var meliSrc = !_p12LoadMeta.diariesOk
+          ? 'Meli weekly: Unavailable'
+          : ('Meli weekly: ' + meliRows.length + ' entr' + (meliRows.length === 1 ? 'y' : 'ies') +
+            ' (Job Name = Meli\'s Record Keeping)');
+        srcEl.textContent = 'Sources · ' + dSrc + ' · ' + vSrc + ' · ' + meliSrc;
+      }
+
+      var meliCard = document.getElementById('p12-meli');
+      if (meliCard) {
+        meliCard.classList.toggle('p12-meli--live', meliRows.length > 0);
+        meliCard.classList.toggle('p12-meli--empty', _p12LoadMeta.diariesOk && meliRows.length === 0);
+      }
+      var meliHint = document.getElementById('p12-meli-hint');
+      if (meliHint) {
+        if (!_p12LoadMeta.diariesOk) {
+          meliHint.textContent = 'Buildpass_Site Diaries unavailable';
+        } else if (!meliRows.length) {
+          meliHint.textContent = 'No Meli\'s Record Keeping diaries for ' +
+            p12WeekLabelFromKey(activeP12WeekKey) + ' · Job Name match only';
+        } else {
+          meliHint.textContent = meliRows.length + ' entr' +
+            (meliRows.length === 1 ? 'y' : 'ies') +
+            ' this week · Logged work from Buildpass_Site Diaries';
+        }
+      }
+      var meliFeed = document.getElementById('p12-meli-feed');
+      if (meliFeed) {
+        if (!_p12LoadMeta.diariesOk) {
+          meliFeed.innerHTML = emptyCard('Site diaries unavailable');
+        } else if (!meliRows.length) {
+          meliFeed.innerHTML = emptyCard(
+            'No Meli\'s Record Keeping entries for this week.'
+          );
+        } else {
+          var mHtml = '';
+          meliRows.forEach(function(r) {
+            var dObj = diaryDate(r);
+            var dLabel = dObj
+              ? dObj.toLocaleDateString('en-AU', {
+                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+                })
+              : (String(col(r, 'Date', 'date') || '').trim() || 'Date not recorded');
+            mHtml += '<article class="p12-job-card p12-meli-card">';
+            mHtml += '<header class="p12-job-head">';
+            mHtml += '<div class="p12-job-id">' + p12Esc(dLabel) + '</div>';
+            mHtml += '<div class="p12-job-name">' + p12Esc(diaryJobName(r) || 'Meli\'s Record Keeping') + '</div>';
+            mHtml += '</header>';
+            mHtml += renderP12EntryHtml(r);
+            mHtml += '</article>';
+          });
+          meliFeed.innerHTML = mHtml;
+        }
       }
 
       var hasSummaryCol = (window._p12Diaries || []).some(function(r) {
@@ -15116,101 +15375,7 @@
               html += '</header>';
 
               g.rows.forEach(function(r) {
-                var sum = diarySummaryInfo(r);
-                var saf = safetyState(r);
-                var safDetail = safetyDetailDisplay(r);
-                var stop = workStoppedState(r);
-                var pho = photoState(r);
-                var links = photoLinks(r);
-                var pdf = diaryPdfUrl(r);
-                var brand = String(col(r, 'Brand', 'brand') || '').trim();
-                var type = String(col(r, 'Type', 'type') || '').trim();
-                var mats = String(col(r, 'Materials Used', 'materials_used') || '').trim();
-                var people = diaryPerson(r);
-                var workDone = diaryWorkCompleted(r);
-
-                html += '<div class="p12-entry">';
-                html += '<div class="p12-entry-meta">';
-                html += '<span>' + p12Esc(people) + '</span>';
-                if (brand) html += '<span>' + p12Esc(brand) + '</span>';
-                if (type) html += '<span>' + p12Esc(type) + '</span>';
-                html += '</div>';
-
-                // Emily plain-English summary line (Job#, name, person, summary)
-                html += '<div class="p12-summary-block">';
-                html += '<span class="' + chipClass(sum.kind) + '">' + p12Esc(sum.label) + '</span>';
-                html += '<p class="p12-summary-text">' + p12Esc(sum.text) + '</p>';
-                html += '</div>';
-
-                // Work completed as source field (not a fake AI summary)
-                if (workDone) {
-                  html += '<div class="p12-detail-block">';
-                  html += '<div class="p12-detail-label">Work completed</div>';
-                  html += '<p class="p12-detail-text">' + p12Esc(workDone) + '</p></div>';
-                }
-
-                // Full issues text for next crew (never a bare count)
-                html += '<div class="p12-detail-block' + (hasIssueContent(r) ? ' p12-detail-block--issue' : '') + '">';
-                html += '<div class="p12-detail-label">Issues &amp; blockers</div>';
-                html += '<p class="p12-detail-text">' +
-                  p12Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') +
-                  '</p></div>';
-
-                // Full safety detail (not a count of flags)
-                html += '<div class="p12-detail-block' + (safDetail.alert ? ' p12-detail-block--issue' : '') + '">';
-                html += '<div class="p12-detail-label">Safety</div>';
-                html += '<p class="p12-detail-text">' + p12Esc(safDetail.text) + '</p></div>';
-
-                html += '<div class="p12-flags">';
-                html += '<span class="' + chipClass(saf.code === 'yes' ? 'yes' : saf.code) +
-                  '">Safety: ' + p12Esc(saf.label) + '</span>';
-                html += '<span class="' + chipClass(stop.isStop ? 'stop' : stop.code) +
-                  '">Work stopped: ' + p12Esc(stop.label) + '</span>';
-                html += '<span class="p12-chip">Photos: ' + p12Esc(pho.label) +
-                  (links.length ? ' (' + links.length + ' link' + (links.length === 1 ? '' : 's') + ')' : '') +
-                  '</span>';
-                html += '</div>';
-
-                // Photos + optional Site Diary PDF — simple external links (new tab)
-                html += '<div class="p12-photos">';
-                html += '<div class="p12-detail-label">Photos &amp; diary PDF</div>';
-                if (links.length || pdf) {
-                  html += '<ul class="p12-photo-list">';
-                  links.forEach(function(u, i) {
-                    var label = links.length > 1
-                      ? ('Open photo ' + (i + 1))
-                      : 'Open photo';
-                    html += '<li><a class="p12-photo-link" href="' + p12Esc(u) +
-                      '" target="_blank" rel="noopener noreferrer">' + p12Esc(label) + '</a></li>';
-                  });
-                  if (pdf) {
-                    html += '<li><a class="p12-photo-link" href="' + p12Esc(pdf) +
-                      '" target="_blank" rel="noopener noreferrer">Open site diary PDF</a></li>';
-                  }
-                  html += '</ul>';
-                } else if (pho.hasPhoto) {
-                  html += '<p class="p12-detail-text p12-muted">Marked Yes · photo links not yet in sheet (Drive / Photo Links columns empty)</p>';
-                } else {
-                  html += '<p class="p12-detail-text p12-muted">' +
-                    p12Esc(pho.code === 'no' ? 'No photos' : 'Not available') +
-                    '</p>';
-                }
-                html += '</div>';
-
-                if (mats) {
-                  html += '<div class="p12-detail-block"><div class="p12-detail-label">Materials</div>';
-                  html += '<p class="p12-detail-text">' + p12Esc(mats) + '</p></div>';
-                }
-
-                var subs = String(col(r, 'Subcontractors on Site', 'Subcontractor Details') || '').trim();
-                var subDet = String(col(r, 'Subcontractor Details') || '').trim();
-                if (subs || subDet) {
-                  html += '<div class="p12-detail-block"><div class="p12-detail-label">Subcontractors</div>';
-                  html += '<p class="p12-detail-text">' +
-                    p12Esc([subs, subDet].filter(Boolean).join(' · ')) + '</p></div>';
-                }
-
-                html += '</div>'; // entry
+                html += renderP12EntryHtml(r);
               });
 
               html += '</article>';
