@@ -6528,23 +6528,56 @@ p.p8-section-hint {
 }
 
 /*
-  Row 1: Activity (left) + Issues by Job (right).
-  Detail tabs + Variations sit below full width.
+  Layout order:
+  KPI → Issues by Job (full width) → Exceptions/Full Summary tabs →
+  Weekly Diary Activity + Variation Actions (side by side).
 */
-#page-p11 .p11-main-row {
+#page-p11 .p11-jobs-row {
+  margin-bottom: 14px;
+  min-width: 0;
+}
+#page-p11 .p11-issues-panel {
+  min-width: 0;
+}
+#page-p11 #p11-issues-by-job {
+  max-height: min(42vh, 420px);
+  overflow-x: auto;
+  overflow-y: auto;
+}
+#page-p11 #p11-issues-by-job .p11-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--p11-surface, #fff);
+}
+
+#page-p11 .p11-bottom-row {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.22fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 14px;
   margin-bottom: 14px;
-  align-items: start;
+  align-items: stretch;
+  min-width: 0;
 }
-#page-p11 .p11-main-left,
-#page-p11 .p11-main-right {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+#page-p11 .p11-bottom-row > .p11-panel {
   min-width: 0;
   min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+#page-p11 .p11-activity-panel .p11-chart-wrap {
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+#page-p11 #p11-variations-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(48vh, 480px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 #page-p11 #p11-exceptions-table {
@@ -6557,11 +6590,6 @@ p.p8-section-hint {
   top: 0;
   z-index: 1;
   background: var(--p11-surface, #fff);
-}
-
-#page-p11 .p11-main-right > .p11-panel {
-  min-width: 0;
-  flex: 0 0 auto;
 }
 
 /* Exceptions + Full Summary tabs (one cohesive panel) */
@@ -7504,7 +7532,7 @@ body.p11-lightbox-open {
   #page-p11 .p11-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  #page-p11 .p11-main-row {
+  #page-p11 .p11-bottom-row {
     grid-template-columns: 1fr;
   }
   #page-p11 .p11-summary-layout {
@@ -7526,6 +7554,9 @@ body.p11-lightbox-open {
   }
   #page-p11 #p11-exceptions-table {
     max-height: min(420px, 55vh);
+  }
+  #page-p11 #p11-variations-panel {
+    max-height: min(360px, 50vh);
   }
 }
 @media (max-width: 640px) {

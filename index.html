@@ -1199,26 +1199,12 @@
               </div>
             </div>
 
-            <div class="p11-main-row">
-              <div class="p11-main-left">
-                <div class="section-card p11-panel">
-                  <div class="section-title">Weekly Diary Activity</div>
-                  <p class="p11-section-hint">Entries per week · issue markers · photo coverage % (diary sheet only)</p>
-                  <div class="p11-chart-wrap" id="p11-activity-chart-wrap">
-                    <canvas id="chart-p11-activity" aria-label="Weekly diary activity"></canvas>
-                  </div>
-                  <div id="p11-activity-empty" class="p11-empty-card" hidden>
-                    <p class="no-data-msg">No diary entries in selection.</p>
-                  </div>
-                </div>
-              </div>
-              <div class="p11-main-right">
-                <div class="section-card p11-panel">
-                  <div class="section-title">Issues by Job</div>
-                  <p class="p11-section-hint">Sorted: Work Stopped · Safety · Issue count · Missing photos · Most recent</p>
-                  <div id="p11-issues-by-job" class="p11-table-wrap">Loading...</div>
-                  <div id="p11-evidence-panel" class="p11-evidence"></div>
-                </div>
+            <div class="p11-jobs-row">
+              <div class="section-card p11-panel p11-issues-panel">
+                <div class="section-title">Issues by Job</div>
+                <p class="p11-section-hint">Sorted: Work Stopped · Safety · Issue count · Missing photos · Most recent</p>
+                <div id="p11-issues-by-job" class="p11-table-wrap">Loading...</div>
+                <div id="p11-evidence-panel" class="p11-evidence"></div>
               </div>
             </div>
 
@@ -1248,10 +1234,22 @@
               </div>
             </div>
 
-            <div class="section-card p11-panel" id="p11-variations-section">
-              <div class="section-title">Variation Actions</div>
-              <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
-              <div id="p11-variations-panel">Loading...</div>
+            <div class="p11-bottom-row">
+              <div class="section-card p11-panel p11-activity-panel">
+                <div class="section-title">Weekly Diary Activity</div>
+                <p class="p11-section-hint">Entries per week · issue markers · photo coverage % (diary sheet only)</p>
+                <div class="p11-chart-wrap" id="p11-activity-chart-wrap">
+                  <canvas id="chart-p11-activity" aria-label="Weekly diary activity"></canvas>
+                </div>
+                <div id="p11-activity-empty" class="p11-empty-card" hidden>
+                  <p class="no-data-msg">No diary entries in selection.</p>
+                </div>
+              </div>
+              <div class="section-card p11-panel p11-variations-panel-wrap" id="p11-variations-section">
+                <div class="section-title">Variation Actions</div>
+                <p class="p11-section-hint" id="p11-variations-hint">Completeness and commercial confirmation · not a trend when few rows</p>
+                <div id="p11-variations-panel">Loading...</div>
+              </div>
             </div>
 
           </div>
