@@ -1314,10 +1314,6 @@
                   <span class="p12-range-label" id="p12-brand-label">ALL</span>
                 </div>
               </div>
-              <p class="p12-sources" id="p12-sources">Sources: checking…</p>
-              <p class="p12-updated" id="p12-last-updated">Last updated…</p>
-              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week drives list · day notes and photos from column P</p>
-
 
               <div class="p12-summary-section">
                 <div class="section-title" id="p12-week-header">Site diaries this week</div>
@@ -15519,6 +15515,17 @@
         h += '<div class="p12-summary-day-date"><strong>' + p12Esc(dLabel) + '</strong>';
         h += '<span class="p12-summary-day-by"> · ' + p12Esc(logged) + '</span></div>';
 
+        // Issues/blockers first: attention signal before work notes
+        if (issues && p12HasIssueContent(r)) {
+          h += '<div class="p12-summary-day-issues p12-summary-day-issues--alert">' +
+            '<span class="p12-summary-meta-label">Issues / blockers</span> ' +
+            p12Esc(issues) + '</div>';
+        } else {
+          h += '<div class="p12-summary-day-issues p12-summary-day-issues--clear">' +
+            '<span class="p12-summary-meta-label">Issues / blockers</span> ' +
+            'No issues or blockers reported</div>';
+        }
+
         if (work) {
           h += '<p class="p12-summary-day-body">' + p12Esc(work) + '</p>';
         } else {
@@ -15527,10 +15534,6 @@
         if (sum && sum !== work) {
           h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Summary</span> ' +
             p12Esc(sum) + '</div>';
-        }
-        if (issues && p12HasIssueContent(r)) {
-          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Issues / blockers</span> ' +
-            p12Esc(issues) + '</div>';
         }
         if (mats) {
           h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Materials</span> ' +
@@ -15621,12 +15624,6 @@
 
       var brandEl = document.getElementById('p12-brand-label');
       if (brandEl) brandEl.textContent = activeBrand || 'ALL';
-      var updEl = document.getElementById('p12-last-updated');
-      if (updEl) {
-        updEl.textContent = 'Last updated ' + new Date().toLocaleString('en-AU', {
-          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        }) + ' · BuildPass typically syncs ~4am / 6pm';
-      }
 
       if (!_p12FiltersBound) {
         _p12FiltersBound = true;
@@ -15688,22 +15685,6 @@
       var weekHeader = document.getElementById('p12-week-header');
       if (weekHeader) {
         weekHeader.textContent = 'Site diaries · ' + p12WeekLabelFromKey(activeP12WeekKey);
-      }
-
-      var withPhotos = groupKeys.filter(function(k) { return _p12ReportGroups[k].photoCount > 0; }).length;
-      var srcEl = document.getElementById('p12-sources');
-      if (srcEl) {
-        if (!_p12LoadMeta.diariesOk) {
-          srcEl.textContent = 'Sources · Buildpass_Site Diaries: Unavailable';
-        } else {
-          var varSrc = _p12LoadMeta.variationsOk
-            ? 'Variations_Log: Live (description only)'
-            : 'Variations_Log: Unavailable';
-          srcEl.textContent = 'Sources · Buildpass_Site Diaries: Live (' +
-            diariesFiltered.length + ' diary rows · ' + groupKeys.length +
-            ' group' + (groupKeys.length === 1 ? '' : 's') +
-            ' · ' + withPhotos + ' with photos) · ' + varSrc;
-        }
       }
 
       var hintEl = document.getElementById('p12-reports-hint');
