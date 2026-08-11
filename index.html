@@ -1281,28 +1281,14 @@
 
           </div>
 
-          <!-- Single shared photo lightbox for P11 photo links -->
-          <div id="p11-lightbox" class="p11-lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
-            <div class="p11-lightbox-backdrop" data-p11-lb-close tabindex="-1"></div>
-            <div class="p11-lightbox-shell">
-              <button type="button" class="p11-lightbox-close" data-p11-lb-close aria-label="Close photo viewer">&times;</button>
-              <button type="button" class="p11-lightbox-nav p11-lightbox-prev" data-p11-lb-prev aria-label="Previous photo">&#8249;</button>
-              <div class="p11-lightbox-stage">
-                <img class="p11-lightbox-img" id="p11-lightbox-img" alt="" decoding="async" referrerpolicy="no-referrer" />
-              </div>
-              <button type="button" class="p11-lightbox-nav p11-lightbox-next" data-p11-lb-next aria-label="Next photo">&#8250;</button>
-              <div class="p11-lightbox-footer">
-                <span id="p11-lightbox-counter" class="p11-lightbox-counter">1 of 1</span>
-              </div>
-            </div>
-          </div>
+
         </section>
 
         <!-- ─── P12: Site Diaries (crew, full-width list+detail summaries) ─── -->
         <!--
           Access: Google sign-in + Staff_Access role Staff (P12 only), User (P11+P12), or Admin (full).
           Full-width diary summaries (P11 list+detail pattern, no tabs).
-          Site Diary PDF from column Q / Drive only (never BuildPass photo col P).
+          Photos from column P (BuildPass photo links) via shared P11 lightbox.
           Variations: description-only match by job, no dollar values.
         -->
         <section id="page-p12" class="page">
@@ -1312,7 +1298,7 @@
                 <span class="page-badge">P12</span>
                 <h1 class="page-title">Site Diaries</h1>
               </div>
-              <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and Site Diary PDF (Drive/col Q) · variations by description only · no financial figures or BuildPass photo links</p>
+              <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and photos (column P) · variations by description only · no financial figures</p>
             </div>
 
             <div id="p12-content" class="p12-content">
@@ -1330,29 +1316,12 @@
               </div>
               <p class="p12-sources" id="p12-sources">Sources: checking…</p>
               <p class="p12-updated" id="p12-last-updated">Last updated…</p>
-              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week drives list · Site Diary PDF from Drive/col Q · day notes always · no photo col P</p>
+              <p class="p12-meta" id="p12-meta">BuildPass refresh ~4am / 6pm · week drives list · day notes and photos from column P</p>
 
-              <div id="p12-pdf-lightbox" class="p12-pdf-lightbox" hidden role="dialog" aria-modal="true" aria-label="Site diary PDF">
-                <div class="p12-pdf-backdrop" data-p12-pdf-close tabindex="-1"></div>
-                <div class="p12-pdf-shell">
-                  <button type="button" class="p12-pdf-close" data-p12-pdf-close aria-label="Close PDF viewer">&times;</button>
-                  <button type="button" class="p12-pdf-nav p12-pdf-prev" data-p12-pdf-prev aria-label="Previous PDF" disabled>&#8249;</button>
-                  <div class="p12-pdf-stage">
-                    <div id="p12-pdf-status" class="p12-pdf-status" hidden></div>
-                    <iframe id="p12-pdf-frame" class="p12-pdf-frame" title="Site diary PDF preview" hidden allow="autoplay" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                    <canvas id="p12-pdf-canvas" class="p12-pdf-canvas" aria-label="PDF page" hidden></canvas>
-                  </div>
-                  <button type="button" class="p12-pdf-nav p12-pdf-next" data-p12-pdf-next aria-label="Next PDF" disabled>&#8250;</button>
-                  <div class="p12-pdf-footer">
-                    <a id="p12-pdf-open-tab" class="p12-pdf-open-tab" href="#" target="_blank" rel="noopener noreferrer">Open PDF in new tab</a>
-                    <span id="p12-pdf-counter" class="p12-pdf-counter" aria-live="polite">1 of 1</span>
-                  </div>
-                </div>
-              </div>
 
               <div class="p12-summary-section">
                 <div class="section-title" id="p12-week-header">Site diaries this week</div>
-                <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries for the selected week. Select a row for day notes and Site Diary PDF.</p>
+                <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries for the selected week. Select a row for day notes and photos.</p>
                 <div class="p12-summary-layout">
                   <div class="p12-summary-list-wrap" id="p12-reports-list" role="list">Loading…</div>
                   <div class="p12-summary-detail-wrap" id="p12-report-panel" aria-live="polite">
@@ -1365,6 +1334,22 @@
             </div>
           </div>
         </section>
+
+        <!-- Shared photo lightbox (P11 + P12; outside .page so it works on any tab) -->
+        <div id="p11-lightbox" class="p11-lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+          <div class="p11-lightbox-backdrop" data-p11-lb-close tabindex="-1"></div>
+          <div class="p11-lightbox-shell">
+            <button type="button" class="p11-lightbox-close" data-p11-lb-close aria-label="Close photo viewer">&times;</button>
+            <button type="button" class="p11-lightbox-nav p11-lightbox-prev" data-p11-lb-prev aria-label="Previous photo">&#8249;</button>
+            <div class="p11-lightbox-stage">
+              <img class="p11-lightbox-img" id="p11-lightbox-img" alt="" decoding="async" referrerpolicy="no-referrer" />
+            </div>
+            <button type="button" class="p11-lightbox-nav p11-lightbox-next" data-p11-lb-next aria-label="Next photo">&#8250;</button>
+            <div class="p11-lightbox-footer">
+              <span id="p11-lightbox-counter" class="p11-lightbox-counter">1 of 1</span>
+            </div>
+          </div>
+        </div>
 
 
       </main>
@@ -1393,7 +1378,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) via Drive /preview iframe lightbox (multi-PDF arrows per group) or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Photos from column P (Photo Links) via the shared P11 lightbox (next/prev, counter); never Drive column Q PDF on this page. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -15020,8 +15005,7 @@
     // P12 - SITE DIARIES (crew full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
-    // PDF: Site Diary PDF column Q / Drive via embed /preview iframe lightbox.
-    // Never BuildPass photo col P / raw CDN image URLs.
+    // Photos: column P (Photo Links) via shared P11 lightbox. No column Q PDF on P12.
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
@@ -15035,484 +15019,7 @@
     var _p12ReportGroups = {};
     var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
 
-    // ── P12 Site Diary PDF viewer (Drive /preview iframe + multi-PDF set) ──
-    // Pinned: pdf.js 3.11.174 via cdnjs for non-Drive URLs only.
-    var P12_PDFJS_VERSION = '3.11.174';
-    var P12_PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + P12_PDFJS_VERSION;
-    var P12_PDFJS_SCRIPT = P12_PDFJS_CDN + '/pdf.min.js';
-    var P12_PDFJS_WORKER = P12_PDFJS_CDN + '/pdf.worker.min.js';
-    var _p12PdfUrls = [];
-    var _p12PdfIndex = 0;
-    var _p12PdfMode = ''; // 'drive' | 'pdfjs' | ''
-    var _p12PdfDoc = null;
-    var _p12PdfPage = 1;
-    var _p12PdfNumPages = 0;
-    var _p12PdfRenderTask = null;
-    var _p12PdfLoadToken = 0;
-    var _p12PdfJsPromise = null;
-    var _p12PdfTouchX = null;
-
-    /** Extract Google Drive file id from /d/ID/ or open?id= / uc?id= forms. */
-    function p12DriveFileId(url) {
-      var s = String(url || '').trim();
-      if (!s) return '';
-      var m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (m && m[1]) return m[1];
-      m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (m && m[1]) return m[1];
-      m = s.match(/[?&#]id=([a-zA-Z0-9_-]+)/);
-      if (m && m[1]) return m[1];
-      return '';
-    }
-
-    /** Embed-friendly Drive preview URL, or '' if not a Drive file link. */
-    function p12DrivePreviewUrl(url) {
-      var id = p12DriveFileId(url);
-      return id ? ('https://drive.google.com/file/d/' + id + '/preview') : '';
-    }
-
-    /** Prefer original Drive link for new-tab; fall back to /view when only an id is known. */
-    function p12DriveOpenTabUrl(url) {
-      var s = String(url || '').trim();
-      if (s && /^https?:\/\//i.test(s)) return s;
-      var id = p12DriveFileId(s);
-      return id ? ('https://drive.google.com/file/d/' + id + '/view') : s;
-    }
-
-    function p12PdfLightboxIsOpen() {
-      var root = document.getElementById('p12-pdf-lightbox');
-      return !!(root && !root.hasAttribute('hidden'));
-    }
-
-    function p12PdfEls() {
-      return {
-        root: document.getElementById('p12-pdf-lightbox'),
-        canvas: document.getElementById('p12-pdf-canvas'),
-        frame: document.getElementById('p12-pdf-frame'),
-        status: document.getElementById('p12-pdf-status'),
-        counter: document.getElementById('p12-pdf-counter'),
-        openTab: document.getElementById('p12-pdf-open-tab'),
-        prev: document.querySelector('#p12-pdf-lightbox [data-p12-pdf-prev]'),
-        next: document.querySelector('#p12-pdf-lightbox [data-p12-pdf-next]')
-      };
-    }
-
-    function p12PdfClearCanvas() {
-      var canvas = document.getElementById('p12-pdf-canvas');
-      if (!canvas) return;
-      var ctx = canvas.getContext('2d');
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-      canvas.width = 0;
-      canvas.height = 0;
-      canvas.removeAttribute('width');
-      canvas.removeAttribute('height');
-      canvas.style.width = '';
-      canvas.style.height = '';
-    }
-
-    function p12PdfClearFrame() {
-      var frame = document.getElementById('p12-pdf-frame');
-      if (!frame) return;
-      try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
-      frame.setAttribute('hidden', '');
-    }
-
-    /** mode: 'iframe' | 'canvas' | 'none' */
-    function p12PdfSetDisplayMode(mode) {
-      var canvas = document.getElementById('p12-pdf-canvas');
-      var frame = document.getElementById('p12-pdf-frame');
-      if (mode === 'iframe') {
-        if (canvas) canvas.setAttribute('hidden', '');
-        if (frame) frame.removeAttribute('hidden');
-      } else if (mode === 'canvas') {
-        if (frame) {
-          try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
-          frame.setAttribute('hidden', '');
-        }
-        if (canvas) canvas.removeAttribute('hidden');
-      } else {
-        if (canvas) canvas.setAttribute('hidden', '');
-        if (frame) {
-          try { frame.src = 'about:blank'; } catch (e) { /* ignore */ }
-          frame.setAttribute('hidden', '');
-        }
-      }
-    }
-
-    function p12PdfSetStatus(msg, isError) {
-      var status = document.getElementById('p12-pdf-status');
-      if (!status) return;
-      if (!msg) {
-        status.setAttribute('hidden', '');
-        status.textContent = '';
-        status.classList.remove('is-error');
-        return;
-      }
-      status.removeAttribute('hidden');
-      status.textContent = msg;
-      status.classList.toggle('is-error', !!isError);
-    }
-
-    function p12PdfUpdateChrome() {
-      var els = p12PdfEls();
-      var setN = _p12PdfUrls.length;
-      var setIdx = setN ? (_p12PdfIndex + 1) : 0;
-      var multiSet = setN > 1;
-      var pageN = _p12PdfNumPages || 0;
-      var page = pageN ? _p12PdfPage : 0;
-
-      if (els.counter) {
-        if (multiSet) {
-          els.counter.textContent = setIdx + ' of ' + setN;
-        } else if (_p12PdfMode === 'pdfjs' && pageN > 1) {
-          els.counter.textContent = page + ' of ' + pageN;
-        } else if (setN) {
-          els.counter.textContent = '1 of 1';
-        } else {
-          els.counter.textContent = '-';
-        }
-      }
-
-      if (multiSet) {
-        if (els.prev) els.prev.disabled = _p12PdfIndex <= 0;
-        if (els.next) els.next.disabled = _p12PdfIndex >= setN - 1;
-      } else if (_p12PdfMode === 'pdfjs' && pageN > 1) {
-        if (els.prev) els.prev.disabled = page <= 1;
-        if (els.next) els.next.disabled = page >= pageN;
-      } else {
-        if (els.prev) els.prev.disabled = true;
-        if (els.next) els.next.disabled = true;
-      }
-
-      if (els.frame && multiSet) {
-        els.frame.setAttribute('title', 'Site diary PDF ' + setIdx + ' of ' + setN);
-      } else if (els.frame) {
-        els.frame.setAttribute('title', 'Site diary PDF preview');
-      }
-      if (els.canvas && _p12PdfMode === 'pdfjs' && pageN) {
-        els.canvas.setAttribute('aria-label', 'PDF page ' + page + ' of ' + pageN);
-      }
-    }
-
-    /** Lazy-load Mozilla PDF.js once; resolves to global pdfjsLib. */
-    function p12LoadPdfJs() {
-      if (window.pdfjsLib) {
-        try {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = P12_PDFJS_WORKER;
-        } catch (e) { /* ignore */ }
-        return Promise.resolve(window.pdfjsLib);
-      }
-      if (_p12PdfJsPromise) return _p12PdfJsPromise;
-      _p12PdfJsPromise = new Promise(function(resolve, reject) {
-        var existing = document.querySelector('script[data-p12-pdfjs]');
-        if (existing) {
-          existing.addEventListener('load', function() {
-            if (window.pdfjsLib) {
-              window.pdfjsLib.GlobalWorkerOptions.workerSrc = P12_PDFJS_WORKER;
-              resolve(window.pdfjsLib);
-            } else {
-              reject(new Error('PDF.js loaded but pdfjsLib missing'));
-            }
-          });
-          existing.addEventListener('error', function() {
-            reject(new Error('Failed to load PDF.js'));
-          });
-          return;
-        }
-        var s = document.createElement('script');
-        s.src = P12_PDFJS_SCRIPT;
-        s.async = true;
-        s.setAttribute('data-p12-pdfjs', '1');
-        s.onload = function() {
-          if (!window.pdfjsLib) {
-            reject(new Error('PDF.js loaded but pdfjsLib missing'));
-            return;
-          }
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = P12_PDFJS_WORKER;
-          resolve(window.pdfjsLib);
-        };
-        s.onerror = function() {
-          _p12PdfJsPromise = null;
-          reject(new Error('Failed to load PDF.js from CDN'));
-        };
-        document.head.appendChild(s);
-      });
-      return _p12PdfJsPromise;
-    }
-
-    function p12PdfDestroyDoc() {
-      if (_p12PdfRenderTask && typeof _p12PdfRenderTask.cancel === 'function') {
-        try { _p12PdfRenderTask.cancel(); } catch (e) { /* ignore */ }
-      }
-      _p12PdfRenderTask = null;
-      if (_p12PdfDoc && typeof _p12PdfDoc.destroy === 'function') {
-        try { _p12PdfDoc.destroy(); } catch (e) { /* ignore */ }
-      }
-      _p12PdfDoc = null;
-      _p12PdfPage = 1;
-      _p12PdfNumPages = 0;
-    }
-
-    function p12ClosePdfViewer() {
-      _p12PdfLoadToken += 1;
-      p12PdfDestroyDoc();
-      p12PdfClearCanvas();
-      p12PdfClearFrame();
-      p12PdfSetDisplayMode('none');
-      p12PdfSetStatus('');
-      var els = p12PdfEls();
-      if (els.openTab) els.openTab.setAttribute('href', '#');
-      if (els.root) els.root.setAttribute('hidden', '');
-      document.body.classList.remove('p12-pdf-lightbox-open');
-      _p12PdfUrls = [];
-      _p12PdfIndex = 0;
-      _p12PdfMode = '';
-      p12PdfUpdateChrome();
-    }
-
-    function p12PdfRenderPage(pageNum) {
-      if (!_p12PdfDoc || !p12PdfLightboxIsOpen()) return Promise.resolve();
-      var n = _p12PdfNumPages;
-      if (!n) return Promise.resolve();
-      pageNum = Math.max(1, Math.min(n, pageNum | 0));
-      _p12PdfPage = pageNum;
-      p12PdfUpdateChrome();
-
-      var canvas = document.getElementById('p12-pdf-canvas');
-      if (!canvas) return Promise.resolve();
-      var token = _p12PdfLoadToken;
-      p12PdfSetDisplayMode('canvas');
-
-      return _p12PdfDoc.getPage(pageNum).then(function(page) {
-        if (token !== _p12PdfLoadToken || !p12PdfLightboxIsOpen()) return null;
-
-        var stage = canvas.parentElement;
-        var stageW = (stage && stage.clientWidth) ? stage.clientWidth : 720;
-        var stageH = (stage && stage.clientHeight) ? stage.clientHeight : 520;
-        var unscaled = page.getViewport({ scale: 1 });
-        var pad = 8;
-        var scale = Math.min(
-          (stageW - pad) / unscaled.width,
-          (stageH - pad) / unscaled.height,
-          2.5
-        );
-        if (!isFinite(scale) || scale <= 0) scale = 1;
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
-        var viewport = page.getViewport({ scale: scale * dpr });
-        var ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = Math.floor(viewport.width / dpr) + 'px';
-        canvas.style.height = Math.floor(viewport.height / dpr) + 'px';
-
-        if (_p12PdfRenderTask && typeof _p12PdfRenderTask.cancel === 'function') {
-          try { _p12PdfRenderTask.cancel(); } catch (e) { /* ignore */ }
-        }
-        _p12PdfRenderTask = page.render({ canvasContext: ctx, viewport: viewport });
-        return _p12PdfRenderTask.promise.then(function() {
-          _p12PdfRenderTask = null;
-          if (token === _p12PdfLoadToken) p12PdfSetStatus('');
-        });
-      }).catch(function(err) {
-        if (token !== _p12PdfLoadToken) return;
-        if (err && err.name === 'RenderingCancelledException') return;
-        p12PdfSetStatus(
-          'Could not render this page. Use "Open PDF in new tab" below.',
-          true
-        );
-      });
-    }
-
-    function p12PdfShowCorsFallback(url, reason) {
-      p12PdfDestroyDoc();
-      p12PdfClearCanvas();
-      p12PdfClearFrame();
-      p12PdfSetDisplayMode('none');
-      _p12PdfMode = '';
-      p12PdfUpdateChrome();
-      var detail = reason ? (' ' + reason) : '';
-      p12PdfSetStatus(
-        'This PDF cannot be previewed here (often blocked by cross-origin rules).' +
-        detail +
-        ' Use "Open PDF in new tab" to view the full document.',
-        true
-      );
-      var openTab = document.getElementById('p12-pdf-open-tab');
-      var openUrl = p12DriveOpenTabUrl(url);
-      if (openTab && openUrl) openTab.setAttribute('href', openUrl);
-    }
-
-    function p12PdfLoadDrivePreview(url) {
-      var preview = p12DrivePreviewUrl(url);
-      var openUrl = p12DriveOpenTabUrl(url);
-      var els = p12PdfEls();
-      if (!preview || !els.frame) {
-        p12PdfShowCorsFallback(url, '');
-        return;
-      }
-      _p12PdfMode = 'drive';
-      p12PdfDestroyDoc();
-      p12PdfClearCanvas();
-      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
-      p12PdfSetStatus('Loading PDF…', false);
-      p12PdfSetDisplayMode('iframe');
-      p12PdfUpdateChrome();
-      els.frame.onload = function() {
-        if (!p12PdfLightboxIsOpen() || _p12PdfMode !== 'drive') return;
-        p12PdfSetStatus('');
-      };
-      els.frame.src = preview;
-    }
-
-    function p12PdfLoadPdfJs(url) {
-      var safe = String(url || '').trim();
-      var openUrl = p12DriveOpenTabUrl(safe);
-      var els = p12PdfEls();
-      var token = _p12PdfLoadToken;
-      _p12PdfMode = 'pdfjs';
-      p12PdfClearFrame();
-      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
-      p12PdfSetStatus('Loading PDF…', false);
-      p12PdfSetDisplayMode('canvas');
-      p12PdfUpdateChrome();
-
-      p12LoadPdfJs().then(function(pdfjsLib) {
-        if (token !== _p12PdfLoadToken) return null;
-        var loadingTask = pdfjsLib.getDocument({
-          url: safe,
-          withCredentials: false,
-          isEvalSupported: false,
-          useSystemFonts: true
-        });
-        return loadingTask.promise;
-      }).then(function(pdf) {
-        if (token !== _p12PdfLoadToken) {
-          if (pdf && typeof pdf.destroy === 'function') {
-            try { pdf.destroy(); } catch (e) { /* ignore */ }
-          }
-          return;
-        }
-        if (!pdf) return;
-        _p12PdfDoc = pdf;
-        _p12PdfNumPages = pdf.numPages || 0;
-        _p12PdfPage = 1;
-        if (!_p12PdfNumPages) {
-          p12PdfShowCorsFallback(safe, 'Document has no pages.');
-          return;
-        }
-        p12PdfUpdateChrome();
-        return p12PdfRenderPage(1);
-      }).catch(function() {
-        if (token !== _p12PdfLoadToken) return;
-        p12PdfShowCorsFallback(safe, '');
-      });
-    }
-
-    function p12PdfLoadAt(index) {
-      if (!_p12PdfUrls.length || !p12PdfLightboxIsOpen()) return;
-      var n = _p12PdfUrls.length;
-      index = Math.max(0, Math.min(n - 1, index | 0));
-      _p12PdfIndex = index;
-      _p12PdfLoadToken += 1;
-      p12PdfDestroyDoc();
-      p12PdfClearCanvas();
-
-      var url = _p12PdfUrls[_p12PdfIndex];
-      var openUrl = p12DriveOpenTabUrl(url);
-      var els = p12PdfEls();
-      if (els.openTab) els.openTab.setAttribute('href', openUrl || '#');
-
-      if (p12DrivePreviewUrl(url)) {
-        p12PdfLoadDrivePreview(url);
-      } else {
-        p12PdfLoadPdfJs(url);
-      }
-    }
-
-    /**
-     * Open PDF lightbox for one or more diary PDF URLs (column Q / Drive).
-     * urls: string | string[]; startIndex selects which diary PDF to show first.
-     * Arrows step between set items (different row PDFs), not Drive page flips.
-     */
-    function p12OpenPdfViewer(urls, startIndex) {
-      var list = [];
-      if (typeof urls === 'string') {
-        var one = String(urls || '').trim();
-        if (one && /^https?:\/\//i.test(one)) list = [one];
-      } else if (Array.isArray(urls)) {
-        var seen = {};
-        urls.forEach(function(u) {
-          var s = String(u || '').trim();
-          if (!s || !/^https?:\/\//i.test(s) || seen[s]) return;
-          seen[s] = true;
-          list.push(s);
-        });
-      }
-      if (!list.length) return;
-
-      var els = p12PdfEls();
-      if (!els.root) return;
-
-      var idx = (typeof startIndex === 'number' && isFinite(startIndex)) ? (startIndex | 0) : 0;
-      if (idx < 0 || idx >= list.length) idx = 0;
-
-      _p12PdfUrls = list;
-      _p12PdfIndex = idx;
-      _p12PdfMode = '';
-      p12PdfDestroyDoc();
-      p12PdfClearCanvas();
-      p12PdfClearFrame();
-
-      els.root.removeAttribute('hidden');
-      document.body.classList.add('p12-pdf-lightbox-open');
-      p12PdfUpdateChrome();
-      var closeBtn = els.root.querySelector('.p12-pdf-close');
-      if (closeBtn) {
-        try { closeBtn.focus({ preventScroll: true }); } catch (e) { closeBtn.focus(); }
-      }
-      p12PdfLoadAt(idx);
-    }
-
-    function p12PdfStep(delta) {
-      if (!p12PdfLightboxIsOpen()) return;
-      var d = delta || 0;
-      if (_p12PdfUrls.length > 1) {
-        var next = _p12PdfIndex + d;
-        if (next < 0 || next >= _p12PdfUrls.length) return;
-        p12PdfLoadAt(next);
-        return;
-      }
-      if (_p12PdfMode === 'pdfjs' && _p12PdfDoc && _p12PdfNumPages > 1) {
-        var nextPage = _p12PdfPage + d;
-        if (nextPage < 1 || nextPage > _p12PdfNumPages) return;
-        p12PdfRenderPage(nextPage);
-      }
-    }
-
-    /** Resolve PDF set for the active report group, opening at clicked URL. */
-    function p12OpenPdfFromDay(clickedUrl) {
-      var safe = String(clickedUrl || '').trim();
-      if (!safe || !/^https?:\/\//i.test(safe)) return;
-      var urls = [safe];
-      var start = 0;
-      var group = (activeP12ReportKey && _p12ReportGroups)
-        ? _p12ReportGroups[activeP12ReportKey]
-        : null;
-      if (group && group.rows && group.rows.length) {
-        var collected = p12CollectPdfs(group.rows).map(function(p) { return p.url; });
-        if (collected.length) {
-          urls = collected;
-          start = urls.indexOf(safe);
-          if (start < 0) {
-            urls = [safe].concat(collected.filter(function(u) { return u !== safe; }));
-            start = 0;
-          }
-        }
-      }
-      p12OpenPdfViewer(urls, start);
-    }
-
-    /** One-time click handlers for P12 report rows + PDF lightbox (delegation). */
+    /** One-time click handlers for P12 list rows + photo lightbox (shared P11 lightbox). */
     function p12BindUiOnce() {
       if (_p12UiBound) return;
       _p12UiBound = true;
@@ -15528,58 +15035,30 @@
             p12SelectReport(key);
             return;
           }
-          var pdfBtn = ev.target.closest('[data-p12-pdf-open]');
-          if (pdfBtn) {
+          var countBtn = ev.target.closest('button[data-p11-photo-set]');
+          if (countBtn && content.contains(countBtn)) {
             ev.preventDefault();
-            var pdfUrl = pdfBtn.getAttribute('data-p12-pdf-open') || pdfBtn.getAttribute('href') || '';
-            p12OpenPdfFromDay(pdfUrl);
+            var setKey = countBtn.getAttribute('data-p11-photo-set');
+            var setUrls = (setKey && _p11PhotoSets[setKey]) ? _p11PhotoSets[setKey] : [];
+            if (typeof p11OpenLightbox === 'function') p11OpenLightbox(setUrls, 0);
+            return;
+          }
+          var item = ev.target.closest('a.p11-photo-item');
+          if (item && content.contains(item)) {
+            var grid = item.closest('.p11-photo-grid');
+            if (!grid) return;
+            ev.preventDefault();
+            var urls = [];
+            Array.prototype.forEach.call(grid.querySelectorAll('a.p11-photo-item'), function(a) {
+              var href = a.getAttribute('href');
+              if (href) urls.push(href);
+            });
+            var idx = parseInt(item.getAttribute('data-p11-lb-index'), 10);
+            if (isNaN(idx)) idx = Math.max(0, urls.indexOf(item.getAttribute('href')));
+            if (typeof p11OpenLightbox === 'function') p11OpenLightbox(urls, idx);
           }
         });
       }
-      var lb = document.getElementById('p12-pdf-lightbox');
-      if (lb) {
-        lb.addEventListener('click', function(ev) {
-          if (ev.target.closest('[data-p12-pdf-close]')) {
-            p12ClosePdfViewer();
-            return;
-          }
-          if (ev.target.closest('[data-p12-pdf-prev]')) {
-            p12PdfStep(-1);
-            return;
-          }
-          if (ev.target.closest('[data-p12-pdf-next]')) {
-            p12PdfStep(1);
-          }
-        });
-        lb.addEventListener('touchstart', function(ev) {
-          if (!p12PdfLightboxIsOpen() || !ev.changedTouches || !ev.changedTouches.length) return;
-          _p12PdfTouchX = ev.changedTouches[0].clientX;
-        }, { passive: true });
-        lb.addEventListener('touchend', function(ev) {
-          if (_p12PdfTouchX == null || !ev.changedTouches || !ev.changedTouches.length) {
-            _p12PdfTouchX = null;
-            return;
-          }
-          var dx = ev.changedTouches[0].clientX - _p12PdfTouchX;
-          _p12PdfTouchX = null;
-          if (Math.abs(dx) < 48) return;
-          if (dx > 0) p12PdfStep(-1);
-          else p12PdfStep(1);
-        }, { passive: true });
-      }
-      document.addEventListener('keydown', function(ev) {
-        if (!p12PdfLightboxIsOpen()) return;
-        if (ev.key === 'Escape') {
-          ev.preventDefault();
-          p12ClosePdfViewer();
-        } else if (ev.key === 'ArrowLeft') {
-          ev.preventDefault();
-          p12PdfStep(-1);
-        } else if (ev.key === 'ArrowRight') {
-          ev.preventDefault();
-          p12PdfStep(1);
-        }
-      });
     }
 
     function p12RestrictNavEnabled() {
@@ -15792,11 +15271,15 @@
       return String(name || '').trim() || 'Person-only entry';
     }
 
-    function p12ExtractUrlsFromCell(raw) {
-      var s = String(raw || '').trim();
-      if (!s) return [];
+    /** Column P photo URLs (commas, newlines). Same style as P11 photoLinks. */
+    function p12PhotoLinks(r) {
+      var raw = String(col(r,
+        'Photo Links', 'Photo Link', 'photo_links', 'Photo URL', 'Photo URLs',
+        'BuildPass Photos', 'BuildPass Link', 'Photos URL'
+      ) || '').trim();
+      if (!raw) return [];
       var urls = [];
-      var m = s.match(/https?:\/\/[^\s,;|]+/gi);
+      var m = raw.match(/https?:\/\/[^\s,;|]+/gi);
       if (m && m.length) {
         m.forEach(function(u) {
           var clean = String(u).replace(/[)\].,]+$/g, '');
@@ -15804,22 +15287,40 @@
         });
         return urls;
       }
-      s.split(/[,;|]+/).forEach(function(p) {
+      raw.split(/[\n\r,;|]+/).forEach(function(p) {
         var t = String(p || '').trim();
         if (/^https?:\/\//i.test(t) && urls.indexOf(t) === -1) urls.push(t);
       });
       return urls;
     }
 
-    /** Site Diary PDF URL from col Q only (Site Diary PDF / Drive). Never photo links (col P). */
-    function p12DiaryPdfUrl(r) {
-      var raw = String(col(r,
-        'Site Diary PDF', 'Diary PDF', 'PDF Link', 'Site Diary PDF Link',
-        'PDF', 'Buildpass PDF', 'pdf_link', 'site_diary_pdf'
-      ) || '').trim();
-      if (!raw) return '';
-      var found = p12ExtractUrlsFromCell(raw);
-      return found.length ? found[0] : '';
+    function p12CollectPhotos(rows) {
+      var urls = [];
+      (rows || []).forEach(function(r) {
+        p12PhotoLinks(r).forEach(function(u) {
+          if (urls.indexOf(u) === -1) urls.push(u);
+        });
+      });
+      return urls;
+    }
+
+    function p12MediaThumbsHtml(links) {
+      if (!links || !links.length) return '';
+      var h = '<div class="p11-media-block">';
+      h += '<div class="p11-media-label">Photos (' + links.length + ')</div>';
+      h += '<div class="p11-photo-grid">';
+      links.forEach(function(u, i) {
+        var n = i + 1;
+        h += '<a class="p11-photo-item" href="' + p12Esc(u) +
+          '" data-p11-lb-index="' + i + '" role="button" title="View photo ' + n + '">' +
+          '<img class="p11-photo-thumb" src="' + p12Esc(u) + '" alt="Photo ' + n +
+          '" loading="lazy" referrerpolicy="no-referrer" ' +
+          "onerror=\"this.classList.add('is-broken')\" />" +
+          '<span class="p11-photo-link-text">View photo ' + n + '</span>' +
+          '</a>';
+      });
+      h += '</div></div>';
+      return h;
     }
 
     function p12DateLabel(d, fallback) {
@@ -15831,26 +15332,6 @@
       return fallback || 'Date not recorded';
     }
 
-    function p12CollectPdfs(rows) {
-      var list = [];
-      var seen = {};
-      (rows || []).forEach(function(r) {
-        var url = p12DiaryPdfUrl(r);
-        if (!url || seen[url]) return;
-        seen[url] = true;
-        var d = p12DiaryDate(r);
-        list.push({
-          url: url,
-          date: d,
-          dateLabel: p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Undated'),
-          person: p12DiaryPerson(r) || 'Not recorded'
-        });
-      });
-      list.sort(function(a, b) {
-        return (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0);
-      });
-      return list;
-    }
 
     function p12UniqueWorkers(rows) {
       var out = [];
@@ -15890,7 +15371,7 @@
         personOnly: personOnly,
         isSpecial: personOnly && p12IsKnownPersonSpecial(name),
         rows: [],
-        pdfs: [],
+        photoCount: 0,
         workers: []
       };
     }
@@ -15978,7 +15459,7 @@
       return h;
     }
 
-    /** Paint detail panel: day-by-day notes (newest first) + PDF from col Q only. */
+    /** Paint detail panel: day-by-day notes (newest first) + column P photos via P11 lightbox. */
     function p12SelectReport(key) {
       var group = key ? _p12ReportGroups[key] : null;
       var bodyEl = document.getElementById('p12-report-body');
@@ -16021,7 +15502,7 @@
         (rowsSorted.length === 1 ? 'y' : 'ies') + ' this week</div>';
       h += '</div>';
 
-      rowsSorted.forEach(function(r) {
+      rowsSorted.forEach(function(r, eIdx) {
         var d = p12DiaryDate(r);
         var dLabel = p12DateLabel(d, String(col(r, 'Date', 'date') || '').trim() || 'Not recorded');
         var work = p12DiaryWorkCompleted(r);
@@ -16031,7 +15512,8 @@
         var saf = p12SafetyState(r);
         var stop = p12WorkStoppedState(r);
         var logged = p12DiaryPerson(r) || 'Not recorded';
-        var pdfUrl = p12DiaryPdfUrl(r);
+        var rowLinks = p12PhotoLinks(r);
+        var dayKey = 'p12-sumday-' + String(key || '').replace(/[^a-zA-Z0-9_-]/g, '_') + '-' + eIdx;
 
         h += '<article class="p12-summary-day">';
         h += '<div class="p12-summary-day-date"><strong>' + p12Esc(dLabel) + '</strong>';
@@ -16059,16 +15541,15 @@
         h += '<span>Work stopped: ' + p12Esc(stop.label) + '</span>';
         h += '</div>';
 
-        if (pdfUrl) {
-          var openTabUrl = p12DriveOpenTabUrl(pdfUrl) || pdfUrl;
-          h += '<div class="p12-summary-day-pdf p12-pdf-actions">';
-          h += '<button type="button" class="p12-pdf-open-btn" data-p12-pdf-open="' +
-            p12Esc(pdfUrl) + '">View Site Diary PDF</button>';
-          h += '<a class="p12-photo-link p12-pdf-tab" href="' + p12Esc(openTabUrl) +
-            '" target="_blank" rel="noopener noreferrer">Open in new tab</a>';
+        if (rowLinks.length) {
+          _p11PhotoSets[dayKey] = rowLinks.slice();
+          h += '<div class="p12-summary-day-photos">';
+          h += '<button type="button" class="p11-expand-btn p11-job-count-btn" data-p11-photo-set="' +
+            dayKey + '" title="View photos">Photos · ' + rowLinks.length + '</button>';
+          h += p12MediaThumbsHtml(rowLinks);
           h += '</div>';
         } else {
-          h += '<div class="p12-summary-day-pdf p12-gap-text">Site Diary PDF unavailable</div>';
+          h += '<div class="p12-summary-day-photos p12-gap-text">No photos attached</div>';
         }
         h += '</article>';
       });
@@ -16181,7 +15662,7 @@
 
       Object.keys(_p12ReportGroups).forEach(function(k) {
         var g = _p12ReportGroups[k];
-        g.pdfs = p12CollectPdfs(g.rows);
+        g.photoCount = p12CollectPhotos(g.rows).length;
         g.workers = p12UniqueWorkers(g.rows);
         g.latestTs = 0;
         g.rows.forEach(function(r) {
@@ -16209,7 +15690,7 @@
         weekHeader.textContent = 'Site diaries · ' + p12WeekLabelFromKey(activeP12WeekKey);
       }
 
-      var withPdf = groupKeys.filter(function(k) { return _p12ReportGroups[k].pdfs.length > 0; }).length;
+      var withPhotos = groupKeys.filter(function(k) { return _p12ReportGroups[k].photoCount > 0; }).length;
       var srcEl = document.getElementById('p12-sources');
       if (srcEl) {
         if (!_p12LoadMeta.diariesOk) {
@@ -16221,7 +15702,7 @@
           srcEl.textContent = 'Sources · Buildpass_Site Diaries: Live (' +
             diariesFiltered.length + ' diary rows · ' + groupKeys.length +
             ' group' + (groupKeys.length === 1 ? '' : 's') +
-            ' · ' + withPdf + ' with PDF) · ' + varSrc;
+            ' · ' + withPhotos + ' with photos) · ' + varSrc;
         }
       }
 
@@ -16234,7 +15715,7 @@
         } else {
           hintEl.textContent = groupKeys.length + ' job/person group' +
             (groupKeys.length === 1 ? '' : 's') +
-            ' · select a row for day notes and Site Diary PDF';
+            ' · select a row for day notes and photos';
         }
       }
 
@@ -16255,7 +15736,7 @@
           var listHtml = '<div class="p12-summary-list" role="list">';
           groupKeys.forEach(function(k) {
             var g = _p12ReportGroups[k];
-            var hasPdf = g.pdfs.length > 0;
+            var hasPhotos = g.photoCount > 0;
             var selected = k === activeP12ReportKey;
             var workers = g.workers.length
               ? g.workers.join(', ')
@@ -16283,8 +15764,8 @@
             listHtml += '<span class="p12-summary-workers">' + p12Esc(workers) + '</span>';
             listHtml += '<span class="p12-summary-count">' + g.rows.length + ' entr' +
               (g.rows.length === 1 ? 'y' : 'ies') + '</span>';
-            if (hasPdf) {
-              listHtml += '<span class="p12-summary-pdf-hint">PDF available</span>';
+            if (hasPhotos) {
+              listHtml += '<span class="p12-summary-photo-hint">Photos</span>';
             }
             listHtml += '</div></button>';
           });
