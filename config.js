@@ -7,6 +7,9 @@
 // 2. The API key is restricted to bb-dashboard-eight.vercel.app
 //    by HTTP referrer in Google Cloud — safe to leave here.
 // 3. Do NOT commit a real API key to a public repo.
+// 4. Firebase web config: fill CONFIG.FIREBASE from Firebase Console
+//    (Project settings → Your apps → Web). Client keys are public.
+//    See AUTH.md for Google sign-in and Staff_Access setup.
 //
 // ═══════════════════════════════════════════════════════════════
 
@@ -64,27 +67,29 @@ const CONFIG = {
     VARIATIONS_LOG:      'Variations_Log',
     DEFECTS_REWORK:      'Defects_Rework',
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
+    // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
+    STAFF_ACCESS:        'Staff_Access',
   },
 
-  // ─── P12 staff unlock (crew Site Diaries only) ─────────────
-  // Temporary shared pass unlocks P12 *content* only.
-  // restrictNavToP12: when true (production BB-email staff accounts), hide/block
-  // P1–P11 at route level. When false (current temp pass), admin/owner keeps full
-  // dashboard; pass only opens Site Diaries content. Scope keys are cleared on load
-  // if restrictNavToP12 is false so an earlier staff unlock cannot trap the admin.
-  P12_STAFF_GATE: {
-    sessionKey: 'bb_p12_staff_unlock',
-    /** sessionStorage key for nav access scope (only used when restrictNavToP12) */
-    scopeKey: 'bb_access_scope',
-    /** value stored when crew nav is locked to P12 only */
-    staffScope: 'p12_only',
-    /**
-     * false = temporary shared pass (content unlock only; full P1–P11 always available)
-     * true  = production staff role: sidebar + loaders limited to P12 until lock/exit
-     */
-    restrictNavToP12: false,
-    // Change freely; temporary shared crew unlock
-    pass: 'bbcrew'
+  // ─── Firebase Auth (Google sign-in) ─────────────────────────
+  // Client-side web config is public by design (restricted by Firebase Auth rules
+  // + Staff_Access sheet). Paste values from Firebase Console → Project settings
+  // → Your apps → Web app config object.
+  //
+  // Optional Vercel env names (if you later inject at build / edge; this SPA
+  // currently reads CONFIG.FIREBASE with no build step):
+  //   FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID,
+  //   FIREBASE_STORAGE_BUCKET, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID
+  //
+  // Leave PASTE_ placeholders until Lori creates the Firebase web app.
+  // App shows "Sign-in not configured" (does not grant open dashboard access).
+  FIREBASE: {
+    apiKey:            'PASTE_FIREBASE_API_KEY',
+    authDomain:        'PASTE_PROJECT_ID.firebaseapp.com',
+    projectId:         'PASTE_PROJECT_ID',
+    storageBucket:     'PASTE_PROJECT_ID.appspot.com',
+    messagingSenderId: 'PASTE_MESSAGING_SENDER_ID',
+    appId:             'PASTE_APP_ID'
   }
 
 };

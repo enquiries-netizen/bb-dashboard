@@ -53,6 +53,13 @@ function clearSheetsCache() {
   Object.keys(_cache).forEach(k => delete _cache[k]);
 }
 
+/** Clear one tab from the in-memory cache (e.g. re-check Staff_Access on sign-in). */
+function clearSheetCache(tabName) {
+  if (tabName && Object.prototype.hasOwnProperty.call(_cache, tabName)) {
+    delete _cache[tabName];
+  }
+}
+
 /**
  * Filters rows by brand.
  *

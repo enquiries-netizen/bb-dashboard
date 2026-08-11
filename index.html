@@ -11,8 +11,23 @@
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="app">
+<body class="auth-pending">
+  <!-- App-level Google sign-in (Firebase Auth + Staff_Access). No page content until authorized. -->
+  <div id="auth-gate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="auth-gate-title">
+    <div class="auth-gate-card">
+      <div class="auth-gate-brand">
+        <img src="assets/bb-logo.png" alt="" class="auth-gate-logo" width="56" height="56">
+        <h1 id="auth-gate-title" class="auth-gate-title">BB Building Services</h1>
+        <p class="auth-gate-tagline">Unified Dashboard</p>
+      </div>
+      <p id="auth-gate-status" class="auth-gate-status">Checking sign-in…</p>
+      <button type="button" id="auth-google-btn" class="auth-google-btn" hidden>Sign in with Google</button>
+      <button type="button" id="auth-gate-signout-btn" class="auth-gate-signout-btn" hidden>Sign out</button>
+      <p id="auth-gate-error" class="auth-gate-error" role="alert" hidden></p>
+    </div>
+  </div>
+
+  <div class="app" id="app-shell" aria-hidden="true">
 
     <!-- ═══════════════════════════════════════════════════════
          HEADER
@@ -72,6 +87,10 @@
           </select>
         </div>
         <button class="refresh-btn" id="refresh-btn" title="Refresh data">Refresh</button>
+        <div class="header-user" id="header-user" hidden>
+          <span class="header-user-email" id="header-user-email"></span>
+          <button type="button" class="auth-signout-btn" id="auth-signout-btn">Sign out</button>
+        </div>
       </div>
     </header>
 
@@ -94,7 +113,6 @@
           <li class="nav-item" data-page="p9">P9: Cash Flow</li>
           <li class="nav-item" data-page="p10">P10: Marketing</li>
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
-          <!-- Crew-only Site Diaries (staff gate separate from dashboard access) -->
           <li class="nav-item" data-page="p12">P12: Site Diaries</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
@@ -1280,14 +1298,9 @@
           </div>
         </section>
 
-        <!-- ─── P12: Site Diaries (staff, full-width list+detail summaries) ─── -->
+        <!-- ─── P12: Site Diaries (crew, full-width list+detail summaries) ─── -->
         <!--
-          STAFF ACCESS (temporary shared pass via CONFIG.P12_STAFF_GATE):
-          Unlock opens Site Diaries content for the session.
-          Nav restriction to P12 only applies when
-          CONFIG.P12_STAFF_GATE.restrictNavToP12 is true (production crew accounts).
-          Temporary pass keeps P1-P11 fully available for admin/owner.
-          "Lock this session" clears content unlock. Stale p12_only scopes are cleared on load.
+          Access: Google sign-in + Staff_Access role Staff (P12 only), User (P11+P12), or Admin (full).
           Full-width diary summaries (P11 list+detail pattern, no tabs).
           Site Diary PDF from column Q / Drive only (never BuildPass photo col P).
           Variations: description-only match by job, no dollar values.
@@ -1302,29 +1315,7 @@
               <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and Site Diary PDF (Drive/col Q) · variations by description only · no financial figures or BuildPass photo links</p>
             </div>
 
-            <div id="p12-gate" class="p12-gate" hidden>
-              <div class="p12-gate-card">
-                <h2 class="p12-gate-title">Staff unlock</h2>
-                <p class="p12-gate-copy">
-                  Site Diaries are for crew (not general dashboard access).
-                  Enter the temporary staff pass to view this session.
-                  Production login method (per-person vs shared) ADMIN.
-                </p>
-                <p class="p12-gate-copy p12-gate-note">
-                  Temporary shared pass lives in <code>CONFIG.P12_STAFF_GATE</code>.
-                  Admin/owner dashboard nav (P1-P11) stays available with this temporary pass.
-                  Use &ldquo;Lock this session&rdquo; after viewing to clear crew unlock.
-                </p>
-                <form id="p12-unlock-form" class="p12-unlock-form" autocomplete="off">
-                  <label class="p12-unlock-label" for="p12-pass-input">Staff pass</label>
-                  <input type="password" id="p12-pass-input" class="p12-pass-input" name="p12_staff_pass" autocomplete="current-password" required>
-                  <button type="submit" class="p12-unlock-btn">Unlock Site Diaries</button>
-                </form>
-                <p id="p12-gate-error" class="p12-gate-error" role="alert" hidden>Pass not recognised. Check with your supervisor.</p>
-              </div>
-            </div>
-
-            <div id="p12-content" class="p12-content" hidden>
+            <div id="p12-content" class="p12-content">
               <div class="p12-filters">
                 <div class="filter-group p12-filter">
                   <span class="filter-label">Week</span>
@@ -1363,7 +1354,7 @@
                 <div class="section-title" id="p12-week-header">Site diaries this week</div>
                 <p class="p12-section-hint" id="p12-reports-hint">Jobs and person-only entries for the selected week. Select a row for day notes and Site Diary PDF.</p>
                 <div class="p12-summary-layout">
-                  <div class="p12-summary-list-wrap" id="p12-reports-list" role="list">Unlock to load…</div>
+                  <div class="p12-summary-list-wrap" id="p12-reports-list" role="list">Loading…</div>
                   <div class="p12-summary-detail-wrap" id="p12-report-panel" aria-live="polite">
                     <div id="p12-report-body">
                       <p class="p12-summary-empty">Select a job or person entry to view diary notes.</p>
@@ -1371,9 +1362,6 @@
                   </div>
                 </div>
               </div>
-              <p class="p12-lock-row">
-                <button type="button" class="p12-lock-btn" id="p12-lock-btn">Lock this session</button>
-              </p>
             </div>
           </div>
         </section>
@@ -1383,8 +1371,10 @@
     </div>
   </div>
 
-  <!-- Load order: config → sheets → app logic -->
+  <!-- Load order: config → Firebase Auth → sheets → app logic -->
   <script src="config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="sheets.js"></script>
   <script>
 
@@ -1403,7 +1393,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (staff full-width diary summaries). Staff-gated. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) via Drive /preview iframe lightbox (multi-PDF arrows per group) or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Site Diary PDF only from Drive/column Q (Site Diary PDF etc) via Drive /preview iframe lightbox (multi-PDF arrows per group) or new tab; never BuildPass photo column P or raw CDN image URLs. If no col Q PDF: Site Diary PDF unavailable. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -1865,33 +1855,436 @@
 
 
     // ═══════════════════════════════════════════════════════════
+    // ACCESS CONTROL (Firebase Google sign-in + Staff_Access sheet)
+    // Tiers: none | staff (P12) | user (P11+P12) | admin (all)
+    // ═══════════════════════════════════════════════════════════
+    var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12'];
+    var LAST_PAGE_SESSION_KEY = 'bb_last_page';
+    var _authUser = null;
+    var _accessTier = 'none';
+    var _staffAccessMap = null;
+    var _authReady = false;
+    var _authStateGen = 0;
+    var _allNavItems = null;
+    var _appBooted = false;
+
+    function isFirebaseConfigured() {
+      var f = (typeof CONFIG !== 'undefined' && CONFIG.FIREBASE) ? CONFIG.FIREBASE : null;
+      if (!f) return false;
+      var key = String(f.apiKey || '').trim();
+      var projectId = String(f.projectId || '').trim();
+      if (!key || !projectId) return false;
+      if (/PASTE_|YOUR_/i.test(key) || /PASTE_|YOUR_/i.test(projectId)) return false;
+      return true;
+    }
+
+    function getAccessTier() {
+      return _accessTier || 'none';
+    }
+
+    function isAuthenticated() {
+      return !!_authUser;
+    }
+
+    function allowedPages(tier) {
+      var t = tier || getAccessTier();
+      if (t === 'admin') return ALL_PAGE_IDS.slice();
+      if (t === 'user') return ['p11', 'p12'];
+      if (t === 'staff') return ['p12'];
+      return [];
+    }
+
+    function isPageAllowed(pageId) {
+      var id = String(pageId || '').toLowerCase();
+      return allowedPages(getAccessTier()).indexOf(id) >= 0;
+    }
+
+    function defaultLandingPage(tier) {
+      var t = tier || getAccessTier();
+      if (t === 'staff') return 'p12';
+      if (t === 'user') return 'p11';
+      if (t === 'admin') {
+        try {
+          var last = sessionStorage.getItem(LAST_PAGE_SESSION_KEY);
+          if (last && allowedPages('admin').indexOf(last) >= 0) return last;
+        } catch (e) { /* private mode */ }
+        return 'p1';
+      }
+      return null;
+    }
+
+    function resolveAccessTierFromEntry(entry) {
+      if (!entry || !entry.active) return 'none';
+      var role = String(entry.role || '').toLowerCase().trim();
+      if (role === 'admin') return 'admin';
+      if (role === 'user') return 'user';
+      if (role === 'staff') return 'staff';
+      return 'none';
+    }
+
+    function isActiveYes(raw) {
+      var s = String(raw == null ? '' : raw).trim().toLowerCase();
+      return s === 'yes' || s === 'y' || s === 'true' || s === '1';
+    }
+
+    function loadStaffAccessMap(force) {
+      var tab = (CONFIG.TABS && CONFIG.TABS.STAFF_ACCESS) ? CONFIG.TABS.STAFF_ACCESS : 'Staff_Access';
+      if (force && typeof clearSheetCache === 'function') clearSheetCache(tab);
+      if (!force && _staffAccessMap) return Promise.resolve(_staffAccessMap);
+      return fetchSheet(tab).then(function(rows) {
+        var map = {};
+        (rows || []).forEach(function(r) {
+          var email = String(col(r, 'Email', 'email', 'E-mail', 'Email Address') || '')
+            .trim().toLowerCase();
+          if (!email) return;
+          var role = String(col(r, 'Role', 'role') || '').trim().toLowerCase();
+          var active = isActiveYes(col(r, 'Active', 'active', 'Enabled', 'Status'));
+          map[email] = { role: role, active: active };
+        });
+        _staffAccessMap = map;
+        return map;
+      }).catch(function(err) {
+        console.error('[Auth] Staff_Access load failed:', err);
+        _staffAccessMap = {};
+        return _staffAccessMap;
+      });
+    }
+
+    function clearLegacyP12GateStorage() {
+      try {
+        sessionStorage.removeItem('bb_p12_staff_unlock');
+        sessionStorage.removeItem('bb_access_scope');
+      } catch (e) { /* private mode */ }
+    }
+
+    function applyAccessChrome() {
+      var tier = getAccessTier();
+      var allowed = allowedPages(tier);
+      document.body.classList.remove(
+        'app-role-staff', 'app-role-user', 'app-role-admin', 'app-role-none', 'p12-only-access'
+      );
+      if (tier === 'staff' || tier === 'user' || tier === 'admin') {
+        document.body.classList.add('app-role-' + tier);
+      } else {
+        document.body.classList.add('app-role-none');
+      }
+      // Staff: same period-filter hide as old p12-only chrome
+      if (tier === 'staff') document.body.classList.add('p12-only-access');
+
+      var navList = document.querySelector('.nav-list');
+      if (navList) {
+        if (!_allNavItems) {
+          _allNavItems = Array.prototype.slice.call(navList.querySelectorAll('.nav-item'));
+        }
+        // Remove forbidden items from the DOM (not merely CSS-hide)
+        navList.innerHTML = '';
+        _allNavItems.forEach(function(li) {
+          var pg = li.getAttribute('data-page') || '';
+          if (allowed.indexOf(pg) >= 0) navList.appendChild(li);
+        });
+      }
+
+      ['month-select', 'year-select'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var group = el.closest('.filter-group');
+        if (!group) return;
+        if (tier === 'staff') group.classList.add('p12-hide-for-staff');
+        else group.classList.remove('p12-hide-for-staff');
+      });
+
+      var headerUser = document.getElementById('header-user');
+      var emailEl = document.getElementById('header-user-email');
+      if (headerUser) {
+        if (_authUser && tier !== 'none') {
+          headerUser.removeAttribute('hidden');
+          if (emailEl) emailEl.textContent = _authUser.email || '';
+        } else {
+          headerUser.setAttribute('hidden', '');
+          if (emailEl) emailEl.textContent = '';
+        }
+      }
+    }
+
+    /** Compatibility alias used by older call sites */
+    function p12SyncAccessChrome() {
+      applyAccessChrome();
+    }
+
+    function p12IsP12OnlyAccess() {
+      return getAccessTier() === 'staff';
+    }
+
+    function setAuthGateUI(opts) {
+      opts = opts || {};
+      var statusEl = document.getElementById('auth-gate-status');
+      var errEl = document.getElementById('auth-gate-error');
+      var googleBtn = document.getElementById('auth-google-btn');
+      var gateOutBtn = document.getElementById('auth-gate-signout-btn');
+      if (statusEl) statusEl.textContent = opts.status || '';
+      if (errEl) {
+        if (opts.error) {
+          errEl.textContent = opts.error;
+          errEl.removeAttribute('hidden');
+        } else {
+          errEl.textContent = '';
+          errEl.setAttribute('hidden', '');
+        }
+      }
+      if (googleBtn) {
+        if (opts.showGoogle) googleBtn.removeAttribute('hidden');
+        else googleBtn.setAttribute('hidden', '');
+        googleBtn.disabled = !!opts.busy;
+      }
+      if (gateOutBtn) {
+        if (opts.showSignOut) gateOutBtn.removeAttribute('hidden');
+        else gateOutBtn.setAttribute('hidden', '');
+      }
+    }
+
+    function showAuthGate() {
+      document.body.classList.add('auth-pending');
+      document.body.classList.remove('auth-ready');
+      var gate = document.getElementById('auth-gate');
+      var shell = document.getElementById('app-shell');
+      if (gate) gate.removeAttribute('hidden');
+      if (shell) {
+        shell.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function hideAuthGate() {
+      document.body.classList.remove('auth-pending');
+      document.body.classList.add('auth-ready');
+      var gate = document.getElementById('auth-gate');
+      var shell = document.getElementById('app-shell');
+      if (gate) gate.setAttribute('hidden', '');
+      if (shell) shell.setAttribute('aria-hidden', 'false');
+    }
+
+    function bootAppForTier(tier, isFirstLand) {
+      applyAccessChrome();
+      hideAuthGate();
+      var land = defaultLandingPage(tier) || 'p1';
+      if (!isPageAllowed(land)) land = (allowedPages(tier)[0] || 'p1');
+      showPage(land);
+      if (typeof loadCurrentPage === 'function') loadCurrentPage();
+      if (typeof init3DTilt === 'function') init3DTilt();
+      _appBooted = true;
+    }
+
+    function lockAppUnauthorized(message) {
+      _accessTier = 'none';
+      applyAccessChrome();
+      showAuthGate();
+      setAuthGateUI({
+        status: message || 'Not authorized. Contact Lori.',
+        error: '',
+        showGoogle: false,
+        showSignOut: true,
+        busy: false
+      });
+    }
+
+    function handleAuthState(user) {
+      var gen = ++_authStateGen;
+      _authUser = user || null;
+      _authReady = true;
+
+      if (!user) {
+        _accessTier = 'none';
+        _staffAccessMap = null;
+        applyAccessChrome();
+        showAuthGate();
+        setAuthGateUI({
+          status: 'Sign in with your Google account to continue.',
+          error: '',
+          showGoogle: true,
+          showSignOut: false,
+          busy: false
+        });
+        return;
+      }
+
+      setAuthGateUI({
+        status: 'Checking access…',
+        error: '',
+        showGoogle: false,
+        showSignOut: true,
+        busy: true
+      });
+
+      loadStaffAccessMap(true).then(function(map) {
+        if (gen !== _authStateGen) return;
+        var email = String(user.email || '').trim().toLowerCase();
+        var entry = (map && email) ? map[email] : null;
+        var tier = resolveAccessTierFromEntry(entry);
+        _accessTier = tier;
+        if (tier === 'none') {
+          lockAppUnauthorized('Not authorized. Contact Lori.');
+          return;
+        }
+        bootAppForTier(tier, true);
+      }).catch(function(err) {
+        if (gen !== _authStateGen) return;
+        console.error('[Auth] access resolve failed:', err);
+        lockAppUnauthorized('Could not verify access. Contact Lori.');
+      });
+    }
+
+    function bindAuthUiOnce() {
+      if (bindAuthUiOnce._done) return;
+      bindAuthUiOnce._done = true;
+
+      var googleBtn = document.getElementById('auth-google-btn');
+      if (googleBtn) {
+        googleBtn.addEventListener('click', function() {
+          if (!isFirebaseConfigured() || typeof firebase === 'undefined') {
+            setAuthGateUI({
+              status: 'Sign-in not configured.',
+              error: 'Add Firebase web keys in config.js (CONFIG.FIREBASE). See AUTH.md.',
+              showGoogle: false,
+              showSignOut: false,
+              busy: false
+            });
+            return;
+          }
+          setAuthGateUI({
+            status: 'Opening Google sign-in…',
+            error: '',
+            showGoogle: true,
+            showSignOut: false,
+            busy: true
+          });
+          var provider = new firebase.auth.GoogleAuthProvider();
+          // No hd domain restriction - personal emails allowed.
+          firebase.auth().signInWithPopup(provider).catch(function(err) {
+            console.error('[Auth] sign-in failed:', err);
+            var msg = (err && err.message) ? String(err.message) : 'Sign-in failed. Try again.';
+            setAuthGateUI({
+              status: 'Sign in with your Google account to continue.',
+              error: msg,
+              showGoogle: true,
+              showSignOut: false,
+              busy: false
+            });
+          });
+        });
+      }
+
+      function doSignOut() {
+        clearLegacyP12GateStorage();
+        _accessTier = 'none';
+        _staffAccessMap = null;
+        _appBooted = false;
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+          firebase.auth().signOut().catch(function(err) {
+            console.error('[Auth] sign-out failed:', err);
+            handleAuthState(null);
+          });
+        } else {
+          handleAuthState(null);
+        }
+      }
+
+      var outBtn = document.getElementById('auth-signout-btn');
+      if (outBtn) outBtn.addEventListener('click', doSignOut);
+      var gateOut = document.getElementById('auth-gate-signout-btn');
+      if (gateOut) gateOut.addEventListener('click', doSignOut);
+    }
+
+    function initAppAuth() {
+      clearLegacyP12GateStorage();
+      bindAuthUiOnce();
+      showAuthGate();
+
+      if (!isFirebaseConfigured()) {
+        _authReady = true;
+        setAuthGateUI({
+          status: 'Sign-in not configured.',
+          error: 'Add Firebase web keys in config.js (CONFIG.FIREBASE). See AUTH.md for Lori setup steps.',
+          showGoogle: false,
+          showSignOut: false,
+          busy: false
+        });
+        return;
+      }
+
+      if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+        _authReady = true;
+        setAuthGateUI({
+          status: 'Sign-in not configured.',
+          error: 'Firebase SDK failed to load. Check network or script tags.',
+          showGoogle: false,
+          showSignOut: false,
+          busy: false
+        });
+        return;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(CONFIG.FIREBASE);
+        }
+      } catch (err) {
+        console.error('[Auth] Firebase init failed:', err);
+        _authReady = true;
+        setAuthGateUI({
+          status: 'Sign-in not configured.',
+          error: 'Firebase init failed. Check CONFIG.FIREBASE values.',
+          showGoogle: false,
+          showSignOut: false,
+          busy: false
+        });
+        return;
+      }
+
+      setAuthGateUI({
+        status: 'Checking sign-in…',
+        error: '',
+        showGoogle: false,
+        showSignOut: false,
+        busy: true
+      });
+      firebase.auth().onAuthStateChanged(handleAuthState);
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // NAVIGATION
     // ═══════════════════════════════════════════════════════════
     var navItems = document.querySelectorAll('.nav-item');
     var pages    = document.querySelectorAll('.page');
 
     function showPage(pageId) {
-      // Staff (P12-only) sessions: route-level block, not just sidebar hide
-      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && pageId !== 'p12') {
-        pageId = 'p12';
+      // Unauthenticated or unauthorized: never expose page chrome
+      if (!isAuthenticated() || getAccessTier() === 'none') {
+        return;
+      }
+      // Role-based route guard (Staff / User)
+      if (!isPageAllowed(pageId)) {
+        pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
       }
       pages.forEach(function(p) { p.classList.remove('active'); });
-      navItems.forEach(function(n) { n.classList.remove('active'); });
+      // Active class on currently attached nav nodes
+      document.querySelectorAll('.nav-item').forEach(function(n) {
+        n.classList.remove('active');
+      });
       var page = document.getElementById('page-' + pageId);
-      var nav  = document.querySelector('[data-page="' + pageId + '"]');
+      var nav  = document.querySelector('.nav-list [data-page="' + pageId + '"]');
       if (page) page.classList.add('active');
       if (nav)  nav.classList.add('active');
+      try { sessionStorage.setItem(LAST_PAGE_SESSION_KEY, pageId); } catch (e) { /* private mode */ }
       if (typeof setBbAiVisibleForPage === 'function') setBbAiVisibleForPage(pageId);
-      if (typeof p12SyncAccessChrome === 'function') p12SyncAccessChrome();
     }
 
     navItems.forEach(function(item) {
       item.addEventListener('click', function() {
         var target = item.dataset.page;
-        if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && target !== 'p12') {
-          // Route-level block: crew may not enter management pages
-          showPage('p12');
-          loadP12();
+        if (!isAuthenticated() || getAccessTier() === 'none') return;
+        if (!isPageAllowed(target)) {
+          var land = defaultLandingPage(getAccessTier());
+          showPage(land);
+          if (typeof loadCurrentPage === 'function') loadCurrentPage();
           return;
         }
         showPage(target);
@@ -2406,23 +2799,21 @@
     // PAGE LOAD ROUTER
     // ═══════════════════════════════════════════════════════════
     function loadCurrentPage() {
+      if (!isAuthenticated() || getAccessTier() === 'none') return;
       var active = document.querySelector('.nav-item.active');
-      if (!active) return;
-      var pageId = active.dataset.page;
-      // P12-only staff: never load management pages (P1–P11)
-      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess()) {
-        if (pageId !== 'p12') {
-          showPage('p12');
-          pageId = 'p12';
-        }
+      var pageId = active ? active.dataset.page : '';
+      if (!pageId || !isPageAllowed(pageId)) {
+        pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
+        showPage(pageId);
       }
       var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12 };
       var placeholders = {};
       var fn = loaders[pageId];
-      // Belt and braces: refuse management loaders under p12_only
-      if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess() && pageId !== 'p12') {
-        fn = loadP12;
-        pageId = 'p12';
+      // Belt and braces: never run a loader outside the role allow-list
+      if (!isPageAllowed(pageId)) {
+        pageId = defaultLandingPage(getAccessTier()) || 'p12';
+        showPage(pageId);
+        fn = loaders[pageId];
       }
       if (fn) {
         fn();
@@ -14626,37 +15017,23 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P12 - SITE DIARIES (staff full-width list+detail summaries)
+    // P12 - SITE DIARIES (crew full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
     // PDF: Site Diary PDF column Q / Drive via embed /preview iframe lightbox.
     // Never BuildPass photo col P / raw CDN image URLs.
-    // Auth: temporary pass unlocks P12 content only unless
-    // CONFIG.P12_STAFF_GATE.restrictNavToP12 === true (production staff role).
-    // Admin/owner always keeps P1-P11 when restrictNavToP12 is false.
+    // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
     var activeP12WeekKey = null;
     /** Selected report group key for the week entry list */
     var activeP12ReportKey = null;
     var _p12FiltersBound = false;
-    var _p12GateBound = false;
     var _p12UiBound = false;
-    var _p12MemUnlocked = false;
-    var _p12MemScope = null;
     var _p12LoadMeta = { diariesOk: false, variationsOk: false };
     /** Built each render: groupKey → report group object */
     var _p12ReportGroups = {};
     var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
-    var P12_GATE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.sessionKey)
-      ? CONFIG.P12_STAFF_GATE.sessionKey
-      : 'bb_p12_staff_unlock';
-    var P12_SCOPE_SESSION_KEY = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.scopeKey)
-      ? CONFIG.P12_STAFF_GATE.scopeKey
-      : 'bb_access_scope';
-    var P12_STAFF_SCOPE = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.staffScope)
-      ? CONFIG.P12_STAFF_GATE.staffScope
-      : 'p12_only';
 
     // ── P12 Site Diary PDF viewer (Drive /preview iframe + multi-PDF set) ──
     // Pinned: pdf.js 3.11.174 via cdnjs for non-Drive URLs only.
@@ -15206,104 +15583,9 @@
     }
 
     function p12RestrictNavEnabled() {
-      return !!(CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.restrictNavToP12 === true);
+      // Legacy name: staff tier is the only role limited strictly to P12.
+      return getAccessTier() === 'staff';
     }
-
-    function p12IsUnlocked() {
-      if (_p12MemUnlocked) return true;
-      try {
-        return sessionStorage.getItem(P12_GATE_SESSION_KEY) === '1';
-      } catch (e) {
-        return false;
-      }
-    }
-
-    /**
-     * Nav/loader restriction to P12 only.
-     * Temporary shared pass never sets this (restrictNavToP12 false).
-     * Production staff login should set restrictNavToP12 true and enter staff session.
-     */
-    function p12IsP12OnlyAccess() {
-      if (!p12RestrictNavEnabled()) return false;
-      if (_p12MemScope === P12_STAFF_SCOPE) return true;
-      try {
-        return sessionStorage.getItem(P12_SCOPE_SESSION_KEY) === P12_STAFF_SCOPE;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    /** Clear any sticky nav-scope left from older code that set scope on temp unlock. */
-    function p12ClearNavRestriction() {
-      _p12MemScope = null;
-      try {
-        sessionStorage.removeItem(P12_SCOPE_SESSION_KEY);
-      } catch (e) { /* private mode */ }
-      p12SyncAccessChrome();
-    }
-
-    /**
-     * Content unlock for P12. Nav restriction only if restrictNavToP12 is true
-     * (production crew accounts — not the temporary shared admin-review pass).
-     */
-    function p12EnterStaffSession() {
-      _p12MemUnlocked = true;
-      try {
-        sessionStorage.setItem(P12_GATE_SESSION_KEY, '1');
-      } catch (e) { /* private mode */ }
-      if (p12RestrictNavEnabled()) {
-        _p12MemScope = P12_STAFF_SCOPE;
-        try {
-          sessionStorage.setItem(P12_SCOPE_SESSION_KEY, P12_STAFF_SCOPE);
-        } catch (e2) { /* private mode */ }
-      } else {
-        p12ClearNavRestriction();
-      }
-      p12SyncAccessChrome();
-    }
-
-    function p12ExitStaffSession() {
-      _p12MemUnlocked = false;
-      _p12MemScope = null;
-      try {
-        sessionStorage.removeItem(P12_GATE_SESSION_KEY);
-        sessionStorage.removeItem(P12_SCOPE_SESSION_KEY);
-      } catch (e) { /* private mode */ }
-      p12SyncAccessChrome();
-    }
-
-    function p12SetUnlocked(on) {
-      if (on) p12EnterStaffSession();
-      else p12ExitStaffSession();
-    }
-
-    function p12SyncAccessChrome() {
-      var only = p12IsP12OnlyAccess();
-      document.body.classList.toggle('p12-only-access', !!only);
-      document.querySelectorAll('.nav-item').forEach(function(li) {
-        var pg = li.getAttribute('data-page') || '';
-        if (only && pg && pg !== 'p12') {
-          li.setAttribute('aria-hidden', 'true');
-          li.setAttribute('tabindex', '-1');
-        } else {
-          li.removeAttribute('aria-hidden');
-          li.removeAttribute('tabindex');
-        }
-      });
-      ['month-select', 'year-select'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        var group = el.closest('.filter-group');
-        if (group) {
-          if (only) group.classList.add('p12-hide-for-staff');
-          else group.classList.remove('p12-hide-for-staff');
-        }
-      });
-    }
-
-    // Immediately untrap any admin session still holding a stale p12_only scope
-    // from the prior temporary-pass bug (restrictNav was always on).
-    p12ClearNavRestriction();
 
     function p12MondayOf(d) {
       if (!d || isNaN(d.getTime())) return null;
@@ -15344,69 +15626,14 @@
       return left + ' – ' + right + ' · ' + weekKey;
     }
 
-    function p12ShowGate(showGate) {
-      var gate = document.getElementById('p12-gate');
-      var content = document.getElementById('p12-content');
-      if (gate) {
-        if (showGate) gate.removeAttribute('hidden');
-        else gate.setAttribute('hidden', '');
-      }
-      if (content) {
-        if (showGate) content.setAttribute('hidden', '');
-        else content.removeAttribute('hidden');
-      }
-    }
-
-    function p12BindGateOnce() {
-      if (_p12GateBound) return;
-      _p12GateBound = true;
-      var form = document.getElementById('p12-unlock-form');
-      var errEl = document.getElementById('p12-gate-error');
-      var lockBtn = document.getElementById('p12-lock-btn');
-      if (form) {
-        form.addEventListener('submit', function(ev) {
-          ev.preventDefault();
-          var input = document.getElementById('p12-pass-input');
-          var expected = (CONFIG.P12_STAFF_GATE && CONFIG.P12_STAFF_GATE.pass != null)
-            ? String(CONFIG.P12_STAFF_GATE.pass)
-            : '';
-          var given = input ? String(input.value || '') : '';
-          if (expected && given === expected) {
-            p12EnterStaffSession();
-            if (errEl) errEl.setAttribute('hidden', '');
-            if (input) input.value = '';
-            showPage('p12');
-            loadP12();
-          } else {
-            if (errEl) errEl.removeAttribute('hidden');
-          }
-        });
-      }
-      if (lockBtn) {
-        lockBtn.addEventListener('click', function() {
-          p12ExitStaffSession();
-          window._p12Diaries = null;
-          window._p12Variations = null;
-          _p12ReportGroups = {};
-          activeP12ReportKey = null;
-          p12ShowGate(true);
-          showPage('p12');
-        });
-      }
-    }
-
     async function loadP12() {
-      p12BindGateOnce();
-      p12BindUiOnce();
-      p12SyncAccessChrome();
-      setBbAiVisibleForPage('p12');
-      if (!p12IsUnlocked()) {
-        p12ShowGate(true);
-        showLoading(false);
+      if (!isAuthenticated() || !isPageAllowed('p12')) {
+        showPage(defaultLandingPage(getAccessTier()) || 'p12');
         return;
       }
-      if (!p12IsP12OnlyAccess()) p12EnterStaffSession();
-      p12ShowGate(false);
+      p12BindUiOnce();
+      applyAccessChrome();
+      setBbAiVisibleForPage('p12');
       showLoading(true);
       removeError('p12');
       _p12LoadMeta = { diariesOk: false, variationsOk: false };
@@ -20409,15 +20636,10 @@
 
 
     // ═══════════════════════════════════════════════════════════
-    // INITIALISE
+    // INITIALISE (wait for Google sign-in + Staff_Access before pages)
     // ═══════════════════════════════════════════════════════════
     init3DTilt();
-    if (typeof p12IsP12OnlyAccess === 'function' && p12IsP12OnlyAccess()) {
-      showPage('p12');
-      loadP12();
-    } else {
-      loadP1();
-    }
+    initAppAuth();
 
   </script>
 
