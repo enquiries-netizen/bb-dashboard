@@ -7642,9 +7642,7 @@ body.p11-lightbox-open {
 }
 #page-p11 .kpi-label,
 #page-p11 .kpi-sub,
-#page-p11 .p11-updated,
 #page-p11 .p11-data-quality,
-#page-p11 .p11-sources,
 #page-p11 .p11-scope-note,
 #page-p11 .p11-section-hint,
 #page-p11 .no-data-msg,
@@ -8140,6 +8138,13 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   flex-shrink: 0;
   font-weight: 600;
   color: var(--p12-text);
+}
+#page-p12 .p12-summary-count--issue {
+  color: var(--p12-text);
+}
+#page-p12 .p12-summary-issue-word {
+  color: var(--accent, #EA580C);
+  font-weight: 700;
 }
 #page-p12 .p12-summary-photo-hint {
   flex-shrink: 0;

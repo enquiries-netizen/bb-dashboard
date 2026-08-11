@@ -15636,8 +15636,10 @@
         var g = _p12ReportGroups[k];
         g.photoCount = p12CollectPhotos(g.rows).length;
         g.workers = p12UniqueWorkers(g.rows);
+        g.issueCount = 0;
         g.latestTs = 0;
         g.rows.forEach(function(r) {
+          if (p12HasIssueContent(r)) g.issueCount += 1;
           var d = p12DiaryDate(r);
           var ts = d ? d.getTime() : 0;
           if (ts > g.latestTs) g.latestTs = ts;
@@ -15718,8 +15720,16 @@
             listHtml += '</div>';
             listHtml += '<div class="p12-summary-row-meta">';
             listHtml += '<span class="p12-summary-workers">' + p12Esc(workers) + '</span>';
-            listHtml += '<span class="p12-summary-count">' + g.rows.length + ' entr' +
-              (g.rows.length === 1 ? 'y' : 'ies') + '</span>';
+            var nEnt = g.rows.length;
+            var entrWord = nEnt === 1 ? 'entry' : 'entries';
+            if (g.issueCount > 0) {
+              var issueWord = g.issueCount === 1 ? 'issue' : 'issues';
+              listHtml += '<span class="p12-summary-count p12-summary-count--issue">' +
+                nEnt + ' ' + entrWord + ' with ' +
+                '<span class="p12-summary-issue-word">' + issueWord + '</span></span>';
+            } else {
+              listHtml += '<span class="p12-summary-count">' + nEnt + ' ' + entrWord + '</span>';
+            }
             if (hasPhotos) {
               listHtml += '<span class="p12-summary-photo-hint">Photos</span>';
             }
