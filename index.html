@@ -15515,35 +15515,31 @@
         h += '<div class="p12-summary-day-date"><strong>' + p12Esc(dLabel) + '</strong>';
         h += '<span class="p12-summary-day-by"> · ' + p12Esc(logged) + '</span></div>';
 
-        // Issues/blockers first: attention signal before work notes
-        if (issues && p12HasIssueContent(r)) {
-          h += '<div class="p12-summary-day-issues p12-summary-day-issues--alert">' +
-            '<span class="p12-summary-meta-label">Issues / blockers</span> ' +
-            p12Esc(issues) + '</div>';
-        } else {
-          h += '<div class="p12-summary-day-issues p12-summary-day-issues--clear">' +
-            '<span class="p12-summary-meta-label">Issues / blockers</span> ' +
-            'No issues or blockers reported</div>';
-        }
+        // Same labeled sections as P11 Exceptions expand; Issues first for crew scan
+        var hasIssue = !!(issues && p12HasIssueContent(r));
+        var issueText = hasIssue ? issues : 'No issues or blockers reported';
+        var stopCls = stop.code === 'yes' ? 'p12-flag p12-flag--accent'
+          : (stop.code === 'no' ? 'p12-flag p12-flag--neutral' : 'p12-flag p12-flag--gap');
+        var safCls = saf.isFlag ? 'p12-flag p12-flag--accent'
+          : (saf.code === 'no' ? 'p12-flag p12-flag--neutral' : 'p12-flag p12-flag--gap');
 
-        if (work) {
-          h += '<p class="p12-summary-day-body">' + p12Esc(work) + '</p>';
-        } else {
-          h += '<p class="p12-summary-day-body p12-gap-text">No work completed text recorded for this day.</p>';
-        }
+        h += '<div class="p12-drawer-grid">';
+        h += '<div class="p12-drawer-wide p12-drawer-issue' +
+          (hasIssue ? ' p12-drawer-issue--alert' : ' p12-drawer-issue--clear') + '">' +
+          '<dt>Full Issue Description</dt><dd>' + p12Esc(issueText) + '</dd></div>';
+        h += '<div class="p12-drawer-wide"><dt>Work Completed</dt><dd>' +
+          p12Esc(work || 'Not recorded') + '</dd></div>';
+        h += '<div><dt>Work Stopped</dt><dd><span class="' + stopCls + '">' +
+          p12Esc(stop.label) + '</span></dd></div>';
+        h += '<div><dt>Safety Flag</dt><dd><span class="' + safCls + '">' +
+          p12Esc(saf.label) + '</span></dd></div>';
         if (sum && sum !== work) {
-          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Summary</span> ' +
-            p12Esc(sum) + '</div>';
+          h += '<div class="p12-drawer-wide"><dt>Summary</dt><dd>' + p12Esc(sum) + '</dd></div>';
         }
         if (mats) {
-          h += '<div class="p12-summary-day-meta"><span class="p12-summary-meta-label">Materials</span> ' +
-            p12Esc(mats) + '</div>';
+          h += '<div class="p12-drawer-wide"><dt>Materials</dt><dd>' + p12Esc(mats) + '</dd></div>';
         }
-        h += '<div class="p12-summary-day-flags">';
-        h += '<span>Safety: ' + p12Esc(saf.label) + '</span>';
-        h += '<span>Work stopped: ' + p12Esc(stop.label) + '</span>';
-        h += '</div>';
-
+        h += '<div class="p12-drawer-wide"><dt>Photos</dt><dd>';
         if (rowLinks.length) {
           _p11PhotoSets[dayKey] = rowLinks.slice();
           h += '<div class="p12-summary-day-photos">';
@@ -15552,8 +15548,10 @@
           h += p12MediaThumbsHtml(rowLinks);
           h += '</div>';
         } else {
-          h += '<div class="p12-summary-day-photos p12-gap-text">No photos attached</div>';
+          h += '<span class="p12-gap-text">No photos attached</span>';
         }
+        h += '</dd></div>';
+        h += '</div>';
         h += '</article>';
       });
 
