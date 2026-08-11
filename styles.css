@@ -7201,7 +7201,7 @@ p.p8-section-hint {
 #page-p11 .p11-job-detail-work dt,
 #page-p11 .p11-job-detail-stop dt,
 #page-p11 .p11-job-detail-safety dt,
-#page-p11 .p11-job-detail-deliveries dt {
+#page-p11 .p11-job-detail-daily-summary dt {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -7213,7 +7213,7 @@ p.p8-section-hint {
 #page-p11 .p11-job-detail-work dd,
 #page-p11 .p11-job-detail-stop dd,
 #page-p11 .p11-job-detail-safety dd,
-#page-p11 .p11-job-detail-deliveries dd {
+#page-p11 .p11-job-detail-daily-summary dd {
   margin: 0 0 6px;
   font-size: 13px;
   color: var(--p11-text, #111827);

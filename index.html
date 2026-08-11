@@ -1372,7 +1372,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes (work completed, issues/blockers when real, materials, safety/work-stopped labels). Photos from column P (Photo Links) via the shared P11 lightbox only. Column Q is Deliveries Made Today / Details text (Meli) shown only when non-blank, never as PDF or photo URL. Soft-load Variations_Log for job groups: description and status/id only, never dollar/contract values. Not merged with P11 exceptions tab. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Daily Summary (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -13782,19 +13782,29 @@
       }
 
       /**
-       * Column Q: Deliveries Made Today / Details (Meli's Record Keeping).
+       * Column Q: Daily Summary (all diary entries). Pipe-separated sections.
        * Plain text only, never treat as URL/PDF/photo.
        */
-      function diaryDeliveriesText(r) {
+      function diaryDailySummaryText(r) {
         var raw = String(col(r,
+          'Daily Summary',
+          'daily_summary',
+          'Daily summary',
+          // Legacy header names if sheet still has them
           'Deliveries Made Today / Details',
           'Deliveries Made Today',
-          'Deliveries Made Today/Details',
-          'Deliveries',
-          'deliveries_made_today',
-          'Deliveries Made'
+          'Deliveries Made Today/Details'
         ) || '').trim();
         return raw;
+      }
+
+      /** Pipe-separated sections as HTML lines (escaped). Blank when empty. */
+      function diaryDailySummaryHtml(r) {
+        var raw = diaryDailySummaryText(r);
+        if (!raw) return '';
+        var parts = raw.split('|').map(function(s) { return String(s || '').trim(); }).filter(Boolean);
+        if (!parts.length) return '';
+        return parts.map(function(p) { return p11Esc(p); }).join('<br>');
       }
 
       function photoState(r) {
@@ -14461,7 +14471,7 @@
                   '<span>' + p11Esc(dLabel) + '</span>' +
                   '<span>Logged by ' + p11Esc(by) + '</span>' +
                   '</div>' +
-                  /* Order: Work Completed, Work Stopped, Issue/Safety, Deliveries (col Q when set), Photos (col P) */
+                  /* Order: Work Completed, Work Stopped, Issue/Safety, Daily Summary (col Q when set), Photos (col P) */
                   '<div class="p11-job-detail-work"><dt>Work Completed</dt><dd>' +
                     p11Esc(workDone) + '</dd></div>' +
                   '<div class="p11-job-detail-stop"><dt>Work Stopped</dt><dd>' +
@@ -14473,10 +14483,10 @@
                     '<span class="' + flagClass(saf.isFlag ? 'yes' : (saf.code === 'missing' ? 'missing' : 'neutral')) + '">' +
                     p11Esc(saf.label) + '</span></dd></div>' +
                   (function() {
-                    var deliv = diaryDeliveriesText(r);
-                    if (!deliv) return '';
-                    return '<div class="p11-job-detail-deliveries"><dt>Deliveries Made Today</dt><dd>' +
-                      p11Esc(deliv) + '</dd></div>';
+                    var sumHtml = diaryDailySummaryHtml(r);
+                    if (!sumHtml) return '';
+                    return '<div class="p11-job-detail-daily-summary"><dt>Daily Summary</dt><dd>' +
+                      sumHtml + '</dd></div>';
                   })() +
                   p11MediaLinksHtml(r) +
                   '</div>';
@@ -14651,7 +14661,7 @@
               '<tr class="p11-ex-drawer" id="' + drawerId + '" hidden>' +
               '<td colspan="8">' +
               '<div class="p11-drawer-grid">' +
-              /* Order: Work Completed, Work Stopped, Safety, Issue, Deliveries (col Q), Photos (col P only) */
+              /* Order: Work Completed, Work Stopped, Safety, Issue, Daily Summary (col Q), Photos (col P only) */
               '<div class="p11-drawer-wide"><dt>Work Completed</dt><dd>' +
                 p11Esc(col(r, 'Work Completed', 'work_completed', 'Work Description',
                   'Description of Work', 'Work completed') || 'Not recorded') + '</dd></div>' +
@@ -14663,10 +14673,10 @@
               '<div class="p11-drawer-wide"><dt>Full Issue Description</dt><dd>' +
                 p11Esc(hasIssueContent(r) ? diaryIssuesText(r) : 'Not recorded') + '</dd></div>' +
               (function() {
-                var deliv = diaryDeliveriesText(r);
-                if (!deliv) return '';
-                return '<div class="p11-drawer-wide"><dt>Deliveries Made Today</dt><dd>' +
-                  p11Esc(deliv) + '</dd></div>';
+                var sumHtml = diaryDailySummaryHtml(r);
+                if (!sumHtml) return '';
+                return '<div class="p11-drawer-wide"><dt>Daily Summary</dt><dd>' +
+                  sumHtml + '</dd></div>';
               })() +
               '<div class="p11-drawer-wide"><dt>Photos</dt><dd>' +
                 p11MediaLinksHtml(r) +
@@ -14785,7 +14795,7 @@
           var stop = workStoppedState(r);
           var logged = col(r, 'Logged By', 'Logged by', 'logged_by') || 'Not recorded';
           var rowLinks = photoLinks(r);
-          var deliveries = diaryDeliveriesText(r);
+          var dailySumHtml = diaryDailySummaryHtml(r);
           var dayKey = 'sumday-' + group.key.replace(/[^a-zA-Z0-9_-]/g, '_') + '-' + eIdx;
 
           h += '<article class="p11-summary-day">';
@@ -14805,10 +14815,10 @@
             h += '<div class="p11-summary-day-meta"><span class="p11-summary-meta-label">Materials</span> ' +
               p11Esc(String(mats).trim()) + '</div>';
           }
-          if (deliveries) {
-            h += '<div class="p11-summary-day-meta p11-summary-day-deliveries">' +
-              '<span class="p11-summary-meta-label">Deliveries Made Today</span> ' +
-              p11Esc(deliveries) + '</div>';
+          if (dailySumHtml) {
+            h += '<div class="p11-summary-day-meta p11-summary-day-daily">' +
+              '<span class="p11-summary-meta-label">Daily Summary</span><br>' +
+              dailySumHtml + '</div>';
           }
           h += '<div class="p11-summary-day-flags">';
           h += '<span>Safety: ' + p11Esc(saf.label) + '</span>';
@@ -14993,7 +15003,7 @@
     // P12 - SITE DIARIES (crew full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
-    // Photos: column P (Photo Links) via shared P11 lightbox. Column Q = Deliveries Made Today text (Meli).
+    // Photos: column P via shared P11 lightbox. Column Q = Daily Summary text (any entry, when non-blank).
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
@@ -15163,8 +15173,9 @@
     }
 
     function p12DiarySummaryText(r) {
+      // Free-text summary fields only. Do not read Daily Summary (col Q); that has its own UI field.
       var summary = col(r,
-        'Summary', 'ChatGPT Summary', 'Diary Summary', 'Daily Summary',
+        'Summary', 'ChatGPT Summary', 'Diary Summary',
         'AI Summary', 'Plain English Summary', 'Endorsement Summary',
         'summary', 'chatgpt_summary', 'diary_summary'
       );
@@ -15242,33 +15253,52 @@
 
     function p12IsKnownPersonSpecial(name) {
       var n = p12NormName(name);
-      return n === 'melis record keeping' ||
-        n === 'fabrication and welding' ||
-        n === 'fabrication & welding' ||
-        n === 'fab and welding' ||
-        n === 'fab welding';
+      if (n === 'melis record keeping') return true;
+      // Fabrication and Welding (with or without BBYARD / similar suffix)
+      if (n.indexOf('fabrication and welding') === 0 ||
+          n.indexOf('fabrication & welding') === 0 ||
+          n === 'fab and welding' ||
+          n === 'fab welding') {
+        return true;
+      }
+      return false;
     }
 
     function p12PersonSpecialLabel(name) {
       var n = p12NormName(name);
       if (n === 'melis record keeping') return "Meli's Record Keeping";
-      if (n === 'fabrication and welding' || n === 'fabrication & welding' ||
-          n === 'fab and welding' || n === 'fab welding') {
-        return 'Fabrication and Welding';
+      if (n.indexOf('fabrication and welding') === 0 ||
+          n.indexOf('fabrication & welding') === 0 ||
+          n === 'fab and welding' ||
+          n === 'fab welding') {
+        // Prefer sheet job name so "Fabrication and Welding BBYARD" shows as-is
+        var raw = String(name || '').trim();
+        return raw || 'Fabrication and Welding';
       }
       return String(name || '').trim() || 'Person-only entry';
     }
 
-    /** Column Q: Deliveries Made Today / Details (Meli). Plain text only, never URL/PDF. */
-    function p12DiaryDeliveries(r) {
+    /**
+     * Column Q: Daily Summary for any diary entry. Plain text only, never URL/PDF.
+     * Prefer Daily Summary header; legacy Deliveries headers accepted if present.
+     */
+    function p12DiaryDailySummary(r) {
       return String(col(r,
+        'Daily Summary',
+        'daily_summary',
+        'Daily summary',
         'Deliveries Made Today / Details',
         'Deliveries Made Today',
-        'Deliveries Made Today/Details',
-        'Deliveries',
-        'deliveries_made_today',
-        'Deliveries Made'
+        'Deliveries Made Today/Details'
       ) || '').trim();
+    }
+
+    function p12DiaryDailySummaryHtml(r) {
+      var raw = p12DiaryDailySummary(r);
+      if (!raw) return '';
+      var parts = raw.split('|').map(function(s) { return String(s || '').trim(); }).filter(Boolean);
+      if (!parts.length) return '';
+      return parts.map(function(p) { return p12Esc(p); }).join('<br>');
     }
 
     /** Column P photo URLs (commas, newlines). Same style as P11 photoLinks. */
@@ -15514,7 +15544,7 @@
         var stop = p12WorkStoppedState(r);
         var logged = p12DiaryPerson(r) || 'Not recorded';
         var rowLinks = p12PhotoLinks(r);
-        var deliveries = p12DiaryDeliveries(r);
+        var dailySumHtml = p12DiaryDailySummaryHtml(r);
         var dayKey = 'p12-sumday-' + String(key || '').replace(/[^a-zA-Z0-9_-]/g, '_') + '-' + eIdx;
 
         h += '<article class="p12-summary-day">';
@@ -15539,15 +15569,16 @@
           p12Esc(stop.label) + '</span></dd></div>';
         h += '<div><dt>Safety Flag</dt><dd><span class="' + safCls + '">' +
           p12Esc(saf.label) + '</span></dd></div>';
-        if (sum && sum !== work) {
+        // Optional older free-text summary fields only (never col Q Daily Summary; that has its own field)
+        if (sum && sum !== work && sum !== p12DiaryDailySummary(r)) {
           h += '<div class="p12-drawer-wide"><dt>Summary</dt><dd>' + p12Esc(sum) + '</dd></div>';
         }
         if (mats) {
           h += '<div class="p12-drawer-wide"><dt>Materials</dt><dd>' + p12Esc(mats) + '</dd></div>';
         }
-        if (deliveries) {
-          h += '<div class="p12-drawer-wide p12-drawer-deliveries"><dt>Deliveries Made Today</dt><dd>' +
-            p12Esc(deliveries) + '</dd></div>';
+        if (dailySumHtml) {
+          h += '<div class="p12-drawer-wide p12-drawer-daily-summary"><dt>Daily Summary</dt><dd>' +
+            dailySumHtml + '</dd></div>';
         }
         h += '<div class="p12-drawer-wide"><dt>Photos</dt><dd>';
         if (rowLinks.length) {
