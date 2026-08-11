@@ -1296,7 +1296,7 @@
                 <span class="page-badge">P12</span>
                 <h1 class="page-title">Site Diaries</h1>
               </div>
-              <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and photos (column P) · variations by description only · no financial figures</p>
+              <p class="p12-scope-note">Week-driven crew summaries · job or person-only entries · day notes and photos</p>
             </div>
 
             <div id="p12-content" class="p12-content">
@@ -14107,21 +14107,6 @@
       if (dqEl) {
         dqEl.textContent = 'Quality data confidence: ' + confLevel +
           (dqBits.length ? ' · ' + dqBits.join(' · ') : '');
-      }
-      var srcEl = document.getElementById('p11-sources');
-      if (srcEl) {
-        var diarySrc = !_p11LoadMeta.diariesOk
-          ? 'Buildpass_Site Diaries: Unavailable'
-          : ('Buildpass_Site Diaries: Live (' + entryCount + ' in selection)');
-        var varSrc = !_p11LoadMeta.variationsOk
-          ? 'Variations_Log: Unavailable'
-          : ('Variations_Log: Live (' + varCount + ' in selection)');
-        var defSrc = !_p11LoadMeta.defectsOk
-          ? 'Defects_Rework: Unavailable'
-          : (defectCount
-            ? ('Defects_Rework: Live (' + defectCount + ' recorded)')
-            : 'Defects_Rework: Live · 0 recorded (rework cost Unavailable, source not connected)');
-        srcEl.textContent = 'Sources · ' + diarySrc + ' · ' + varSrc + ' · ' + defSrc;
       }
 
       setBBPageData('P11', 'P11: Site Diary Quality and Variations Exceptions', {
