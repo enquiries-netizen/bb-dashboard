@@ -1180,8 +1180,6 @@
                 </div>
               </div>
               <p class="p11-data-quality" id="p11-data-quality" aria-live="polite">Quality data confidence: checking sources...</p>
-              <p class="p11-sources" id="p11-sources">Sources: checking...</p>
-              <p class="p11-updated" id="p11-last-updated">Last updated...</p>
             </div>
 
             <div class="p11-kpi-row" aria-label="Site diary and variations KPIs">
@@ -13960,12 +13958,6 @@
       }
       var brandEl = document.getElementById('p11-brand-label');
       if (brandEl) brandEl.textContent = activeBrand || 'ALL';
-      var updEl = document.getElementById('p11-last-updated');
-      if (updEl) {
-        updEl.textContent = 'Last updated ' + new Date().toLocaleString('en-AU', {
-          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-      }
 
       // Department filter (master list)
       var deptList = (CONFIG.DEPARTMENTS && CONFIG.DEPARTMENTS.length)

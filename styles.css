@@ -6469,20 +6469,12 @@ p.p8-section-hint {
 .p11-select {
   min-width: 160px;
 }
-#page-p11 .p11-data-quality,
-#page-p11 .p11-sources,
-#page-p11 .p11-updated {
+#page-p11 .p11-data-quality {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.4;
   color: var(--p11-muted, #6B7280);
-}
-#page-p11 .p11-data-quality {
   font-weight: 500;
-  font-size: 12.5px;
-}
-#page-p11 .p11-sources {
-  font-size: 11.5px;
 }
 #page-p11 .p11-kpi-row {
   display: grid;
