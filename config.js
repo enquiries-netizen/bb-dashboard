@@ -84,12 +84,12 @@ const CONFIG = {
   // Leave PASTE_ placeholders until Lori creates the Firebase web app.
   // App shows "Sign-in not configured" (does not grant open dashboard access).
   FIREBASE: {
-    apiKey:            'PASTE_FIREBASE_API_KEY',
-    authDomain:        'PASTE_PROJECT_ID.firebaseapp.com',
-    projectId:         'PASTE_PROJECT_ID',
-    storageBucket:     'PASTE_PROJECT_ID.appspot.com',
-    messagingSenderId: 'PASTE_MESSAGING_SENDER_ID',
-    appId:             'PASTE_APP_ID'
+    apiKey:            'AIzaSyB5JsjElEf3BmckHX7k3mGP3mQcVa56b20',
+    authDomain:        'bb-dashboard-authentication.firebaseapp.com',
+    projectId:         'bb-dashboard-authentication',
+    storageBucket:     'bb-dashboard-authentication.firebasestorage.app',
+    messagingSenderId: '992671300884',
+    appId:             '1:992671300884:web:92d2b302e37049bb911601'
   }
 
 };
