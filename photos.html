@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site diary photos · BB Building Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Standalone photo viewer (email deep link). No dashboard chrome or sign-in. */
+    html, body {
+      height: 100%;
+      overflow: auto;
+    }
+    body.photos-page {
+      margin: 0;
+      min-height: 100%;
+      background:
+        linear-gradient(165deg, #f8fafc 0%, #eceae8 55%, #e4e1de 100%);
+      color: var(--text, #111827);
+      font-family: var(--font-body, 'Poppins', sans-serif);
+    }
+    .photos-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+      box-sizing: border-box;
+    }
+    .photos-brand {
+      font-family: var(--font-heading, 'Montserrat', sans-serif);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted, #6B7280);
+      margin-bottom: 10px;
+    }
+    .photos-header {
+      padding: 16px 18px;
+      background: #fff;
+      border: 1px solid var(--ui-border, #E2E4E8);
+      border-top: 3px solid var(--accent, #EA580C);
+      border-radius: 6px;
+      box-shadow: 0 1px 0 rgba(38, 36, 37, 0.04);
+      margin-bottom: 16px;
+    }
+    .photos-title {
+      font-family: var(--font-heading, 'Montserrat', sans-serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text, #111827);
+      line-height: 1.35;
+      margin: 0 0 6px;
+    }
+    .photos-sub {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted, #6B7280);
+      line-height: 1.45;
+    }
+    .photos-status {
+      margin: 16px 0 0;
+      font-size: 13px;
+      color: var(--muted, #6B7280);
+    }
+    .photos-status.is-error {
+      color: #a82b2b;
+    }
+    .photos-empty {
+      margin-top: 20px;
+      padding: 28px 20px;
+      text-align: center;
+      background: #fff;
+      border: 1px solid var(--ui-border, #E2E4E8);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--muted, #6B7280);
+      line-height: 1.5;
+    }
+    .photos-actions {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .photos-open-btn {
+      appearance: none;
+      border: 1px solid rgba(38, 36, 37, 0.18);
+      border-radius: 4px;
+      background: var(--charcoal, #111827);
+      color: #fff;
+      font-family: var(--font-heading, 'Montserrat', sans-serif);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .photos-open-btn:hover {
+      background: var(--charcoal-mid, #1f2937);
+    }
+    .photos-count {
+      font-size: 12.5px;
+      color: var(--muted, #6B7280);
+    }
+    .photos-thumbs {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 10px;
+    }
+    .photos-thumb {
+      display: block;
+      aspect-ratio: 1;
+      border: 1px solid var(--ui-border, #E2E4E8);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #2a2928;
+      cursor: pointer;
+      padding: 0;
+    }
+    .photos-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      referrerpolicy: no-referrer;
+    }
+    .photos-thumb:hover,
+    .photos-thumb:focus-visible {
+      outline: 2px solid var(--accent, #EA580C);
+      outline-offset: 1px;
+    }
+    /* Standalone: keep lightbox visible chrome on this page */
+    body.photos-page .p11-lightbox {
+      --p11-accent: #EA580C;
+      --p11-text: #111827;
+    }
+  </style>
+</head>
+<body class="photos-page">
+  <div class="photos-shell">
+    <div class="photos-brand">BB Building Services</div>
+    <header class="photos-header">
+      <h1 class="photos-title" id="photos-title">Site diary photos</h1>
+      <p class="photos-sub" id="photos-sub">Loading job and date…</p>
+      <p class="photos-status" id="photos-status" hidden></p>
+      <div class="photos-actions" id="photos-actions" hidden>
+        <button type="button" class="photos-open-btn" id="photos-open-btn">View photos</button>
+        <span class="photos-count" id="photos-count"></span>
+      </div>
+    </header>
+    <div id="photos-empty" class="photos-empty" hidden>No photos found for this job/date</div>
+    <div id="photos-thumbs" class="photos-thumbs" hidden></div>
+  </div>
+
+  <!-- Same lightbox markup as P11 (shared .p11-lightbox CSS in styles.css) -->
+  <div id="p11-lightbox" class="p11-lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <div class="p11-lightbox-backdrop" data-p11-lb-close tabindex="-1"></div>
+    <div class="p11-lightbox-shell">
+      <button type="button" class="p11-lightbox-close" data-p11-lb-close aria-label="Close photo viewer">&times;</button>
+      <button type="button" class="p11-lightbox-nav p11-lightbox-prev" data-p11-lb-prev aria-label="Previous photo">&#8249;</button>
+      <div class="p11-lightbox-stage">
+        <img class="p11-lightbox-img" id="p11-lightbox-img" alt="" decoding="async" referrerpolicy="no-referrer" />
+      </div>
+      <button type="button" class="p11-lightbox-nav p11-lightbox-next" data-p11-lb-next aria-label="Next photo">&#8250;</button>
+      <div class="p11-lightbox-footer">
+        <span id="p11-lightbox-counter" class="p11-lightbox-counter">1 of 1</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="sheets.js"></script>
+  <script>
+(function () {
+  'use strict';
+
+  /*
+   * Standalone site-diary photo viewer for email deep links:
+   *   /photos.html?job={jobNum}&date={yyyy-MM-dd}
+   * No Firebase sign-in: email clients cannot complete auth, and Ben needs
+   * one-tap access from the daily site diaries email. Column P BuildPass
+   * photo URLs are loadable by anyone with this link (same as email image links).
+   */
+
+  var _lbUrls = [];
+  var _lbIndex = 0;
+  var _lbTouchX = null;
+  var _lbBound = false;
+  var _allUrls = [];
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function col(row) {
+    var names = Array.prototype.slice.call(arguments, 1);
+    if (!row) return '';
+    var keys = Object.keys(row);
+    for (var i = 0; i < names.length; i++) {
+      var want = String(names[i] || '').trim().toLowerCase();
+      for (var k = 0; k < keys.length; k++) {
+        if (String(keys[k] || '').trim().toLowerCase() === want) {
+          var val = row[keys[k]];
+          if (val !== undefined && val !== null && String(val).trim() !== '') return val;
+        }
+      }
+    }
+    return '';
+  }
+
+  function parseFlexibleDate(dateStr) {
+    if (!dateStr && dateStr !== 0) return null;
+    if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+    var s = String(dateStr).trim();
+    if (!s) return null;
+    if (/^\d{8}$/.test(s)) {
+      var dd = parseInt(s.substring(0, 2), 10);
+      var mm = parseInt(s.substring(2, 4), 10);
+      var yyyy = parseInt(s.substring(4, 8), 10);
+      if (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy > 1900) {
+        return new Date(yyyy, mm - 1, dd);
+      }
+    }
+    var parts = s.split(/[\/\-\.]/);
+    if (parts.length === 3) {
+      var a = parseInt(parts[0], 10);
+      var b = parseInt(parts[1], 10);
+      var c = parseInt(parts[2], 10);
+      if (a > 1900 && b >= 1 && b <= 12) {
+        return new Date(a, b - 1, parseInt(parts[2], 10) || 1);
+      }
+      if (c > 1900 && b >= 1 && b <= 12 && a >= 1 && a <= 31) {
+        return new Date(c, b - 1, a);
+      }
+      if (c > 1900 && a >= 1 && a <= 12 && b >= 1 && b <= 31) {
+        return new Date(c, a - 1, b);
+      }
+    }
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function ymdKey(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function formatDisplayDate(d, fallback) {
+    if (d && !isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-AU', {
+        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+      });
+    }
+    return fallback || 'Date not recorded';
+  }
+
+  function jobNumberPrefix(val) {
+    var s = String(val || '').trim().toUpperCase();
+    var m = s.match(/^(J\d+)/i);
+    return m ? m[1].toUpperCase() : '';
+  }
+
+  function jobsMatch(a, b) {
+    var sa = String(a || '').trim().toUpperCase();
+    var sb = String(b || '').trim().toUpperCase();
+    if (!sa || !sb) return false;
+    if (sa === sb) return true;
+    var pa = jobNumberPrefix(sa);
+    var pb = jobNumberPrefix(sb);
+    if (pa && pb && pa === pb) return true;
+    if (pa && sb.indexOf(pa) !== -1) return true;
+    if (pb && sa.indexOf(pb) !== -1) return true;
+    // Numeric-only parity (e.g. 1234 vs J1234)
+    var na = sa.replace(/^J/i, '');
+    var nb = sb.replace(/^J/i, '');
+    if (na && nb && na === nb) return true;
+    return false;
+  }
+
+  /** Column P photo URLs: split commas, newlines, spaces; regex extract http(s). */
+  function photoLinksFromRow(r) {
+    var raw = String(col(r,
+      'Photo Links', 'Photo Link', 'photo_links', 'Photo URL', 'Photo URLs',
+      'BuildPass Photos', 'BuildPass Link', 'Photos URL'
+    ) || '').trim();
+    if (!raw) return [];
+    var urls = [];
+    var m = raw.match(/https?:\/\/[^\s,;|]+/gi);
+    if (m && m.length) {
+      m.forEach(function (u) {
+        var clean = String(u).replace(/[)\].,]+$/g, '');
+        if (clean && urls.indexOf(clean) === -1) urls.push(clean);
+      });
+      return urls;
+    }
+    raw.split(/[\n\r,;|]+/).forEach(function (p) {
+      var t = String(p || '').trim();
+      if (/^https?:\/\//i.test(t) && urls.indexOf(t) === -1) urls.push(t);
+    });
+    return urls;
+  }
+
+  function lightboxEls() {
+    return {
+      root: $('p11-lightbox'),
+      img: $('p11-lightbox-img'),
+      counter: $('p11-lightbox-counter')
+    };
+  }
+
+  function lightboxIsOpen() {
+    var root = $('p11-lightbox');
+    return !!(root && !root.hasAttribute('hidden'));
+  }
+
+  function lightboxShowAt(index) {
+    if (!_lbUrls.length) return;
+    var n = _lbUrls.length;
+    _lbIndex = ((index % n) + n) % n;
+    var els = lightboxEls();
+    if (els.img) {
+      els.img.src = _lbUrls[_lbIndex];
+      els.img.alt = 'Photo ' + (_lbIndex + 1) + ' of ' + n;
+    }
+    if (els.counter) {
+      els.counter.textContent = (_lbIndex + 1) + ' of ' + n;
+    }
+    if (els.root) {
+      var prev = els.root.querySelector('[data-p11-lb-prev]');
+      var next = els.root.querySelector('[data-p11-lb-next]');
+      if (prev) prev.disabled = n <= 1;
+      if (next) next.disabled = n <= 1;
+    }
+  }
+
+  function openLightbox(urls, startIndex) {
+    var list = (urls || []).filter(function (u) { return !!u; });
+    if (!list.length) return;
+    bindLightboxOnce();
+    _lbUrls = list;
+    var els = lightboxEls();
+    if (!els.root) return;
+    els.root.removeAttribute('hidden');
+    document.body.classList.add('p11-lightbox-open');
+    lightboxShowAt(typeof startIndex === 'number' ? startIndex : 0);
+    var closeBtn = els.root.querySelector('.p11-lightbox-close');
+    if (closeBtn) {
+      try { closeBtn.focus({ preventScroll: true }); } catch (e) { closeBtn.focus(); }
+    }
+  }
+
+  function closeLightbox() {
+    if (!lightboxIsOpen()) return;
+    var els = lightboxEls();
+    if (els.root) els.root.setAttribute('hidden', '');
+    if (els.img) {
+      els.img.removeAttribute('src');
+      els.img.alt = '';
+    }
+    document.body.classList.remove('p11-lightbox-open');
+    _lbUrls = [];
+    _lbIndex = 0;
+    _lbTouchX = null;
+  }
+
+  function lightboxStep(delta) {
+    if (!lightboxIsOpen() || _lbUrls.length <= 1) return;
+    lightboxShowAt(_lbIndex + delta);
+  }
+
+  function bindLightboxOnce() {
+    if (_lbBound) return;
+    _lbBound = true;
+    var root = $('p11-lightbox');
+    if (root) {
+      root.addEventListener('click', function (ev) {
+        if (ev.target.closest('[data-p11-lb-close]')) {
+          closeLightbox();
+          return;
+        }
+        if (ev.target.closest('[data-p11-lb-prev]')) {
+          lightboxStep(-1);
+          return;
+        }
+        if (ev.target.closest('[data-p11-lb-next]')) {
+          lightboxStep(1);
+        }
+      });
+      root.addEventListener('touchstart', function (ev) {
+        if (!lightboxIsOpen() || !ev.changedTouches || !ev.changedTouches.length) return;
+        _lbTouchX = ev.changedTouches[0].clientX;
+      }, { passive: true });
+      root.addEventListener('touchend', function (ev) {
+        if (_lbTouchX == null || !ev.changedTouches || !ev.changedTouches.length) {
+          _lbTouchX = null;
+          return;
+        }
+        var dx = ev.changedTouches[0].clientX - _lbTouchX;
+        _lbTouchX = null;
+        if (Math.abs(dx) < 48) return;
+        if (dx > 0) lightboxStep(-1);
+        else lightboxStep(1);
+      }, { passive: true });
+    }
+    document.addEventListener('keydown', function (ev) {
+      if (!lightboxIsOpen()) return;
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        closeLightbox();
+      } else if (ev.key === 'ArrowLeft') {
+        ev.preventDefault();
+        lightboxStep(-1);
+      } else if (ev.key === 'ArrowRight') {
+        ev.preventDefault();
+        lightboxStep(1);
+      }
+    });
+  }
+
+  function setStatus(msg, isError) {
+    var el = $('photos-status');
+    if (!el) return;
+    if (!msg) {
+      el.setAttribute('hidden', '');
+      el.textContent = '';
+      el.classList.remove('is-error');
+      return;
+    }
+    el.removeAttribute('hidden');
+    el.textContent = msg;
+    el.classList.toggle('is-error', !!isError);
+  }
+
+  function showEmpty() {
+    var empty = $('photos-empty');
+    if (empty) empty.removeAttribute('hidden');
+    var actions = $('photos-actions');
+    if (actions) actions.setAttribute('hidden', '');
+    var thumbs = $('photos-thumbs');
+    if (thumbs) {
+      thumbs.innerHTML = '';
+      thumbs.setAttribute('hidden', '');
+    }
+  }
+
+  function queryParams() {
+    var q = new URLSearchParams(window.location.search || '');
+    var job = String(q.get('job') || q.get('jobNum') || q.get('job#') || '').trim();
+    var date = String(q.get('date') || '').trim();
+    return { job: job, date: date };
+  }
+
+  function renderHeader(jobLabel, jobName, dateLabel) {
+    var title = $('photos-title');
+    var sub = $('photos-sub');
+    var head = jobLabel || 'Job not specified';
+    if (jobName && jobName !== head) head += ' · ' + jobName;
+    if (title) title.textContent = head;
+    if (sub) sub.textContent = dateLabel || 'Date not specified';
+    document.title = (jobLabel || 'Photos') + ' · ' + (dateLabel || 'site diary') + ' · BB';
+  }
+
+  function renderResults(urls, autoOpen) {
+    _allUrls = urls.slice();
+    var empty = $('photos-empty');
+    var actions = $('photos-actions');
+    var countEl = $('photos-count');
+    var thumbs = $('photos-thumbs');
+    var openBtn = $('photos-open-btn');
+
+    if (!urls.length) {
+      showEmpty();
+      return;
+    }
+    if (empty) empty.setAttribute('hidden', '');
+    if (actions) actions.removeAttribute('hidden');
+    if (countEl) {
+      countEl.textContent = urls.length + ' photo' + (urls.length === 1 ? '' : 's');
+    }
+    if (openBtn) {
+      openBtn.onclick = function () { openLightbox(_allUrls, 0); };
+    }
+    if (thumbs) {
+      thumbs.removeAttribute('hidden');
+      var html = '';
+      urls.forEach(function (u, i) {
+        html += '<button type="button" class="photos-thumb" data-photo-index="' + i +
+          '" aria-label="Open photo ' + (i + 1) + '">' +
+          '<img src="' + esc(u) + '" alt="" loading="lazy" referrerpolicy="no-referrer" />' +
+          '</button>';
+      });
+      thumbs.innerHTML = html;
+      thumbs.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-photo-index]');
+        if (!btn || !thumbs.contains(btn)) return;
+        var idx = parseInt(btn.getAttribute('data-photo-index'), 10);
+        if (isNaN(idx)) idx = 0;
+        openLightbox(_allUrls, idx);
+      });
+    }
+    if (autoOpen) openLightbox(urls, 0);
+  }
+
+  async function main() {
+    bindLightboxOnce();
+    var params = queryParams();
+    var targetDate = parseFlexibleDate(params.date);
+    var dateKey = ymdKey(targetDate);
+    var dateLabel = formatDisplayDate(targetDate, params.date || '');
+
+    if (!params.job || !params.date) {
+      renderHeader(params.job || '', '', dateLabel || params.date || '');
+      setStatus('This link needs both job and date query parameters (e.g. ?job=J1234&date=2026-08-10).', true);
+      showEmpty();
+      return;
+    }
+
+    renderHeader(params.job, '', dateLabel);
+    setStatus('Loading photos from site diaries…');
+
+    var tab = (CONFIG.TABS && (CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES))
+      || 'Buildpass_Site Diaries';
+
+    var rows;
+    try {
+      rows = await fetchSheet(tab);
+    } catch (err) {
+      console.error(err);
+      setStatus('Could not load site diaries. Try again later or contact the office.', true);
+      showEmpty();
+      return;
+    }
+
+    var matched = (rows || []).filter(function (r) {
+      var jn = col(r, 'Job #', 'Job Number', 'job_number', 'Job No');
+      if (!jobsMatch(jn, params.job)) return false;
+      var rd = parseFlexibleDate(col(r, 'Date', 'date', 'Diary Date', 'Entry Date', 'Work Date'));
+      if (!rd || !dateKey) return false;
+      return ymdKey(rd) === dateKey;
+    });
+
+    var jobName = '';
+    matched.forEach(function (r) {
+      if (jobName) return;
+      var n = String(col(r, 'Job Name', 'job_name') || '').trim();
+      if (n) jobName = n;
+    });
+    renderHeader(params.job, jobName, dateLabel);
+
+    var urls = [];
+    matched.forEach(function (r) {
+      photoLinksFromRow(r).forEach(function (u) {
+        if (urls.indexOf(u) === -1) urls.push(u);
+      });
+    });
+
+    setStatus(
+      matched.length
+        ? (matched.length + ' diary row' + (matched.length === 1 ? '' : 's') + ' for this job and date')
+        : ''
+    );
+
+    if (!matched.length || !urls.length) {
+      showEmpty();
+      if (!matched.length) setStatus('No diary rows for this job and date.', false);
+      return;
+    }
+
+    renderResults(urls, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', main);
+  } else {
+    main();
+  }
+})();
+  </script>
+</body>
+</html>
