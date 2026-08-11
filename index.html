@@ -1372,7 +1372,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Daily Summary (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details label (sheet Daily Summary, any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -13782,11 +13782,14 @@
       }
 
       /**
-       * Column Q: Daily Summary (all diary entries). Pipe-separated sections.
-       * Plain text only, never treat as URL/PDF/photo.
+       * Column Q: sheet header "Other Details" (was Daily Summary / Deliveries).
+       * Pipe-separated sections. Plain text only, never URL/PDF/photo.
        */
       function diaryDailySummaryText(r) {
         var raw = String(col(r,
+          'Other Details',
+          'other_details',
+          'Other details',
           'Daily Summary',
           'daily_summary',
           'Daily summary',
@@ -15003,7 +15006,7 @@
     // P12 - SITE DIARIES (crew full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
-    // Photos: column P via shared P11 lightbox. Column Q = Daily Summary text (any entry, when non-blank).
+    // Photos: column P via shared P11 lightbox. Column Q sheet "Daily Summary" shown as "Other Details" when non-blank.
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
@@ -15279,11 +15282,14 @@
     }
 
     /**
-     * Column Q: Daily Summary for any diary entry. Plain text only, never URL/PDF.
-     * Prefer Daily Summary header; legacy Deliveries headers accepted if present.
+     * Column Q: sheet header "Other Details". Plain text only, never URL/PDF.
+     * Prefer Other Details; also accept Daily Summary / legacy Deliveries headers.
      */
     function p12DiaryDailySummary(r) {
       return String(col(r,
+        'Other Details',
+        'other_details',
+        'Other details',
         'Daily Summary',
         'daily_summary',
         'Daily summary',
@@ -15577,7 +15583,7 @@
           h += '<div class="p12-drawer-wide"><dt>Materials</dt><dd>' + p12Esc(mats) + '</dd></div>';
         }
         if (dailySumHtml) {
-          h += '<div class="p12-drawer-wide p12-drawer-daily-summary"><dt>Daily Summary</dt><dd>' +
+          h += '<div class="p12-drawer-wide p12-drawer-daily-summary"><dt>Other Details</dt><dd>' +
             dailySumHtml + '</dd></div>';
         }
         h += '<div class="p12-drawer-wide"><dt>Photos</dt><dd>';
