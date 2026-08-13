@@ -2354,6 +2354,14 @@ select {
   }
 }
 
+#page-p6 .p6-ts-disc-card {
+  margin-top: 12px;
+}
+#page-p6 .p6-ts-disc-table td:last-child {
+  color: var(--charcoal);
+  font-size: 13px;
+}
+
 /* Hybrid: Weekly Capacity bars + Assignment Summary (legacy side-by-side) */
 #page-p6 .p6-hybrid-grid {
   display: grid;

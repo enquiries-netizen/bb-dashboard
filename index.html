@@ -18496,6 +18496,8 @@
     var P6_HORIZON_WEEKS = 12;      // gantt horizon from selected week
     var P6_DAILY_WEEKS = 4;         // weeks 1-4 of horizon shown daily
     var P6_UNUSUAL_DAY_HRS = 14;    // single-day hours after dedupe → Unusual Hours
+    // Attendance vs Buildpass_Labour (timesheet) weekly totals; 1h absorbs sign-off vs timesheet noise.
+    var P6_ATT_TS_DISC_THRESHOLD_HRS = 1;
     var P6_PROJECT_COLORS = ['var(--p6-project-1)', 'var(--p6-project-2)', 'var(--p6-project-3)'];
     var P6_RISK_BANNER_KEY = 'p6-risk-banner-dismissed';
 
@@ -19711,6 +19713,246 @@
       return html;
     }
 
+    // ── Attendance vs Buildpass_Labour (timesheet) discrepancy flags ─────
+    // Buildpass_Labour is the live per-worker/job/day hours source (Scenario 9b);
+    // there is no separate Xero_Timesheets tab. Compare Fri-Thu payroll week totals.
+
+    function p6DiscNormJobKey(job) {
+      if (typeof p12NormJobKey === 'function') return p12NormJobKey(job);
+      return String(job || '').trim().toUpperCase().replace(/\s+/g, '');
+    }
+
+    function p6DiscJobKeysFromSite(siteStr) {
+      if (typeof p12AttJobKeysFromSite === 'function') {
+        return (p12AttJobKeysFromSite(siteStr) || []).map(p6DiscNormJobKey).filter(Boolean);
+      }
+      var s = String(siteStr || '');
+      var keys = {};
+      var m;
+      var re = /J\s*(\d+)/gi;
+      while ((m = re.exec(s))) keys['J' + m[1]] = true;
+      return Object.keys(keys);
+    }
+
+    function p6DiscLabourJobKey(r) {
+      var job = String(col(r, 'Xero Project J#', 'xero project j#', 'Job #', 'Job Number') || '').trim();
+      var nk = p6DiscNormJobKey(job);
+      if (nk) return nk;
+      var site = String(col(r, 'Site / Area', 'site / area', 'Site', 'Job # / Site') || '').trim();
+      var fromSite = p6DiscJobKeysFromSite(site);
+      return fromSite.length ? fromSite[0] : '';
+    }
+
+    function p6DiscGroupKey(jobKeys, siteLabel) {
+      var keys = (jobKeys || []).slice().filter(Boolean).sort();
+      if (keys.length) return keys.join('/');
+      var site = p6NormEmpName(siteLabel);
+      return site ? ('site:' + site) : 'site:unknown';
+    }
+
+    /**
+     * Flag worker+job pairs where Buildpass_Attendance Hours On Site (present only)
+     * diverge from deduped Buildpass_Labour hours in the same Fri-Thu payroll week.
+     */
+    function p6BuildTimesheetDiscrepancies(attRows, labRows, weekKey) {
+      var threshold = P6_ATT_TS_DISC_THRESHOLD_HRS;
+      var flags = [];
+      if (!weekKey) {
+        return { weekKey: '', threshold: threshold, flags: [], attPairs: 0, labPairs: 0 };
+      }
+
+      var attMap = {};
+      (attRows || []).forEach(function(r) {
+        var dateStr = col(r, 'Date (DD/MM/YYYY)', 'Date', 'date');
+        var d = parseFlexibleDate(dateStr);
+        if (!d || p6AttWeekKeyFromDate(d) !== weekKey) return;
+        var hrs = p6AttHoursPresent(r);
+        if (hrs == null) return;
+        var name = p6DisplayName(col(r, 'Team Member', 'Employee', 'Name')) || 'Unknown';
+        var emp = p6NormEmpName(name);
+        if (!emp) return;
+        var site = p6DisplayName(col(r, 'Job # / Site', 'Job #', 'Site', 'Job')) || 'Unknown';
+        var jobKeys = p6DiscJobKeysFromSite(site);
+        var gKey = p6DiscGroupKey(jobKeys, site);
+        var id = emp + '|' + gKey;
+        if (!attMap[id]) {
+          attMap[id] = {
+            emp: emp,
+            name: name,
+            groupKey: gKey,
+            jobKeys: jobKeys.slice(),
+            displayJob: site,
+            hours: 0
+          };
+        }
+        attMap[id].hours += hrs;
+        if (!attMap[id].jobKeys.length && jobKeys.length) {
+          attMap[id].jobKeys = jobKeys.slice();
+        }
+      });
+
+      var labDeduped = p6DedupLabourRows(labRows || []);
+      var labMap = {};
+      labDeduped.forEach(function(r) {
+        var dateStr = col(r, 'Shift Date', 'shift date', 'Date', 'date');
+        var d = parseFlexibleDate(dateStr);
+        if (!d || p6AttWeekKeyFromDate(d) !== weekKey) return;
+        var hrs = p6LabourHours(r);
+        if (hrs == null) return;
+        var name = p6DisplayName(col(r, 'Employee Name', 'employee name')) || 'Unknown';
+        var emp = p6NormEmpName(name);
+        if (!emp) return;
+        var jobKey = p6DiscLabourJobKey(r);
+        var site = p6DisplayName(col(r, 'Site / Area', 'site / area')) || jobKey || 'Unknown';
+        var gKey = jobKey || p6DiscGroupKey([], site);
+        var id = emp + '|' + gKey;
+        if (!labMap[id]) {
+          labMap[id] = {
+            emp: emp,
+            name: name,
+            groupKey: gKey,
+            jobKey: jobKey,
+            displayJob: jobKey || site,
+            hours: 0
+          };
+        }
+        labMap[id].hours += hrs;
+        if (jobKey && !labMap[id].jobKey) labMap[id].jobKey = jobKey;
+        if (jobKey && labMap[id].displayJob === site) labMap[id].displayJob = jobKey;
+      });
+
+      function jobSetsOverlap(attJobKeys, labJobKey, attGroupKey, labGroupKey) {
+        var lk = p6DiscNormJobKey(labJobKey || '');
+        if (attJobKeys && attJobKeys.length) {
+          if (!lk) return attGroupKey === labGroupKey;
+          for (var i = 0; i < attJobKeys.length; i++) {
+            if (attJobKeys[i] === lk) return true;
+          }
+          return false;
+        }
+        return attGroupKey === labGroupKey;
+      }
+
+      var usedLab = {};
+      Object.keys(attMap).forEach(function(aId) {
+        var att = attMap[aId];
+        att.hours = p6Round1(att.hours);
+        var matchedHrs = 0;
+        var matchedLabs = [];
+        Object.keys(labMap).forEach(function(lId) {
+          var lab = labMap[lId];
+          if (lab.emp !== att.emp) return;
+          if (!jobSetsOverlap(att.jobKeys, lab.jobKey, att.groupKey, lab.groupKey)) return;
+          matchedHrs += lab.hours;
+          matchedLabs.push(lab);
+          usedLab[lId] = true;
+        });
+        matchedHrs = p6Round1(matchedHrs);
+        var displayJob = att.displayJob;
+        if (matchedLabs.length === 1 && matchedLabs[0].displayJob) {
+          displayJob = att.displayJob;
+        }
+        if (!matchedLabs.length) {
+          flags.push({
+            worker: att.name,
+            job: displayJob,
+            attHours: att.hours,
+            tsHours: null,
+            reason: 'Attendance hours, no matching timesheet',
+            sort: 1
+          });
+          return;
+        }
+        var diff = Math.abs(att.hours - matchedHrs);
+        if (diff > threshold + 1e-9) {
+          flags.push({
+            worker: att.name,
+            job: displayJob,
+            attHours: att.hours,
+            tsHours: matchedHrs,
+            reason: 'Hours differ by ' + p6FmtHours(diff) + ' h',
+            sort: 2
+          });
+        }
+      });
+
+      Object.keys(labMap).forEach(function(lId) {
+        if (usedLab[lId]) return;
+        var lab = labMap[lId];
+        lab.hours = p6Round1(lab.hours);
+        if (lab.hours === 0) return;
+        flags.push({
+          worker: lab.name,
+          job: lab.displayJob || lab.jobKey || 'Unknown',
+          attHours: null,
+          tsHours: lab.hours,
+          reason: 'Timesheet hours, no matching attendance',
+          sort: 3
+        });
+      });
+
+      flags.sort(function(a, b) {
+        if (a.sort !== b.sort) return a.sort - b.sort;
+        var dw = String(a.worker).localeCompare(String(b.worker));
+        if (dw) return dw;
+        return String(a.job).localeCompare(String(b.job));
+      });
+
+      return {
+        weekKey: weekKey,
+        weekLabel: p6AttWeekLabel(weekKey),
+        threshold: threshold,
+        flags: flags,
+        attPairs: Object.keys(attMap).length,
+        labPairs: Object.keys(labMap).length
+      };
+    }
+
+    function p6RenderTimesheetDiscrepancySection(disc) {
+      var d = disc || { flags: [], weekLabel: '', threshold: P6_ATT_TS_DISC_THRESHOLD_HRS };
+      var html = '';
+      html += '<div class="p6-section-card p6-attendance-card p6-ts-disc-card">';
+      html += '<div class="p6-section-title">Attendance vs timesheet flags</div>';
+      html += '<p class="p6-section-hint">Buildpass_Attendance Hours On Site (blank hours excluded) vs Buildpass_Labour hours after fingerprint dedupe for ' +
+        p6Esc(d.weekLabel || 'selected Fri-Thu payroll week') +
+        '. Flagged when attendance has no matching timesheet, timesheet has no matching attendance, or weekly totals differ by more than ' +
+        p6FmtHours(d.threshold != null ? d.threshold : P6_ATT_TS_DISC_THRESHOLD_HRS) +
+        ' h. Same payroll week as Attendance above. Job match uses J# keys (P12-style).</p>';
+
+      if (!d.flags || !d.flags.length) {
+        if ((d.attPairs || 0) === 0 && (d.labPairs || 0) === 0) {
+          html += '<p class="no-data-msg">No attendance hours or timesheet hours in this payroll week to compare.</p></div>';
+        } else {
+          html += '<p class="no-data-msg">No discrepancies above the ' +
+            p6FmtHours(d.threshold != null ? d.threshold : P6_ATT_TS_DISC_THRESHOLD_HRS) +
+            ' h threshold for this payroll week.</p></div>';
+        }
+        return html;
+      }
+
+      html += '<div class="table-wrap"><table class="data-table p6-attendance-table p6-ts-disc-table">';
+      html += '<thead><tr>';
+      html += '<th>Worker</th>';
+      html += '<th>Job</th>';
+      html += '<th class="text-right">Buildpass hours</th>';
+      html += '<th class="text-right">Timesheet hours</th>';
+      html += '<th>Flag</th>';
+      html += '</tr></thead><tbody>';
+      d.flags.forEach(function(f) {
+        html += '<tr>';
+        html += '<td>' + p6Esc(f.worker) + '</td>';
+        html += '<td>' + p6Esc(f.job) + '</td>';
+        html += '<td class="text-right">' +
+          (f.attHours != null ? p6FmtHours(f.attHours) : '-') + '</td>';
+        html += '<td class="text-right">' +
+          (f.tsHours != null ? p6FmtHours(f.tsHours) : '-') + '</td>';
+        html += '<td>' + p6Esc(f.reason) + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      return html;
+    }
+
     async function loadP6(opts) {
       opts = opts || {};
       var silent = !!opts.silent;
@@ -19809,6 +20051,11 @@
         raw.attendance || [],
         window._p6AttendanceWeekKey
       );
+      probe.timesheetDiscrepancies = p6BuildTimesheetDiscrepancies(
+        raw.attendance || [],
+        raw.labour || [],
+        probe.attendanceMetrics.weekKey
+      );
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
 
@@ -19873,6 +20120,7 @@
 
       // Attendance analysis uses selectable Fri-Thu payroll week (not planning ISO week).
       html += p6RenderAttendanceSection(m.attendanceMetrics);
+      html += p6RenderTimesheetDiscrepancySection(m.timesheetDiscrepancies);
 
       p6SetBB(m);
       return html;
