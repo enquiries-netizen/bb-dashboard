@@ -15351,8 +15351,7 @@
 
     /**
      * Per-entry diary quality checklist (P12 crew accountability).
-     * Work Stopped is NOT scored: Buildpass_Site Diaries has no Work Stopped column
-     * (p12WorkStoppedState always returns Not recorded when the header is absent).
+     * Work Stopped is NOT scored (visibility-only via p12WorkStoppedState / list badges).
      * Four checks: work completed clarity, materials, safety, photos (col P).
      */
     var P12_WORK_PLACEHOLDER = /^(n\/?a|na|none|nil|null|none logged|not recorded|not available|\.|-+|—+|–+)$/i;
@@ -15616,20 +15615,71 @@
       return { code: 'ambiguous', label: 'Ambiguous (' + String(raw).trim() + ')', isFlag: false };
     }
 
-    /** Mirror P11 workStoppedState labels. */
+    /**
+     * Work Stopped visibility (NOT quality-scored).
+     * Maps Y/N columns and reason/detail aliases. isStop when Yes or substantive
+     * reason/free-text is present (not blank, Not recorded, No, or placeholders).
+     * If the sheet still lacks these headers, returns Not recorded / isStop false.
+     */
+    var P12_WORK_STOPPED_YN = [
+      'Work Stopped (Y/N)', 'Work Stopped', 'work_stopped', 'WorkStopped'
+    ];
+    var P12_WORK_STOPPED_REASON = [
+      'Work Stopped Reason', 'Work Stopped Details', 'Work Stopped Notes',
+      'Work Stopped Comment', 'Stopped Reason', 'Stop Reason',
+      'Why Work Stopped', 'work_stopped_reason', 'Work Stop Reason'
+    ];
+
+    function p12WorkStoppedReasonText(r) {
+      var raw = String(rawColByNames(r, P12_WORK_STOPPED_REASON) || '').trim();
+      if (!raw) return '';
+      if (P12_WORK_PLACEHOLDER.test(raw)) return '';
+      return raw;
+    }
+
     function p12WorkStoppedState(r) {
-      var keyProbe = resolveRowKey(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']);
-      if (keyProbe === null) return { code: 'missing', label: 'Not recorded', isStop: false };
-      var val = String(rawColByNames(r, ['Work Stopped (Y/N)', 'Work Stopped', 'work_stopped']) || '').trim();
-      if (!val) return { code: 'missing', label: 'Not recorded', isStop: false };
-      var s = val.toLowerCase();
+      var ynKey = resolveRowKey(r, P12_WORK_STOPPED_YN);
+      var reasonKey = resolveRowKey(r, P12_WORK_STOPPED_REASON);
+      if (ynKey === null && reasonKey === null) {
+        return { code: 'missing', label: 'Not recorded', isStop: false };
+      }
+
+      var ynVal = ynKey !== null
+        ? String(rawColByNames(r, P12_WORK_STOPPED_YN) || '').trim()
+        : '';
+      var reason = p12WorkStoppedReasonText(r);
+      var s = ynVal.toLowerCase();
+
       if (s === 'y' || s === 'yes' || s === 'true' || s === '1') {
-        return { code: 'yes', label: 'Yes', isStop: true };
+        return {
+          code: 'yes',
+          label: reason || 'Yes',
+          isStop: true
+        };
       }
       if (s === 'n' || s === 'no' || s === 'false' || s === '0') {
+        // Plain No is not a visibility flag; a separate reason text still is.
+        if (reason) {
+          return { code: 'yes', label: reason, isStop: true };
+        }
         return { code: 'no', label: 'No', isStop: false };
       }
-      return { code: 'ambiguous', label: 'Ambiguous (' + val + ')', isStop: false };
+      // Free-text in the Work Stopped column (not Y/N) counts as recorded content.
+      if (ynVal && !P12_WORK_PLACEHOLDER.test(ynVal)) {
+        var label = reason && reason !== ynVal ? (ynVal + ': ' + reason) : ynVal;
+        return { code: 'text', label: label, isStop: true };
+      }
+      if (reason) {
+        return { code: 'text', label: reason, isStop: true };
+      }
+      if (ynKey !== null && !ynVal) {
+        return { code: 'missing', label: 'Not recorded', isStop: false };
+      }
+      return { code: 'missing', label: 'Not recorded', isStop: false };
+    }
+
+    function p12HasWorkStoppedContent(r) {
+      return !!p12WorkStoppedState(r).isStop;
     }
 
     function p12NormName(name) {
@@ -15795,6 +15845,7 @@
         rows: [],
         photoCount: 0,
         issueCount: 0,
+        workStoppedCount: 0,
         workers: []
       };
     }
@@ -16106,7 +16157,8 @@
         // Same labeled sections as P11 Exceptions expand; Issues first for crew scan
         var hasIssue = !!(issues && p12HasIssueContent(r));
         var issueText = hasIssue ? issues : 'No issues or blockers reported';
-        var stopCls = stop.code === 'yes' ? 'p12-flag p12-flag--accent'
+        var hasStop = !!stop.isStop;
+        var stopCls = hasStop ? 'p12-flag p12-flag--accent'
           : (stop.code === 'no' ? 'p12-flag p12-flag--neutral' : 'p12-flag p12-flag--gap');
         var safCls = saf.isFlag ? 'p12-flag p12-flag--accent'
           : (saf.code === 'no' ? 'p12-flag p12-flag--neutral' : 'p12-flag p12-flag--gap');
@@ -16117,8 +16169,16 @@
           '<dt>Full Issue Description</dt><dd>' + p12Esc(issueText) + '</dd></div>';
         h += '<div class="p12-drawer-wide"><dt>Work Completed</dt><dd>' +
           p12Esc(work || 'Not recorded') + '</dd></div>';
-        h += '<div><dt>Work Stopped</dt><dd><span class="' + stopCls + '">' +
-          p12Esc(stop.label) + '</span></dd></div>';
+        // Same alert treatment as Full Issue Description when a stop/reason is recorded
+        h += '<div class="' + (hasStop ? 'p12-drawer-wide ' : '') + 'p12-drawer-issue' +
+          (hasStop ? ' p12-drawer-issue--alert' : ' p12-drawer-issue--clear') + '">' +
+          '<dt>Work Stopped</dt><dd>';
+        if (hasStop) {
+          h += p12Esc(stop.label);
+        } else {
+          h += '<span class="' + stopCls + '">' + p12Esc(stop.label) + '</span>';
+        }
+        h += '</dd></div>';
         h += '<div><dt>Safety Flag</dt><dd><span class="' + safCls + '">' +
           p12Esc(saf.label) + '</span></dd></div>';
         // Optional older free-text summary fields only (never col Q Daily Summary; that has its own field)
@@ -16255,9 +16315,11 @@
         g.photoCount = p12CollectPhotos(g.rows).length;
         g.workers = p12UniqueWorkers(g.rows);
         g.issueCount = 0;
+        g.workStoppedCount = 0;
         g.latestTs = 0;
         g.rows.forEach(function(r) {
           if (p12HasIssueContent(r)) g.issueCount += 1;
+          if (p12HasWorkStoppedContent(r)) g.workStoppedCount += 1;
           var d = p12DiaryDate(r);
           var ts = d ? d.getTime() : 0;
           if (ts > g.latestTs) g.latestTs = ts;
@@ -16340,6 +16402,7 @@
             listHtml += '<span class="p12-summary-workers">' + p12Esc(workers) + '</span>';
             var nEnt = g.rows.length;
             var entrWord = nEnt === 1 ? 'entry' : 'entries';
+            var stopN = g.workStoppedCount || 0;
             if (g.issueCount > 0) {
               var issueWord = g.issueCount === 1 ? 'issue' : 'issues';
               listHtml += '<span class="p12-summary-count p12-summary-count--issue">' +
@@ -16347,6 +16410,12 @@
                 '<span class="p12-summary-issue-word">' + issueWord + '</span></span>';
             } else {
               listHtml += '<span class="p12-summary-count">' + nEnt + ' ' + entrWord + '</span>';
+            }
+            // Separate badge when any entry has recorded Work Stopped Yes/reason text
+            if (stopN > 0) {
+              listHtml += '<span class="p12-summary-count p12-summary-count--issue">' +
+                stopN + ' with ' +
+                '<span class="p12-summary-issue-word">work stopped</span></span>';
             }
             if (hasPhotos) {
               listHtml += '<span class="p12-summary-photo-hint">Photos</span>';
