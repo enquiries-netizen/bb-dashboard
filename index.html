@@ -1372,7 +1372,7 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details label (sheet Daily Summary, any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -1726,6 +1726,37 @@
       if (key === null) return '';
       var val = row[key];
       return val === undefined || val === null ? '' : val;
+    }
+
+    /**
+     * P11/P12 defensive diary filter: exclude Emily Thomas empty stub rows only.
+     * Hide when Logged By is Emily Thomas AND Job #, Project/Job Name, and Work Completed
+     * are all blank. If any of those three fields has content, keep the row.
+     */
+    function diaryIsEmilyThomasEmptyStub(r) {
+      var by = String(col(r, 'Logged By', 'Logged by', 'logged_by') || '')
+        .trim()
+        .toLowerCase()
+        .replace(/['\u2018\u2019\u0060\u00B4]/g, '')
+        .replace(/\s+/g, ' ');
+      if (by !== 'emily thomas') return false;
+      var jn = String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
+      if (jn) return false;
+      var project = String(col(r,
+        'Project Name', 'project_name', 'Job Name', 'job_name',
+        'Xero Project ID', 'xero_project_id'
+      ) || '').trim();
+      if (project) return false;
+      var work = String(col(r,
+        'Work Completed', 'work_completed', 'Work Description',
+        'Description of Work', 'Work completed'
+      ) || '').trim();
+      if (work) return false;
+      return true;
+    }
+
+    function diaryRowVisibleOnP11P12(r) {
+      return !diaryIsEmilyThomasEmptyStub(r);
     }
 
     /**
@@ -14047,9 +14078,10 @@
       }
 
       // Apply dept + job. Keep diaries missing job/brand/dept in counts.
+      // Defensive: drop Emily Thomas stub rows (blank Job #, project name, and Work Completed).
       var defectsFiltered    = filterByJob(filterByDept(brandedDefects));
       var variationsFiltered = filterByJob(filterByDept(brandedVariations));
-      var diariesFiltered    = filterByJob(filterByDept(brandedDiaries));
+      var diariesFiltered    = filterByJob(filterByDept(brandedDiaries)).filter(diaryRowVisibleOnP11P12);
 
       var entryCount = diariesFiltered.length;
       var issueRows = diariesFiltered.filter(hasIssueContent);
@@ -15006,7 +15038,7 @@
     // P12 - SITE DIARIES (crew full-width list+detail summaries)
     // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
-    // Photos: column P via shared P11 lightbox. Column Q sheet "Daily Summary" shown as "Other Details" when non-blank.
+    // Photos: column P via shared P11 lightbox. Column Q header "Other Details" (UI label same) when non-blank.
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
     /** ISO week key YYYY-Www; null = default to current week on first render */
@@ -15187,6 +15219,97 @@
 
     function p12DiaryMaterials(r) {
       return String(col(r, 'Materials Used', 'materials_used', 'Materials') || '').trim();
+    }
+
+    /**
+     * Per-entry diary quality checklist (P12 crew accountability).
+     * Work Stopped is NOT scored: Buildpass_Site Diaries has no Work Stopped column
+     * (p12WorkStoppedState always returns Not recorded when the header is absent).
+     * Four checks: work completed clarity, materials, safety, photos (col P).
+     */
+    var P12_WORK_PLACEHOLDER = /^(n\/?a|na|none|nil|null|none logged|not recorded|not available|\.|-+|—+|–+)$/i;
+
+    function p12WorkCompletedLooksClear(work) {
+      var t = String(work || '').trim();
+      if (!t) return false;
+      if (P12_WORK_PLACEHOLDER.test(t)) return false;
+      // Rough clarity: prefer roughly 8+ words of real content
+      var words = t.split(/\s+/).filter(Boolean);
+      if (words.length < 8) return false;
+      return true;
+    }
+
+    function p12SafetyAnswered(r) {
+      var raw = String(rawColByNames(r, [
+        'Safety Entry (Y/N)', 'Safety Entry', 'safety_entry', 'Safety'
+      ]) || '').trim();
+      if (!raw) return false;
+      if (P12_WORK_PLACEHOLDER.test(raw)) return false;
+      return true;
+    }
+
+    function p12DiaryQuality(r) {
+      var work = p12DiaryWorkCompleted(r);
+      var mats = p12DiaryMaterials(r);
+      var photos = p12PhotoLinks(r);
+      var items = [
+        {
+          ok: p12WorkCompletedLooksClear(work),
+          passLabel: 'Work completed recorded clearly',
+          failLabel: 'Work completed recorded clearly',
+          miss: 'work completed'
+        },
+        {
+          ok: !!mats && !P12_WORK_PLACEHOLDER.test(mats),
+          passLabel: 'Materials recorded',
+          failLabel: 'Materials recorded',
+          miss: 'materials'
+        },
+        {
+          ok: p12SafetyAnswered(r),
+          passLabel: 'Safety response recorded',
+          failLabel: 'Safety response recorded',
+          miss: 'safety response'
+        },
+        {
+          ok: photos.length > 0,
+          passLabel: 'Progress photos uploaded',
+          failLabel: 'No progress photos uploaded',
+          miss: 'progress photos'
+        }
+      ];
+      var passN = items.filter(function(it) { return it.ok; }).length;
+      var total = items.length;
+      var pct = total ? Math.round((passN / total) * 100) : 0;
+      var missing = items.filter(function(it) { return !it.ok; }).map(function(it) { return it.miss; });
+      return {
+        pct: pct,
+        items: items,
+        missingLine: missing.length
+          ? ('Missing today: ' + missing.join(', '))
+          : ''
+      };
+    }
+
+    function p12DiaryQualityHtml(r) {
+      var q = p12DiaryQuality(r);
+      var h = '<div class="p12-quality">';
+      h += '<div class="p12-quality-score">Diary quality: ' + q.pct + '%</div>';
+      h += '<ul class="p12-quality-list">';
+      q.items.forEach(function(it) {
+        h += '<li class="p12-quality-item ' + (it.ok ? 'is-pass' : 'is-fail') + '">';
+        h += '<span class="p12-quality-mark" aria-hidden="true">' +
+          (it.ok ? '✓' : '⚠️') + '</span> ';
+        h += '<span class="p12-quality-label">' +
+          p12Esc(it.ok ? it.passLabel : it.failLabel) + '</span>';
+        h += '</li>';
+      });
+      h += '</ul>';
+      if (q.missingLine) {
+        h += '<p class="p12-quality-missing">' + p12Esc(q.missingLine) + '</p>';
+      }
+      h += '</div>';
+      return h;
     }
 
     /** Mirror P11 diaryIssuesText (local to P12; P11 helper is not global). */
@@ -15599,6 +15722,7 @@
         }
         h += '</dd></div>';
         h += '</div>';
+        h += p12DiaryQualityHtml(r);
         h += '</article>';
       });
 
@@ -15664,7 +15788,7 @@
       }
 
       var diariesFiltered = brandAllDiaries.filter(function(r) {
-        return inSelectedWeek(p12DiaryDate(r));
+        return inSelectedWeek(p12DiaryDate(r)) && diaryRowVisibleOnP11P12(r);
       });
 
       var brandEl = document.getElementById('p12-brand-label');
