@@ -2326,6 +2326,16 @@ select {
 #page-p6 .p6-attendance-card {
   margin-top: 12px;
 }
+#page-p6 .p6-attendance-head {
+  align-items: center;
+  margin-bottom: 6px;
+}
+#page-p6 .p6-attendance-head .p6-section-title {
+  margin: 0;
+}
+#page-p6 .p6-attendance-week-select {
+  max-width: min(320px, 100%);
+}
 #page-p6 .p6-attendance-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);

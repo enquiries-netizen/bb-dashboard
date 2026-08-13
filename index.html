@@ -19145,7 +19145,7 @@
       };
     }
 
-    // ── Buildpass_Attendance (current Fri-Thu payroll week) ──────────────
+    // ── Buildpass_Attendance (selectable Fri-Thu payroll week) ───────────
     // Reuse P12 payroll-week helpers when present; mirror only if needed.
 
     function p6AttFridayOf(d) {
@@ -19171,8 +19171,37 @@
     }
 
     function p6AttWeekLabel(weekKey) {
-      if (typeof p12WeekLabelFromKey === 'function') return p12WeekLabelFromKey(weekKey);
+      if (typeof p12WeekLabelFromKey === 'function') {
+        var raw = p12WeekLabelFromKey(weekKey);
+        // Prefer "7 Aug - 13 Aug 2026 (2026-W32)" over middle-dot form.
+        var paren = String(raw).replace(/\s*[·•]\s*([0-9]{4}-W\d+)\s*$/i, ' ($1)');
+        return paren;
+      }
       return weekKey ? String(weekKey) : 'Current payroll week';
+    }
+
+    /** Payroll week keys present in attendance rows (+ current week). Newest first. */
+    function p6AttAvailableWeekKeys(rows) {
+      var set = {};
+      var cur = p6AttCurrentWeekKey();
+      if (cur) set[cur] = true;
+      (rows || []).forEach(function(r) {
+        var dateStr = col(r, 'Date (DD/MM/YYYY)', 'Date', 'date');
+        var d = parseFlexibleDate(dateStr);
+        if (!d) return;
+        var wk = p6AttWeekKeyFromDate(d);
+        if (wk) set[wk] = true;
+      });
+      return Object.keys(set).sort().reverse();
+    }
+
+    function p6AttResolveWeekKey(rows, preferred) {
+      var available = p6AttAvailableWeekKeys(rows);
+      var cur = p6AttCurrentWeekKey();
+      var want = preferred || window._p6AttendanceWeekKey || cur;
+      if (want && available.indexOf(want) >= 0) return want;
+      if (cur && available.indexOf(cur) >= 0) return cur;
+      return available.length ? available[0] : cur;
     }
 
     function p6AttFlagYes(val) {
@@ -19193,8 +19222,10 @@
       return isNaN(n) ? null : n;
     }
 
-    function p6BuildAttendanceMetrics(rows) {
-      var weekKey = p6AttCurrentWeekKey();
+    function p6BuildAttendanceMetrics(rows, weekKeyOpt) {
+      var availableWeeks = p6AttAvailableWeekKeys(rows);
+      var weekKey = p6AttResolveWeekKey(rows, weekKeyOpt);
+      if (weekKey) window._p6AttendanceWeekKey = weekKey;
       var weekLabel = p6AttWeekLabel(weekKey);
       var workersMap = {};
       var jobsMap = {};
@@ -19263,6 +19294,7 @@
       return {
         weekKey: weekKey,
         weekLabel: weekLabel,
+        availableWeeks: availableWeeks,
         workers: workers,
         jobs: jobs,
         rowCount: rowCount,
@@ -19271,10 +19303,26 @@
     }
 
     function p6RenderAttendanceSection(metrics) {
-      var m = metrics || { workers: [], jobs: [], weekLabel: '', weekKey: '', rowCount: 0, loaded: false };
+      var m = metrics || {
+        workers: [], jobs: [], weekLabel: '', weekKey: '',
+        availableWeeks: [], rowCount: 0, loaded: false
+      };
+      var weeks = (m.availableWeeks && m.availableWeeks.length)
+        ? m.availableWeeks.slice()
+        : (m.weekKey ? [m.weekKey] : []);
       var html = '';
       html += '<div class="p6-section-card p6-attendance-card">';
+      html += '<div class="p6-section-head p6-attendance-head">';
       html += '<div class="p6-section-title">Attendance this payroll week</div>';
+      html += '<label class="p6-filter-label">Payroll week ';
+      html += '<select id="p6-attendance-week-select" class="p6-select p6-attendance-week-select" ' +
+        'aria-label="Attendance payroll week" onchange="p6OnAttendanceWeekChange(this.value)">';
+      weeks.forEach(function(wk) {
+        html += '<option value="' + p6Esc(wk) + '"' +
+          (wk === m.weekKey ? ' selected' : '') + '>' +
+          p6Esc(p6AttWeekLabel(wk)) + '</option>';
+      });
+      html += '</select></label></div>';
       html += '<p class="p6-section-hint">Buildpass sign-on hours and sign-off flags for ' +
         p6Esc(m.weekLabel || 'current Fri-Thu payroll week') +
         '. Blank Hours On Site rows (auto or missing sign-off) are excluded from hour totals, not counted as 0. Distinct from Capacity Planning ISO week.</p>';
@@ -19284,7 +19332,7 @@
         return html;
       }
       if (!m.rowCount) {
-        html += '<p class="no-data-msg">No attendance rows in the current payroll week.</p></div>';
+        html += '<p class="no-data-msg">No attendance rows in the selected payroll week.</p></div>';
         return html;
       }
 
@@ -19434,7 +19482,10 @@
       var filters = window._p6Filters || { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
 
       var probe = p6BuildModel(capRows, labAll, window._p6SelectedWeek, null, filters);
-      probe.attendanceMetrics = p6BuildAttendanceMetrics(raw.attendance || []);
+      probe.attendanceMetrics = p6BuildAttendanceMetrics(
+        raw.attendance || [],
+        window._p6AttendanceWeekKey
+      );
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
 
@@ -19497,7 +19548,7 @@
         html += p6RenderPlanningMode(m);
       }
 
-      // Attendance analysis uses current Fri-Thu payroll week (not planning ISO week).
+      // Attendance analysis uses selectable Fri-Thu payroll week (not planning ISO week).
       html += p6RenderAttendanceSection(m.attendanceMetrics);
 
       p6SetBB(m);
@@ -20485,6 +20536,11 @@
 
     function p6OnWeekChange(val) {
       window._p6SelectedWeek = parseInt(val, 10) || null;
+      p6Remount();
+    }
+
+    function p6OnAttendanceWeekChange(val) {
+      window._p6AttendanceWeekKey = val || p6AttCurrentWeekKey();
       p6Remount();
     }
 
