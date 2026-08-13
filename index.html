@@ -114,6 +114,7 @@
           <li class="nav-item" data-page="p10">P10: Marketing</li>
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
           <li class="nav-item" data-page="p12">P12: Site Diaries</li>
+          <li class="nav-item" data-page="library" id="nav-library" hidden>BBBS Library</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
@@ -1337,6 +1338,53 @@
           </div>
         </section>
 
+        <!-- ─── BBBS Library (Phase 1 shell: chat + gating, no guide content yet) ── -->
+        <section id="page-library" class="page">
+          <div class="lib-layout">
+            <div class="lib-head">
+              <div class="page-header lib-page-header">
+                <h1 class="page-title lib-page-title">BBBS Library</h1>
+              </div>
+              <p class="lib-scope-note">Ask BB about company how-to guides. Answers come from Library guides only.</p>
+            </div>
+
+            <div class="lib-chat-shell" id="lib-chat-shell">
+              <div class="lib-chat-bar">
+                <svg class="lib-chat-mark" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="lib-chat-title">BB: Library Assistant</span>
+              </div>
+
+              <div id="lib-name-step" class="lib-name-step">
+                <p class="lib-prompt">Type your first name to continue.</p>
+                <input id="lib-name-input" type="text" placeholder="Type your first name" autocomplete="given-name" />
+                <button type="button" id="lib-name-continue" class="lib-btn lib-btn-primary">Continue</button>
+                <div id="lib-name-error" class="lib-name-error" hidden></div>
+              </div>
+
+              <div id="lib-denied-step" class="lib-denied-step" hidden>
+                <p id="lib-denied-msg" class="lib-denied-msg">BBBS Library is not available for your account yet.</p>
+                <a id="lib-switch-user-denied" href="#" class="lib-switch-user">Not you? Switch user</a>
+              </div>
+
+              <div id="lib-ask-step" class="lib-ask-step" hidden>
+                <p id="lib-greeting" class="lib-greeting"></p>
+                <a id="lib-switch-user" href="#" class="lib-switch-user">Not you? Switch user</a>
+                <div id="lib-messages" class="lib-messages" aria-live="polite"></div>
+                <div class="lib-compose">
+                  <textarea id="lib-q" rows="2" placeholder="e.g. How do I submit a site diary?"></textarea>
+                  <div class="lib-compose-actions">
+                    <button type="button" id="lib-ask-btn" class="lib-btn lib-btn-primary">Ask</button>
+                    <button type="button" id="lib-ask-speak-btn" class="lib-btn lib-btn-secondary">Ask &amp; Speak</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Shared photo lightbox (P11 + P12; outside .page so it works on any tab) -->
         <div id="p11-lightbox" class="p11-lightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
           <div class="p11-lightbox-backdrop" data-p11-lb-close tabindex="-1"></div>
@@ -1536,8 +1584,10 @@
 
     // Accumulate visited-page data for BB (updates only this key; never clears others).
     // P12 crew page: do not feed diary content to Ask BB.
+    // Library page has its own chat shell (hide floating Ask BB there too).
     function isBbAiDisabledPage(pageId) {
-      return pageId === 'p12' || pageId === 'P12';
+      var id = String(pageId || '').toLowerCase();
+      return id === 'p12' || id === 'library';
     }
 
     function getActivePageId() {
@@ -1877,6 +1927,10 @@
     // Tiers: none | staff (P12) | user (P11+P12) | admin (all)
     // ═══════════════════════════════════════════════════════════
     var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12'];
+    // Library is not in ALL_PAGE_IDS: gated by BB AI name allow-list (bb_name), not Staff_Access role.
+    // Phase 1: Lori only. Add Emily / Ben here in one line when ready.
+    // TODO Phase 2: filter Library_Guides by Division/Role Tag (column E) — do not build yet.
+    var LIBRARY_ALLOW = ['Lori'];
     var LAST_PAGE_SESSION_KEY = 'bb_last_page';
     var _authUser = null;
     var _accessTier = 'none';
@@ -1885,6 +1939,34 @@
     var _authStateGen = 0;
     var _allNavItems = null;
     var _appBooted = false;
+    window._libraryGuides = window._libraryGuides || [];
+    window._libraryChatHistory = window._libraryChatHistory || [];
+
+    function isLibraryAllowListed(name) {
+      var n = String(name || '').trim().toLowerCase();
+      if (!n) return false;
+      for (var i = 0; i < LIBRARY_ALLOW.length; i++) {
+        if (String(LIBRARY_ALLOW[i] || '').toLowerCase() === n) return true;
+      }
+      return false;
+    }
+
+    /** True when bb_name is on the Library allow-list (Lori for Phase 1). */
+    function canAccessLibrary() {
+      try {
+        return isLibraryAllowListed(localStorage.getItem('bb_name'));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * Nav + route: Library button/page only when bb_name is on LIBRARY_ALLOW (Lori for Phase 1).
+     * Identify via Ask BB or the on-page name step after a prior Lori session.
+     */
+    function canSeeLibraryNav() {
+      return canAccessLibrary();
+    }
 
     function isFirebaseConfigured() {
       var f = (typeof CONFIG !== 'undefined' && CONFIG.FIREBASE) ? CONFIG.FIREBASE : null;
@@ -1906,14 +1988,18 @@
 
     function allowedPages(tier) {
       var t = tier || getAccessTier();
-      if (t === 'admin') return ALL_PAGE_IDS.slice();
-      if (t === 'user') return ['p11', 'p12'];
-      if (t === 'staff') return ['p12'];
-      return [];
+      var pages;
+      if (t === 'admin') pages = ALL_PAGE_IDS.slice();
+      else if (t === 'user') pages = ['p11', 'p12'];
+      else if (t === 'staff') pages = ['p12'];
+      else return [];
+      if (canSeeLibraryNav() && pages.indexOf('library') < 0) pages.push('library');
+      return pages;
     }
 
     function isPageAllowed(pageId) {
       var id = String(pageId || '').toLowerCase();
+      if (id === 'library') return canSeeLibraryNav();
       return allowedPages(getAccessTier()).indexOf(id) >= 0;
     }
 
@@ -1998,7 +2084,10 @@
         navList.innerHTML = '';
         _allNavItems.forEach(function(li) {
           var pg = li.getAttribute('data-page') || '';
-          if (allowed.indexOf(pg) >= 0) navList.appendChild(li);
+          if (allowed.indexOf(pg) >= 0) {
+            li.removeAttribute('hidden');
+            navList.appendChild(li);
+          }
         });
       }
 
@@ -2824,7 +2913,7 @@
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
         showPage(pageId);
       }
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12 };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, library: loadLibrary };
       var placeholders = {};
       var fn = loaders[pageId];
       // Belt and braces: never run a loader outside the role allow-list
@@ -15075,6 +15164,17 @@
             if (!key) return;
             activeP12ReportKey = key;
             p12SelectReport(key);
+            // Leaderboard sits below list+detail; scroll up so selection is visible.
+            if (reportRow.classList.contains('p12-quality-board-row')) {
+              var summarySec = document.querySelector('#page-p12 .p12-summary-section');
+              if (summarySec) {
+                try {
+                  summarySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (eScroll) {
+                  summarySec.scrollIntoView(true);
+                }
+              }
+            }
             return;
           }
           var countBtn = ev.target.closest('button[data-p11-photo-set]');
@@ -15284,19 +15384,19 @@
         {
           ok: p12WorkCompletedLooksClear(work),
           passLabel: 'Work completed recorded clearly',
-          failLabel: 'Work completed recorded clearly',
+          failLabel: 'No work completed recorded',
           miss: 'work completed'
         },
         {
           ok: !!mats && !P12_WORK_PLACEHOLDER.test(mats),
           passLabel: 'Materials recorded',
-          failLabel: 'Materials recorded',
+          failLabel: 'No materials recorded',
           miss: 'materials'
         },
         {
           ok: p12SafetyAnswered(r),
           passLabel: 'Safety response recorded',
-          failLabel: 'Safety response recorded',
+          failLabel: 'No safety response recorded',
           miss: 'safety response'
         },
         {
@@ -15397,8 +15497,12 @@
       var status = score >= P12_QUALITY_GREAT_PCT
         ? 'Great job'
         : (commonMiss.length ? ('Missing: ' + commonMiss.join(', ')) : 'Missing: checklist items');
+      var workers = (group.workers && group.workers.length)
+        ? group.workers.join(', ')
+        : 'Worker not recorded';
       return {
         title: p12GroupListTitle(group),
+        workers: workers,
         score: score,
         entryCount: rows.length,
         status: status,
@@ -15425,7 +15529,10 @@
         var g = _p12ReportGroups[k];
         if (!g || !g.rows || !g.rows.length) return; // omit empty groups
         var roll = p12GroupWeekQuality(g);
-        if (roll) rows.push(roll);
+        if (roll) {
+          roll.key = k;
+          rows.push(roll);
+        }
       });
       rows.sort(function(a, b) {
         if (b.score !== a.score) return b.score - a.score;
@@ -15437,11 +15544,19 @@
         return;
       }
 
-      var h = '<ul class="p12-quality-board-list" role="list">';
+      var h = '<div class="p12-quality-board-list" role="list">';
       rows.forEach(function(row) {
-        h += '<li class="p12-quality-board-row' + (row.great ? ' is-great' : '') + '" role="listitem">';
+        var selected = row.key && row.key === activeP12ReportKey;
+        h += '<button type="button" class="p12-quality-board-row' +
+          (row.great ? ' is-great' : '') +
+          (selected ? ' is-selected' : '') +
+          '" role="listitem" data-p12-report-key="' + p12Esc(row.key || '') +
+          '" aria-selected="' + (selected ? 'true' : 'false') + '">';
         h += '<div class="p12-quality-board-main">';
+        h += '<div class="p12-quality-board-identity">';
         h += '<span class="p12-quality-board-name">' + p12Esc(row.title) + '</span>';
+        h += '<span class="p12-quality-board-workers">' + p12Esc(row.workers || 'Worker not recorded') + '</span>';
+        h += '</div>';
         h += '<span class="p12-quality-board-score">' + row.score + '%</span>';
         h += '</div>';
         h += '<div class="p12-quality-board-status">';
@@ -15454,9 +15569,9 @@
             p12Esc(row.status) + '</span>';
         }
         h += '</div>';
-        h += '</li>';
+        h += '</button>';
       });
-      h += '</ul>';
+      h += '</div>';
       boardEl.innerHTML = h;
     }
 
@@ -15926,6 +16041,15 @@
 
       if (listEl) {
         listEl.querySelectorAll('.p12-summary-row').forEach(function(row) {
+          var on = row.getAttribute('data-p12-report-key') === key;
+          row.classList.toggle('is-selected', on);
+          row.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+      }
+
+      var boardEl = document.getElementById('p12-quality-board');
+      if (boardEl) {
+        boardEl.querySelectorAll('.p12-quality-board-row').forEach(function(row) {
           var on = row.getAttribute('data-p12-report-key') === key;
           row.classList.toggle('is-selected', on);
           row.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -20838,6 +20962,309 @@
 
 
     // ═══════════════════════════════════════════════════════════
+    // BBBS LIBRARY (Phase 1: shell + Lori gating + AI plumbing)
+    // Soft-loads Library_Guides; empty/missing → []. No Phase 2 role filter yet.
+    // ═══════════════════════════════════════════════════════════
+    var _libraryBound = false;
+    var LIBRARY_EMPTY_MSG = 'Library content is still being added, check back soon.';
+
+    function refreshLibraryAccess() {
+      if (typeof applyAccessChrome === 'function') applyAccessChrome();
+      var onLibrary = getActivePageId() === 'library';
+      if (onLibrary && !canSeeLibraryNav()) {
+        var land = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p1';
+        showPage(land);
+        if (typeof loadCurrentPage === 'function') loadCurrentPage();
+        return;
+      }
+      if (onLibrary && typeof refreshLibraryPanel === 'function') refreshLibraryPanel();
+    }
+
+    function normalizeLibraryGuides(rows) {
+      // Soft header matching (A–F suggested): Guide ID, Title, Category,
+      // Content / Steps, Division/Role Tag, Media Link.
+      // TODO Phase 2: filter by Division/Role Tag (column E) — not built yet.
+      if (!rows || !rows.length) return [];
+      var out = [];
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var title = String(col(r, 'Title', 'Guide Title', 'Name') || '').trim();
+        var content = String(col(
+          r,
+          'Content / Steps',
+          'Content/Steps',
+          'Content',
+          'Steps',
+          'Guide Content'
+        ) || '').trim();
+        var id = String(col(r, 'Guide ID', 'GuideID', 'ID', 'Id') || '').trim();
+        if (!title && !content && !id) continue;
+        out.push({
+          guideId: id,
+          title: title,
+          category: String(col(r, 'Category', 'Cat') || '').trim(),
+          content: content,
+          // Stored for Phase 2 filtering; unused in Phase 1.
+          divisionRoleTag: String(col(
+            r,
+            'Division/Role Tag',
+            'Division / Role Tag',
+            'Division',
+            'Role Tag',
+            'Role'
+          ) || '').trim(),
+          mediaLink: String(col(r, 'Media Link', 'Media', 'Link', 'URL') || '').trim()
+        });
+      }
+      return out;
+    }
+
+    function libAppendMessage(role, text) {
+      var box = document.getElementById('lib-messages');
+      if (!box || !text) return;
+      var el = document.createElement('div');
+      el.className = 'lib-msg lib-msg--' + (role === 'user' ? 'user' : 'assistant');
+      el.textContent = text;
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function libClearMessages() {
+      var box = document.getElementById('lib-messages');
+      if (box) box.innerHTML = '';
+    }
+
+    function libShowNameStep() {
+      var nameStep = document.getElementById('lib-name-step');
+      var askStep = document.getElementById('lib-ask-step');
+      var denied = document.getElementById('lib-denied-step');
+      if (nameStep) nameStep.hidden = false;
+      if (askStep) askStep.hidden = true;
+      if (denied) denied.hidden = true;
+      var err = document.getElementById('lib-name-error');
+      if (err) {
+        err.hidden = true;
+        err.textContent = '';
+      }
+      var input = document.getElementById('lib-name-input');
+      if (input) input.value = '';
+    }
+
+    function libShowDenied(name) {
+      var nameStep = document.getElementById('lib-name-step');
+      var askStep = document.getElementById('lib-ask-step');
+      var denied = document.getElementById('lib-denied-step');
+      if (nameStep) nameStep.hidden = true;
+      if (askStep) askStep.hidden = true;
+      if (denied) denied.hidden = false;
+      var msg = document.getElementById('lib-denied-msg');
+      if (msg) {
+        msg.textContent = name
+          ? ('Hey ' + name + ', BBBS Library is not available for your account yet.')
+          : 'BBBS Library is not available for your account yet.';
+      }
+    }
+
+    function libShowAskStep(name) {
+      var nameStep = document.getElementById('lib-name-step');
+      var askStep = document.getElementById('lib-ask-step');
+      var denied = document.getElementById('lib-denied-step');
+      if (nameStep) nameStep.hidden = true;
+      if (denied) denied.hidden = true;
+      if (askStep) askStep.hidden = false;
+      var greet = document.getElementById('lib-greeting');
+      if (greet) greet.textContent = 'Hey ' + name + ', ask me about a Library guide.';
+      var sw = document.getElementById('lib-switch-user');
+      if (sw) sw.textContent = 'Not ' + name + '? Switch user';
+      if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
+        var guides = window._libraryGuides || [];
+        if (!guides.length) {
+          libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
+        } else {
+          libAppendMessage(
+            'assistant',
+            'I answer from Library guides only. If nothing matches, I will say no guide was found.'
+          );
+        }
+      }
+    }
+
+    function refreshLibraryPanel() {
+      var saved = '';
+      try { saved = localStorage.getItem('bb_name') || ''; } catch (e) { saved = ''; }
+      if (!saved) {
+        libShowNameStep();
+        return;
+      }
+      if (!isLibraryAllowListed(saved)) {
+        libShowDenied(saved);
+        return;
+      }
+      libShowAskStep(saved);
+    }
+
+    function submitLibraryName() {
+      var input = document.getElementById('lib-name-input');
+      var raw = input ? input.value : '';
+      var matched = (typeof matchBbName === 'function') ? matchBbName(raw) : null;
+      // Fallback if Ask BB script not yet parsed: exact allow-list match only.
+      if (!matched) {
+        var trimmed = String(raw || '').trim().toLowerCase();
+        var allow = typeof BB_ALLOW !== 'undefined' ? BB_ALLOW : ['Emily', 'Stacey', 'Ben', 'Anne', 'Lori', 'Loida'];
+        for (var i = 0; i < allow.length; i++) {
+          if (String(allow[i]).toLowerCase() === trimmed) {
+            matched = allow[i];
+            break;
+          }
+        }
+      }
+      var err = document.getElementById('lib-name-error');
+      if (!matched) {
+        if (err) {
+          err.hidden = false;
+          err.textContent = 'Sorry, I can only assist BB Building Services team members. If you believe this is a mistake, please contact Lori.';
+        }
+        return;
+      }
+      try { localStorage.setItem('bb_name', matched); } catch (e2) { /* private mode */ }
+      if (typeof refreshBbPanel === 'function') refreshBbPanel();
+      refreshLibraryAccess();
+      if (isLibraryAllowListed(matched)) {
+        libClearMessages();
+        libShowAskStep(matched);
+      } else {
+        libShowDenied(matched);
+      }
+    }
+
+    function switchLibraryUser(e) {
+      if (e) e.preventDefault();
+      try { localStorage.removeItem('bb_name'); } catch (err) { /* ignore */ }
+      if (typeof clearBbHistory === 'function') clearBbHistory();
+      window._libraryChatHistory = [];
+      libClearMessages();
+      if (typeof showBbNameStep === 'function') showBbNameStep();
+      refreshLibraryAccess();
+      libShowNameStep();
+    }
+
+    function bindLibraryUi() {
+      if (_libraryBound) return;
+      _libraryBound = true;
+      var cont = document.getElementById('lib-name-continue');
+      if (cont) cont.addEventListener('click', submitLibraryName);
+      var nameInput = document.getElementById('lib-name-input');
+      if (nameInput) {
+        nameInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submitLibraryName();
+          }
+        });
+      }
+      var askBtn = document.getElementById('lib-ask-btn');
+      if (askBtn) askBtn.addEventListener('click', function() { askLibrary(false); });
+      var speakBtn = document.getElementById('lib-ask-speak-btn');
+      if (speakBtn) speakBtn.addEventListener('click', function() { askLibrary(true); });
+      var sw = document.getElementById('lib-switch-user');
+      if (sw) sw.addEventListener('click', switchLibraryUser);
+      var sw2 = document.getElementById('lib-switch-user-denied');
+      if (sw2) sw2.addEventListener('click', switchLibraryUser);
+      var q = document.getElementById('lib-q');
+      if (q) {
+        q.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            askLibrary(false);
+          }
+        });
+      }
+    }
+
+    function askLibrary(speak) {
+      if (!canAccessLibrary()) {
+        refreshLibraryPanel();
+        return;
+      }
+      var qEl = document.getElementById('lib-q');
+      var q = qEl ? qEl.value.trim() : '';
+      if (!q) return;
+      var name = '';
+      try { name = localStorage.getItem('bb_name') || ''; } catch (e) { name = ''; }
+      var guides = window._libraryGuides || [];
+
+      // Client-side empty-state: no API call needed when sheet has no guides.
+      if (!guides.length) {
+        libAppendMessage('user', q);
+        libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
+        if (qEl) qEl.value = '';
+        window._libraryChatHistory.push({ role: 'user', text: q });
+        window._libraryChatHistory.push({ role: 'assistant', text: LIBRARY_EMPTY_MSG });
+        return;
+      }
+
+      libAppendMessage('user', q);
+      libAppendMessage('assistant', 'BB is thinking...');
+      if (qEl) qEl.value = '';
+
+      var history = (window._libraryChatHistory || []).slice(-16);
+
+      fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'library',
+          question: q,
+          name: name,
+          libraryGuides: guides,
+          conversationHistory: history
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var answer = d.answer || d.error || 'No answer.';
+        var box = document.getElementById('lib-messages');
+        if (box && box.lastChild) box.removeChild(box.lastChild);
+        libAppendMessage('assistant', answer);
+        window._libraryChatHistory.push({ role: 'user', text: q });
+        window._libraryChatHistory.push({ role: 'assistant', text: answer });
+        if (window._libraryChatHistory.length > 16) {
+          window._libraryChatHistory = window._libraryChatHistory.slice(-16);
+        }
+        if (speak && d.answer && typeof speakWithFallback === 'function') {
+          speakWithFallback(d.answer);
+        }
+      })
+      .catch(function(err) {
+        var box = document.getElementById('lib-messages');
+        if (box && box.lastChild) box.removeChild(box.lastChild);
+        libAppendMessage('assistant', 'Error: ' + (err && err.message ? err.message : 'request failed'));
+      });
+    }
+
+    async function loadLibrary() {
+      showLoading(true);
+      removeError('library');
+      bindLibraryUi();
+      try {
+        var tab = (CONFIG.TABS && CONFIG.TABS.LIBRARY_GUIDES) ? CONFIG.TABS.LIBRARY_GUIDES : 'Library_Guides';
+        var rows = await fetchSheet(tab).catch(function() { return []; });
+        var guides = normalizeLibraryGuides(rows);
+        window._libraryGuides = guides;
+        libClearMessages();
+        refreshLibraryPanel();
+      } catch (err) {
+        console.warn('[Library] soft-load failed:', err);
+        window._libraryGuides = [];
+        libClearMessages();
+        refreshLibraryPanel();
+      } finally {
+        showLoading(false);
+      }
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
     // INITIALISE (wait for Google sign-in + Staff_Access before pages)
     // ═══════════════════════════════════════════════════════════
     init3DTilt();
@@ -20950,6 +21377,7 @@
       }
       localStorage.setItem('bb_name', matched);
       showBbAskStep(matched);
+      if (typeof refreshLibraryAccess === 'function') refreshLibraryAccess();
     }
 
     function switchBbUser(e) {
@@ -20957,6 +21385,7 @@
       localStorage.removeItem('bb_name');
       clearBbHistory();
       showBbNameStep();
+      if (typeof refreshLibraryAccess === 'function') refreshLibraryAccess();
     }
 
     /** Hide Ask BB on P12 (crew Site Diaries). */

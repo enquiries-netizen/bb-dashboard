@@ -13,12 +13,84 @@
     pageDirectory,
     allPagesData,
     conversationHistory,
-    pageInsights
+    pageInsights,
+    mode,
+    libraryGuides
   } = req.body || {};
   if (!question) return res.status(400).json({ error: 'No question' });
 
   const who = (name && String(name).trim()) || 'a team member';
   const ctx = (pageContext && String(pageContext).trim()) || 'unknown page';
+
+  // ─── Library mode (BBBS Library): ground ONLY in Library_Guides ───
+  // Separate path so BB AI dashboard prompting is unchanged.
+  if (mode === 'library') {
+    const guides = Array.isArray(libraryGuides) ? libraryGuides : [];
+    const history = Array.isArray(conversationHistory)
+      ? conversationHistory.slice(-16).filter(function(t) {
+          return t && t.text && (t.role === 'user' || t.role === 'assistant' || t.role === 'model');
+        })
+      : [];
+
+    let historyBlock = '';
+    if (history.length) {
+      historyBlock = '\n\nCONVERSATION SO FAR (same browser session, use for follow-ups):\n';
+      history.forEach(function(turn) {
+        const role = (turn.role === 'assistant' || turn.role === 'model') ? 'BB' : 'User';
+        historyBlock += role + ': ' + String(turn.text).slice(0, 1200) + '\n';
+      });
+    }
+
+    let prompt;
+    if (!guides.length) {
+      // Empty / missing sheet: fixed message, no general-knowledge answers.
+      prompt =
+        'You are BB, the BBBS Library assistant for BB Building Services. ' +
+        'You are speaking with ' + who + '. ' +
+        'The Library_Guides sheet is empty or not available yet. ' +
+        'Reply with exactly this message (you may greet them by name first): ' +
+        '"Library content is still being added, check back soon." ' +
+        'Do not answer from general knowledge. Do not invent guides. ' +
+        'Never use em dashes in your answers, use commas or colons instead.' +
+        historyBlock +
+        '\n\nCurrent question: ' + question;
+    } else {
+      const guidesPayload = JSON.stringify(guides).slice(0, 80000);
+      prompt =
+        'You are BB, the BBBS Library assistant for BB Building Services. ' +
+        'You help team members find how-to guides from the company library only. ' +
+        'You are speaking with ' + who + '. Address them by name naturally where appropriate. ' +
+        'GROUNDING RULES (mandatory): ' +
+        '1) Answer ONLY from the LIBRARY GUIDES data provided below. Do not use general knowledge. ' +
+        '2) Do not invent steps, policies, tools, or guides that are not in the data. ' +
+        '3) If no guide matches the question, say plainly that no guide was found for that topic. ' +
+        'Do not guess or fill gaps. Suggest they try different wording only if helpful. ' +
+        '4) When a guide matches, use its Title, Category, Content/Steps, and Media Link as relevant. ' +
+        '5) Prefer clear, practical language. Never use em dashes; use commas or colons instead. ' +
+        '6) If asked who you are, say you are BB, the BBBS Library assistant. ' +
+        'Do not volunteer developer or ownership details unless specifically asked; ' +
+        'if asked who built this app, say Lori is your developer and the app is owned by BB Building Services.' +
+        historyBlock +
+        '\n\nLIBRARY GUIDES (sole source of truth):\n' + guidesPayload +
+        '\n\nCurrent question: ' + question;
+    }
+
+    const rLib = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + process.env.GEMINI_API_KEY,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
+      }
+    );
+    const dataLib = await rLib.json();
+    let answerLib = dataLib.candidates && dataLib.candidates[0] && dataLib.candidates[0].content && dataLib.candidates[0].content.parts[0].text;
+    if (!answerLib) {
+      answerLib = 'BB error: ' + (dataLib.error ? dataLib.error.message : JSON.stringify(dataLib).slice(0, 300));
+    }
+    answerLib = String(answerLib).replace(/\u2014/g, ',').replace(/\u2013/g, '-');
+    return res.status(200).json({ answer: answerLib });
+  }
 
   const PAGE_DIRECTORY = pageDirectory || {
     P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
