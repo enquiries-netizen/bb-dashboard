@@ -15361,7 +15361,7 @@
     /**
      * Per-entry diary quality checklist (P12 crew accountability).
      * Work Stopped is NOT scored (visibility-only via p12WorkStoppedState / list badges).
-     * Four checks: work completed clarity, materials, safety, photos (col P).
+     * Five checks: work completed clarity, materials, safety, photos (col P), attendance sign-off.
      */
     var P12_WORK_PLACEHOLDER = /^(n\/?a|na|none|nil|null|none logged|not recorded|not available|\.|-+|—+|–+)$/i;
 
@@ -15384,10 +15384,59 @@
       return true;
     }
 
+    /**
+     * Attendance rows for P12 quality / display: prefer P12 soft-load cache,
+     * then AI / P6 caches so quality can score if attendance arrived via another path.
+     */
+    function p12AttendanceRowsForQuality() {
+      if (Array.isArray(window._p12Attendance)) return window._p12Attendance;
+      if (Array.isArray(window._bbAiAttendanceCache)) return window._bbAiAttendanceCache;
+      if (window._p6Raw && Array.isArray(window._p6Raw.attendance)) {
+        return window._p6Raw.attendance;
+      }
+      return [];
+    }
+
+    /**
+     * Sign-off for diary author on diary date (worker name + date; not job).
+     * Pass: ≥1 attendance row that day and none have Missing Sign-Off Flag = Yes.
+     * Fail: no attendance that day, or any row that day missing sign-off
+     * (applies to all of that worker's diary entries that day).
+     */
+    function p12WorkerSignOffRecorded(personName, dateObj) {
+      var personNorm = p12NormName(personName);
+      var dateKey = p12DateKey(dateObj);
+      if (!personNorm || !dateKey) return false;
+
+      var rows = p12AttendanceRowsForQuality();
+      var dayRows = [];
+      var i;
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var attDate = parseFlexibleDate(col(r,
+          'Date (DD/MM/YYYY)', 'Date', 'date'
+        ));
+        if (p12DateKey(attDate) !== dateKey) continue;
+        var member = String(col(r, 'Team Member', 'Employee', 'Name') || '').trim();
+        if (p12NormName(member) !== personNorm) continue;
+        dayRows.push(r);
+      }
+      if (!dayRows.length) return false;
+      for (i = 0; i < dayRows.length; i++) {
+        if (p12AttFlagYes(col(dayRows[i],
+          'Missing Sign-Off Flag (Yes/No)', 'Missing Sign-Off Flag', 'Missing Flag'
+        ))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     function p12DiaryQuality(r) {
       var work = p12DiaryWorkCompleted(r);
       var mats = p12DiaryMaterials(r);
       var photos = p12PhotoLinks(r);
+      var signOffOk = p12WorkerSignOffRecorded(p12DiaryPerson(r), p12DiaryDate(r));
       var items = [
         {
           ok: p12WorkCompletedLooksClear(work),
@@ -15412,6 +15461,12 @@
           passLabel: 'Progress photos uploaded',
           failLabel: 'No progress photos uploaded',
           miss: 'progress photos'
+        },
+        {
+          ok: signOffOk,
+          passLabel: 'Sign-off recorded',
+          failLabel: 'No sign-off recorded.',
+          miss: 'sign-off'
         }
       ];
       var passN = items.filter(function(it) { return it.ok; }).length;
@@ -21897,9 +21952,17 @@
 
     async function bbEnsureAttendanceRows() {
       if (window._p6Raw && Array.isArray(window._p6Raw.attendance) && window._p6Raw.attendance.length) {
+        if (!Array.isArray(window._p12Attendance) || !window._p12Attendance.length) {
+          window._p12Attendance = window._p6Raw.attendance;
+        }
         return window._p6Raw.attendance;
       }
-      if (Array.isArray(window._bbAiAttendanceCache)) return window._bbAiAttendanceCache;
+      if (Array.isArray(window._bbAiAttendanceCache)) {
+        if (!Array.isArray(window._p12Attendance) || !window._p12Attendance.length) {
+          window._p12Attendance = window._bbAiAttendanceCache;
+        }
+        return window._bbAiAttendanceCache;
+      }
       if (Array.isArray(window._p12Attendance) && window._p12Attendance.length) {
         window._bbAiAttendanceCache = window._p12Attendance;
         return window._p12Attendance;
@@ -21911,6 +21974,10 @@
       if (!window._p6Raw) window._p6Raw = { capacity: [], labour: [], attendance: [] };
       if (!window._p6Raw.attendance || !window._p6Raw.attendance.length) {
         window._p6Raw.attendance = window._bbAiAttendanceCache;
+      }
+      // Keep P12 quality sign-off check on the same cache as P12 attendance display.
+      if (!Array.isArray(window._p12Attendance) || !window._p12Attendance.length) {
+        window._p12Attendance = window._bbAiAttendanceCache;
       }
       return window._bbAiAttendanceCache;
     }
