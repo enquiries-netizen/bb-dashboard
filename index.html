@@ -15041,7 +15041,7 @@
     // Photos: column P via shared P11 lightbox. Column Q header "Other Details" (UI label same) when non-blank.
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
     // ═══════════════════════════════════════════════════════════════
-    /** ISO week key YYYY-Www; null = default to current week on first render */
+    /** Payroll week key YYYY-Www (Fri–Thu, keyed by Friday's ISO week); null = current week on first render */
     var activeP12WeekKey = null;
     /** Selected report group key for the week entry list */
     var activeP12ReportKey = null;
@@ -15099,25 +15099,27 @@
       return getAccessTier() === 'staff';
     }
 
-    function p12MondayOf(d) {
+    /** Most recent Friday on or before d (BB payroll week start). */
+    function p12FridayOf(d) {
       if (!d || isNaN(d.getTime())) return null;
       var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      var day = x.getDay();
-      var diff = day === 0 ? -6 : 1 - day;
+      var day = x.getDay(); // 0=Sun .. 5=Fri .. 6=Sat
+      var diff = day >= 5 ? 5 - day : -(day + 2);
       x.setDate(x.getDate() + diff);
       x.setHours(0, 0, 0, 0);
       return x;
     }
 
     function p12CurrentWeekKey() {
-      return isoWeekKey(p12MondayOf(new Date())) || isoWeekKey(new Date());
+      return isoWeekKey(p12FridayOf(new Date())) || isoWeekKey(new Date());
     }
 
     function p12WeekKeyFromDate(d) {
-      var mon = p12MondayOf(d);
-      return mon ? isoWeekKey(mon) : null;
+      var fri = p12FridayOf(d);
+      return fri ? isoWeekKey(fri) : null;
     }
 
+    /** Label for payroll week key: Friday through Thursday (inclusive). */
     function p12WeekLabelFromKey(weekKey) {
       if (!weekKey) return 'Week';
       var parts = String(weekKey).match(/^(\d{4})-W(\d{1,2})$/i);
@@ -15128,14 +15130,22 @@
         ? p8WeekMonday(y, w)
         : (function() {
             var simple = new Date(Date.UTC(y, 0, 1 + (w - 1) * 7));
-            return p12MondayOf(new Date(simple.getUTCFullYear(), simple.getUTCMonth(), simple.getUTCDate()));
+            var local = new Date(simple.getUTCFullYear(), simple.getUTCMonth(), simple.getUTCDate());
+            var day = local.getDay() || 7;
+            local.setDate(local.getDate() - day + 1);
+            local.setHours(0, 0, 0, 0);
+            return local;
           })();
       if (!mon || isNaN(mon.getTime())) return String(weekKey);
-      var sun = new Date(mon);
-      sun.setDate(mon.getDate() + 6);
-      var left = mon.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
-      var right = sun.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-      return left + ' – ' + right + ' · ' + weekKey;
+      // Key is ISO week of the payroll Friday; Friday = that ISO Monday + 4.
+      var fri = new Date(mon);
+      fri.setDate(mon.getDate() + 4);
+      fri.setHours(0, 0, 0, 0);
+      var thu = new Date(fri);
+      thu.setDate(fri.getDate() + 6);
+      var left = fri.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+      var right = thu.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      return left + ' - ' + right + ' · ' + weekKey;
     }
 
     async function loadP12() {
