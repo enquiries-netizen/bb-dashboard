@@ -1585,14 +1585,21 @@
     // Accumulate visited-page data for BB (updates only this key; never clears others).
     // P12 crew page: do not feed diary content to Ask BB.
     // Internal Hub page has its own chat shell (hide floating Ask BB there too).
-    function isBbAiDisabledPage(pageId) {
+    function normalizePageId(pageId) {
       var id = String(pageId || '').toLowerCase();
+      // Legacy slug from BBBS Library rename
+      if (id === 'library') return 'internal-hub';
+      return id;
+    }
+
+    function isBbAiDisabledPage(pageId) {
+      var id = normalizePageId(pageId);
       return id === 'p12' || id === 'internal-hub';
     }
 
     function getActivePageId() {
       var active = document.querySelector('.nav-item.active');
-      return active ? active.dataset.page : '';
+      return normalizePageId(active ? active.dataset.page : '');
     }
 
     function setBbAiVisibleForPage(pageId) {
@@ -2006,7 +2013,7 @@
     }
 
     function isPageAllowed(pageId) {
-      var id = String(pageId || '').toLowerCase();
+      var id = normalizePageId(pageId);
       if (id === 'internal-hub') return canSeeLibraryNav();
       return allowedPages(getAccessTier()).indexOf(id) >= 0;
     }
@@ -2017,7 +2024,7 @@
       if (t === 'user') return 'p11';
       if (t === 'admin') {
         try {
-          var last = sessionStorage.getItem(LAST_PAGE_SESSION_KEY);
+          var last = normalizePageId(sessionStorage.getItem(LAST_PAGE_SESSION_KEY));
           if (last && allowedPages('admin').indexOf(last) >= 0) return last;
         } catch (e) { /* private mode */ }
         return 'p1';
@@ -2375,6 +2382,7 @@
       if (!isAuthenticated() || getAccessTier() === 'none') {
         return;
       }
+      pageId = normalizePageId(pageId);
       // Role-based route guard (Staff / User)
       if (!isPageAllowed(pageId)) {
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
@@ -2917,7 +2925,7 @@
     function loadCurrentPage() {
       if (!isAuthenticated() || getAccessTier() === 'none') return;
       var active = document.querySelector('.nav-item.active');
-      var pageId = active ? active.dataset.page : '';
+      var pageId = normalizePageId(active ? active.dataset.page : '');
       if (!pageId || !isPageAllowed(pageId)) {
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
         showPage(pageId);
