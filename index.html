@@ -15518,7 +15518,7 @@
     function p12GroupListTitle(g) {
       if (!g) return '';
       if (g.personOnly) {
-        return 'Person-only · ' + (g.jobName || 'General (no job #)');
+        return g.jobName || 'General (no job #)';
       }
       var nameLine = g.jobName && g.jobName !== g.jobNo ? g.jobName : '';
       return nameLine ? (String(g.jobNo || '') + ' · ' + nameLine) : String(g.jobNo || '');
