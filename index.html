@@ -1325,6 +1325,14 @@
                   </div>
                 </div>
               </div>
+
+              <div class="p12-quality-board-section" id="p12-quality-board-section">
+                <div class="section-title">Team Diary Quality</div>
+                <p class="p12-section-hint" id="p12-quality-board-week">Payroll week</p>
+                <div id="p12-quality-board" class="p12-quality-board" aria-live="polite">
+                  <p class="p12-summary-empty">Loading…</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -15332,6 +15340,126 @@
       return h;
     }
 
+    /** On-track threshold for weekly team diary quality leaderboard (score >= this → "Great job"). */
+    var P12_QUALITY_GREAT_PCT = 90;
+
+    /** Display title matching the left-list job/person row (single-line). */
+    function p12GroupListTitle(g) {
+      if (!g) return '';
+      if (g.personOnly) {
+        return 'Person-only · ' + (g.jobName || 'General (no job #)');
+      }
+      var nameLine = g.jobName && g.jobName !== g.jobNo ? g.jobName : '';
+      return nameLine ? (String(g.jobNo || '') + ' · ' + nameLine) : String(g.jobNo || '');
+    }
+
+    /** P6-style payroll week range: "7 Aug - 13 Aug 2026 (2026-W32)". */
+    function p12QualityBoardWeekLabel(weekKey) {
+      var raw = p12WeekLabelFromKey(weekKey);
+      return String(raw).replace(/\s*[·•]\s*([0-9]{4}-W\d+)\s*$/i, ' ($1)');
+    }
+
+    /**
+     * Weekly rollup for one job/person group: reuse p12DiaryQuality per entry.
+     * Score = average of entry pct values, then round once (not re-score from totals).
+     * Miss summary = checklist miss labels ranked by fail frequency across the week.
+     */
+    function p12GroupWeekQuality(group) {
+      var rows = (group && group.rows) || [];
+      if (!rows.length) return null;
+      var sumPct = 0;
+      var failCount = {};
+      var missOrder = [];
+      rows.forEach(function(r) {
+        var q = p12DiaryQuality(r);
+        sumPct += q.pct;
+        (q.items || []).forEach(function(it) {
+          if (it.ok) return;
+          var miss = it.miss || '';
+          if (!miss) return;
+          if (!failCount[miss]) {
+            failCount[miss] = 0;
+            missOrder.push(miss);
+          }
+          failCount[miss] += 1;
+        });
+      });
+      // Average entry percentages, then round (documented: not mean of pass counts).
+      var score = Math.round(sumPct / rows.length);
+      var commonMiss = missOrder
+        .slice()
+        .sort(function(a, b) {
+          var d = (failCount[b] || 0) - (failCount[a] || 0);
+          if (d) return d;
+          return missOrder.indexOf(a) - missOrder.indexOf(b);
+        })
+        .filter(function(m) { return (failCount[m] || 0) > 0; });
+      var status = score >= P12_QUALITY_GREAT_PCT
+        ? 'Great job'
+        : (commonMiss.length ? ('Missing: ' + commonMiss.join(', ')) : 'Missing: checklist items');
+      return {
+        title: p12GroupListTitle(group),
+        score: score,
+        entryCount: rows.length,
+        status: status,
+        great: score >= P12_QUALITY_GREAT_PCT
+      };
+    }
+
+    /** Full-width Team Diary Quality leaderboard for the selected payroll week. */
+    function p12RenderQualityBoard(groupKeys) {
+      var weekEl = document.getElementById('p12-quality-board-week');
+      var boardEl = document.getElementById('p12-quality-board');
+      if (weekEl) {
+        weekEl.textContent = p12QualityBoardWeekLabel(activeP12WeekKey);
+      }
+      if (!boardEl) return;
+
+      if (!_p12LoadMeta.diariesOk) {
+        boardEl.innerHTML = '<p class="p12-summary-empty">Site diaries unavailable</p>';
+        return;
+      }
+
+      var rows = [];
+      (groupKeys || []).forEach(function(k) {
+        var g = _p12ReportGroups[k];
+        if (!g || !g.rows || !g.rows.length) return; // omit empty groups
+        var roll = p12GroupWeekQuality(g);
+        if (roll) rows.push(roll);
+      });
+      rows.sort(function(a, b) {
+        if (b.score !== a.score) return b.score - a.score;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      });
+
+      if (!rows.length) {
+        boardEl.innerHTML = '<p class="p12-summary-empty">No diary groups for this week.</p>';
+        return;
+      }
+
+      var h = '<ul class="p12-quality-board-list" role="list">';
+      rows.forEach(function(row) {
+        h += '<li class="p12-quality-board-row' + (row.great ? ' is-great' : '') + '" role="listitem">';
+        h += '<div class="p12-quality-board-main">';
+        h += '<span class="p12-quality-board-name">' + p12Esc(row.title) + '</span>';
+        h += '<span class="p12-quality-board-score">' + row.score + '%</span>';
+        h += '</div>';
+        h += '<div class="p12-quality-board-status">';
+        if (row.great) {
+          h += '<span class="p12-quality-mark" aria-hidden="true">✓</span> ';
+          h += '<span class="p12-quality-board-status-text">' + p12Esc(row.status) + '</span>';
+        } else {
+          h += '<span class="p12-quality-mark" aria-hidden="true">⚠️</span> ';
+          h += '<span class="p12-quality-board-status-text p12-quality-board-status-text--miss">' +
+            p12Esc(row.status) + '</span>';
+        }
+        h += '</div>';
+        h += '</li>';
+      });
+      h += '</ul>';
+      boardEl.innerHTML = h;
+    }
+
     /** Mirror P11 diaryIssuesText (local to P12; P11 helper is not global). */
     function p12DiaryIssuesText(r) {
       var direct = col(r,
@@ -16111,6 +16239,8 @@
         activeP12ReportKey = null;
         p12SelectReport(null);
       }
+
+      p12RenderQualityBoard(groupKeys);
 
       // P12: no BB AI context (crew diary data not sent to Ask BB)
     }

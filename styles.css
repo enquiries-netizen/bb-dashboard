@@ -8404,6 +8404,68 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   color: var(--accent, #EA580C);
   line-height: 1.4;
 }
+/* Team Diary Quality weekly leaderboard (full-width below list+detail) */
+#page-p12 .p12-quality-board-section {
+  min-width: 0;
+  margin-top: 4px;
+}
+#page-p12 .p12-quality-board-section .section-title {
+  margin-bottom: 4px;
+}
+#page-p12 .p12-quality-board-section .p12-section-hint {
+  margin: 0 0 10px;
+}
+#page-p12 .p12-quality-board-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#page-p12 .p12-quality-board-row {
+  padding: 10px 12px;
+  background: rgba(107, 114, 128, 0.06);
+  border: 1px solid var(--p12-border);
+  border-radius: 4px;
+}
+#page-p12 .p12-quality-board-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 14px;
+  margin-bottom: 4px;
+}
+#page-p12 .p12-quality-board-name {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--p12-text);
+  min-width: 0;
+}
+#page-p12 .p12-quality-board-score {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--p12-text);
+  flex-shrink: 0;
+}
+#page-p12 .p12-quality-board-status {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--p12-text);
+}
+#page-p12 .p12-quality-board-row.is-great .p12-quality-mark {
+  color: var(--healthy, #4B7A5A);
+}
+#page-p12 .p12-quality-board-status-text--miss {
+  font-weight: 600;
+  color: var(--accent, #EA580C);
+}
 #page-p12 .p12-summary-variations {
   margin-top: 16px;
   padding-top: 12px;
