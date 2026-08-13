@@ -8638,29 +8638,29 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 }
 
 /* ============================================================
-   BBBS Library (Phase 1) — charcoal chat shell matching Ask BB
+   BBBS Internal Hub (Phase 1) — charcoal chat shell matching Ask BB
    ============================================================ */
-#page-library {
+#page-internal-hub {
   min-height: 60vh;
   padding-bottom: 24px;
 }
-#page-library .lib-layout {
+#page-internal-hub .lib-layout {
   max-width: 720px;
 }
-#page-library .lib-page-header {
+#page-internal-hub .lib-page-header {
   margin-bottom: 4px;
 }
-#page-library .lib-page-title {
+#page-internal-hub .lib-page-title {
   color: var(--charcoal);
 }
-#page-library .lib-scope-note {
+#page-internal-hub .lib-scope-note {
   margin: 0 0 18px;
   font-size: 13px;
   line-height: 1.45;
   color: var(--muted);
   max-width: 36rem;
 }
-#page-library .lib-chat-shell {
+#page-internal-hub .lib-chat-shell {
   background: #262425;
   color: #F8FAFC;
   border: 1px solid #3d3b3c;
@@ -8671,7 +8671,7 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   gap: 12px;
   min-height: min(62vh, 560px);
 }
-#page-library .lib-chat-bar {
+#page-internal-hub .lib-chat-bar {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -8680,27 +8680,27 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   font-size: 14px;
   color: #F8FAFC;
 }
-#page-library .lib-chat-mark {
+#page-internal-hub .lib-chat-mark {
   flex-shrink: 0;
   color: #F8FAFC;
 }
-#page-library .lib-prompt,
-#page-library .lib-greeting,
-#page-library .lib-denied-msg {
+#page-internal-hub .lib-prompt,
+#page-internal-hub .lib-greeting,
+#page-internal-hub .lib-denied-msg {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
   color: #E5E7EB;
 }
-#page-library .lib-switch-user {
+#page-internal-hub .lib-switch-user {
   display: inline-block;
   margin: 4px 0 8px;
   font-size: 12px;
   color: #BCBDBE;
   text-decoration: underline;
 }
-#page-library .lib-name-step input,
-#page-library .lib-compose textarea {
+#page-internal-hub .lib-name-step input,
+#page-internal-hub .lib-compose textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 12px;
@@ -8712,16 +8712,16 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   font-size: 13px;
   resize: vertical;
 }
-#page-library .lib-name-step input::placeholder,
-#page-library .lib-compose textarea::placeholder {
+#page-internal-hub .lib-name-step input::placeholder,
+#page-internal-hub .lib-compose textarea::placeholder {
   color: #9CA3AF;
 }
-#page-library .lib-name-step input:focus,
-#page-library .lib-compose textarea:focus {
+#page-internal-hub .lib-name-step input:focus,
+#page-internal-hub .lib-compose textarea:focus {
   outline: none;
   border-color: #BCBDBE;
 }
-#page-library .lib-btn {
+#page-internal-hub .lib-btn {
   border: none;
   border-radius: 8px;
   padding: 9px 14px;
@@ -8730,42 +8730,42 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   font-weight: 600;
   font-size: 13px;
 }
-#page-library .lib-btn-primary {
+#page-internal-hub .lib-btn-primary {
   background: #F8FAFC;
   color: #262425;
   width: 100%;
   margin-top: 8px;
 }
-#page-library .lib-btn-secondary {
+#page-internal-hub .lib-btn-secondary {
   background: #3d3b3c;
   color: #F8FAFC;
   flex: 1;
 }
-#page-library .lib-compose-actions .lib-btn-primary {
+#page-internal-hub .lib-compose-actions .lib-btn-primary {
   width: auto;
   flex: 1;
   margin-top: 0;
 }
-#page-library .lib-name-error {
+#page-internal-hub .lib-name-error {
   margin-top: 10px;
   font-size: 13px;
   line-height: 1.55;
   color: #E5E7EB;
 }
-#page-library .lib-ask-step {
+#page-internal-hub .lib-ask-step {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   gap: 6px;
 }
-#page-library .lib-name-step[hidden],
-#page-library .lib-ask-step[hidden],
-#page-library .lib-denied-step[hidden],
-#page-library .lib-name-error[hidden] {
+#page-internal-hub .lib-name-step[hidden],
+#page-internal-hub .lib-ask-step[hidden],
+#page-internal-hub .lib-denied-step[hidden],
+#page-internal-hub .lib-name-error[hidden] {
   display: none !important;
 }
-#page-library .lib-messages {
+#page-internal-hub .lib-messages {
   flex: 1;
   min-height: 180px;
   max-height: min(42vh, 360px);
@@ -8775,7 +8775,7 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   gap: 10px;
   padding: 4px 2px 8px;
 }
-#page-library .lib-msg {
+#page-internal-hub .lib-msg {
   max-width: 92%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -8784,30 +8784,30 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-#page-library .lib-msg--assistant {
+#page-internal-hub .lib-msg--assistant {
   align-self: flex-start;
   background: #3d3b3c;
   color: #F8FAFC;
 }
-#page-library .lib-msg--user {
+#page-internal-hub .lib-msg--user {
   align-self: flex-end;
   background: #F8FAFC;
   color: #262425;
 }
-#page-library .lib-compose {
+#page-internal-hub .lib-compose {
   margin-top: auto;
 }
-#page-library .lib-compose-actions {
+#page-internal-hub .lib-compose-actions {
   display: flex;
   gap: 8px;
   margin-top: 8px;
 }
 @media (max-width: 640px) {
-  #page-library .lib-chat-shell {
+  #page-internal-hub .lib-chat-shell {
     min-height: 55vh;
     padding: 14px;
   }
-  #page-library .lib-messages {
+  #page-internal-hub .lib-messages {
     max-height: min(48vh, 420px);
   }
 }

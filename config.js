@@ -71,7 +71,7 @@ const CONFIG = {
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
     // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
     STAFF_ACCESS:        'Staff_Access',
-    // BBBS Library guides (optional). Soft-load: missing/empty tab → [].
+    // BBBS Internal Hub guides (optional). Soft-load: missing/empty tab → [].
     // Expected columns (header-name match, not letter index):
     //   A Guide ID | B Title | C Category | D Content / Steps
     //   E Division/Role Tag | F Media Link

@@ -77,8 +77,9 @@
     };
   }
 
-  // ─── Library mode (BBBS Library): ground ONLY in Library_Guides ───
+  // ─── Library mode (BBBS Internal Hub): ground ONLY in Library_Guides ───
   // Separate path so BB AI dashboard prompting is unchanged.
+  // API mode key stays "library"; page route is internal-hub.
   if (mode === 'library') {
     const guides = Array.isArray(libraryGuides) ? libraryGuides : [];
     const history = Array.isArray(conversationHistory)
@@ -99,13 +100,13 @@
     let prompt;
     if (!guides.length) {
       prompt =
-        'You are BB, the BBBS Library assistant for BB Building Services. ' +
+        'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
         'You are speaking with ' +
         who +
         '. ' +
         'The Library_Guides sheet is empty or not available yet. ' +
         'Reply with exactly this message (you may greet them by name first): ' +
-        '"Library content is still being added, check back soon." ' +
+        '"Internal Hub content is still being added, check back soon." ' +
         'Do not answer from general knowledge. Do not invent guides. ' +
         'Never use em dashes in your answers, use commas or colons instead.' +
         historyBlock +
@@ -114,23 +115,23 @@
     } else {
       const guidesPayload = JSON.stringify(guides).slice(0, 80000);
       prompt =
-        'You are BB, the BBBS Library assistant for BB Building Services. ' +
-        'You help team members find how-to guides from the company library only. ' +
+        'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
+        'You help team members find how-to guides and internal info from the company Internal Hub only. ' +
         'You are speaking with ' +
         who +
         '. Address them by name naturally where appropriate. ' +
         'GROUNDING RULES (mandatory): ' +
-        '1) Answer ONLY from the LIBRARY GUIDES data provided below. Do not use general knowledge. ' +
+        '1) Answer ONLY from the INTERNAL HUB GUIDES data provided below. Do not use general knowledge. ' +
         '2) Do not invent steps, policies, tools, or guides that are not in the data. ' +
         '3) If no guide matches the question, say plainly that no guide was found for that topic. ' +
         'Do not guess or fill gaps. Suggest they try different wording only if helpful. ' +
         '4) When a guide matches, use its Title, Category, Content/Steps, and Media Link as relevant. ' +
         '5) Prefer clear, practical language. Never use em dashes; use commas or colons instead. ' +
-        '6) If asked who you are, say you are BB, the BBBS Library assistant. ' +
+        '6) If asked who you are, say you are BB, the BBBS Internal Hub assistant. ' +
         'Do not volunteer developer or ownership details unless specifically asked; ' +
         'if asked who built this app, say Lori is your developer and the app is owned by BB Building Services.' +
         historyBlock +
-        '\n\nLIBRARY GUIDES (sole source of truth):\n' +
+        '\n\nINTERNAL HUB GUIDES (sole source of truth):\n' +
         guidesPayload +
         '\n\nCurrent question: ' +
         question;

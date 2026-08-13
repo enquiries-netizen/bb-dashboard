@@ -114,7 +114,7 @@
           <li class="nav-item" data-page="p10">P10: Marketing</li>
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
           <li class="nav-item" data-page="p12">P12: Site Diaries</li>
-          <li class="nav-item" data-page="library" id="nav-library" hidden>BBBS Library</li>
+          <li class="nav-item" data-page="internal-hub" id="nav-internal-hub" hidden>BBBS Internal Hub</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
       </nav>
@@ -1338,14 +1338,14 @@
           </div>
         </section>
 
-        <!-- ─── BBBS Library (Phase 1 shell: chat + gating, no guide content yet) ── -->
-        <section id="page-library" class="page">
+        <!-- ─── BBBS Internal Hub (Phase 1 shell: chat + gating, no guide content yet) ── -->
+        <section id="page-internal-hub" class="page">
           <div class="lib-layout">
             <div class="lib-head">
               <div class="page-header lib-page-header">
-                <h1 class="page-title lib-page-title">BBBS Library</h1>
+                <h1 class="page-title lib-page-title">BBBS Internal Hub</h1>
               </div>
-              <p class="lib-scope-note">Ask BB about company how-to guides. Answers come from Library guides only.</p>
+              <p class="lib-scope-note">Ask BB about company how-to guides and internal info. Answers come from Internal Hub guides only.</p>
             </div>
 
             <div class="lib-chat-shell" id="lib-chat-shell">
@@ -1354,7 +1354,7 @@
                   <path d="M2 12L12 4L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M4 11V20H20V11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="lib-chat-title">BB: Library Assistant</span>
+                <span class="lib-chat-title">BB: Internal Hub Assistant</span>
               </div>
 
               <div id="lib-name-step" class="lib-name-step">
@@ -1365,7 +1365,7 @@
               </div>
 
               <div id="lib-denied-step" class="lib-denied-step" hidden>
-                <p id="lib-denied-msg" class="lib-denied-msg">BBBS Library is not available for your account yet.</p>
+                <p id="lib-denied-msg" class="lib-denied-msg">BBBS Internal Hub is not available for your account yet.</p>
                 <a id="lib-switch-user-denied" href="#" class="lib-switch-user">Not you? Switch user</a>
               </div>
 
@@ -1584,10 +1584,10 @@
 
     // Accumulate visited-page data for BB (updates only this key; never clears others).
     // P12 crew page: do not feed diary content to Ask BB.
-    // Library page has its own chat shell (hide floating Ask BB there too).
+    // Internal Hub page has its own chat shell (hide floating Ask BB there too).
     function isBbAiDisabledPage(pageId) {
       var id = String(pageId || '').toLowerCase();
-      return id === 'p12' || id === 'library';
+      return id === 'p12' || id === 'internal-hub';
     }
 
     function getActivePageId() {
@@ -2001,13 +2001,13 @@
       else if (t === 'user') pages = ['p11', 'p12'];
       else if (t === 'staff') pages = ['p12'];
       else return [];
-      if (canSeeLibraryNav() && pages.indexOf('library') < 0) pages.push('library');
+      if (canSeeLibraryNav() && pages.indexOf('internal-hub') < 0) pages.push('internal-hub');
       return pages;
     }
 
     function isPageAllowed(pageId) {
       var id = String(pageId || '').toLowerCase();
-      if (id === 'library') return canSeeLibraryNav();
+      if (id === 'internal-hub') return canSeeLibraryNav();
       return allowedPages(getAccessTier()).indexOf(id) >= 0;
     }
 
@@ -2922,7 +2922,7 @@
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
         showPage(pageId);
       }
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, library: loadLibrary };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, 'internal-hub': loadLibrary };
       var placeholders = {};
       var fn = loaders[pageId];
       // Belt and braces: never run a loader outside the role allow-list
@@ -21343,15 +21343,15 @@
 
 
     // ═══════════════════════════════════════════════════════════
-    // BBBS LIBRARY (Phase 1: shell + Lori gating + AI plumbing)
+    // BBBS INTERNAL HUB (Phase 1: shell + Lori gating + AI plumbing)
     // Soft-loads Library_Guides; empty/missing → []. No Phase 2 role filter yet.
     // ═══════════════════════════════════════════════════════════
     var _libraryBound = false;
-    var LIBRARY_EMPTY_MSG = 'Library content is still being added, check back soon.';
+    var LIBRARY_EMPTY_MSG = 'Internal Hub content is still being added, check back soon.';
 
     function refreshLibraryAccess() {
       if (typeof applyAccessChrome === 'function') applyAccessChrome();
-      var onLibrary = getActivePageId() === 'library';
+      var onLibrary = getActivePageId() === 'internal-hub';
       if (onLibrary && !canSeeLibraryNav()) {
         var land = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p1';
         showPage(land);
@@ -21441,8 +21441,8 @@
       var msg = document.getElementById('lib-denied-msg');
       if (msg) {
         msg.textContent = name
-          ? ('Hey ' + name + ', BBBS Library is not available for your account yet.')
-          : 'BBBS Library is not available for your account yet.';
+          ? ('Hey ' + name + ', BBBS Internal Hub is not available for your account yet.')
+          : 'BBBS Internal Hub is not available for your account yet.';
       }
     }
 
@@ -21454,7 +21454,7 @@
       if (denied) denied.hidden = true;
       if (askStep) askStep.hidden = false;
       var greet = document.getElementById('lib-greeting');
-      if (greet) greet.textContent = 'Hey ' + name + ', ask me about a Library guide.';
+      if (greet) greet.textContent = 'Hey ' + name + ', ask me about an Internal Hub guide.';
       var sw = document.getElementById('lib-switch-user');
       if (sw) sw.textContent = 'Not ' + name + '? Switch user';
       if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
@@ -21464,7 +21464,7 @@
         } else {
           libAppendMessage(
             'assistant',
-            'I answer from Library guides only. If nothing matches, I will say no guide was found.'
+            'I answer from Internal Hub guides only. If nothing matches, I will say no guide was found.'
           );
         }
       }
@@ -21625,7 +21625,7 @@
 
     async function loadLibrary() {
       showLoading(true);
-      removeError('library');
+      removeError('internal-hub');
       bindLibraryUi();
       try {
         var tab = (CONFIG.TABS && CONFIG.TABS.LIBRARY_GUIDES) ? CONFIG.TABS.LIBRARY_GUIDES : 'Library_Guides';
