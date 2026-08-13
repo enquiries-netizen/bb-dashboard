@@ -26,21 +26,79 @@
 
   const who = (name && String(name).trim()) || 'a team member';
   const ctx = (pageContext && String(pageContext).trim()) || 'unknown page';
-  const GEMINI_URL =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' +
-    process.env.GEMINI_API_KEY;
+  // Primary: stable Gemini Pro (billing enabled). Fallback: Flash on quota/404/429/etc.
+  const GEMINI_PRIMARY = 'gemini-2.5-pro';
+  const GEMINI_FALLBACK = 'gemini-flash-latest';
+  const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
   function stripEmDashes(text) {
     return String(text || '').replace(/\u2014/g, ',').replace(/\u2013/g, '-');
   }
 
-  async function callGemini(body) {
-    const r = await fetch(GEMINI_URL, {
+  function geminiUrl(model) {
+    return (
+      'https://generativelanguage.googleapis.com/v1beta/models/' +
+      model +
+      ':generateContent?key=' +
+      GEMINI_KEY
+    );
+  }
+
+  async function callGeminiOnce(model, body) {
+    const r = await fetch(geminiUrl(model), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    return r.json();
+    let data;
+    try {
+      data = await r.json();
+    } catch (e) {
+      data = { error: { message: 'Invalid JSON from Gemini (' + r.status + ')' } };
+    }
+    const ok = r.ok && !(data && data.error);
+    return { ok: ok, status: r.status, data: data };
+  }
+
+  async function callGemini(body) {
+    let primary;
+    try {
+      primary = await callGeminiOnce(GEMINI_PRIMARY, body);
+    } catch (e) {
+      primary = {
+        ok: false,
+        status: 0,
+        data: { error: { message: String((e && e.message) || e) } }
+      };
+    }
+
+    if (primary.ok) {
+      console.log('[ask] model=', GEMINI_PRIMARY);
+      return { data: primary.data, modelUsed: GEMINI_PRIMARY };
+    }
+
+    const errMsg =
+      (primary.data && primary.data.error && primary.data.error.message) ||
+      ('HTTP ' + primary.status);
+    console.warn(
+      '[ask] primary model failed; falling back to',
+      GEMINI_FALLBACK,
+      errMsg
+    );
+
+    let fallback;
+    try {
+      fallback = await callGeminiOnce(GEMINI_FALLBACK, body);
+    } catch (e) {
+      fallback = {
+        ok: false,
+        status: 0,
+        data: { error: { message: String((e && e.message) || e) } }
+      };
+    }
+
+    console.log('[ask] model=', GEMINI_FALLBACK);
+    return { data: fallback.data, modelUsed: GEMINI_FALLBACK };
   }
 
   function extractAnswer(data) {
@@ -137,7 +195,8 @@
         question;
     }
 
-    const dataLib = await callGemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+    const libResult = await callGemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+    const dataLib = libResult.data;
     const extractedLib = extractAnswer(dataLib);
     let answerLib = extractedLib.answer;
     if (!answerLib) {
@@ -271,10 +330,11 @@
     });
     contents.push({ role: 'user', parts: responseParts });
 
-    const dataCont = await callGemini({
+    const contResult = await callGemini({
       contents: contents,
       tools: BB_TOOLS
     });
+    const dataCont = contResult.data;
     const extractedCont = extractAnswer(dataCont);
 
     if (extractedCont.functionCalls.length) {
@@ -409,10 +469,11 @@
     question;
 
   const initialContents = [{ role: 'user', parts: [{ text: prompt }] }];
-  const data = await callGemini({
+  const askResult = await callGemini({
     contents: initialContents,
     tools: BB_TOOLS
   });
+  const data = askResult.data;
   const extracted = extractAnswer(data);
 
   if (extracted.functionCalls.length) {
