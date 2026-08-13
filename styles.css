@@ -8478,6 +8478,7 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 }
 #page-p12 .p12-quality-board-workers {
   font-size: 11px;
+  font-weight: 700;
   color: var(--p12-muted);
   min-width: 0;
   overflow-wrap: normal;
