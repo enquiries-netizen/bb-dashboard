@@ -147,10 +147,26 @@
     return res.status(200).json({ answer: stripEmDashes(answerLib) });
   }
 
-  // ─── Cross-page tools (attendance + diary quality). Client executes; server only orchestrates. ───
+  // ─── Cross-page tools. Client executes (sheets in browser); server only orchestrates. ───
   const BB_TOOLS = [
     {
       function_declarations: [
+        {
+          name: 'getPageData',
+          description:
+            'Load live dashboard data for any page (P1-P12) on demand without the user visiting that page. Use when the question needs Marketing, Cash Flow, Sales, Profitability, Capacity, Weekly Overview, or any other page that is not already in the visited-pages payload. Accepts page ids (P10, p10) or names (Marketing, Cash Flow). Call multiple times if the question spans pages. Prefer the specialised attendance/diary tools for worker hours or diary quality scores.',
+          parameters: {
+            type: 'object',
+            properties: {
+              pageName: {
+                type: 'string',
+                description:
+                  'Page id or alias, e.g. P10, Marketing, P9, Cash Flow, P2, Sales, P8, Weekly Overview.'
+              }
+            },
+            required: ['pageName']
+          }
+        },
         {
           name: 'getWorkerAttendance',
           description:
@@ -343,16 +359,17 @@
     'Do NOT volunteer who made or developed you, or who owns the app, in general introductions, page explanations, greetings, or any answer unless the user specifically asks. Never insert "As you know, Lori is my developer" or similar unprompted. ' +
     'Only if the user specifically asks who created or developed you, who made you, who built this app, or similar: then say Lori is your developer and this app is owned and registered by BB Building Services. ' +
     'Never use em dashes in your answers, use commas or colons instead. ' +
-    '\n\nCROSS-PAGE TOOLS (use when needed, even if the user is not on P6 or P12): ' +
-    'You can call getWorkerAttendance, getJobAttendance, getDiaryQuality, and getTeamDiaryQualitySummary. ' +
-    'These read live Buildpass_Attendance and Buildpass_Site Diaries for the Fri-Thu payroll week. ' +
+    '\n\nCROSS-PAGE TOOLS (use when needed from any page): ' +
+    'Call getPageData(pageName) to load any page P1-P12 on demand (aliases like Marketing, Cash Flow, Sales work). ' +
+    'Use it whenever the question needs another page that is not already in the visited-pages payload. You may call it multiple times for multi-topic questions. ' +
+    'Also available: getWorkerAttendance, getJobAttendance, getDiaryQuality, getTeamDiaryQualitySummary for Buildpass attendance and diary quality (Fri-Thu payroll week). ' +
     'Default weekStart to the current payroll week when the user does not specify a week. ' +
-    'If a tool returns found:false or notFound, say clearly that the worker, job, or group was not found. Do not invent names, hours, or scores. ' +
+    'If a tool returns found:false, notFound, or unavailable, say that clearly. Do not invent names, hours, scores, or page metrics. ' +
     'Keep using the current page context below for "what am I looking at" questions; tools are additive, not a replacement.' +
     '\n\nGROUNDING RULES (mandatory, more important than sounding impressive): ' +
-    '1) Only answer from: current page data, other visited pages in the all-pages payload, the page directory, conversation history that already cited that data, listed proactive insights, and results returned by the cross-page tools. ' +
+    '1) Only answer from: current page data, other visited pages in the all-pages payload, the page directory, conversation history that already cited that data, listed proactive insights, and results returned by the cross-page tools (including getPageData). ' +
     '2) Do not invent, estimate, round up inventively, or guess numbers, names, margins, ROAS, hours, or trends. ' +
-    '3) If the question needs a page that is not loaded AND tools cannot answer it, say so plainly and name the page to visit (for example: "I do not have P9 cash flow data loaded yet, visit that page and ask me again"). For attendance or diary quality, call the tools instead of asking the user to open P6/P12. ' +
+    '3) If the question needs another page, call getPageData first. Do not tell the user to visit that page unless getPageData returns notFound or unavailable. For attendance or diary quality scores, prefer the specialised tools. ' +
     '4) If the underlying field is blank, missing, incomplete, or the dashboard already shows labels like "Data not available", "No Leads Matched Yet", "Not yet tracked", "Awaiting job completion", or similar, say that plainly. Do not fill gaps with assumptions. ' +
     '5) Trends and period comparisons only when the data contains values for both periods (for example weekOverWeek on P8, weekComparison, spendMonthComparison, monthlyRevenue with two months). Never invent a trend from a single data point. ' +
     'A single weekPulse number on P2, P6, or P10 is not enough for full week comparison: direct the user to P8 (Weekly Overview) for the management meeting dashboard with shared Week Ending period, scorecard, and trends. ' +
@@ -378,7 +395,7 @@
     '\n\nThe user is currently viewing: ' +
     ctx +
     '. ' +
-    'You may combine data across all visited pages provided below. ' +
+    'You may combine data across visited pages and any pages returned by getPageData. ' +
     'Visited pages in this session: ' +
     (visitedKeys.length ? visitedKeys.join(', ') : 'none yet') +
     '.' +

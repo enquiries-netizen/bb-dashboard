@@ -1614,6 +1614,10 @@
       }
     }
 
+    // Soft-fetch depth: BB AI getPageData runs page loaders without flipping
+    // the visible page, spinner, or Ask BB "current page" context.
+    var _bbSoftPageFetch = 0;
+
     function setBBPageData(key, name, data) {
       if (isBbAiDisabledPage(key) || isBbAiDisabledPage(String(key || '').toLowerCase())) {
         return;
@@ -1622,6 +1626,10 @@
       var insights = computeBBInsights(key, payload);
       payload.bbInsights = insights;
       window._allPagesData[key] = { name: name, data: payload, insights: insights };
+      if (_bbSoftPageFetch > 0) {
+        // Cache for cross-page tools only; do not steal the user's current page.
+        return;
+      }
       window._currentPage = { key: key, name: name, data: payload, insights: insights };
       maybeShowBbProactiveInsights();
     }
@@ -2463,6 +2471,7 @@
     // UI HELPERS
     // ═══════════════════════════════════════════════════════════
     function showLoading(show) {
+      if (_bbSoftPageFetch > 0) return;
       document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
     }
 
@@ -22200,10 +22209,206 @@
       };
     }
 
+    // ─── getPageData: soft-load any P1-P12 BB payload without visiting ───
+    var BB_PAGE_ALIASES = {
+      p1: 'P1', '1': 'P1', executive: 'P1', snapshot: 'P1',
+      'executive snapshot': 'P1', cockpit: 'P1',
+      p2: 'P2', '2': 'P2', sales: 'P2', pipeline: 'P2',
+      'sales pipeline': 'P2', 'sales and pipeline': 'P2', 'sales & pipeline': 'P2',
+      p3: 'P3', '3': 'P3', quoting: 'P3', estimating: 'P3',
+      'quoting estimating': 'P3', 'quoting and estimating': 'P3', 'quoting & estimating': 'P3',
+      p4: 'P4', '4': 'P4', jobs: 'P4', 'job performance': 'P4', projects: 'P4',
+      p5: 'P5', '5': 'P5', profitability: 'P5', profit: 'P5',
+      p6: 'P6', '6': 'P6', capacity: 'P6', labour: 'P6', labor: 'P6',
+      'capacity labour': 'P6', 'capacity and labour': 'P6', 'capacity & labour': 'P6',
+      p7: 'P7', '7': 'P7', csat: 'P7', 'client satisfaction': 'P7', satisfaction: 'P7',
+      p8: 'P8', '8': 'P8', weekly: 'P8', 'weekly overview': 'P8', overview: 'P8',
+      p9: 'P9', '9': 'P9', cash: 'P9', 'cash flow': 'P9', cashflow: 'P9', liquidity: 'P9',
+      p10: 'P10', '10': 'P10', marketing: 'P10', ads: 'P10', campaigns: 'P10',
+      p11: 'P11', '11': 'P11', qa: 'P11', 'site diary quality': 'P11',
+      'diary quality': 'P11', variations: 'P11', 'variations exceptions': 'P11',
+      p12: 'P12', '12': 'P12', diaries: 'P12', 'site diaries': 'P12', crew: 'P12'
+    };
+
+    var BB_PAGE_NAMES = {
+      P1: 'P1: Executive Snapshot',
+      P2: 'P2: Sales & Pipeline',
+      P3: 'P3: Quoting & Estimating',
+      P4: 'P4: Job Performance',
+      P5: 'P5: Profitability',
+      P6: 'P6: Capacity & Labour',
+      P7: 'P7: Client Satisfaction',
+      P8: 'P8: Weekly Overview',
+      P9: 'P9: Cash Flow',
+      P10: 'P10: Marketing',
+      P11: 'P11: Site Diary Quality and Variations Exceptions',
+      P12: 'P12: Site Diaries'
+    };
+
+    function bbResolvePageAlias(pageName) {
+      var raw = String(pageName == null ? '' : pageName).trim();
+      if (!raw) return null;
+      var compact = raw.toLowerCase().replace(/^page\s+/i, '').trim();
+      var norm = compact
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      var key = null;
+      var m = compact.match(/^p\s*([0-9]{1,2})$/i) || norm.match(/^p\s*([0-9]{1,2})$/i);
+      if (!m && /^\d{1,2}$/.test(norm)) {
+        m = [norm, norm];
+      }
+      if (m) {
+        var n = parseInt(m[1], 10);
+        if (n >= 1 && n <= 12) key = 'P' + n;
+        else return null;
+      }
+      if (!key && BB_PAGE_ALIASES[norm]) key = BB_PAGE_ALIASES[norm];
+      if (!key && BB_PAGE_ALIASES[compact]) key = BB_PAGE_ALIASES[compact];
+      // Fuzzy only for word aliases length >= 4 (avoid "9" matching inside "P99").
+      if (!key && norm.length >= 4) {
+        var aliasKeys = Object.keys(BB_PAGE_ALIASES);
+        for (var i = 0; i < aliasKeys.length; i++) {
+          var a = aliasKeys[i];
+          if (a.length < 4) continue;
+          if (norm === a || norm.indexOf(a) !== -1 || a.indexOf(norm) !== -1) {
+            key = BB_PAGE_ALIASES[a];
+            break;
+          }
+        }
+      }
+      if (!key) return null;
+      return {
+        key: key,
+        name: BB_PAGE_NAMES[key] || key,
+        query: raw
+      };
+    }
+
+    function bbCapToolPayload(obj, maxChars) {
+      maxChars = maxChars || 28000;
+      try {
+        var json = JSON.stringify(obj);
+        if (json.length <= maxChars) return obj;
+        return {
+          truncated: true,
+          note: 'Payload truncated for size. Key summary fields kept where possible.',
+          preview: json.slice(0, maxChars)
+        };
+      } catch (e) {
+        return { truncated: true, note: 'Payload could not be serialised', error: String(e && e.message ? e.message : e) };
+      }
+    }
+
+    async function bbSoftEnsurePageData(pageKey) {
+      if (window._allPagesData && window._allPagesData[pageKey] &&
+          window._allPagesData[pageKey].data) {
+        return { entry: window._allPagesData[pageKey], source: 'session-cache' };
+      }
+
+      var loaders = {
+        P1: function() { return loadP1(); },
+        P2: function() { return loadP2(); },
+        P3: function() { return loadP3(); },
+        P4: function() { return loadP4(); },
+        P5: function() { return loadP5(); },
+        P6: function() { return loadP6({ silent: true, preserve: true }); },
+        P7: function() { return loadP7(); },
+        P8: function() { return loadP8({ silent: true }); },
+        P9: function() { return loadP9(); },
+        P10: function() { return loadP10(); },
+        P11: function() { return loadP11(); }
+      };
+
+      var fn = loaders[pageKey];
+      if (!fn) {
+        return { entry: null, source: 'unavailable', reason: 'No soft loader for ' + pageKey };
+      }
+
+      _bbSoftPageFetch++;
+      try {
+        await fn();
+      } finally {
+        _bbSoftPageFetch = Math.max(0, _bbSoftPageFetch - 1);
+      }
+
+      if (window._allPagesData && window._allPagesData[pageKey]) {
+        return { entry: window._allPagesData[pageKey], source: 'soft-fetch' };
+      }
+      return {
+        entry: null,
+        source: 'unavailable',
+        reason: 'Page loader ran but no BB payload was produced for ' + pageKey
+      };
+    }
+
+    async function bbToolGetPageData(args) {
+      var resolved = bbResolvePageAlias(args && args.pageName);
+      if (!resolved) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Unknown page. Use P1-P12 or names like Marketing, Cash Flow, Sales, Weekly Overview.',
+          pageQuery: args && args.pageName != null ? String(args.pageName) : '',
+          validPages: Object.keys(BB_PAGE_NAMES)
+        };
+      }
+
+      if (resolved.key === 'P12') {
+        return {
+          found: false,
+          unavailable: true,
+          notFound: false,
+          pageKey: 'P12',
+          pageName: BB_PAGE_NAMES.P12,
+          reason:
+            'P12 Site Diaries are not available to Ask BB (crew page). ' +
+            'Use getDiaryQuality or getTeamDiaryQualitySummary for diary quality scores, ' +
+            'or getPageData(P11) for site diary quality and variations exceptions.',
+          pageQuery: resolved.query
+        };
+      }
+
+      var result = await bbSoftEnsurePageData(resolved.key);
+      if (!result.entry) {
+        return {
+          found: false,
+          unavailable: true,
+          pageKey: resolved.key,
+          pageName: resolved.name,
+          reason: result.reason || ('Could not load data for ' + resolved.key),
+          pageQuery: resolved.query,
+          source: result.source
+        };
+      }
+
+      var data = result.entry.data || {};
+      var capped = bbCapToolPayload(data, 28000);
+      return {
+        found: true,
+        pageKey: resolved.key,
+        pageName: result.entry.name || resolved.name,
+        directory: (typeof BB_PAGE_DIRECTORY !== 'undefined' && BB_PAGE_DIRECTORY[resolved.key])
+          ? BB_PAGE_DIRECTORY[resolved.key]
+          : null,
+        insights: result.entry.insights || data.bbInsights || [],
+        source: result.source,
+        data: capped
+      };
+    }
+
+    // Expose for console dry-run: await window._bbGetPageData({ pageName: 'Marketing' })
+    window._bbResolvePageAlias = bbResolvePageAlias;
+    window._bbGetPageData = bbToolGetPageData;
+
     async function bbExecuteToolCall(call) {
       var name = call && call.name ? String(call.name) : '';
       var args = (call && call.args) || {};
       try {
+        if (name === 'getPageData') {
+          return await bbToolGetPageData(args);
+        }
         if (name === 'getWorkerAttendance' || name === 'getJobAttendance') {
           await bbEnsureAttendanceRows();
         } else if (name === 'getDiaryQuality' || name === 'getTeamDiaryQualitySummary') {
@@ -22322,7 +22527,12 @@
             });
             d = await r.json();
             if (d && d.needsTools && Array.isArray(d.toolCalls) && d.toolCalls.length) {
-              out.textContent = 'BB is checking attendance and diaries...';
+              var toolNames = d.toolCalls.map(function(c) { return c && c.name ? String(c.name) : ''; });
+              if (toolNames.indexOf('getPageData') !== -1) {
+                out.textContent = 'BB is loading page data...';
+              } else {
+                out.textContent = 'BB is checking attendance and diaries...';
+              }
               var toolResults = [];
               for (var t = 0; t < d.toolCalls.length; t++) {
                 var call = d.toolCalls[t];
