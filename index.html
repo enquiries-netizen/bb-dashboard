@@ -19426,7 +19426,7 @@
     }
 
     function renderP6() {
-      var raw = window._p6Raw || { capacity: [], labour: [] };
+      var raw = window._p6Raw || { capacity: [], labour: [], attendance: [] };
       var labRows = p6FilterLabour(raw.labour);
       var capRows = p6FilterCapacity(raw.capacity);
       if (!capRows.length) capRows = raw.capacity || [];
@@ -19434,9 +19434,9 @@
       var filters = window._p6Filters || { brand: 'ALL', dept: 'ALL', crew: 'ALL', project: 'ALL' };
 
       var probe = p6BuildModel(capRows, labAll, window._p6SelectedWeek, null, filters);
+      probe.attendanceMetrics = p6BuildAttendanceMetrics(raw.attendance || []);
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
-      probe.attendanceMetrics = p6BuildAttendanceMetrics((raw && raw.attendance) || []);
 
       return p6RenderShell(probe);
     }
