@@ -21779,6 +21779,489 @@
       .catch(function(){ speakBrowserFallback(text); });
     }
 
+    // ─── BB AI cross-page tools (client executes against sheet caches) ───
+    // Architecture A: Gemini returns function calls from /api/ask; the browser
+    // soft-loads Buildpass_Attendance / Site Diaries if needed, runs tools, then
+    // posts results back. Server has GEMINI_API_KEY only (no sheet service account).
+
+    function bbToolNorm(s) {
+      return String(s || '')
+        .toLowerCase()
+        .replace(/['\u2018\u2019\u0060\u00B4]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    function bbToolJobNorm(s) {
+      return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function bbToolResolveWeekKey(weekStart) {
+      var s = weekStart != null ? String(weekStart).trim() : '';
+      if (!s || /^current$/i.test(s) || /^this\s*week$/i.test(s)) {
+        if (typeof p6AttCurrentWeekKey === 'function') return p6AttCurrentWeekKey();
+        if (typeof p12CurrentWeekKey === 'function') return p12CurrentWeekKey();
+        return typeof isoWeekKey === 'function' ? isoWeekKey(new Date()) : null;
+      }
+      var iso = s.match(/^(\d{4})-W(\d{1,2})$/i);
+      if (iso) {
+        var ww = parseInt(iso[2], 10);
+        return iso[1] + '-W' + (ww < 10 ? '0' : '') + ww;
+      }
+      var d = typeof parseFlexibleDate === 'function' ? parseFlexibleDate(s) : null;
+      if (d) {
+        if (typeof p6AttWeekKeyFromDate === 'function') return p6AttWeekKeyFromDate(d);
+        if (typeof p12WeekKeyFromDate === 'function') return p12WeekKeyFromDate(d);
+      }
+      if (typeof p6AttCurrentWeekKey === 'function') return p6AttCurrentWeekKey();
+      if (typeof p12CurrentWeekKey === 'function') return p12CurrentWeekKey();
+      return null;
+    }
+
+    function bbToolWeekLabel(weekKey) {
+      if (typeof p6AttWeekLabel === 'function') return p6AttWeekLabel(weekKey);
+      if (typeof p12WeekLabelFromKey === 'function') {
+        return String(p12WeekLabelFromKey(weekKey))
+          .replace(/\s*[·•]\s*([0-9]{4}-W\d+)\s*$/i, ' ($1)');
+      }
+      return weekKey ? String(weekKey) : 'Current payroll week';
+    }
+
+    function bbToolFmtHours(n) {
+      if (typeof p6FmtHours === 'function') return p6FmtHours(n);
+      if (n == null || isNaN(n)) return '-';
+      var x = Math.round(n * 10) / 10;
+      return (Math.abs(x - Math.round(x)) < 1e-9) ? String(Math.round(x)) : x.toFixed(1);
+    }
+
+    function bbToolFindBestName(query, names) {
+      var q = bbToolNorm(query);
+      if (!q || !names || !names.length) return null;
+      var starts = null;
+      var includes = null;
+      var fuzzy = null;
+      var bestDist = 3;
+      var i, name, n, dist, qLast, nLast;
+      qLast = q.split(' ').pop();
+      for (i = 0; i < names.length; i++) {
+        name = names[i];
+        n = bbToolNorm(name);
+        if (!n) continue;
+        if (n === q) return name;
+        if (!starts && (n.indexOf(q) === 0 || q.indexOf(n) === 0)) starts = name;
+        if (!includes && (n.indexOf(q) !== -1 || q.indexOf(n) !== -1)) includes = name;
+        nLast = n.split(' ').pop();
+        if (qLast && nLast && qLast === nLast && qLast.length >= 3) includes = includes || name;
+        if (typeof bbLevenshtein === 'function') {
+          dist = bbLevenshtein(q, n);
+          if (dist >= 1 && dist <= 2 && dist < bestDist) {
+            bestDist = dist;
+            fuzzy = name;
+          }
+        }
+      }
+      return starts || includes || fuzzy;
+    }
+
+    function bbToolFindBestJob(query, jobNames) {
+      var qRaw = String(query || '').trim();
+      var qNorm = bbToolNorm(qRaw);
+      var qJob = bbToolJobNorm(qRaw);
+      if (!qNorm && !qJob) return null;
+      var starts = null;
+      var includes = null;
+      var i, job, jNorm, jJob;
+      for (i = 0; i < (jobNames || []).length; i++) {
+        job = jobNames[i];
+        jNorm = bbToolNorm(job);
+        jJob = bbToolJobNorm(job);
+        if (jNorm === qNorm || (qJob && jJob === qJob)) return job;
+        if (qJob && jJob && (jJob.indexOf(qJob) !== -1 || qJob.indexOf(jJob) !== -1)) {
+          if (jJob === qJob) return job;
+          includes = includes || job;
+        }
+        if (!starts && qNorm && (jNorm.indexOf(qNorm) === 0 || qNorm.indexOf(jNorm) === 0)) starts = job;
+        if (!includes && qNorm && (jNorm.indexOf(qNorm) !== -1 || qNorm.indexOf(jNorm) !== -1)) includes = job;
+      }
+      return starts || includes;
+    }
+
+    async function bbEnsureAttendanceRows() {
+      if (window._p6Raw && Array.isArray(window._p6Raw.attendance) && window._p6Raw.attendance.length) {
+        return window._p6Raw.attendance;
+      }
+      if (Array.isArray(window._bbAiAttendanceCache)) return window._bbAiAttendanceCache;
+      if (Array.isArray(window._p12Attendance) && window._p12Attendance.length) {
+        window._bbAiAttendanceCache = window._p12Attendance;
+        return window._p12Attendance;
+      }
+      var tab = (CONFIG.TABS && (CONFIG.TABS.BUILDPASS_ATTENDANCE || 'Buildpass_Attendance')) ||
+        'Buildpass_Attendance';
+      var rows = await fetchSheet(tab).catch(function() { return []; });
+      window._bbAiAttendanceCache = rows || [];
+      if (!window._p6Raw) window._p6Raw = { capacity: [], labour: [], attendance: [] };
+      if (!window._p6Raw.attendance || !window._p6Raw.attendance.length) {
+        window._p6Raw.attendance = window._bbAiAttendanceCache;
+      }
+      return window._bbAiAttendanceCache;
+    }
+
+    async function bbEnsureDiaryRows() {
+      if (Array.isArray(window._p12Diaries) && window._p12Diaries.length) {
+        return window._p12Diaries;
+      }
+      if (Array.isArray(window._bbAiDiariesCache)) return window._bbAiDiariesCache;
+      var tab = (CONFIG.TABS &&
+        (CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES)) ||
+        'Buildpass_Site Diaries';
+      var rows = await fetchSheet(tab).catch(function() { return []; });
+      var filtered = (rows || []).filter(function(r) {
+        return typeof diaryRowVisibleOnP11P12 === 'function'
+          ? diaryRowVisibleOnP11P12(r)
+          : true;
+      });
+      window._bbAiDiariesCache = filtered;
+      if (!window._p12Diaries || !window._p12Diaries.length) {
+        window._p12Diaries = filtered;
+      }
+      return filtered;
+    }
+
+    async function bbEnsureToolSheets() {
+      await Promise.all([
+        bbEnsureAttendanceRows().catch(function() { return []; }),
+        bbEnsureDiaryRows().catch(function() { return []; })
+      ]);
+    }
+
+    function bbBuildDiaryGroupsForWeek(diaries, weekKey) {
+      var groups = {};
+      (diaries || []).forEach(function(r) {
+        if (typeof diaryRowVisibleOnP11P12 === 'function' && !diaryRowVisibleOnP11P12(r)) return;
+        var d = typeof p12DiaryDate === 'function' ? p12DiaryDate(r) : null;
+        if (!d || isNaN(d.getTime())) return;
+        var wk = typeof p12WeekKeyFromDate === 'function' ? p12WeekKeyFromDate(d) : null;
+        if (wk !== weekKey) return;
+        var key = typeof p12ReportGroupKey === 'function' ? p12ReportGroupKey(r) : null;
+        if (!key) return;
+        if (!groups[key]) {
+          groups[key] = typeof p12BuildReportGroup === 'function'
+            ? p12BuildReportGroup(r)
+            : { key: key, rows: [], workers: [], jobNo: '', jobName: '', personOnly: false };
+        }
+        var g = groups[key];
+        g.rows.push(r);
+        var jn = typeof p12DiaryJobNo === 'function' ? p12DiaryJobNo(r) : '';
+        var name = typeof p12DiaryJobName === 'function' ? p12DiaryJobName(r) : '';
+        if (!g.personOnly && name && (!g.jobName || g.jobName === g.jobNo)) g.jobName = name;
+        if (g.personOnly && name) {
+          g.jobName = (typeof p12IsKnownPersonSpecial === 'function' && p12IsKnownPersonSpecial(name))
+            ? p12PersonSpecialLabel(name)
+            : name;
+          g.isSpecial = typeof p12IsKnownPersonSpecial === 'function' && p12IsKnownPersonSpecial(name);
+        }
+        if (jn && !g.jobNo) g.jobNo = jn;
+      });
+      Object.keys(groups).forEach(function(k) {
+        var g = groups[k];
+        g.workers = typeof p12UniqueWorkers === 'function' ? p12UniqueWorkers(g.rows) : [];
+      });
+      return groups;
+    }
+
+    function bbToolGetWorkerAttendance(args) {
+      var rows = (window._p6Raw && window._p6Raw.attendance) ||
+        window._bbAiAttendanceCache ||
+        window._p12Attendance ||
+        [];
+      var weekKey = bbToolResolveWeekKey(args && args.weekStart);
+      if (typeof p6BuildAttendanceMetrics !== 'function') {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Attendance helpers unavailable',
+          weekKey: weekKey
+        };
+      }
+      var metrics = p6BuildAttendanceMetrics(rows, weekKey);
+      weekKey = metrics.weekKey || weekKey;
+      var names = (metrics.workers || []).map(function(w) { return w.name; });
+      var matched = bbToolFindBestName(args && args.workerName, names);
+      if (!matched) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Worker not found in Buildpass_Attendance for this payroll week',
+          workerQuery: args && args.workerName ? String(args.workerName) : '',
+          weekKey: weekKey,
+          weekLabel: metrics.weekLabel || bbToolWeekLabel(weekKey),
+          availableWorkersSample: names.slice(0, 12)
+        };
+      }
+      var w = null;
+      for (var i = 0; i < metrics.workers.length; i++) {
+        if (metrics.workers[i].name === matched) { w = metrics.workers[i]; break; }
+      }
+      return {
+        found: true,
+        workerName: matched,
+        weekKey: weekKey,
+        weekLabel: metrics.weekLabel || bbToolWeekLabel(weekKey),
+        hoursOnSite: w.hasHours ? Math.round(w.hours * 10) / 10 : null,
+        hoursOnSiteDisplay: w.hasHours ? bbToolFmtHours(w.hours) : '-',
+        missingSignOff: w.missing || 0,
+        autoSignOff: w.auto || 0,
+        note: 'Blank Hours On Site rows (auto or missing sign-off) are excluded from hour totals, not counted as 0.'
+      };
+    }
+
+    function bbToolGetJobAttendance(args) {
+      var rows = (window._p6Raw && window._p6Raw.attendance) ||
+        window._bbAiAttendanceCache ||
+        window._p12Attendance ||
+        [];
+      var weekKey = bbToolResolveWeekKey(args && args.weekStart);
+      if (typeof p6BuildAttendanceMetrics !== 'function') {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Attendance helpers unavailable',
+          weekKey: weekKey
+        };
+      }
+      var metrics = p6BuildAttendanceMetrics(rows, weekKey);
+      weekKey = metrics.weekKey || weekKey;
+      var jobs = (metrics.jobs || []).map(function(j) { return j.job; });
+      var matched = bbToolFindBestJob(args && args.jobNumberOrSite, jobs);
+      if (!matched) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Job or site not found in Buildpass_Attendance for this payroll week',
+          jobQuery: args && args.jobNumberOrSite ? String(args.jobNumberOrSite) : '',
+          weekKey: weekKey,
+          weekLabel: metrics.weekLabel || bbToolWeekLabel(weekKey),
+          availableJobsSample: jobs.slice(0, 12)
+        };
+      }
+      var j = null;
+      for (var i = 0; i < metrics.jobs.length; i++) {
+        if (metrics.jobs[i].job === matched) { j = metrics.jobs[i]; break; }
+      }
+      return {
+        found: true,
+        jobOrSite: matched,
+        weekKey: weekKey,
+        weekLabel: metrics.weekLabel || bbToolWeekLabel(weekKey),
+        hoursOnSite: j.hasHours ? Math.round(j.hours * 10) / 10 : null,
+        hoursOnSiteDisplay: j.hasHours ? bbToolFmtHours(j.hours) : '-',
+        note: 'Blank Hours On Site rows are excluded from hour totals, not counted as 0.'
+      };
+    }
+
+    function bbToolGetDiaryQuality(args) {
+      var diaries = window._p12Diaries || window._bbAiDiariesCache || [];
+      var weekKey = bbToolResolveWeekKey(args && args.weekStart);
+      if (!weekKey || typeof p12GroupWeekQuality !== 'function') {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Diary quality helpers unavailable',
+          weekKey: weekKey
+        };
+      }
+      if (!diaries.length) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'No site diary rows loaded',
+          weekKey: weekKey,
+          weekLabel: bbToolWeekLabel(weekKey)
+        };
+      }
+      var groups = bbBuildDiaryGroupsForWeek(diaries, weekKey);
+      var keys = Object.keys(groups);
+      var titles = keys.map(function(k) {
+        return typeof p12GroupListTitle === 'function'
+          ? p12GroupListTitle(groups[k])
+          : (groups[k].jobName || groups[k].jobNo || k);
+      });
+      var query = args && args.jobOrPersonGroup ? String(args.jobOrPersonGroup) : '';
+      var matchedTitle = bbToolFindBestName(query, titles) || bbToolFindBestJob(query, titles);
+      var matchedKey = null;
+      var i;
+      if (matchedTitle) {
+        for (i = 0; i < keys.length; i++) {
+          var t = typeof p12GroupListTitle === 'function'
+            ? p12GroupListTitle(groups[keys[i]])
+            : (groups[keys[i]].jobName || groups[keys[i]].jobNo || keys[i]);
+          if (t === matchedTitle) { matchedKey = keys[i]; break; }
+        }
+      }
+      if (!matchedKey) {
+        var qJob = bbToolJobNorm(query);
+        var qNorm = bbToolNorm(query);
+        for (i = 0; i < keys.length; i++) {
+          var g = groups[keys[i]];
+          if (qJob && bbToolJobNorm(g.jobNo) === qJob) { matchedKey = keys[i]; break; }
+          if (qNorm && bbToolNorm(g.jobName) === qNorm) { matchedKey = keys[i]; break; }
+          if (qNorm && (g.workers || []).some(function(w) {
+            return bbToolNorm(w) === qNorm || bbToolNorm(w).indexOf(qNorm) !== -1;
+          })) {
+            matchedKey = keys[i];
+            break;
+          }
+        }
+      }
+      if (!matchedKey) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Diary group not found for this payroll week',
+          groupQuery: query,
+          weekKey: weekKey,
+          weekLabel: bbToolWeekLabel(weekKey),
+          availableGroupsSample: titles.slice(0, 15)
+        };
+      }
+      var group = groups[matchedKey];
+      var roll = p12GroupWeekQuality(group);
+      if (!roll) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'No diary entries for that group in this payroll week',
+          groupQuery: query,
+          weekKey: weekKey,
+          weekLabel: bbToolWeekLabel(weekKey)
+        };
+      }
+      return {
+        found: true,
+        title: roll.title,
+        workers: roll.workers,
+        weekKey: weekKey,
+        weekLabel: bbToolWeekLabel(weekKey),
+        scorePct: roll.score,
+        entryCount: roll.entryCount,
+        status: roll.status,
+        great: !!roll.great
+      };
+    }
+
+    function bbToolGetTeamDiaryQualitySummary(args) {
+      var diaries = window._p12Diaries || window._bbAiDiariesCache || [];
+      var weekKey = bbToolResolveWeekKey(args && args.weekStart);
+      if (!weekKey || typeof p12GroupWeekQuality !== 'function') {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Diary quality helpers unavailable',
+          weekKey: weekKey
+        };
+      }
+      if (!diaries.length) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'No site diary rows loaded',
+          weekKey: weekKey,
+          weekLabel: bbToolWeekLabel(weekKey),
+          groups: []
+        };
+      }
+      var groups = bbBuildDiaryGroupsForWeek(diaries, weekKey);
+      var rows = [];
+      Object.keys(groups).forEach(function(k) {
+        var g = groups[k];
+        if (!g.rows || !g.rows.length) return;
+        var roll = p12GroupWeekQuality(g);
+        if (roll) rows.push(roll);
+      });
+      rows.sort(function(a, b) {
+        if (b.score !== a.score) return b.score - a.score;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      });
+      return {
+        found: true,
+        weekKey: weekKey,
+        weekLabel: bbToolWeekLabel(weekKey),
+        groupCount: rows.length,
+        groups: rows.map(function(r) {
+          return {
+            title: r.title,
+            workers: r.workers,
+            scorePct: r.score,
+            entryCount: r.entryCount,
+            status: r.status,
+            great: !!r.great
+          };
+        })
+      };
+    }
+
+    async function bbExecuteToolCall(call) {
+      var name = call && call.name ? String(call.name) : '';
+      var args = (call && call.args) || {};
+      try {
+        if (name === 'getWorkerAttendance' || name === 'getJobAttendance') {
+          await bbEnsureAttendanceRows();
+        } else if (name === 'getDiaryQuality' || name === 'getTeamDiaryQualitySummary') {
+          await bbEnsureDiaryRows();
+        }
+        if (name === 'getWorkerAttendance') return bbToolGetWorkerAttendance(args);
+        if (name === 'getJobAttendance') return bbToolGetJobAttendance(args);
+        if (name === 'getDiaryQuality') return bbToolGetDiaryQuality(args);
+        if (name === 'getTeamDiaryQualitySummary') return bbToolGetTeamDiaryQualitySummary(args);
+        return { found: false, notFound: true, reason: 'Unknown tool: ' + name };
+      } catch (err) {
+        return {
+          found: false,
+          notFound: true,
+          reason: 'Tool error: ' + (err && err.message ? err.message : 'failed')
+        };
+      }
+    }
+
+    function bbSpeakAnswer(answer) {
+      if (!answer) return;
+      var sentences = answer.match(/[^.!?]+[.!?]+/g) || [answer];
+      var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var fetchPromises = sentences.map(function(sentence) {
+        return fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: sentence.trim() })
+        }).then(function(r) { return r.json(); }).catch(function() { return null; });
+      });
+
+      function playBuffer(pcm16) {
+        return new Promise(function(resolve) {
+          var audioBuffer = audioCtx.createBuffer(1, pcm16.length, 24000);
+          var channelData = audioBuffer.getChannelData(0);
+          for (var j = 0; j < pcm16.length; j++) channelData[j] = pcm16[j] / 32768;
+          var source = audioCtx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioCtx.destination);
+          source.onended = resolve;
+          source.start();
+        });
+      }
+
+      (async function playSequentially() {
+        for (var i = 0; i < fetchPromises.length; i++) {
+          var sd = await fetchPromises[i];
+          if (sd && sd.audio) {
+            var binary = atob(sd.audio);
+            var bytes = new Uint8Array(binary.length);
+            for (var k = 0; k < binary.length; k++) bytes[k] = binary.charCodeAt(k);
+            var pcm16 = new Int16Array(bytes.buffer);
+            await playBuffer(pcm16);
+          }
+        }
+      })();
+    }
+
     function askAI(speak) {
       if (isBbAiDisabledPage(getActivePageId())) return;
       var q = document.getElementById('ai-q').value.trim();
@@ -21809,74 +22292,71 @@
 
       var history = (window._bbChatHistory || []).slice(-BB_CHAT_MAX_TURNS);
       var insights = (window._currentPage && window._currentPage.insights) || [];
+      var BB_TOOL_MAX_ROUNDS = 4;
 
-      fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: q,
-          pageData: pageData,
-          name: name,
-          pageContext: window._currentPage.name,
-          pageDirectory: BB_PAGE_DIRECTORY,
-          allPagesData: allPagesPayload,
-          conversationHistory: history,
-          pageInsights: insights
-        })
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(d) {
-        var answer = d.answer || d.error || 'No answer.';
-        out.textContent = answer;
-        out.setAttribute('data-bb-busy', '0');
-        out.setAttribute('data-bb-mode', 'answer');
-        out.setAttribute('data-bb-page', (window._currentPage && window._currentPage.key) || '');
-        pushBbHistory('user', q);
-        pushBbHistory('assistant', answer);
-        try { document.getElementById('ai-q').value = ''; } catch (e2) { /* ignore */ }
-        if (speak && d.answer) {
-          var sentences = d.answer.match(/[^.!?]+[.!?]+/g) || [d.answer];
-          var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          var fetchPromises = sentences.map(function(sentence) {
-            return fetch('/api/speak', {
+      (async function runBbAsk() {
+        try {
+          // Soft-load attendance + diaries so tools work off P6/P12.
+          out.textContent = 'BB is preparing data...';
+          await bbEnsureToolSheets();
+          out.textContent = 'BB is thinking...';
+
+          var body = {
+            question: q,
+            pageData: pageData,
+            name: name,
+            pageContext: window._currentPage.name,
+            pageDirectory: BB_PAGE_DIRECTORY,
+            allPagesData: allPagesPayload,
+            conversationHistory: history,
+            pageInsights: insights
+          };
+
+          var round = 0;
+          var d = null;
+          while (round < BB_TOOL_MAX_ROUNDS) {
+            var r = await fetch('/api/ask', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: sentence.trim() })
-            }).then(function(r){ return r.json(); }).catch(function(){ return null; });
-          });
-
-          function playBuffer(pcm16) {
-            return new Promise(function(resolve) {
-              var audioBuffer = audioCtx.createBuffer(1, pcm16.length, 24000);
-              var channelData = audioBuffer.getChannelData(0);
-              for (var j = 0; j < pcm16.length; j++) channelData[j] = pcm16[j] / 32768;
-              var source = audioCtx.createBufferSource();
-              source.buffer = audioBuffer;
-              source.connect(audioCtx.destination);
-              source.onended = resolve;
-              source.start();
+              body: JSON.stringify(body)
             });
+            d = await r.json();
+            if (d && d.needsTools && Array.isArray(d.toolCalls) && d.toolCalls.length) {
+              out.textContent = 'BB is checking attendance and diaries...';
+              var toolResults = [];
+              for (var t = 0; t < d.toolCalls.length; t++) {
+                var call = d.toolCalls[t];
+                var result = await bbExecuteToolCall(call);
+                toolResults.push({ name: call.name, response: result });
+              }
+              body = {
+                toolContinue: true,
+                geminiContents: d.geminiContents,
+                toolResults: toolResults,
+                name: name,
+                pageContext: window._currentPage.name
+              };
+              round++;
+              continue;
+            }
+            break;
           }
 
-          (async function playSequentially() {
-            for (var i = 0; i < fetchPromises.length; i++) {
-              var sd = await fetchPromises[i];
-              if (sd && sd.audio) {
-                var binary = atob(sd.audio);
-                var bytes = new Uint8Array(binary.length);
-                for (var k = 0; k < binary.length; k++) bytes[k] = binary.charCodeAt(k);
-                var pcm16 = new Int16Array(bytes.buffer);
-                await playBuffer(pcm16);
-              }
-            }
-          })();
+          var answer = (d && (d.answer || d.error)) || 'No answer.';
+          out.textContent = answer;
+          out.setAttribute('data-bb-busy', '0');
+          out.setAttribute('data-bb-mode', 'answer');
+          out.setAttribute('data-bb-page', (window._currentPage && window._currentPage.key) || '');
+          pushBbHistory('user', q);
+          pushBbHistory('assistant', answer);
+          try { document.getElementById('ai-q').value = ''; } catch (e2) { /* ignore */ }
+          if (speak && d && d.answer) bbSpeakAnswer(d.answer);
+        } catch (e) {
+          out.textContent = 'Error: ' + (e && e.message ? e.message : 'request failed');
+          out.setAttribute('data-bb-busy', '0');
+          out.setAttribute('data-bb-mode', 'answer');
         }
-      })
-      .catch(function(e){
-        out.textContent = 'Error: ' + e.message;
-        out.setAttribute('data-bb-busy', '0');
-        out.setAttribute('data-bb-mode', 'answer');
-      });
+      })();
     }
   </script>
 </body>
