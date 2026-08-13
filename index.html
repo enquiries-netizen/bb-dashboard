@@ -15036,7 +15036,8 @@
 
     // ═══════════════════════════════════════════════════════════════
     // P12 - SITE DIARIES (crew full-width list+detail summaries)
-    // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only).
+    // Sources: Buildpass_Site Diaries; soft-load Variations_Log (description only);
+    //          soft-load Buildpass_Attendance (per job+date under each day article).
     // Layout: P11-style list + day-notes detail (no tabs, full width).
     // Photos: column P via shared P11 lightbox. Column Q header "Other Details" (UI label same) when non-blank.
     // Access: app-level Google sign-in + Staff_Access (Staff / User / Admin).
@@ -15047,7 +15048,7 @@
     var activeP12ReportKey = null;
     var _p12FiltersBound = false;
     var _p12UiBound = false;
-    var _p12LoadMeta = { diariesOk: false, variationsOk: false };
+    var _p12LoadMeta = { diariesOk: false, variationsOk: false, attendanceOk: false };
     /** Built each render: groupKey → report group object */
     var _p12ReportGroups = {};
     var P12_EMPTY_ISSUE = /^[-–—\u2013\u2014]*$|^(n\/?a|na|none|nil|null|no issues?|no blockers?|\.)$/i;
@@ -15158,7 +15159,7 @@
       setBbAiVisibleForPage('p12');
       showLoading(true);
       removeError('p12');
-      _p12LoadMeta = { diariesOk: false, variationsOk: false };
+      _p12LoadMeta = { diariesOk: false, variationsOk: false, attendanceOk: false };
       try {
         var diaries = await fetchSheet(
           CONFIG.TABS.BUILDPASS_SITE_DIARIES || CONFIG.TABS.BUILDPASS_DIARIES
@@ -15175,6 +15176,15 @@
           return [];
         });
         window._p12Variations = variations;
+        // Soft-load attendance for per job+date crew sign-on list (ok on fail)
+        var attendance = await fetchSheet(CONFIG.TABS.BUILDPASS_ATTENDANCE).then(function(r) {
+          _p12LoadMeta.attendanceOk = true;
+          return r || [];
+        }).catch(function() {
+          _p12LoadMeta.attendanceOk = false;
+          return [];
+        });
+        window._p12Attendance = attendance;
         renderP12(diaries);
       } catch (err) {
         console.error('P12 load error:', err);
@@ -15629,6 +15639,157 @@
       return h;
     }
 
+    /** Calendar day key YYYY-MM-DD for attendance ↔ diary date join. */
+    function p12DateKey(d) {
+      if (!d || isNaN(d.getTime())) return '';
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1);
+      var day = String(d.getDate());
+      if (m.length < 2) m = '0' + m;
+      if (day.length < 2) day = '0' + day;
+      return y + '-' + m + '-' + day;
+    }
+
+    function p12AttFlagYes(val) {
+      return String(val == null ? '' : val).trim().toLowerCase() === 'yes';
+    }
+
+    /**
+     * Job keys from Buildpass_Attendance "Job # / Site".
+     * Prefer (Jxxxx) / (J1349 / J1348); else leading J1378… Avoid street numbers (e.g. 11395).
+     */
+    function p12AttJobKeysFromSite(siteStr) {
+      var s = String(siteStr || '').trim();
+      var keys = {};
+      var parenRe = /\(([^)]*)\)/g;
+      var pm;
+      var foundParenJob = false;
+      while ((pm = parenRe.exec(s))) {
+        var inner = pm[1] || '';
+        var jm;
+        var jre = /J\s*(\d+)/gi;
+        while ((jm = jre.exec(inner))) {
+          keys['J' + jm[1]] = true;
+          foundParenJob = true;
+        }
+      }
+      if (!foundParenJob) {
+        var lead = s.match(/^(J\d{3,5})\b/i);
+        if (lead) keys[String(lead[1]).toUpperCase()] = true;
+      }
+      return Object.keys(keys);
+    }
+
+    /** Hours On Site when calculated; blank → null (never invent 0). */
+    function p12AttHoursPresent(row) {
+      var raw = rawColByNames(row, [
+        'Hours On Site', 'Hours on Site', 'Hours Onsite', 'Hours'
+      ]);
+      if (raw === '' || raw === null || raw === undefined) return null;
+      if (String(raw).trim() === '') return null;
+      var n = parseFloat(String(raw).replace(/[$,%\s]/g, '').replace(/,/g, ''));
+      return isNaN(n) ? null : n;
+    }
+
+    function p12AttSignOnSortKey(row) {
+      var t = String(col(row, 'Sign-On Time', 'Sign On Time', 'Sign-on Time') || '').trim();
+      var m = t.match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return 99999;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    }
+
+    /**
+     * Attendance rows for one P12 job/person group on one diary date.
+     * Same grouping keys as diaries: job:Jxxxx or person:… specials.
+     */
+    function p12AttendanceForGroupDay(group, dateObj) {
+      if (!group || !_p12LoadMeta.attendanceOk) return [];
+      var dateKey = p12DateKey(dateObj);
+      if (!dateKey) return [];
+      var targetJob = (!group.personOnly && group.jobNo)
+        ? p12NormJobKey(group.jobNo)
+        : '';
+      var targetPerson = group.personOnly
+        ? p12NormName(group.jobName)
+        : '';
+      if (!targetJob && !targetPerson) return [];
+
+      var out = [];
+      (window._p12Attendance || []).forEach(function(r) {
+        var attDate = parseFlexibleDate(col(r,
+          'Date (DD/MM/YYYY)', 'Date', 'date'
+        ));
+        if (p12DateKey(attDate) !== dateKey) return;
+        var site = String(col(r,
+          'Job # / Site', 'Job #/Site', 'Job / Site', 'Site', 'Job #'
+        ) || '').trim();
+        var jobKeys = p12AttJobKeysFromSite(site);
+
+        if (targetJob) {
+          var hit = false;
+          for (var i = 0; i < jobKeys.length; i++) {
+            if (p12NormJobKey(jobKeys[i]) === targetJob) { hit = true; break; }
+          }
+          if (!hit) return;
+        } else {
+          // Person-only / special: match site string when it has no job # keys
+          if (jobKeys.length) return;
+          var siteNorm = p12NormName(site);
+          var siteLabel = p12IsKnownPersonSpecial(site)
+            ? p12NormName(p12PersonSpecialLabel(site))
+            : siteNorm;
+          if (siteNorm !== targetPerson && siteLabel !== targetPerson) return;
+        }
+        out.push(r);
+      });
+
+      out.sort(function(a, b) {
+        return p12AttSignOnSortKey(a) - p12AttSignOnSortKey(b);
+      });
+      return out;
+    }
+
+    /**
+     * Attendance block for a day article. Omit entirely when no rows.
+     * Text-only flag labels; no colored badge icons; no em dashes.
+     */
+    function p12AttendanceHtml(rows) {
+      if (!rows || !rows.length) return '';
+      var h = '<div class="p12-attendance">';
+      h += '<div class="p12-attendance-title">Attendance</div>';
+      h += '<ul class="p12-attendance-list">';
+      rows.forEach(function(r) {
+        var member = String(col(r, 'Team Member', 'Employee', 'Name') || '').trim() ||
+          'Not recorded';
+        var signOn = String(col(r, 'Sign-On Time', 'Sign On Time', 'Sign-on Time') || '').trim();
+        var signOff = String(col(r, 'Sign-Off Time', 'Sign Off Time', 'Sign-off Time') || '').trim();
+        var hours = p12AttHoursPresent(r);
+        var auto = p12AttFlagYes(col(r,
+          'Auto Sign-Off Flag (Yes/No)', 'Auto Sign-Off Flag', 'Auto Flag'
+        ));
+        var missing = p12AttFlagYes(col(r,
+          'Missing Sign-Off Flag (Yes/No)', 'Missing Sign-Off Flag', 'Missing Flag'
+        ));
+
+        h += '<li class="p12-attendance-item">';
+        h += '<div class="p12-attendance-name">' + p12Esc(member) + '</div>';
+        h += '<div class="p12-attendance-meta">';
+        h += '<span>Sign-on ' + p12Esc(signOn || 'Not recorded') + '</span>';
+        h += '<span>Sign-off ' + p12Esc(signOff || 'Not recorded') + '</span>';
+        h += '<span>Hours ' + (hours != null ? p12Esc(String(hours)) : '-') + '</span>';
+        h += '</div>';
+        if (auto) {
+          h += '<div class="p12-attendance-note">Auto sign-off, not a confirmed finish time</div>';
+        }
+        if (missing) {
+          h += '<div class="p12-attendance-note">No sign-off recorded</div>';
+        }
+        h += '</li>';
+      });
+      h += '</ul></div>';
+      return h;
+    }
+
     /** Paint detail panel: day-by-day notes (newest first) + column P photos via P11 lightbox. */
     function p12SelectReport(key) {
       var group = key ? _p12ReportGroups[key] : null;
@@ -15733,6 +15894,7 @@
         h += '</dd></div>';
         h += '</div>';
         h += p12DiaryQualityHtml(r);
+        h += p12AttendanceHtml(p12AttendanceForGroupDay(group, d));
         h += '</article>';
       });
 
@@ -18983,6 +19145,201 @@
       };
     }
 
+    // ── Buildpass_Attendance (current Fri-Thu payroll week) ──────────────
+    // Reuse P12 payroll-week helpers when present; mirror only if needed.
+
+    function p6AttFridayOf(d) {
+      if (typeof p12FridayOf === 'function') return p12FridayOf(d);
+      if (!d || isNaN(d.getTime())) return null;
+      var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var day = x.getDay();
+      var diff = day >= 5 ? 5 - day : -(day + 2);
+      x.setDate(x.getDate() + diff);
+      x.setHours(0, 0, 0, 0);
+      return x;
+    }
+
+    function p6AttWeekKeyFromDate(d) {
+      if (typeof p12WeekKeyFromDate === 'function') return p12WeekKeyFromDate(d);
+      var fri = p6AttFridayOf(d);
+      return fri ? isoWeekKey(fri) : null;
+    }
+
+    function p6AttCurrentWeekKey() {
+      if (typeof p12CurrentWeekKey === 'function') return p12CurrentWeekKey();
+      return p6AttWeekKeyFromDate(new Date()) || isoWeekKey(new Date());
+    }
+
+    function p6AttWeekLabel(weekKey) {
+      if (typeof p12WeekLabelFromKey === 'function') return p12WeekLabelFromKey(weekKey);
+      return weekKey ? String(weekKey) : 'Current payroll week';
+    }
+
+    function p6AttFlagYes(val) {
+      return String(val == null ? '' : val).trim().toLowerCase() === 'yes';
+    }
+
+    /**
+     * Hours On Site when present. Blanks (auto / missing sign-off) return null
+     * and must not be treated as 0 in sums. Explicit 0 still counts.
+     */
+    function p6AttHoursPresent(row) {
+      var raw = rawColByNames(row, [
+        'Hours On Site', 'Hours on Site', 'Hours Onsite', 'Hours'
+      ]);
+      if (raw === '' || raw === null || raw === undefined) return null;
+      if (String(raw).trim() === '') return null;
+      var n = parseFloat(String(raw).replace(/[$,%\s]/g, '').replace(/,/g, ''));
+      return isNaN(n) ? null : n;
+    }
+
+    function p6BuildAttendanceMetrics(rows) {
+      var weekKey = p6AttCurrentWeekKey();
+      var weekLabel = p6AttWeekLabel(weekKey);
+      var workersMap = {};
+      var jobsMap = {};
+      var rowCount = 0;
+
+      (rows || []).forEach(function(r) {
+        var dateStr = col(r, 'Date (DD/MM/YYYY)', 'Date', 'date');
+        var d = parseFlexibleDate(dateStr);
+        if (!d) return;
+        if (p6AttWeekKeyFromDate(d) !== weekKey) return;
+        rowCount++;
+
+        var member = p6DisplayName(col(r, 'Team Member', 'Employee', 'Name')) || 'Unknown';
+        var job = p6DisplayName(col(r, 'Job # / Site', 'Job #', 'Site', 'Job')) || 'Unknown';
+
+        if (!workersMap[member]) {
+          workersMap[member] = {
+            name: member,
+            hours: 0,
+            hasHours: false,
+            missing: 0,
+            auto: 0
+          };
+        }
+        if (!jobsMap[job]) {
+          jobsMap[job] = { job: job, hours: 0, hasHours: false };
+        }
+
+        var hrs = p6AttHoursPresent(r);
+        if (hrs != null) {
+          workersMap[member].hours += hrs;
+          workersMap[member].hasHours = true;
+          jobsMap[job].hours += hrs;
+          jobsMap[job].hasHours = true;
+        }
+
+        if (p6AttFlagYes(col(r,
+          'Missing Sign-Off Flag (Yes/No)',
+          'Missing Sign-Off Flag',
+          'Missing Flag'
+        ))) {
+          workersMap[member].missing++;
+        }
+        if (p6AttFlagYes(col(r,
+          'Auto Sign-Off Flag (Yes/No)',
+          'Auto Sign-Off Flag',
+          'Auto Flag'
+        ))) {
+          workersMap[member].auto++;
+        }
+      });
+
+      var workers = Object.keys(workersMap).map(function(k) { return workersMap[k]; });
+      workers.sort(function(a, b) {
+        if (b.hours !== a.hours) return b.hours - a.hours;
+        if (b.missing !== a.missing) return b.missing - a.missing;
+        return String(a.name).localeCompare(String(b.name));
+      });
+
+      var jobs = Object.keys(jobsMap).map(function(k) { return jobsMap[k]; });
+      jobs.sort(function(a, b) {
+        if (b.hours !== a.hours) return b.hours - a.hours;
+        return String(a.job).localeCompare(String(b.job));
+      });
+
+      return {
+        weekKey: weekKey,
+        weekLabel: weekLabel,
+        workers: workers,
+        jobs: jobs,
+        rowCount: rowCount,
+        loaded: !!(rows && rows.length)
+      };
+    }
+
+    function p6RenderAttendanceSection(metrics) {
+      var m = metrics || { workers: [], jobs: [], weekLabel: '', weekKey: '', rowCount: 0, loaded: false };
+      var html = '';
+      html += '<div class="p6-section-card p6-attendance-card">';
+      html += '<div class="p6-section-title">Attendance this payroll week</div>';
+      html += '<p class="p6-section-hint">Buildpass sign-on hours and sign-off flags for ' +
+        p6Esc(m.weekLabel || 'current Fri-Thu payroll week') +
+        '. Blank Hours On Site rows (auto or missing sign-off) are excluded from hour totals, not counted as 0. Distinct from Capacity Planning ISO week.</p>';
+
+      if (!m.loaded) {
+        html += '<p class="no-data-msg">No attendance data loaded from Buildpass_Attendance.</p></div>';
+        return html;
+      }
+      if (!m.rowCount) {
+        html += '<p class="no-data-msg">No attendance rows in the current payroll week.</p></div>';
+        return html;
+      }
+
+      html += '<div class="p6-attendance-grid">';
+
+      html += '<div class="p6-attendance-panel">';
+      html += '<div class="p6-attendance-sub">By worker</div>';
+      if (!m.workers.length) {
+        html += '<p class="no-data-msg">No workers this week.</p>';
+      } else {
+        html += '<div class="table-wrap"><table class="data-table p6-attendance-table">';
+        html += '<thead><tr>';
+        html += '<th>Team member</th>';
+        html += '<th class="text-right">Hours on site</th>';
+        html += '<th class="text-right">Missing sign-off</th>';
+        html += '<th class="text-right">Auto sign-off</th>';
+        html += '</tr></thead><tbody>';
+        m.workers.forEach(function(w) {
+          html += '<tr>';
+          html += '<td>' + p6Esc(w.name) + '</td>';
+          html += '<td class="text-right">' +
+            (w.hasHours ? p6FmtHours(w.hours) : '-') + '</td>';
+          html += '<td class="text-right">' + String(w.missing || 0) + '</td>';
+          html += '<td class="text-right">' + String(w.auto || 0) + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      html += '</div>';
+
+      html += '<div class="p6-attendance-panel">';
+      html += '<div class="p6-attendance-sub">By job / site</div>';
+      if (!m.jobs.length) {
+        html += '<p class="no-data-msg">No jobs this week.</p>';
+      } else {
+        html += '<div class="table-wrap"><table class="data-table p6-attendance-table">';
+        html += '<thead><tr>';
+        html += '<th>Job # / Site</th>';
+        html += '<th class="text-right">Hours on site</th>';
+        html += '</tr></thead><tbody>';
+        m.jobs.forEach(function(j) {
+          html += '<tr>';
+          html += '<td>' + p6Esc(j.job) + '</td>';
+          html += '<td class="text-right">' +
+            (j.hasHours ? p6FmtHours(j.hours) : '-') + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      html += '</div>';
+
+      html += '</div></div>';
+      return html;
+    }
+
     async function loadP6(opts) {
       opts = opts || {};
       var silent = !!opts.silent;
@@ -18990,13 +19347,17 @@
       if (!silent) showLoading(true);
       removeError('p6');
       try {
+        var attTab = CONFIG.TABS.BUILDPASS_ATTENDANCE || 'Buildpass_Attendance';
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.CAPACITY),
-          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR)
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
+          // Soft-load: attendance analysis is additive; Capacity/Labour still render if this fails.
+          fetchSheet(attTab).catch(function() { return []; })
         ]);
         window._p6Raw = {
           capacity: results[0] || [],
-          labour: results[1] || []
+          labour: results[1] || [],
+          attendance: results[2] || []
         };
         if (!preserve) {
           window._p6SelectedWeek = null;
@@ -19075,6 +19436,7 @@
       var probe = p6BuildModel(capRows, labAll, window._p6SelectedWeek, null, filters);
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
+      probe.attendanceMetrics = p6BuildAttendanceMetrics((raw && raw.attendance) || []);
 
       return p6RenderShell(probe);
     }
@@ -19134,6 +19496,9 @@
       } else {
         html += p6RenderPlanningMode(m);
       }
+
+      // Attendance analysis uses current Fri-Thu payroll week (not planning ISO week).
+      html += p6RenderAttendanceSection(m.attendanceMetrics);
 
       p6SetBB(m);
       return html;

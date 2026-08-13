@@ -2317,9 +2317,31 @@ select {
 #page-p6 .p6-labour-table .text-right,
 #page-p6 .p6-project-table .text-right,
 #page-p6 .p6-actions-table .text-right,
-#page-p6 .p6-assign-table .text-right {
+#page-p6 .p6-assign-table .text-right,
+#page-p6 .p6-attendance-table .text-right {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+#page-p6 .p6-attendance-card {
+  margin-top: 12px;
+}
+#page-p6 .p6-attendance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+#page-p6 .p6-attendance-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--charcoal);
+  margin: 0 0 8px;
+}
+@media (max-width: 900px) {
+  #page-p6 .p6-attendance-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Hybrid: Weekly Capacity bars + Assignment Summary (legacy side-by-side) */
@@ -8408,6 +8430,50 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 }
 #page-p12 .p12-summary-var-desc {
   white-space: pre-wrap;
+}
+#page-p12 .p12-attendance {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(107, 114, 128, 0.06);
+  border: 1px solid var(--p12-border);
+  border-radius: 4px;
+}
+#page-p12 .p12-attendance-title {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--p12-text);
+  margin-bottom: 8px;
+}
+#page-p12 .p12-attendance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#page-p12 .p12-attendance-item {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--p12-text);
+}
+#page-p12 .p12-attendance-name {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+#page-p12 .p12-attendance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--p12-muted);
+  font-size: 12px;
+}
+#page-p12 .p12-attendance-note {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--p12-muted);
+  font-weight: 500;
 }
 #page-p12 .p12-muted {
   color: var(--charcoal-light);

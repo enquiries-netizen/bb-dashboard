@@ -59,6 +59,8 @@ const CONFIG = {
     // Sheet tab is "Buildpass_Site Diaries" (space, not underscore)
     BUILDPASS_DIARIES:      'Buildpass_Site Diaries',
     BUILDPASS_SITE_DIARIES: 'Buildpass_Site Diaries', // alias
+    // Sign-on/sign-off rows (30-day rolling). Shared by P6 labour metrics + P12.
+    BUILDPASS_ATTENDANCE: 'Buildpass_Attendance',
     CAPACITY:            'Capacity',
     CLIENT_REVIEWS:      'Client_Reviews',
     MARKETING_PAID:      'Marketing_Paid',
