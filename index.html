@@ -1944,7 +1944,7 @@
     var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12'];
     // Library is not in ALL_PAGE_IDS: gated by BB AI name allow-list (bb_name), not Staff_Access role.
     // Phase 1: Lori only. Add Emily / Ben here in one line when ready.
-    // TODO Phase 2: filter Library_Guides by Division/Role Tag (column E) — do not build yet.
+    // Division/Role Tag filtering for guides is server-side in /api/ask.js (not here).
     var LIBRARY_ALLOW = ['Lori'];
     var LAST_PAGE_SESSION_KEY = 'bb_last_page';
     var _authUser = null;
@@ -1954,8 +1954,9 @@
     var _authStateGen = 0;
     var _allNavItems = null;
     var _appBooted = false;
-    window._libraryGuides = window._libraryGuides || [];
+    window._libraryGuides = [];
     window._libraryChatHistory = window._libraryChatHistory || [];
+    window._libraryHubEmpty = true;
 
     function isLibraryAllowListed(name) {
       var n = String(name || '').trim().toLowerCase();
@@ -21351,8 +21352,9 @@
 
 
     // ═══════════════════════════════════════════════════════════
-    // BBBS INTERNAL HUB (Phase 1: shell + Lori gating + AI plumbing)
-    // Soft-loads Library_Guides; empty/missing → []. No Phase 2 role filter yet.
+    // BBBS INTERNAL HUB (chat + Lori gating; guide filter is server-side)
+    // Does not load Library_Guides in the browser. /api/ask fetches and
+    // filters by Division/Role Tag before Gemini or the client see content.
     // ═══════════════════════════════════════════════════════════
     var _libraryBound = false;
     var LIBRARY_EMPTY_MSG = 'Internal Hub content is still being added, check back soon.';
@@ -21367,45 +21369,6 @@
         return;
       }
       if (onLibrary && typeof refreshLibraryPanel === 'function') refreshLibraryPanel();
-    }
-
-    function normalizeLibraryGuides(rows) {
-      // Soft header matching (A–F suggested): Guide ID, Title, Category,
-      // Content / Steps, Division/Role Tag, Media Link.
-      // TODO Phase 2: filter by Division/Role Tag (column E) — not built yet.
-      if (!rows || !rows.length) return [];
-      var out = [];
-      for (var i = 0; i < rows.length; i++) {
-        var r = rows[i];
-        var title = String(col(r, 'Title', 'Guide Title', 'Name') || '').trim();
-        var content = String(col(
-          r,
-          'Content / Steps',
-          'Content/Steps',
-          'Content',
-          'Steps',
-          'Guide Content'
-        ) || '').trim();
-        var id = String(col(r, 'Guide ID', 'GuideID', 'ID', 'Id') || '').trim();
-        if (!title && !content && !id) continue;
-        out.push({
-          guideId: id,
-          title: title,
-          category: String(col(r, 'Category', 'Cat') || '').trim(),
-          content: content,
-          // Stored for Phase 2 filtering; unused in Phase 1.
-          divisionRoleTag: String(col(
-            r,
-            'Division/Role Tag',
-            'Division / Role Tag',
-            'Division',
-            'Role Tag',
-            'Role'
-          ) || '').trim(),
-          mediaLink: String(col(r, 'Media Link', 'Media', 'Link', 'URL') || '').trim()
-        });
-      }
-      return out;
     }
 
     function libAppendMessage(role, text) {
@@ -21466,8 +21429,7 @@
       var sw = document.getElementById('lib-switch-user');
       if (sw) sw.textContent = 'Not ' + name + '? Switch user';
       if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
-        var guides = window._libraryGuides || [];
-        if (!guides.length) {
+        if (window._libraryHubEmpty) {
           libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
         } else {
           libAppendMessage(
@@ -21580,10 +21542,10 @@
       if (!q) return;
       var name = '';
       try { name = localStorage.getItem('bb_name') || ''; } catch (e) { name = ''; }
-      var guides = window._libraryGuides || [];
+      var email = (_authUser && _authUser.email) ? String(_authUser.email).trim() : '';
 
-      // Client-side empty-state: no API call needed when sheet has no guides.
-      if (!guides.length) {
+      // Client-side empty-state: no API call needed when the sheet has no guides.
+      if (window._libraryHubEmpty) {
         libAppendMessage('user', q);
         libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
         if (qEl) qEl.value = '';
@@ -21605,7 +21567,7 @@
           mode: 'library',
           question: q,
           name: name,
-          libraryGuides: guides,
+          email: email,
           conversationHistory: history
         })
       })
@@ -21635,16 +21597,31 @@
       showLoading(true);
       removeError('internal-hub');
       bindLibraryUi();
+      window._libraryGuides = [];
+      window._libraryHubEmpty = true;
       try {
-        var tab = (CONFIG.TABS && CONFIG.TABS.LIBRARY_GUIDES) ? CONFIG.TABS.LIBRARY_GUIDES : 'Library_Guides';
-        var rows = await fetchSheet(tab).catch(function() { return []; });
-        var guides = normalizeLibraryGuides(rows);
-        window._libraryGuides = guides;
+        var name = '';
+        try { name = localStorage.getItem('bb_name') || ''; } catch (eN) { name = ''; }
+        var email = (_authUser && _authUser.email) ? String(_authUser.email).trim() : '';
+        var boot = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'library',
+            action: 'bootstrap',
+            email: email,
+            name: name
+          })
+        }).then(function(r) { return r.json(); }).catch(function() {
+          return { empty: true, visibleCount: 0 };
+        });
+        window._libraryHubEmpty = !boot || boot.empty !== false;
         libClearMessages();
         refreshLibraryPanel();
       } catch (err) {
-        console.warn('[Library] soft-load failed:', err);
+        console.warn('[Library] bootstrap failed:', err);
         window._libraryGuides = [];
+        window._libraryHubEmpty = true;
         libClearMessages();
         refreshLibraryPanel();
       } finally {

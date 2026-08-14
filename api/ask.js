@@ -1,4 +1,211 @@
-﻿export default async function handler(req, res) {
+﻿const SHEET_ID =
+  process.env.SHEET_ID || '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8';
+
+// Hub page access stays on the client allow-list (Lori / enquiries only).
+// This map is division tags only, keyed by email. Staff_Access "Division"
+// column overrides when present and non-blank.
+const HUB_STAFF_DIVISIONS = {
+  'enquiries@bbbuildingservices.com.au': ['General', 'Admin/Office']
+};
+
+function tagNorm(t) {
+  return String(t || '').trim().toLowerCase();
+}
+
+function splitTags(raw) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (!s) return ['General'];
+  return s.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+}
+
+function pickCol(row, names) {
+  var keys = Object.keys(row || {});
+  var i;
+  var k;
+  var want;
+  var normKey;
+  for (i = 0; i < names.length; i++) {
+    want = String(names[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    for (k = 0; k < keys.length; k++) {
+      normKey = String(keys[k] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      if (normKey === want) {
+        var v = row[keys[k]];
+        return v == null ? '' : String(v);
+      }
+    }
+  }
+  return '';
+}
+
+function rowsToObjects(values) {
+  if (!values || values.length < 2) return [];
+  var headers = values[0].map(function (h) { return String(h || '').trim(); });
+  var out = [];
+  var r;
+  var c;
+  for (r = 1; r < values.length; r++) {
+    var row = values[r] || [];
+    var obj = {};
+    var any = false;
+    for (c = 0; c < headers.length; c++) {
+      if (!headers[c]) continue;
+      var cell = row[c] !== undefined && row[c] !== null ? String(row[c]) : '';
+      obj[headers[c]] = cell;
+      if (cell) any = true;
+    }
+    if (any) out.push(obj);
+  }
+  return out;
+}
+
+function parseGvizTable(text) {
+  var start = String(text || '').indexOf('{');
+  var end = String(text || '').lastIndexOf('}');
+  if (start < 0 || end <= start) return [];
+  var data = JSON.parse(text.slice(start, end + 1));
+  var table = data && data.table;
+  if (!table) return [];
+  var headers = (table.cols || []).map(function (col) {
+    return String((col && (col.label || col.id)) || '').trim();
+  });
+  var values = [headers];
+  (table.rows || []).forEach(function (row) {
+    var cells = row && row.c ? row.c : [];
+    var vals = headers.map(function (_h, i) {
+      var cell = cells[i];
+      if (!cell) return '';
+      if (cell.f != null && String(cell.f) !== '') return String(cell.f);
+      if (cell.v == null) return '';
+      return String(cell.v);
+    });
+    values.push(vals);
+  });
+  return values;
+}
+
+async function fetchSheetValues(tabName) {
+  var key =
+    process.env.GOOGLE_SHEETS_API_KEY ||
+    process.env.SHEETS_API_KEY ||
+    'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk';
+  var apiUrl =
+    'https://sheets.googleapis.com/v4/spreadsheets/' +
+    SHEET_ID +
+    '/values/' +
+    encodeURIComponent(tabName) +
+    '?key=' +
+    key;
+  try {
+    var apiRes = await fetch(apiUrl);
+    if (apiRes.ok) {
+      var apiJson = await apiRes.json();
+      return apiJson.values || [];
+    }
+    // Missing/renamed tab: do not fall through to gviz (it returns INDEX).
+    if (apiRes.status === 400 || apiRes.status === 404) {
+      console.warn('[ask] Sheets API missing tab', tabName, apiRes.status);
+      return [];
+    }
+    console.warn('[ask] Sheets API fetch failed for', tabName, apiRes.status);
+  } catch (e) {
+    console.warn('[ask] Sheets API fetch error for', tabName, e && e.message);
+  }
+  var gviz =
+    'https://docs.google.com/spreadsheets/d/' +
+    SHEET_ID +
+    '/gviz/tq?tqx=out:json&sheet=' +
+    encodeURIComponent(tabName);
+  var gRes = await fetch(gviz);
+  if (!gRes.ok) {
+    console.warn('[ask] gviz fetch failed for', tabName, gRes.status);
+    return [];
+  }
+  var text = await gRes.text();
+  try {
+    var values = parseGvizTable(text);
+    var headerJoin = ((values[0] || []).join(' ')).toLowerCase();
+    if (tabName === 'Library_Guides' && headerJoin.indexOf('guide') < 0 && headerJoin.indexOf('title') < 0) {
+      console.warn('[ask] gviz did not return Library_Guides headers; treating as empty');
+      return [];
+    }
+    if (tabName === 'Staff_Access' && headerJoin.indexOf('email') < 0) {
+      console.warn('[ask] gviz did not return Staff_Access headers; treating as empty');
+      return [];
+    }
+    return values;
+  } catch (e2) {
+    console.warn('[ask] gviz parse failed for', tabName, e2 && e2.message);
+    return [];
+  }
+}
+
+function normalizeLibraryGuides(rows) {
+  if (!rows || !rows.length) return [];
+  var out = [];
+  var i;
+  for (i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var title = String(pickCol(r, ['Title', 'Guide Title', 'Name']) || '').trim();
+    var content = String(pickCol(r, [
+      'Content / Steps', 'Content/Steps', 'Content', 'Steps', 'Guide Content'
+    ]) || '').trim();
+    var id = String(pickCol(r, ['Guide ID', 'GuideID', 'ID', 'Id']) || '').trim();
+    if (!title && !content && !id) continue;
+    out.push({
+      guideId: id,
+      title: title,
+      category: String(pickCol(r, ['Category', 'Cat']) || '').trim(),
+      content: content,
+      divisionRoleTag: String(pickCol(r, [
+        'Division/Role Tag',
+        'Division / Role Tag',
+        'Division',
+        'Role Tag',
+        'Role'
+      ]) || '').trim(),
+      mediaLink: String(pickCol(r, ['Media Link', 'Media', 'Link', 'URL']) || '').trim()
+    });
+  }
+  return out;
+}
+
+function buildStaffDivisions(staffRows) {
+  var map = {};
+  Object.keys(HUB_STAFF_DIVISIONS).forEach(function (email) {
+    map[String(email).trim().toLowerCase()] = HUB_STAFF_DIVISIONS[email].slice();
+  });
+  (staffRows || []).forEach(function (r) {
+    var email = String(pickCol(r, ['Email', 'email', 'E-mail', 'Email Address']) || '')
+      .trim()
+      .toLowerCase();
+    if (!email) return;
+    var raw = pickCol(r, [
+      'Division',
+      'Divisions',
+      'Division/Role Tag',
+      'Hub Division',
+      'Role Tag'
+    ]);
+    if (!String(raw || '').trim()) return;
+    map[email] = String(raw)
+      .split(',')
+      .map(function (t) { return t.trim(); })
+      .filter(Boolean);
+  });
+  return map;
+}
+
+function getVisibleGuides(currentUser, allGuides, staffDivisions) {
+  var email = String((currentUser && currentUser.email) || '').trim().toLowerCase();
+  var userDivisions = (staffDivisions[email] || []).map(tagNorm);
+  return (allGuides || []).filter(function (guide) {
+    var tags = splitTags(guide.divisionRoleTag);
+    if (tags.some(function (t) { return tagNorm(t) === 'general'; })) return true;
+    return tags.some(function (tag) { return userDivisions.indexOf(tagNorm(tag)) !== -1; });
+  });
+}
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -16,13 +223,18 @@
     pageInsights,
     mode,
     libraryGuides,
+    email,
+    action,
     toolContinue,
     geminiContents,
     toolResults
   } = req.body || {};
 
   // Tool-continue rounds may omit question (already in geminiContents).
-  if (!toolContinue && !question) return res.status(400).json({ error: 'No question' });
+  // Library bootstrap also has no question.
+  if (!toolContinue && !question && !(mode === 'library' && action === 'bootstrap')) {
+    return res.status(400).json({ error: 'No question' });
+  }
 
   const who = (name && String(name).trim()) || 'a team member';
   const ctx = (pageContext && String(pageContext).trim()) || 'unknown page';
@@ -138,8 +350,45 @@
   // ─── Library mode (BBBS Internal Hub): ground ONLY in Library_Guides ───
   // Separate path so BB AI dashboard prompting is unchanged.
   // API mode key stays "library"; page route is internal-hub.
+  // Client-supplied libraryGuides are ignored: fetch + Division filter run here.
   if (mode === 'library') {
-    const guides = Array.isArray(libraryGuides) ? libraryGuides : [];
+    const userEmail = String(email || '').trim().toLowerCase();
+    let allGuides = [];
+    let staffDivisions = {};
+    let sheetEmpty = true;
+    try {
+      const guideValues = await fetchSheetValues('Library_Guides');
+      const staffValues = await fetchSheetValues('Staff_Access');
+      allGuides = normalizeLibraryGuides(rowsToObjects(guideValues));
+      staffDivisions = buildStaffDivisions(rowsToObjects(staffValues));
+      sheetEmpty = !allGuides.length;
+    } catch (sheetErr) {
+      console.warn('[ask] library sheet load failed', sheetErr && sheetErr.message);
+      allGuides = [];
+      sheetEmpty = true;
+    }
+    // Do not use client-posted libraryGuides (would bypass server-side ACL).
+    void libraryGuides;
+
+    const guides = getVisibleGuides({ email: userEmail }, allGuides, staffDivisions);
+    console.log(
+      '[ask] library filter email=',
+      userEmail || '(none)',
+      'divisions=',
+      (staffDivisions[userEmail] || []).join(',') || '(none)',
+      'visible=',
+      guides.length,
+      '/',
+      allGuides.length
+    );
+
+    if (action === 'bootstrap') {
+      return res.status(200).json({
+        empty: sheetEmpty,
+        visibleCount: guides.length
+      });
+    }
+
     const history = Array.isArray(conversationHistory)
       ? conversationHistory.slice(-16).filter(function (t) {
           return t && t.text && (t.role === 'user' || t.role === 'assistant' || t.role === 'model');
@@ -156,7 +405,7 @@
     }
 
     let prompt;
-    if (!guides.length) {
+    if (sheetEmpty) {
       prompt =
         'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
         'You are speaking with ' +
@@ -165,6 +414,19 @@
         'The Library_Guides sheet is empty or not available yet. ' +
         'Reply with exactly this message (you may greet them by name first): ' +
         '"Internal Hub content is still being added, check back soon." ' +
+        'Do not answer from general knowledge. Do not invent guides. ' +
+        'Never use em dashes in your answers, use commas or colons instead.' +
+        historyBlock +
+        '\n\nCurrent question: ' +
+        question;
+    } else if (!guides.length) {
+      prompt =
+        'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
+        'You are speaking with ' +
+        who +
+        '. ' +
+        'No Internal Hub guides are available for this person\'s division. ' +
+        'Say plainly that no guide was found for that topic. ' +
         'Do not answer from general knowledge. Do not invent guides. ' +
         'Never use em dashes in your answers, use commas or colons instead.' +
         historyBlock +
@@ -492,3 +754,5 @@
   // Hard ban on em dashes in BB output (prompt also forbids them).
   return res.status(200).json({ answer: stripEmDashes(answer) });
 }
+
+export { getVisibleGuides, buildStaffDivisions, normalizeLibraryGuides, fetchSheetValues };

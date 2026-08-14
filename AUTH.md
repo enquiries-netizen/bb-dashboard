@@ -9,6 +9,7 @@ Everyone signs in with Google. Access is controlled by the master sheet tab **St
 | Email  | Google account email |
 | Role   | `Staff`, `User`, or `Admin` (match is case-insensitive) |
 | Active | `Yes` / `No` (case-insensitive) |
+| Division | Optional. Comma-separated Internal Hub tags: `General`, `Roofing`, `RMH`, `Admin/Office`. Read by `/api/ask.js` to filter `Library_Guides`. Blank uses the server fallback for Lori (`General`, `Admin/Office`). Does not change who can open Internal Hub. |
 
 - **Staff** + Active Yes → P12 only (crew Site Diaries)
 - **User** + Active Yes → P11 and P12 only (lands on P11)

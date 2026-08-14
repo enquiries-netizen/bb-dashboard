@@ -71,11 +71,11 @@ const CONFIG = {
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
     // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
     STAFF_ACCESS:        'Staff_Access',
-    // BBBS Internal Hub guides (optional). Soft-load: missing/empty tab → [].
+    // BBBS Internal Hub guides. Fetched server-side in /api/ask.js and filtered
+    // by Division/Role Tag before Gemini or the client see content.
     // Expected columns (header-name match, not letter index):
     //   A Guide ID | B Title | C Category | D Content / Steps
     //   E Division/Role Tag | F Media Link
-    // Phase 2 TODO: filter by column E (Division/Role Tag) — not built yet.
     LIBRARY_GUIDES:      'Library_Guides',
   },
 
