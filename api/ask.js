@@ -3,6 +3,10 @@
 const SHEET_ID =
   process.env.SHEET_ID || '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8';
 
+// Standalone Internal Hub guides spreadsheet (not the Master Dashboard file).
+const LIBRARY_SHEET_ID =
+  process.env.LIBRARY_SHEET_ID || '1R5NEdGGU4dzTqedxy0q3BezqYglz3vGxhYSVa8nKgl0';
+
 const FIREBASE_PROJECT_ID =
   process.env.FIREBASE_PROJECT_ID || 'bb-dashboard-authentication';
 
@@ -191,14 +195,15 @@ function parseGvizTable(text) {
   return values;
 }
 
-async function fetchSheetValues(tabName) {
+async function fetchSheetValues(tabName, spreadsheetId) {
+  var sid = spreadsheetId || SHEET_ID;
   var key =
     process.env.GOOGLE_SHEETS_API_KEY ||
     process.env.SHEETS_API_KEY ||
     'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk';
   var apiUrl =
     'https://sheets.googleapis.com/v4/spreadsheets/' +
-    SHEET_ID +
+    sid +
     '/values/' +
     encodeURIComponent(tabName) +
     '?key=' +
@@ -220,7 +225,7 @@ async function fetchSheetValues(tabName) {
   }
   var gviz =
     'https://docs.google.com/spreadsheets/d/' +
-    SHEET_ID +
+    sid +
     '/gviz/tq?tqx=out:json&sheet=' +
     encodeURIComponent(tabName);
   var gRes = await fetch(gviz);
@@ -481,8 +486,8 @@ export default async function handler(req, res) {
     let staffDivisions = {};
     let sheetEmpty = true;
     try {
-      const guideValues = await fetchSheetValues('Library_Guides');
-      const staffValues = await fetchSheetValues('Staff_Access');
+      const guideValues = await fetchSheetValues('Library_Guides', LIBRARY_SHEET_ID);
+      const staffValues = await fetchSheetValues('Staff_Access', SHEET_ID);
       allGuides = normalizeLibraryGuides(rowsToObjects(guideValues));
       staffDivisions = buildStaffDivisions(rowsToObjects(staffValues));
       sheetEmpty = !allGuides.length;

@@ -17,6 +17,8 @@ const CONFIG = {
 
   // Master Dashboard Google Sheet ID
   SHEET_ID: '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8',
+  // Standalone Internal Hub guides (Library_Guides tab). Server-side fetch in api/ask.js.
+  LIBRARY_SHEET_ID: '1R5NEdGGU4dzTqedxy0q3BezqYglz3vGxhYSVa8nKgl0',
 
   // Google Sheets API Key (restricted to Vercel domain)
   API_KEY: 'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk',
@@ -71,10 +73,10 @@ const CONFIG = {
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
     // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
     STAFF_ACCESS:        'Staff_Access',
-    // BBBS Internal Hub guides. Fetched server-side in /api/ask.js and filtered
-    // by Division/Role Tag before Gemini or the client see content.
+    // BBBS Internal Hub guides. Fetched server-side in /api/ask.js from
+    // CONFIG.LIBRARY_SHEET_ID (standalone sheet, not the Master Dashboard file).
     // Expected columns (header-name match, not letter index):
-    //   A Guide ID | B Title | C Category | D Content / Steps
+    //   A Guide ID | B Title | C Category | D Content/Steps
     //   E Division/Role Tag | F Media Link
     LIBRARY_GUIDES:      'Library_Guides',
   },
