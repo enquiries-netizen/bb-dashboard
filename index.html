@@ -1025,9 +1025,6 @@
                   </select>
                 </label>
               </div>
-              <p class="p10-updated" id="p10-last-updated">Last updated…</p>
-              <p class="p10-data-quality" id="p10-data-quality" aria-live="polite"></p>
-              <p class="p10-period-note" id="p10-period-note">Period uses global Brand / Month / Year. Brand is the global selector.</p>
             </div>
 
             <div class="p10-callouts" id="p10-callouts"></div>
@@ -12252,35 +12249,6 @@
         quotesAlt += parseNum(col(r, 'Quotes Sent', 'Quotes'));
       });
       if (!quotesN && quotesAlt) quotesN = quotesAlt;
-
-      // ── Data quality banner + sources ──
-      var dqParts = [];
-      if (_p10SheetMeta.paid && _p10SheetMeta.paid.ok) {
-        dqParts.push('Marketing_Paid live (' + (_p10SheetMeta.paid.rows || 0) + ' rows)');
-      } else {
-        dqParts.push('Marketing_Paid not available');
-      }
-      if (_p10SheetMeta.sources && _p10SheetMeta.sources.ok && _p10SheetMeta.sources.rows > 0) {
-        dqParts.push('Marketing_Sources live');
-      } else {
-        dqParts.push('Marketing_Sources awaiting or empty');
-      }
-      if (leadMismatch) dqParts.push('Lead definition gap vs P2');
-      if (mktRoiPending) dqParts.push('Marketing ROI Pending (no attributed GP column)');
-      if (_p10State.attr !== 'last') {
-        dqParts.push('Attribution model ' + _p10State.attr + ': credit paths may be Pending');
-      }
-
-      var lu = document.getElementById('p10-last-updated');
-      if (lu) {
-        lu.textContent = 'Last updated ' + now.toLocaleString('en-AU', {
-          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        }) + ' · Brand ' + (activeBrand || 'ALL') +
-          (activeYear && activeYear !== 'ALL' ? ' · ' + activeYear : '') +
-          (activeMonths && activeMonths.length ? ' · ' + activeMonths.join(', ') : '');
-      }
-      var dq = document.getElementById('p10-data-quality');
-      if (dq) dq.textContent = dqParts.join(' · ');
 
       // Callouts
       var callouts = [];

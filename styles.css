@@ -6115,9 +6115,6 @@ p.p8-section-hint {
 }
 #page-p10 .kpi-label,
 #page-p10 .kpi-sub,
-#page-p10 .p10-updated,
-#page-p10 .p10-data-quality,
-#page-p10 .p10-period-note,
 #page-p10 .p10-section-hint,
 #page-p10 .no-data-msg {
   color: var(--p10-muted);
@@ -6158,14 +6155,6 @@ p.p8-section-hint {
 }
 .p10-select {
   min-width: 150px;
-}
-.p10-updated,
-.p10-data-quality,
-.p10-period-note {
-  font-family: var(--font-body);
-  font-size: 12px;
-  margin: 0;
-  line-height: 1.4;
 }
 .p10-callouts {
   display: flex;
