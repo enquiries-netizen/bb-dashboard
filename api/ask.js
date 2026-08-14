@@ -1,9 +1,20 @@
 ﻿const SHEET_ID =
   process.env.SHEET_ID || '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8';
 
-// Hub page access stays on the client allow-list (Lori / enquiries only).
-// This map is division tags only, keyed by email. Staff_Access "Division"
-// column overrides when present and non-blank.
+// Internal Hub access: hardcoded email only. Independent of Staff_Access and BB_ALLOW.
+const HUB_ALLOW_EMAILS = ['enquiries@bbbuildingservices.com.au'];
+
+function isHubEmailAllowed(email) {
+  var n = String(email || '').trim().toLowerCase();
+  if (!n) return false;
+  for (var i = 0; i < HUB_ALLOW_EMAILS.length; i++) {
+    if (String(HUB_ALLOW_EMAILS[i] || '').toLowerCase() === n) return true;
+  }
+  return false;
+}
+
+// Division tags only, keyed by email. Staff_Access "Division" column overrides
+// when present and non-blank. Does not grant Hub page access.
 const HUB_STAFF_DIVISIONS = {
   'enquiries@bbbuildingservices.com.au': ['General', 'Admin/Office']
 };
@@ -353,6 +364,15 @@ export default async function handler(req, res) {
   // Client-supplied libraryGuides are ignored: fetch + Division filter run here.
   if (mode === 'library') {
     const userEmail = String(email || '').trim().toLowerCase();
+    if (!isHubEmailAllowed(userEmail)) {
+      console.log('[ask] library denied email=', userEmail || '(none)');
+      if (action === 'bootstrap') {
+        return res.status(200).json({ empty: true, visibleCount: 0 });
+      }
+      return res.status(200).json({
+        answer: 'BBBS Internal Hub is not available for your account yet.'
+      });
+    }
     let allGuides = [];
     let staffDivisions = {};
     let sheetEmpty = true;

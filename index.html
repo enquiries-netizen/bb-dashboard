@@ -1942,10 +1942,9 @@
     // Tiers: none | staff (P12) | user (P11+P12) | admin (all)
     // ═══════════════════════════════════════════════════════════
     var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12'];
-    // Library is not in ALL_PAGE_IDS: gated by BB AI name allow-list (bb_name), not Staff_Access role.
-    // Phase 1: Lori only. Add Emily / Ben here in one line when ready.
-    // Division/Role Tag filtering for guides is server-side in /api/ask.js (not here).
-    var LIBRARY_ALLOW = ['Lori'];
+    // Internal Hub gate is independent of Staff_Access and of BB AI's BB_ALLOW list.
+    // Hardcoded email only. Do not add names or other emails here.
+    var LIBRARY_ALLOW_EMAILS = ['enquiries@bbbuildingservices.com.au'];
     var LAST_PAGE_SESSION_KEY = 'bb_last_page';
     var _authUser = null;
     var _accessTier = 'none';
@@ -1958,27 +1957,29 @@
     window._libraryChatHistory = window._libraryChatHistory || [];
     window._libraryHubEmpty = true;
 
-    function isLibraryAllowListed(name) {
-      var n = String(name || '').trim().toLowerCase();
+    function signedInHubEmail() {
+      return (_authUser && _authUser.email)
+        ? String(_authUser.email).trim().toLowerCase()
+        : '';
+    }
+
+    function isLibraryAllowListed(email) {
+      var n = String(email || '').trim().toLowerCase();
       if (!n) return false;
-      for (var i = 0; i < LIBRARY_ALLOW.length; i++) {
-        if (String(LIBRARY_ALLOW[i] || '').toLowerCase() === n) return true;
+      for (var i = 0; i < LIBRARY_ALLOW_EMAILS.length; i++) {
+        if (String(LIBRARY_ALLOW_EMAILS[i] || '').toLowerCase() === n) return true;
       }
       return false;
     }
 
-    /** True when bb_name is on the Library allow-list (Lori for Phase 1). */
+    /** True when the signed-in Google email is the Internal Hub test account. */
     function canAccessLibrary() {
-      try {
-        return isLibraryAllowListed(localStorage.getItem('bb_name'));
-      } catch (e) {
-        return false;
-      }
+      return isLibraryAllowListed(signedInHubEmail());
     }
 
     /**
-     * Nav + route: Library button/page only when bb_name is on LIBRARY_ALLOW (Lori for Phase 1).
-     * Identify via Ask BB or the on-page name step after a prior Lori session.
+     * Nav + route: Internal Hub button/page only for the hardcoded Hub email.
+     * Independent of Staff_Access roles and of BB AI's first-name allow-list.
      */
     function canSeeLibraryNav() {
       return canAccessLibrary();
@@ -21441,14 +21442,16 @@
     }
 
     function refreshLibraryPanel() {
+      if (!canAccessLibrary()) {
+        var savedDenied = '';
+        try { savedDenied = localStorage.getItem('bb_name') || ''; } catch (eD) { savedDenied = ''; }
+        libShowDenied(savedDenied);
+        return;
+      }
       var saved = '';
       try { saved = localStorage.getItem('bb_name') || ''; } catch (e) { saved = ''; }
       if (!saved) {
         libShowNameStep();
-        return;
-      }
-      if (!isLibraryAllowListed(saved)) {
-        libShowDenied(saved);
         return;
       }
       libShowAskStep(saved);
@@ -21480,7 +21483,7 @@
       try { localStorage.setItem('bb_name', matched); } catch (e2) { /* private mode */ }
       if (typeof refreshBbPanel === 'function') refreshBbPanel();
       refreshLibraryAccess();
-      if (isLibraryAllowListed(matched)) {
+      if (canAccessLibrary()) {
         libClearMessages();
         libShowAskStep(matched);
       } else {
