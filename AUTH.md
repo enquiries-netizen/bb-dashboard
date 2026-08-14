@@ -58,4 +58,11 @@ The same Google Sheets API key / sheet ID as other tabs loads `Staff_Access`. Th
 
 ## What was removed
 
-Temporary shared pass `CONFIG.P12_STAFF_GATE` and session unlock `bb_p12_staff_unlock` are gone. Auth is Google + Staff_Access only.
+## 4. Internal Hub server token (optional Admin SDK)
+
+Hub `/api/ask` `mode: library` verifies the Firebase ID token from `Authorization: Bearer`.
+
+- Preferred: Vercel env **`FIREBASE_SERVICE_ACCOUNT`** = the full service account JSON (one line). Used by `firebase-admin` `verifyIdToken`. Do not commit this file.
+- If that env is not set, the server still verifies the token with Google's public Secure Token certs for project `bb-dashboard-authentication`. Client-posted `email` is ignored either way.
+
+Firebase Console → Project settings → Service accounts → Generate new private key. Paste JSON into Vercel → Project → Settings → Environment Variables → `FIREBASE_SERVICE_ACCOUNT`.

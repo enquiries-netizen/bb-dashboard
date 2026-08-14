@@ -21535,6 +21535,21 @@
       }
     }
 
+    function getHubIdToken() {
+      try {
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+          return firebase.auth().currentUser.getIdToken();
+        }
+      } catch (e) { /* ignore */ }
+      return Promise.resolve('');
+    }
+
+    function hubAskHeaders(token) {
+      var h = { 'Content-Type': 'application/json' };
+      if (token) h.Authorization = 'Bearer ' + token;
+      return h;
+    }
+
     function askLibrary(speak) {
       if (!canAccessLibrary()) {
         refreshLibraryPanel();
@@ -21545,7 +21560,6 @@
       if (!q) return;
       var name = '';
       try { name = localStorage.getItem('bb_name') || ''; } catch (e) { name = ''; }
-      var email = (_authUser && _authUser.email) ? String(_authUser.email).trim() : '';
 
       // Client-side empty-state: no API call needed when the sheet has no guides.
       if (window._libraryHubEmpty) {
@@ -21563,16 +21577,17 @@
 
       var history = (window._libraryChatHistory || []).slice(-16);
 
-      fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'library',
-          question: q,
-          name: name,
-          email: email,
-          conversationHistory: history
-        })
+      getHubIdToken().then(function(token) {
+        return fetch('/api/ask', {
+          method: 'POST',
+          headers: hubAskHeaders(token),
+          body: JSON.stringify({
+            mode: 'library',
+            question: q,
+            name: name,
+            conversationHistory: history
+          })
+        });
       })
       .then(function(r) { return r.json(); })
       .then(function(d) {
@@ -21605,14 +21620,13 @@
       try {
         var name = '';
         try { name = localStorage.getItem('bb_name') || ''; } catch (eN) { name = ''; }
-        var email = (_authUser && _authUser.email) ? String(_authUser.email).trim() : '';
+        var token = await getHubIdToken();
         var boot = await fetch('/api/ask', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: hubAskHeaders(token),
           body: JSON.stringify({
             mode: 'library',
             action: 'bootstrap',
-            email: email,
             name: name
           })
         }).then(function(r) { return r.json(); }).catch(function() {

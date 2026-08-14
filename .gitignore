@@ -1,0 +1,5 @@
+node_modules/
+.vercel
+*.pem
+*-firebase-adminsdk-*.json
+serviceAccount*.json

@@ -1,5 +1,10 @@
-﻿const SHEET_ID =
+﻿import { createVerify } from 'node:crypto';
+
+const SHEET_ID =
   process.env.SHEET_ID || '17gNgYCC2rwAKGHtuhaApxeCa-6qxyI0gBB71ifciNv8';
+
+const FIREBASE_PROJECT_ID =
+  process.env.FIREBASE_PROJECT_ID || 'bb-dashboard-authentication';
 
 // Internal Hub access: hardcoded email only. Independent of Staff_Access and BB_ALLOW.
 const HUB_ALLOW_EMAILS = ['enquiries@bbbuildingservices.com.au'];
@@ -11,6 +16,98 @@ function isHubEmailAllowed(email) {
     if (String(HUB_ALLOW_EMAILS[i] || '').toLowerCase() === n) return true;
   }
   return false;
+}
+
+function parseBearerToken(authHeader) {
+  var m = String(authHeader || '').match(/^Bearer\s+(\S+)/i);
+  return m ? m[1].trim() : '';
+}
+
+function b64urlToBuffer(str) {
+  var s = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  return Buffer.from(s, 'base64');
+}
+
+var _secureTokenCerts = { at: 0, certs: null };
+
+async function getSecureTokenCerts() {
+  var now = Date.now();
+  if (_secureTokenCerts.certs && now - _secureTokenCerts.at < 50 * 60 * 1000) {
+    return _secureTokenCerts.certs;
+  }
+  var r = await fetch(
+    'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
+  );
+  if (!r.ok) throw new Error('securetoken certs HTTP ' + r.status);
+  var certs = await r.json();
+  _secureTokenCerts = { at: now, certs: certs };
+  return certs;
+}
+
+async function verifyFirebaseIdTokenWithCerts(token) {
+  var parts = String(token || '').split('.');
+  if (parts.length !== 3) return null;
+  var header;
+  var payload;
+  try {
+    header = JSON.parse(b64urlToBuffer(parts[0]).toString('utf8'));
+    payload = JSON.parse(b64urlToBuffer(parts[1]).toString('utf8'));
+  } catch (e) {
+    return null;
+  }
+  if (!header || header.alg !== 'RS256' || !header.kid) return null;
+  var certs = await getSecureTokenCerts();
+  var pem = certs[header.kid];
+  if (!pem) return null;
+  var verifier = createVerify('RSA-SHA256');
+  verifier.update(parts[0] + '.' + parts[1]);
+  verifier.end();
+  if (!verifier.verify(pem, b64urlToBuffer(parts[2]))) return null;
+  var now = Math.floor(Date.now() / 1000);
+  if (!payload.exp || payload.exp < now) return null;
+  if (payload.aud !== FIREBASE_PROJECT_ID) return null;
+  if (payload.iss !== 'https://securetoken.google.com/' + FIREBASE_PROJECT_ID) return null;
+  if (!payload.sub) return null;
+  return payload;
+}
+
+async function verifyHubIdToken(authHeader) {
+  var token = parseBearerToken(authHeader);
+  if (!token) return null;
+  var saRaw = process.env.FIREBASE_SERVICE_ACCOUNT || '';
+  if (saRaw) {
+    try {
+      var adminMod = await import('firebase-admin');
+      var admin = adminMod.default || adminMod;
+      if (!admin.apps.length) {
+        var cred = JSON.parse(saRaw);
+        admin.initializeApp({
+          credential: admin.credential.cert(cred),
+          projectId: FIREBASE_PROJECT_ID
+        });
+      }
+      return await admin.auth().verifyIdToken(token);
+    } catch (e) {
+      console.warn('[ask] firebase-admin verifyIdToken failed', e && e.message);
+      return null;
+    }
+  }
+  try {
+    return await verifyFirebaseIdTokenWithCerts(token);
+  } catch (e2) {
+    console.warn('[ask] Firebase ID token cert verify failed', e2 && e2.message);
+    return null;
+  }
+}
+
+function hubLibraryDenied(res, action) {
+  if (action === 'bootstrap') {
+    return res.status(200).json({ empty: true, visibleCount: 0 });
+  }
+  return res.status(200).json({
+    answer: 'BBBS Internal Hub is not available for your account yet.'
+  });
 }
 
 // Division tags only, keyed by email. Staff_Access "Division" column overrides
@@ -219,7 +316,7 @@ function getVisibleGuides(currentUser, allGuides, staffDivisions) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -363,15 +460,22 @@ export default async function handler(req, res) {
   // API mode key stays "library"; page route is internal-hub.
   // Client-supplied libraryGuides are ignored: fetch + Division filter run here.
   if (mode === 'library') {
-    const userEmail = String(email || '').trim().toLowerCase();
-    if (!isHubEmailAllowed(userEmail)) {
-      console.log('[ask] library denied email=', userEmail || '(none)');
-      if (action === 'bootstrap') {
-        return res.status(200).json({ empty: true, visibleCount: 0 });
-      }
-      return res.status(200).json({
-        answer: 'BBBS Internal Hub is not available for your account yet.'
-      });
+    const authHeader =
+      (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
+    let decoded = null;
+    try {
+      decoded = await verifyHubIdToken(authHeader);
+    } catch (tokErr) {
+      console.warn('[ask] library token verify error', tokErr && tokErr.message);
+      decoded = null;
+    }
+    const userEmail =
+      decoded && decoded.email ? String(decoded.email).trim().toLowerCase() : '';
+    // Ignore client-posted email; only the verified Firebase token counts.
+    void email;
+    if (!userEmail || !isHubEmailAllowed(userEmail)) {
+      console.log('[ask] library denied email=', userEmail || '(none)', 'token=', decoded ? 'ok' : 'missing/invalid');
+      return hubLibraryDenied(res, action);
     }
     let allGuides = [];
     let staffDivisions = {};
@@ -775,4 +879,4 @@ export default async function handler(req, res) {
   return res.status(200).json({ answer: stripEmDashes(answer) });
 }
 
-export { getVisibleGuides, buildStaffDivisions, normalizeLibraryGuides, fetchSheetValues };
+export { getVisibleGuides, buildStaffDivisions, normalizeLibraryGuides, fetchSheetValues, verifyHubIdToken, isHubEmailAllowed };
