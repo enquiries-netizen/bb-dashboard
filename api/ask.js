@@ -318,6 +318,114 @@ function getVisibleGuides(currentUser, allGuides, staffDivisions) {
   });
 }
 
+function libraryJsonFormatRules() {
+  return (
+    ' RESPONSE FORMAT (mandatory): Reply with a single JSON object only. No markdown fences. No extra text. Shape: ' +
+    '{"answer":"plain text for the user","source":{"guideId":"exact Guide ID","title":"exact Title"},"confidence":{"label":"High"}} ' +
+    'Set source to null when no guide matches, or when more than one guide is needed. Never invent a Guide ID or Title. ' +
+    'confidence.label must be High, Medium, or Low: your own rough estimate of how directly the matched guide answers the question. ' +
+    'This is not a calculated retrieval score. Use Low when source is null. ' +
+    'Never use em dashes in answer text, use commas or colons instead.'
+  );
+}
+
+function parseLibraryStructuredAnswer(raw) {
+  var text = String(raw || '').trim();
+  var fallback = { answer: text, source: null, confidenceLabel: 'Low' };
+  if (!text) return { answer: '', source: null, confidenceLabel: 'Low' };
+  var candidate = text;
+  var fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) candidate = fence[1].trim();
+  var start = candidate.indexOf('{');
+  var end = candidate.lastIndexOf('}');
+  if (start < 0 || end <= start) return fallback;
+  try {
+    var obj = JSON.parse(candidate.slice(start, end + 1));
+    if (!obj || typeof obj !== 'object') return fallback;
+    var answer = obj.answer != null ? String(obj.answer) : '';
+    var source = obj.source;
+    if (Array.isArray(source)) {
+      source = source.length === 1 ? source[0] : null;
+    } else if (!source || typeof source !== 'object') {
+      source = null;
+    }
+    var conf = obj.confidence;
+    var label = 'Low';
+    if (typeof conf === 'string') label = conf;
+    else if (conf && typeof conf === 'object' && conf.label != null) label = String(conf.label);
+    else if (obj.confidenceLabel != null) label = String(obj.confidenceLabel);
+    return {
+      answer: answer || text,
+      source: source,
+      confidenceLabel: label
+    };
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function normalizeConfidenceLabel(raw) {
+  var s = String(raw || '').trim().toLowerCase();
+  var pct = parseFloat(s.replace('%', ''));
+  if (!isNaN(pct) && /[0-9]/.test(s)) {
+    if (pct >= 75) return 'High';
+    if (pct >= 40) return 'Medium';
+    return 'Low';
+  }
+  if (s.indexOf('high') !== -1) return 'High';
+  if (s.indexOf('med') !== -1) return 'Medium';
+  if (s.indexOf('low') !== -1) return 'Low';
+  return 'Low';
+}
+
+function resolveLibrarySource(claimed, guides) {
+  if (!claimed || typeof claimed !== 'object' || !guides || !guides.length) return null;
+  var id = String(claimed.guideId || claimed.guide_id || claimed.id || '').trim().toLowerCase();
+  var title = String(claimed.title || '').trim().toLowerCase();
+  var byId = [];
+  var byTitle = [];
+  guides.forEach(function (g) {
+    var gid = String(g.guideId || '').trim().toLowerCase();
+    var gt = String(g.title || '').trim().toLowerCase();
+    if (id && gid && gid === id) byId.push(g);
+    if (title && gt && gt === title) byTitle.push(g);
+  });
+  if (byId.length === 1) {
+    return { guideId: byId[0].guideId || '', title: byId[0].title || '' };
+  }
+  if (!id && byTitle.length === 1) {
+    return { guideId: byTitle[0].guideId || '', title: byTitle[0].title || '' };
+  }
+  return null;
+}
+
+function citationLabelFor(source) {
+  if (!source) return 'No guide found';
+  if (source.title) return source.title;
+  if (source.guideId) return source.guideId;
+  return 'No guide found';
+}
+
+function libraryMetaPayload(answer, claimedSource, confidenceRaw, guides) {
+  var matched = resolveLibrarySource(claimedSource, guides);
+  var confLabel = normalizeConfidenceLabel(confidenceRaw);
+  if (!matched) confLabel = 'Low';
+  return {
+    answer: stripEmDashesLib(answer),
+    source: matched,
+    citationLabel: citationLabelFor(matched),
+    confidence: {
+      label: confLabel,
+      estimated: true,
+      note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+    }
+  };
+}
+
+function stripEmDashesLib(text) {
+  return String(text || '').replace(/\u2014/g, ',').replace(/\u2013/g, '-');
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -545,6 +653,7 @@ export default async function handler(req, res) {
         '"Internal Hub content is still being added, check back soon." ' +
         'Do not answer from general knowledge. Do not invent guides. ' +
         'Never use em dashes in your answers, use commas or colons instead.' +
+        libraryJsonFormatRules() +
         historyBlock +
         '\n\nCurrent question: ' +
         question;
@@ -558,6 +667,7 @@ export default async function handler(req, res) {
         'Say plainly that no guide was found for that topic. ' +
         'Do not answer from general knowledge. Do not invent guides. ' +
         'Never use em dashes in your answers, use commas or colons instead.' +
+        libraryJsonFormatRules() +
         historyBlock +
         '\n\nCurrent question: ' +
         question;
@@ -578,7 +688,9 @@ export default async function handler(req, res) {
         '5) Prefer clear, practical language. Never use em dashes; use commas or colons instead. ' +
         '6) If asked who you are, say you are BB, the BBBS Internal Hub assistant. ' +
         'Do not volunteer developer or ownership details unless specifically asked; ' +
-        'if asked who built this app, say Lori is your developer and the app is owned by BB Building Services.' +
+        'if asked who built this app, say Lori is your developer and the app is owned by BB Building Services. ' +
+        '7) Use CONVERSATION SO FAR only to interpret follow-up questions. It does not allow answers from general knowledge.' +
+        libraryJsonFormatRules() +
         historyBlock +
         '\n\nINTERNAL HUB GUIDES (sole source of truth):\n' +
         guidesPayload +
@@ -586,7 +698,10 @@ export default async function handler(req, res) {
         question;
     }
 
-    const libResult = await callGemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+    const libResult = await callGemini({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' }
+    });
     const dataLib = libResult.data;
     const extractedLib = extractAnswer(dataLib);
     let answerLib = extractedLib.answer;
@@ -594,8 +709,12 @@ export default async function handler(req, res) {
       answerLib =
         'BB error: ' +
         (dataLib.error ? dataLib.error.message : JSON.stringify(dataLib).slice(0, 300));
+      return res.status(200).json(libraryMetaPayload(answerLib, null, 'Low', guides));
     }
-    return res.status(200).json({ answer: stripEmDashes(answerLib) });
+    const parsedLib = parseLibraryStructuredAnswer(answerLib);
+    return res.status(200).json(
+      libraryMetaPayload(parsedLib.answer, parsedLib.source, parsedLib.confidenceLabel, guides)
+    );
   }
 
   // ─── Cross-page tools. Client executes (sheets in browser); server only orchestrates. ───

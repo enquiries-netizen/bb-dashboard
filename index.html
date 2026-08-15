@@ -1367,14 +1367,26 @@
               </div>
 
               <div id="lib-ask-step" class="lib-ask-step" hidden>
-                <p id="lib-greeting" class="lib-greeting"></p>
-                <a id="lib-switch-user" href="#" class="lib-switch-user">Not you? Switch user</a>
+                <div class="lib-ask-top">
+                  <p id="lib-greeting" class="lib-greeting"></p>
+                  <a id="lib-switch-user" href="#" class="lib-switch-user">Not you? Switch user</a>
+                  <div id="lib-chips" class="lib-chips" role="group" aria-label="Suggested questions">
+                    <button type="button" class="lib-chip" data-lib-fill="How do I submit a site diary?">Submit site diary</button>
+                    <button type="button" class="lib-chip" data-lib-fill="What PPE do I need on site?">PPE on site</button>
+                    <button type="button" class="lib-chip" data-lib-fill="How do I report an incident?">Report an incident</button>
+                    <button type="button" class="lib-chip" data-lib-fill="How do I get IT support?">IT support</button>
+                  </div>
+                </div>
                 <div id="lib-messages" class="lib-messages" aria-live="polite"></div>
                 <div class="lib-compose">
-                  <textarea id="lib-q" rows="2" placeholder="e.g. How do I submit a site diary?"></textarea>
-                  <div class="lib-compose-actions">
-                    <button type="button" id="lib-ask-btn" class="lib-btn lib-btn-primary">Ask</button>
-                    <button type="button" id="lib-ask-speak-btn" class="lib-btn lib-btn-secondary">Ask &amp; Speak</button>
+                  <p id="lib-status" class="lib-status">Ask about an Internal Hub guide</p>
+                  <div class="lib-compose-row">
+                    <textarea id="lib-q" rows="1" placeholder="Ask about a company how-to guide"></textarea>
+                    <button type="button" id="lib-ask-btn" class="lib-send" aria-label="Send">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 12h14M13 6l7 6-7 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -21340,14 +21352,175 @@
       if (onLibrary && typeof refreshLibraryPanel === 'function') refreshLibraryPanel();
     }
 
-    function libAppendMessage(role, text) {
+    function libScrollMessages() {
+      var box = document.getElementById('lib-messages');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function libSetStatus(text) {
+      var el = document.getElementById('lib-status');
+      if (el) el.textContent = text || 'Ask about an Internal Hub guide';
+    }
+
+    function libSetBusy(busy) {
+      var btn = document.getElementById('lib-ask-btn');
+      var q = document.getElementById('lib-q');
+      if (btn) btn.disabled = !!busy;
+      if (q) q.disabled = !!busy;
+      libSetStatus(
+        busy
+          ? 'Searching Internal Hub guides with Gemini Pro'
+          : 'Ask about an Internal Hub guide'
+      );
+    }
+
+    function libFillChip(text) {
+      var q = document.getElementById('lib-q');
+      if (!q || q.disabled) return;
+      q.value = text;
+      q.focus();
+    }
+
+    function libAppendMessage(role, text, meta) {
       var box = document.getElementById('lib-messages');
       if (!box || !text) return;
-      var el = document.createElement('div');
-      el.className = 'lib-msg lib-msg--' + (role === 'user' ? 'user' : 'assistant');
-      el.textContent = text;
-      box.appendChild(el);
-      box.scrollTop = box.scrollHeight;
+      if (role === 'user') {
+        var turnU = document.createElement('div');
+        turnU.className = 'lib-turn lib-turn--user';
+        var bubbleU = document.createElement('div');
+        bubbleU.className = 'lib-msg lib-msg--user';
+        bubbleU.textContent = text;
+        turnU.appendChild(bubbleU);
+        box.appendChild(turnU);
+        libScrollMessages();
+        return;
+      }
+      libAppendAssistant(text, meta || null);
+    }
+
+    function libThumbSvg(dir) {
+      var up = dir === 'up';
+      return (
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+        '<path d="' +
+        (up
+          ? 'M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'
+          : 'M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3') +
+        '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>'
+      );
+    }
+
+    function libBindFeedback(row) {
+      if (!row) return;
+      var buttons = row.querySelectorAll('.lib-fb');
+      buttons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var wasOn = btn.classList.contains('is-on');
+          buttons.forEach(function(b) {
+            b.classList.remove('is-on');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          if (!wasOn) {
+            btn.classList.add('is-on');
+            btn.setAttribute('aria-pressed', 'true');
+          }
+        });
+      });
+    }
+
+    function libAppendAssistant(text, meta) {
+      var box = document.getElementById('lib-messages');
+      if (!box || !text) return;
+      var turn = document.createElement('div');
+      turn.className = 'lib-turn lib-turn--assistant';
+      if (meta && meta.pending) turn.setAttribute('data-lib-pending', '1');
+      var bubble = document.createElement('div');
+      bubble.className = 'lib-msg lib-msg--assistant';
+      bubble.textContent = text;
+      turn.appendChild(bubble);
+
+      if (meta && !meta.pending && !meta.intro) {
+        var citation = meta.citationLabel || 'No guide found';
+        var confLabel = (meta.confidence && meta.confidence.label) ? meta.confidence.label : 'Low';
+        var confClass = 'lib-conf lib-conf--' + String(confLabel).toLowerCase();
+        var metaRow = document.createElement('div');
+        metaRow.className = 'lib-msg-meta';
+
+        var cite = document.createElement('span');
+        cite.className = 'lib-cite';
+        cite.textContent = citation;
+        metaRow.appendChild(cite);
+
+        var conf = document.createElement('span');
+        conf.className = confClass;
+        conf.textContent = confLabel + ' · estimated';
+        conf.title = (meta.confidence && meta.confidence.note)
+          ? meta.confidence.note
+          : 'Gemini self-estimate, not a retrieval score';
+        metaRow.appendChild(conf);
+
+        var fb = document.createElement('div');
+        fb.className = 'lib-fb-row';
+        var up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'lib-fb';
+        up.setAttribute('aria-label', 'Helpful');
+        up.setAttribute('aria-pressed', 'false');
+        up.innerHTML = libThumbSvg('up');
+        var down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'lib-fb';
+        down.setAttribute('aria-label', 'Not helpful');
+        down.setAttribute('aria-pressed', 'false');
+        down.innerHTML = libThumbSvg('down');
+        fb.appendChild(up);
+        fb.appendChild(down);
+        metaRow.appendChild(fb);
+        libBindFeedback(fb);
+
+        var jsonBtn = document.createElement('button');
+        jsonBtn.type = 'button';
+        jsonBtn.className = 'lib-json-toggle';
+        jsonBtn.textContent = 'View JSON payload';
+        jsonBtn.setAttribute('aria-expanded', 'false');
+        metaRow.appendChild(jsonBtn);
+
+        var pre = document.createElement('pre');
+        pre.className = 'lib-json';
+        pre.hidden = true;
+        pre.textContent = JSON.stringify({
+          source: meta.source || null,
+          citationLabel: citation,
+          confidence: meta.confidence || {
+            label: confLabel,
+            estimated: true,
+            note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+          }
+        }, null, 2);
+        jsonBtn.addEventListener('click', function() {
+          var open = pre.hidden;
+          pre.hidden = !open;
+          jsonBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          jsonBtn.textContent = open ? 'Hide JSON payload' : 'View JSON payload';
+          libScrollMessages();
+        });
+
+        turn.appendChild(metaRow);
+        turn.appendChild(pre);
+      }
+
+      box.appendChild(turn);
+      libScrollMessages();
+      return turn;
+    }
+
+    function libReplacePendingAssistant(text, meta) {
+      var box = document.getElementById('lib-messages');
+      if (!box) return;
+      var pending = box.querySelector('[data-lib-pending="1"]');
+      if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
+      libAppendAssistant(text, meta);
     }
 
     function libClearMessages() {
@@ -21399,11 +21572,11 @@
       if (sw) sw.textContent = 'Not ' + name + '? Switch user';
       if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
         if (window._libraryHubEmpty) {
-          libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
+          libAppendAssistant(LIBRARY_EMPTY_MSG, { intro: true });
         } else {
-          libAppendMessage(
-            'assistant',
-            'I answer from Internal Hub guides only. If nothing matches, I will say no guide was found.'
+          libAppendAssistant(
+            'I answer from Internal Hub guides only. If nothing matches, I will say no guide was found.',
+            { intro: true }
           );
         }
       }
@@ -21485,9 +21658,15 @@
         });
       }
       var askBtn = document.getElementById('lib-ask-btn');
-      if (askBtn) askBtn.addEventListener('click', function() { askLibrary(false); });
-      var speakBtn = document.getElementById('lib-ask-speak-btn');
-      if (speakBtn) speakBtn.addEventListener('click', function() { askLibrary(true); });
+      if (askBtn) askBtn.addEventListener('click', function() { askLibrary(); });
+      var chips = document.getElementById('lib-chips');
+      if (chips) {
+        chips.addEventListener('click', function(ev) {
+          var t = ev.target && ev.target.closest ? ev.target.closest('[data-lib-fill]') : null;
+          if (!t) return;
+          libFillChip(t.getAttribute('data-lib-fill') || '');
+        });
+      }
       var sw = document.getElementById('lib-switch-user');
       if (sw) sw.addEventListener('click', switchLibraryUser);
       var sw2 = document.getElementById('lib-switch-user-denied');
@@ -21497,7 +21676,7 @@
         q.addEventListener('keydown', function(e) {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            askLibrary(false);
+            askLibrary();
           }
         });
       }
@@ -21518,7 +21697,7 @@
       return h;
     }
 
-    function askLibrary(speak) {
+    function askLibrary() {
       if (!canAccessLibrary()) {
         refreshLibraryPanel();
         return;
@@ -21532,7 +21711,16 @@
       // Client-side empty-state: no API call needed when the sheet has no guides.
       if (window._libraryHubEmpty) {
         libAppendMessage('user', q);
-        libAppendMessage('assistant', LIBRARY_EMPTY_MSG);
+        libAppendAssistant(LIBRARY_EMPTY_MSG, {
+          intro: false,
+          source: null,
+          citationLabel: 'No guide found',
+          confidence: {
+            label: 'Low',
+            estimated: true,
+            note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+          }
+        });
         if (qEl) qEl.value = '';
         window._libraryChatHistory.push({ role: 'user', text: q });
         window._libraryChatHistory.push({ role: 'assistant', text: LIBRARY_EMPTY_MSG });
@@ -21540,8 +21728,9 @@
       }
 
       libAppendMessage('user', q);
-      libAppendMessage('assistant', 'BB is thinking...');
+      libAppendAssistant('BB is thinking...', { pending: true });
       if (qEl) qEl.value = '';
+      libSetBusy(true);
 
       var history = (window._libraryChatHistory || []).slice(-16);
 
@@ -21560,22 +21749,38 @@
       .then(function(r) { return r.json(); })
       .then(function(d) {
         var answer = d.answer || d.error || 'No answer.';
-        var box = document.getElementById('lib-messages');
-        if (box && box.lastChild) box.removeChild(box.lastChild);
-        libAppendMessage('assistant', answer);
+        var meta = {
+          source: d.source || null,
+          citationLabel: d.citationLabel || 'No guide found',
+          confidence: d.confidence || {
+            label: 'Low',
+            estimated: true,
+            note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+          }
+        };
+        libReplacePendingAssistant(answer, meta);
         window._libraryChatHistory.push({ role: 'user', text: q });
         window._libraryChatHistory.push({ role: 'assistant', text: answer });
         if (window._libraryChatHistory.length > 16) {
           window._libraryChatHistory = window._libraryChatHistory.slice(-16);
         }
-        if (speak && d.answer && typeof speakWithFallback === 'function') {
-          speakWithFallback(d.answer);
-        }
       })
       .catch(function(err) {
-        var box = document.getElementById('lib-messages');
-        if (box && box.lastChild) box.removeChild(box.lastChild);
-        libAppendMessage('assistant', 'Error: ' + (err && err.message ? err.message : 'request failed'));
+        libReplacePendingAssistant(
+          'Error: ' + (err && err.message ? err.message : 'request failed'),
+          {
+            source: null,
+            citationLabel: 'No guide found',
+            confidence: {
+              label: 'Low',
+              estimated: true,
+              note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+            }
+          }
+        );
+      })
+      .then(function() {
+        libSetBusy(false);
       });
     }
 
