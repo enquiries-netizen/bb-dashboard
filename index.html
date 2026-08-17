@@ -1636,7 +1636,8 @@
         <!--
           Source: Tenders tab (manual, Emily). Admin tier only (same as financial pages).
           Quote vs final Total (Inc GST) disambiguated in fetchTendersParsed.
-          Optional Month / Monthly Target reference rows (cols O/P).
+          Monthly submitted-value target from Targets ALL/ALL row
+          (Date + Monthly Tender Target/Tender Submissions ($)).
         -->
         <section id="page-p13" class="page">
           <div class="p13-layout">
@@ -1646,7 +1647,7 @@
                 <h1 class="page-title">Tender Pipeline</h1>
               </div>
               <p class="p13-scope-note" id="p13-scope-note">
-                Manual Tenders tab · submissions, decisions, and monthly submission targets
+                Manual Tenders tab · submissions and decisions · monthly submitted-value target from Targets (ALL/ALL)
               </p>
               <p class="p13-data-quality" id="p13-data-quality" aria-live="polite">Loading...</p>
               <p class="p13-lodge-gap" id="p13-lodge-gap" hidden></p>
@@ -1695,10 +1696,10 @@
             </div>
 
             <div class="section-card p13-panel p13-trend-panel">
-              <div class="section-title">Submissions vs Monthly Target</div>
-              <p class="p13-section-hint">Last 6 months · bars = submissions · line = target when set</p>
+              <div class="section-title">Submitted Value vs Monthly Target</div>
+              <p class="p13-section-hint">Last 6 months · bars = quoted value lodged · line = ALL/ALL target when set</p>
               <div class="p13-chart-wrap">
-                <canvas id="chart-p13-trend" aria-label="Tender submissions versus monthly target"></canvas>
+                <canvas id="chart-p13-trend" aria-label="Submitted tender value versus monthly target"></canvas>
               </div>
               <p class="p13-trend-footnote" id="p13-trend-footnote" hidden></p>
             </div>
@@ -1808,7 +1809,7 @@
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
       P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.',
-      P13: 'Tender Pipeline (Admin). Source: Tenders tab (manual). KPIs: monthly opportunity target vs submissions (X of Y), submissions this month, conversion rate of decided tenders only, pending decision count, win rate by value, pipeline value pending. Table of all tenders with status Won/Lost/Pending. Trend: submissions vs monthly target last 6 months. Won with blank/zero Final Price falls back to quoted Total (Inc GST) and is flagged in data quality. Never invent numbers. Answer only from live P13 page data.'
+      P13: 'Tender Pipeline (Admin). Source: Tenders tab (manual). KPIs: monthly submitted-value target vs actual ($X of $Y from Targets ALL/ALL, ignore brand filter), submissions this month (count), conversion rate of decided tenders only, pending decision count, win rate by value, pipeline value pending. Table of all tenders with status Won/Lost/Pending. Trend: submitted quoted value vs monthly $ target last 6 months. Won with blank/zero Final Price falls back to quoted Total (Inc GST) and is flagged in data quality. Never invent numbers. Answer only from live P13 page data.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -18644,7 +18645,8 @@
     // P13 - TENDER PIPELINE (Admin)
     // Source: Tenders tab (manual, Emily). No Make.com.
     // Quote vs final GST / Total (Inc GST) via fetchTendersParsed.
-    // Optional Month / Monthly Target reference rows (cols O/P).
+    // Monthly submitted-value target: Targets tab ALL/ALL row,
+    // Date + Monthly Tender Target/Tender Submissions ($). Company-wide; ignore brand filter.
     // ═══════════════════════════════════════════════════════════════
     var _p13Sort = { key: 'lodge', dir: 'desc' };
     var _p13Rows = [];
@@ -18725,6 +18727,61 @@
       return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
     }
 
+    function p13IsTargetsAllAll(r) {
+      var brand = String(col(r, 'Brand', 'brand') || '').trim().toUpperCase();
+      var div = String(col(r, 'Division', 'division') || '').trim().toUpperCase();
+      return brand === 'ALL' && div === 'ALL';
+    }
+
+    function p13TargetsMonthKey(r) {
+      var d = parseFlexibleDate(col(r, 'Date', 'date') || '');
+      var key = p13MonthKeyFromDate(d);
+      if (key) return key;
+      var monthRaw = String(col(r, 'Month', 'month') || '').trim();
+      var yearRaw = String(col(r, 'Year', 'year') || '').trim();
+      var parsed = p13ParseMonthLabel(monthRaw + (yearRaw ? (' ' + yearRaw) : ''));
+      return parsed ? parsed.key : null;
+    }
+
+    /** Company-wide monthly tender $ target from Targets ALL/ALL rows (ignore dashboard brand). */
+    function p13BuildTenderTargetsByMonth(targetRows) {
+      var map = {};
+      (targetRows || []).forEach(function(r) {
+        if (!p13IsTargetsAllAll(r)) return;
+        var key = p13TargetsMonthKey(r);
+        if (!key) return;
+        if (map[key] != null) return;
+        var raw = rawColByNames(r, [
+          'Monthly Tender Target/Tender Submissions ($)',
+          'Monthly Tender Target/Tender Submissions',
+          'Monthly Tender Target'
+        ]);
+        if (raw === '' || raw == null || !String(raw).trim()) return;
+        var n = parseNum(raw);
+        if (isNaN(n)) return;
+        map[key] = n;
+      });
+      return map;
+    }
+
+    function p13SubmittedValueForMonth(rows, monthKey) {
+      var sum = 0;
+      (rows || []).forEach(function(r) {
+        if (r.lodgeKey !== monthKey) return;
+        if (r.quoted == null) return;
+        sum += r.quoted;
+      });
+      return sum;
+    }
+
+    function p13MoneyTick(v) {
+      var a = Math.abs(v);
+      var sign = v < 0 ? '-' : '';
+      if (a >= 1000000) return sign + '$' + (a / 1000000).toFixed(a >= 10000000 ? 0 : 1) + 'M';
+      if (a >= 1000) return sign + '$' + Math.round(a / 1000) + 'k';
+      return sign + '$' + Math.round(a);
+    }
+
     function p13MonthLabelFromKey(key) {
       var p = String(key || '').split('-');
       if (p.length < 2) return key || '';
@@ -18803,8 +18860,10 @@
           return;
         }
         var tab = (CONFIG.TABS && CONFIG.TABS.TENDERS) ? CONFIG.TABS.TENDERS : 'Tenders';
+        var targetsTab = (CONFIG.TABS && CONFIG.TABS.TARGETS) ? CONFIG.TABS.TARGETS : 'Targets';
         var bundle = await fetchTendersParsed(tab);
-        renderP13(bundle.tenders || [], bundle.targets || []);
+        var targetRows = await fetchSheet(targetsTab).catch(function() { return []; });
+        renderP13(bundle.tenders || [], targetRows || []);
       } catch (err) {
         console.error('P13 load error:', err);
         var detail = (err && err.message) ? String(err.message) : 'Unknown error';
@@ -18829,19 +18888,13 @@
       });
       _p13Rows = rows;
 
-      var targetsByKey = {};
-      (targetRows || []).forEach(function(t) {
-        var parsed = p13ParseMonthLabel(t.Month || t.month || '');
-        if (!parsed) return;
-        var n = parseNum(t['Monthly Target'] != null ? t['Monthly Target'] : t['monthly target']);
-        if (!(n > 0)) return;
-        targetsByKey[parsed.key] = (targetsByKey[parsed.key] || 0) + n;
-      });
+      var targetsByKey = p13BuildTenderTargetsByMonth(targetRows);
 
       var submissionsThisMonth = rows.filter(function(r) {
         return r.submitted === 'Y' && r.lodgeKey === thisKey;
       }).length;
 
+      var submittedValueThisMonth = p13SubmittedValueForMonth(rows, thisKey);
       var monthTarget = targetsByKey[thisKey] != null ? targetsByKey[thisKey] : null;
 
       var wonRows = rows.filter(function(r) { return r.status === 'Won'; });
@@ -18886,17 +18939,20 @@
       }
 
       if (monthTarget != null) {
+        var targetPctSub = monthTarget > 0
+          ? (formatPct((submittedValueThisMonth / monthTarget) * 100) + ' of monthly target · ' + thisLabel)
+          : (thisLabel + ' · submitted-value target from Targets ALL/ALL');
         setP13Kpi(
           'kpi-p13-target',
           'kpi-p13-target-sub',
-          submissionsThisMonth + ' of ' + monthTarget + ' submitted',
-          thisLabel + ' · submission target from Tenders Month/Target rows'
+          formatCurrency(submittedValueThisMonth) + ' of ' + formatCurrency(monthTarget),
+          targetPctSub
         );
       } else {
         setP13Kpi(
           'kpi-p13-target',
           'kpi-p13-target-sub',
-          submissionsThisMonth + ' of - submitted',
+          formatCurrency(submittedValueThisMonth) + ' of -',
           thisLabel + ' · monthly target not set yet'
         );
       }
@@ -19054,8 +19110,8 @@
         var bits = [];
         bits.push(rows.length ? (rows.length + ' tenders') : 'No tender rows yet');
         bits.push(Object.keys(targetsByKey).length
-          ? (Object.keys(targetsByKey).length + ' monthly targets')
-          : 'Monthly targets not filled in yet');
+          ? (Object.keys(targetsByKey).length + ' monthly targets (Targets tab)')
+          : 'Monthly targets not filled in yet (Targets tab)');
         if (fallbackWins.length) {
           bits.push(
             fallbackWins.length + ' won tender' + (fallbackWins.length === 1 ? '' : 's') +
@@ -19075,10 +19131,11 @@
         month: thisLabel,
         kpis: {
           submissionsThisMonth: submissionsThisMonth,
+          submittedValueThisMonth: submittedValueThisMonth,
           monthTarget: monthTarget,
           targetDisplay: monthTarget != null
-            ? (submissionsThisMonth + ' of ' + monthTarget + ' submitted')
-            : (submissionsThisMonth + ' of - submitted'),
+            ? (formatCurrency(submittedValueThisMonth) + ' of ' + formatCurrency(monthTarget))
+            : (formatCurrency(submittedValueThisMonth) + ' of -'),
           conversionRateOfDecided: conversion,
           decidedCount: decidedCount,
           wonCount: wonRows.length,
@@ -19227,23 +19284,21 @@
         keys.push(p13MonthKeyFromDate(d));
       }
 
-      var submissions = keys.map(function(k) {
-        return rows.filter(function(r) {
-          return r.submitted === 'Y' && r.lodgeKey === k;
-        }).length;
+      var submittedValue = keys.map(function(k) {
+        return p13SubmittedValueForMonth(rows, k);
       });
       var targets = keys.map(function(k) {
         return targetsByKey[k] != null ? targetsByKey[k] : null;
       });
       var anyTarget = targets.some(function(v) { return v != null; });
-      var anySub = submissions.some(function(n) { return n > 0; });
+      var anySub = submittedValue.some(function(n) { return n > 0; });
 
       if (foot) {
         if (!anySub && !anyTarget) {
-          foot.textContent = 'No submissions or monthly targets in the last 6 months yet.';
+          foot.textContent = 'No submitted value or monthly targets in the last 6 months yet.';
           foot.removeAttribute('hidden');
         } else if (!anyTarget) {
-          foot.textContent = 'Monthly targets (Month / Monthly Target columns) not filled in yet. Showing submissions only.';
+          foot.textContent = 'Monthly tender targets on the Targets tab are not filled in yet. Showing submitted value only.';
           foot.removeAttribute('hidden');
         } else {
           foot.setAttribute('hidden', '');
@@ -19258,8 +19313,8 @@
 
       var datasets = [{
         type: 'bar',
-        label: 'Submissions',
-        data: submissions,
+        label: 'Submitted value',
+        data: submittedValue,
         backgroundColor: '#374151',
         borderWidth: 0,
         order: 2
@@ -19297,7 +19352,7 @@
               callbacks: {
                 label: function(ctx) {
                   if (ctx.raw == null) return ctx.dataset.label + ': Not set';
-                  return ctx.dataset.label + ': ' + ctx.raw;
+                  return ctx.dataset.label + ': ' + formatCurrency(ctx.raw);
                 }
               }
             }
@@ -19313,7 +19368,7 @@
               ticks: {
                 color: '#6B7280',
                 font: { size: 10 },
-                precision: 0
+                callback: function(v) { return p13MoneyTick(v); }
               },
               grid: { color: 'rgba(226,228,232,0.9)', lineWidth: 0.75 },
               border: { color: '#E2E4E8' }
