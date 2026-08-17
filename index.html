@@ -1794,7 +1794,7 @@
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
-      P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (payroll week Sat-Fri, ending Friday), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
+      P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (payroll week Fri-Thu, ending Thursday), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
@@ -5789,13 +5789,14 @@
 
     // ═══════════════════════════════════════════════════════════════
     // P8 — WEEKLY OVERVIEW (management meeting dashboard)
-    // One Saturday-Friday payroll reporting period for the whole page
-    // (Week Ending = Friday). Week list is generated in code from live
-    // dated events plus Weekly_Summary Week Start / Week End when present;
-    // it is not a direct dump of Weekly_Summary labels. Until that tab
-    // is rebuilt to Sat-Fri, sheet rows may not match dropdown weeks.
-    // Roll-ups from GHL, Quotes, Weekly_Summary, Labour, Capacity,
-    // schedule, Xero, variations - never invent numbers.
+    // One Friday-Thursday payroll reporting period for the whole page
+    // (Week Ending = Thursday), same convention as P6 attendance / P12
+    // (e.g. 7 Aug-13 Aug 2026 is W32). Week list is generated in code
+    // from live dated events plus Weekly_Summary Week Start / Week End
+    // when present; Fri-Thu calc fills gaps. Prefer sheet dates over
+    // inventing a third week system. Roll-ups from GHL, Quotes,
+    // Weekly_Summary, Labour, Capacity, schedule, Xero, variations -
+    // never invent numbers.
     // ═══════════════════════════════════════════════════════════════
     var _p8Cache = null;
     var _p8SelectedWeekKey = null;
@@ -5849,7 +5850,7 @@
 
     // ISO Monday for YYYY-Www. Kept as ISO (Mon-Sun planning week) because
     // P6 Capacity and P12 payroll helpers fall back to this. P8 date ranges
-    // use p8PayrollSaturday / p8PayrollFriday instead.
+    // use p8PayrollFridayStart / p8PayrollThursday instead.
     function p8WeekMonday(year, week) {
       if (typeof p6IsoWeekMonday === 'function') return p6IsoWeekMonday(year, week);
       var jan4 = new Date(year, 0, 4);
@@ -5862,7 +5863,7 @@
       return mon;
     }
 
-    // ISO Sunday of YYYY-Www. Unused by P8 labels (those use p8PayrollFriday).
+    // ISO Sunday of YYYY-Www. Unused by P8 labels (those use p8PayrollThursday).
     function p8WeekSunday(year, week) {
       var mon = p8WeekMonday(year, week);
       var sun = new Date(mon);
@@ -5871,35 +5872,35 @@
       return sun;
     }
 
-    // P8 payroll week: Saturday through Friday, keyed by the Friday's ISO week.
-    // Example: 2026-W32 -> Sat 1 Aug through Fri 7 Aug 2026.
-    function p8PayrollSaturday(year, week) {
-      var mon = p8WeekMonday(year, week);
-      var sat = new Date(mon);
-      sat.setDate(mon.getDate() - 2);
-      sat.setHours(0, 0, 0, 0);
-      return sat;
-    }
-
-    function p8PayrollFriday(year, week) {
+    // P8 payroll week: Friday through Thursday, keyed by the Friday's ISO week.
+    // Same math as p12WeekLabelFromKey / p6DiscPayrollWeekBounds:
+    // Friday = ISO Monday + 4, Thursday = Friday + 6.
+    // Example: 2026-W32 -> Fri 7 Aug through Thu 13 Aug 2026.
+    function p8PayrollFridayStart(year, week) {
       var mon = p8WeekMonday(year, week);
       var fri = new Date(mon);
       fri.setDate(mon.getDate() + 4);
-      fri.setHours(23, 59, 59, 999);
+      fri.setHours(0, 0, 0, 0);
       return fri;
     }
 
-    /** Payroll week parts from a Date (Sat-Fri, key = ISO week of that Friday). */
+    function p8PayrollThursday(year, week) {
+      var fri = p8PayrollFridayStart(year, week);
+      var thu = new Date(fri);
+      thu.setDate(fri.getDate() + 6);
+      thu.setHours(23, 59, 59, 999);
+      return thu;
+    }
+
+    /** Payroll week parts from a Date (Fri-Thu, key = ISO week of that Friday). */
     function p8PayrollParts(d) {
       if (!d || isNaN(d.getTime())) return null;
       var date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       date.setHours(0, 0, 0, 0);
-      var daysFromSat = (date.getDay() + 1) % 7;
-      var sat = new Date(date);
-      sat.setDate(date.getDate() - daysFromSat);
-      var fri = new Date(sat);
-      fri.setDate(sat.getDate() + 6);
-      return p8IsoParts(fri);
+      var day = date.getDay(); // 0=Sun .. 5=Fri .. 6=Sat
+      var diff = day >= 5 ? 5 - day : -(day + 2);
+      date.setDate(date.getDate() + diff);
+      return p8IsoParts(date);
     }
 
     function p8FmtDayMonth(d) {
@@ -5914,12 +5915,12 @@
 
     function p8PeriodLabel(parts) {
       if (!parts) return 'Period not set';
-      var sat = p8PayrollSaturday(parts.year, parts.week);
-      var fri = p8PayrollFriday(parts.year, parts.week);
-      var range = sat.getMonth() === fri.getMonth()
-        ? sat.getDate() + '-' + p8FmtDayMonthYear(fri)
-        : p8FmtDayMonth(sat) + '-' + p8FmtDayMonthYear(fri);
-      return 'Week ending ' + p8FmtDayMonthYear(fri) + ' · ' + range;
+      var fri = p8PayrollFridayStart(parts.year, parts.week);
+      var thu = p8PayrollThursday(parts.year, parts.week);
+      var range = fri.getMonth() === thu.getMonth()
+        ? fri.getDate() + '-' + p8FmtDayMonthYear(thu)
+        : p8FmtDayMonth(fri) + '-' + p8FmtDayMonthYear(thu);
+      return 'Week ending ' + p8FmtDayMonthYear(thu) + ' · ' + range;
     }
 
     function p8DateInRange(d, start, end) {
@@ -6056,7 +6057,7 @@
     }
 
     // Match Weekly_Summary rows by sheet Week Start / Week End when present
-    // (converted to Sat-Fri payroll keys). Fall back to week-number labels
+    // (converted to Fri-Thu payroll keys). Fall back to week-number labels
     // only when those dates are missing.
     function p8SummaryWeekKey(r) {
       var we = col(r, 'Week Ending', 'Week End', 'week_ending', 'Week Ended');
@@ -6098,9 +6099,9 @@
     function p8PrevWeekKey(key) {
       var p = p8ParseWeekKey(key);
       if (!p) return null;
-      var sat = p8PayrollSaturday(p.year, p.week);
-      sat.setDate(sat.getDate() - 7);
-      var prev = p8PayrollParts(sat);
+      var fri = p8PayrollFridayStart(p.year, p.week);
+      fri.setDate(fri.getDate() - 7);
+      var prev = p8PayrollParts(fri);
       return prev ? prev.key : null;
     }
 
@@ -6197,7 +6198,7 @@
       var defects = brandRows(_p8Cache.defects);
       var labour = typeof p6DedupLabourRows === 'function' ? p6DedupLabourRows(labourRaw) : labourRaw;
 
-      // ── Discover payroll weeks (Sat-Fri) from live dated events ──
+      // ── Discover payroll weeks (Fri-Thu) from live dated events ──
       var weekSet = {};
       function noteDate(ds) {
         var d = parseFlexibleDate(ds);
@@ -6251,8 +6252,8 @@
         sel = { year: cur.year, week: cur.week, key: curKey };
         _p8SelectedWeekKey = sel.key;
       }
-      var weekStart = p8PayrollSaturday(sel.year, sel.week);
-      var weekEnd = p8PayrollFriday(sel.year, sel.week);
+      var weekStart = p8PayrollFridayStart(sel.year, sel.week);
+      var weekEnd = p8PayrollThursday(sel.year, sel.week);
       var mon = p8WeekMonday(sel.year, sel.week); // ISO Monday for Mon-Fri commitments strip only
       var prevKey = p8PrevWeekKey(sel.key);
       var prevParts = p8ParseWeekKey(prevKey);
@@ -6267,7 +6268,7 @@
       var cmpEl = document.getElementById('p8-compare-cue');
       if (cmpEl) {
         cmpEl.textContent = prevParts
-          ? 'Compared to previous week ending ' + p8FmtDayMonthYear(p8PayrollFriday(prevParts.year, prevParts.week))
+          ? 'Compared to previous week ending ' + p8FmtDayMonthYear(p8PayrollThursday(prevParts.year, prevParts.week))
           : 'No previous week in range';
       }
       var updEl = document.getElementById('p8-last-updated');
@@ -6278,13 +6279,13 @@
         }) + ' · auto-refresh every 10 min while open';
       }
 
-      // Week ending select (show Fridays)
+      // Week ending select (show Thursdays)
       var selEl = document.getElementById('p8-week-ending');
       if (selEl) {
         var optsHtml = weekKeys.slice().reverse().map(function(k) {
           var p = p8ParseWeekKey(k);
           if (!p) return '';
-          var end = p8PayrollFriday(p.year, p.week);
+          var end = p8PayrollThursday(p.year, p.week);
           var label = p8FmtDayMonthYear(end) + ' (W' + p.week + ')';
           return '<option value="' + p8Esc(k) + '"' + (k === sel.key ? ' selected' : '') + '>' +
             p8Esc(label) + '</option>';
@@ -6307,8 +6308,8 @@
             summaryPresent: false
           };
         }
-        var wStart = p8PayrollSaturday(p.year, p.week);
-        var wEnd = p8PayrollFriday(p.year, p.week);
+        var wStart = p8PayrollFridayStart(p.year, p.week);
+        var wEnd = p8PayrollThursday(p.year, p.week);
 
         var leadsN = 0, qualN = 0;
         leads.forEach(function(r) {
@@ -6370,7 +6371,7 @@
           winsN = sumJobs;
         }
 
-        // Labour: prefer shift dates in Sat-Fri range; else week-number match for this Friday-keyed week
+        // Labour: prefer shift dates in Fri-Thu range; else week-number match for this Friday-keyed week
         var productHrs = 0, leaveHrs = 0, labAny = false;
         labour.forEach(function(r) {
           var h = typeof p6LabourHours === 'function'
@@ -6464,7 +6465,7 @@
       // Weekly revenue target = monthly target for that month / weeks in month
       function weeklyRevTargetFor(parts) {
         if (!parts || !targets.length) return null;
-        var monDate = p8PayrollFriday(parts.year, parts.week);
+        var monDate = p8PayrollThursday(parts.year, parts.week);
         var monthIdx = monDate.getMonth();
         var monthAbbr = monDate.toLocaleString('en-AU', { month: 'short' }).substring(0, 3).toLowerCase();
         var year = String(parts.year);
@@ -19001,11 +19002,12 @@
           setP13Kpi(
             'kpi-p13-conversion',
             'kpi-p13-conversion-sub',
-            formatPct(conversion) + ' vs ' + p13FormatTargetPct(conversionTarget) + ' target',
+            formatPct(conversion),
             convDecidedSub
           );
           if (convOfEl) {
-            convOfEl.innerHTML = '<span class="p13-conv-chip p13-conv-chip--' +
+            convOfEl.innerHTML = 'vs ' + p13FormatTargetPct(conversionTarget) + ' target ' +
+              '<span class="p13-conv-chip p13-conv-chip--' +
               (convAbove ? 'above' : 'below') + '">' +
               (convAbove ? 'above target' : 'below target') + '</span>';
           }
