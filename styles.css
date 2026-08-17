@@ -10077,9 +10077,17 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   margin-top: auto;
 }
 
+/* Flagship KPI: Submission Target vs Actual */
+#page-p13 #p13-kpi-target {
+  border-color: var(--action);
+  border-top-color: var(--action);
+  background: color-mix(in srgb, var(--action) 8%, var(--surface));
+}
+
 #page-p13 #p13-kpi-target .p13-kpi-target-of {
   font-size: 10px;
-  color: var(--muted);
+  font-weight: 600;
+  color: var(--text);
   line-height: 1.3;
   margin-bottom: 4px;
   word-break: break-word;
