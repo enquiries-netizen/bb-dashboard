@@ -846,7 +846,7 @@
           </div>
         </section>
 
-        <!-- ─── P7: Client Satisfaction (customer-journey) ─── -->
+        <!-- ─── P7: Client Satisfaction ─── -->
         <!-- p7-test-palette = scoped visual test (CSS/JS only for this page) -->
         <section id="page-p7" class="page p7-test-palette">
           <div class="p7-layout">
@@ -855,7 +855,6 @@
                 <span class="page-badge">P7</span>
                 <h1 class="page-title">Client Satisfaction</h1>
               </div>
-              <p class="p7-updated" id="p7-last-updated">Last updated...</p>
               <div class="p7-controls" id="p7-controls">
                 <div class="p7-controls-row">
                   <label class="p7-filter">
@@ -937,9 +936,9 @@
                 <div class="kpi-sub" id="kpi-p7-sla-sub">Closed-loop resolution</div>
               </div>
               <div class="kpi-card card p7-kpi-card">
-                <div class="kpi-label">Public Review Response</div>
+                <div class="kpi-label">Public Reputation</div>
                 <div class="kpi-value" id="kpi-p7-public-rr">Not available</div>
-                <div class="kpi-sub" id="kpi-p7-public-rr-sub">Within 48 hours</div>
+                <div class="kpi-sub" id="kpi-p7-public-rr-sub">From Client_Reviews</div>
               </div>
               <div class="kpi-card card p7-kpi-card" id="p7-kpi-conversion-wrap" hidden>
                 <div class="kpi-label">Review Conversion</div>
@@ -984,21 +983,6 @@
               </div>
               <div class="p7-chart-wrap">
                 <canvas id="chart-p7-distribution" aria-label="Rating distribution"></canvas>
-              </div>
-            </div>
-
-            <div class="p7-row-two">
-              <div class="section-card p7-panel">
-                <div class="section-title">Customer Journey Satisfaction
-                  <span class="p7-section-hint">CX stages · Status Healthy / Watch / At Risk / Strong</span>
-                </div>
-                <div id="p7-journey-table">Loading journey...</div>
-              </div>
-              <div class="section-card p7-panel">
-                <div class="section-title">At-Risk Clients
-                  <span class="p7-section-hint">Action queue · severity · next action</span>
-                </div>
-                <div id="p7-atrisk-table">Loading at-risk clients...</div>
               </div>
             </div>
 
@@ -1803,7 +1787,7 @@
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
-      P7: 'Client Satisfaction (customer-journey dashboard). Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Review Response (within 48h); optional Review Conversion only when invite data exists. Layout: journey satisfaction table, at-risk action table, theme drivers with n= sample sizes (low-n greyed), closed-loop resolution, recent feedback table + side drawer. Monthly trend only when sample is enough. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
+      P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
@@ -4486,11 +4470,12 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P7 — CLIENT SATISFACTION (customer-journey dashboard)
+    // P7 — CLIENT SATISFACTION
     // Sources: Client_Reviews (soft) + Defects_Rework (soft, service recovery)
     // Types stay separate: CX Surveys · Public Reputation · Service Recovery
     // Incomplete rows → data-quality queue (excluded from main metrics)
     // Missing rating is NEVER treated as zero.
+    // Journey / at-risk panels removed until a real CX survey source exists.
     // ═══════════════════════════════════════════════════════════════
     var P7_NA = 'Not available';
     var P7_PENDING = 'Pending';
@@ -4918,7 +4903,7 @@
       // but do not invent it.
       var incomplete = missingFields.length > 0;
 
-      // Usable in main KPIs / journey: must be real feedback with identity + channel.
+      // Usable in main KPIs: must be real feedback with identity + channel.
       // Missing rating alone is OK if comment exists (rating not coerced to 0).
       // Public: project optional. Survey/recovery: client or project required.
       var hasIdentity = !!(client || project);
@@ -5212,16 +5197,6 @@
           r.missingFields.indexOf('review content') !== -1;
       });
 
-      // ── Last updated ──
-      var lu = document.getElementById('p7-last-updated');
-      if (lu) {
-        lu.textContent = _p7LoadedAt
-          ? ('Last updated ' + _p7LoadedAt.toLocaleString('en-AU') +
-            ' · Brand: ' + (activeBrand || 'ALL') +
-            (_p7Period && _p7Period !== 'all' ? ' · Period: ' + _p7Period : ''))
-          : 'Last updated: Pending';
-      }
-
       // ── Data quality banner ──
       var dqEl = document.getElementById('p7-data-quality');
       if (dqEl) {
@@ -5319,33 +5294,19 @@
         setKPI('kpi-p7-sla', 'kpi-p7-sla-sub', P7_NA, 'No recovery / at-risk cases in view');
       }
 
-      // Public Review Response within 48h
-      var publicWithResponseData = publicRep.filter(function(r) {
-        return r.responded === true || r.responded === false || r.responseHours != null;
+      // Public Reputation: response count + average/status from Client_Reviews
+      var publicRatings = publicRep.map(function(r) { return r.rating; }).filter(function(n) {
+        return n != null && !isNaN(n);
       });
-      if (publicWithResponseData.length) {
-        var within48 = publicWithResponseData.filter(function(r) {
-          if (r.responseHours != null) return r.responded === true && r.responseHours <= 48;
-          return false; // yes/no without timing = not counted as meeting 48h
-        }).length;
-        var knownTiming = publicWithResponseData.filter(function(r) {
-          return r.responseHours != null;
-        });
-        if (knownTiming.length) {
-          var hit = knownTiming.filter(function(r) {
-            return r.responded === true && r.responseHours <= 48;
-          }).length;
-          setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub',
-            Math.round(hit / knownTiming.length * 100) + '%',
-            hit + ' of ' + knownTiming.length + ' public replies within 48h');
-        } else {
-          var yesCount = publicWithResponseData.filter(function(r) { return r.responded === true; }).length;
-          setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_PENDING,
-            yesCount + ' replied · response timestamps missing for 48h SLA');
-        }
-      } else if (publicRep.length) {
-        setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_PENDING,
-          publicRep.length + ' public reviews · no response fields');
+      if (publicRep.length) {
+        var pubAvg = publicRatings.length
+          ? (publicRatings.reduce(function(a, b) { return a + b; }, 0) / publicRatings.length)
+          : null;
+        var pubStatus = p7StatusFromCsat(pubAvg, publicRatings.length);
+        var pubSub = pubAvg != null
+          ? (pubAvg.toFixed(1) + ' average · ' + pubStatus)
+          : (P7_NA + ' · ' + pubStatus);
+        setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', String(publicRep.length), pubSub);
       } else {
         setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_NA, 'No public reputation reviews in view');
       }
@@ -5362,114 +5323,6 @@
           'Invite volume present but conversion link not complete');
       } else {
         if (convWrap) convWrap.hidden = true;
-      }
-
-      // ── Journey table ──
-      var journeyEl = document.getElementById('p7-journey-table');
-      if (journeyEl) {
-        var journeyRows = P7_JOURNEY_STAGES.map(function(stage) {
-          var stageRecs = surveys.filter(function(r) { return r.stage === stage; });
-          var ratings = stageRecs.map(function(r) { return r.rating; }).filter(function(n) {
-            return n != null && !isNaN(n);
-          });
-          var responses = stageRecs.length;
-          // Surveys sent: only if field present
-          var sentParts = stageRecs.filter(function(r) { return r.surveysSent != null; });
-          var sent = sentParts.length
-            ? sentParts.reduce(function(a, r) { return a + r.surveysSent; }, 0)
-            : null;
-          var rr = (sent != null && sent > 0)
-            ? (Math.round(responses / sent * 100) + '%')
-            : P7_PENDING;
-          var csatVal = ratings.length
-            ? (ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length)
-            : null;
-          var status = p7StatusFromCsat(csatVal, ratings.length);
-          return {
-            stage: stage,
-            sent: sent != null ? String(sent) : P7_PENDING,
-            responses: String(responses),
-            rr: rr,
-            csat: csatVal != null ? csatVal.toFixed(1) : P7_NA,
-            status: status
-          };
-        });
-        // Also show Public Reputation + Service Recovery summary rows (not blended into CSAT)
-        function auxRow(label, recs) {
-          var ratings = recs.map(function(r) { return r.rating; }).filter(function(n) {
-            return n != null && !isNaN(n);
-          });
-          var csatVal = ratings.length
-            ? (ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length)
-            : null;
-          return {
-            stage: label,
-            sent: '-',
-            responses: String(recs.length),
-            rr: '-',
-            csat: csatVal != null ? csatVal.toFixed(1) : P7_NA,
-            status: p7StatusFromCsat(csatVal, ratings.length)
-          };
-        }
-        journeyRows.push(auxRow('Public Reputation', publicRep));
-        journeyRows.push(auxRow('Service Recovery', recovery));
-
-        journeyEl.innerHTML =
-          '<div class="table-wrap"><table class="data-table p7-table">' +
-          '<thead><tr>' +
-          '<th>Stage</th><th>Surveys Sent</th><th>Responses</th><th>Response Rate</th><th>CSAT</th><th>Status</th>' +
-          '</tr></thead><tbody>' +
-          journeyRows.map(function(jr) {
-            return '<tr>' +
-              '<td>' + p7Esc(jr.stage) + '</td>' +
-              '<td>' + p7Esc(jr.sent) + '</td>' +
-              '<td>' + p7Esc(jr.responses) + '</td>' +
-              '<td>' + p7Esc(jr.rr) + '</td>' +
-              '<td>' + p7Esc(jr.csat) + '</td>' +
-              '<td><span class="p7-status ' + p7StatusClass(jr.status) + '">' + p7Esc(jr.status) + '</span></td>' +
-              '</tr>';
-          }).join('') +
-          '</tbody></table></div>';
-      }
-
-      // ── At-risk action table ──
-      var riskEl = document.getElementById('p7-atrisk-table');
-      if (riskEl) {
-        if (!atRisk.length) {
-          riskEl.innerHTML = '<p class="no-data-msg">No at-risk clients in the current filters.</p>';
-        } else {
-          var riskSorted = atRisk.slice().sort(function(a, b) {
-            var sa = String(a.severity || '').toLowerCase() === 'high' ? 0 : 1;
-            var sb = String(b.severity || '').toLowerCase() === 'high' ? 0 : 1;
-            if (sa !== sb) return sa - sb;
-            return (b.daysOpen || 0) - (a.daysOpen || 0);
-          });
-          riskEl.innerHTML =
-            '<div class="table-wrap"><table class="data-table p7-table p7-table--click">' +
-            '<thead><tr>' +
-            '<th>Client / Project</th><th>Stage</th><th>Score / Issue</th><th>Days Open</th>' +
-            '<th>Owner</th><th>Next Action</th><th>Severity</th><th>Last Contact</th><th>Status</th><th>Due</th>' +
-            '</tr></thead><tbody>' +
-            riskSorted.map(function(r, i) {
-              var issue = r.rating != null
-                ? ('Score ' + r.rating + (r.comment ? ' · ' + r.comment.substring(0, 60) : ''))
-                : (r.comment ? r.comment.substring(0, 80) : (r.actionRequired || 'Issue'));
-              var sevClass = String(r.severity || '').toLowerCase() === 'high' ? ' p7-sev--high' : '';
-              return '<tr class="p7-row-click" data-p7-id="' + p7Esc(r.id) + '">' +
-                '<td>' + p7Esc((r.client || P7_NA) + (r.project ? ' / ' + r.project : '')) + '</td>' +
-                '<td>' + p7Esc(r.stage || 'Unspecified') + '</td>' +
-                '<td>' + p7Esc(issue) + '</td>' +
-                '<td>' + (r.daysOpen != null ? r.daysOpen : P7_NA) + '</td>' +
-                '<td>' + p7Esc(r.owner || P7_PENDING) + '</td>' +
-                '<td>' + p7Esc(r.actionRequired || P7_PENDING) + '</td>' +
-                '<td><span class="p7-sev' + sevClass + '">' + p7Esc(r.severity || P7_NA) + '</span></td>' +
-                '<td>' + (r.lastContactObj ? p7FormatDate(r.lastContactObj) : P7_NA) + '</td>' +
-                '<td>' + p7Esc(r.status || (r.responded ? 'Responded' : 'Open')) + '</td>' +
-                '<td>' + (r.dueObj ? p7FormatDate(r.dueObj) : P7_PENDING) + '</td>' +
-                '</tr>';
-            }).join('') +
-            '</tbody></table></div>';
-        }
       }
 
       // ── Satisfaction drivers (themes with n=) ──
