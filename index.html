@@ -1646,14 +1646,15 @@
                 <h1 class="page-title">Tender Pipeline</h1>
               </div>
               <p class="p13-scope-note" id="p13-scope-note">
-                Manual Tenders tab · submissions, decisions, and monthly opportunity targets
+                Manual Tenders tab · submissions, decisions, and monthly submission targets
               </p>
               <p class="p13-data-quality" id="p13-data-quality" aria-live="polite">Loading...</p>
+              <p class="p13-lodge-gap" id="p13-lodge-gap" hidden></p>
             </div>
 
             <div class="p13-kpi-row" aria-label="Tender pipeline KPIs">
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-target">
-                <div class="kpi-label">Monthly Opportunity Target vs Actual</div>
+                <div class="kpi-label">Submission Target vs Actual</div>
                 <div class="kpi-value" id="kpi-p13-target">-</div>
                 <div class="kpi-sub" id="kpi-p13-target-sub">Loading...</div>
               </div>
@@ -1683,6 +1684,9 @@
                 <div class="kpi-sub" id="kpi-p13-pipeline-sub">Loading...</div>
               </div>
             </div>
+
+            <div class="p13-pending-age" id="p13-pending-age" hidden></div>
+            <div id="p13-concentration" class="p2-concentration" hidden></div>
 
             <div class="section-card p13-panel">
               <div class="section-title">All Tenders</div>
@@ -18453,7 +18457,7 @@
           'kpi-p13-target',
           'kpi-p13-target-sub',
           submissionsThisMonth + ' of ' + monthTarget + ' submitted',
-          thisLabel + ' · opportunity target from Tenders Month/Target rows'
+          thisLabel + ' · submission target from Tenders Month/Target rows'
         );
       } else {
         setP13Kpi(
@@ -18494,6 +18498,86 @@
         'Submitted · Won? still blank'
       );
 
+      var pendingAll = rows.filter(function(r) { return r.status === 'Pending'; });
+      var ageBuckets = [
+        { id: '0-30', label: '0-30 days', min: 0, max: 30, count: 0, value: 0, valueKnown: false },
+        { id: '31-60', label: '31-60 days', min: 31, max: 60, count: 0, value: 0, valueKnown: false },
+        { id: '61-90', label: '61-90 days', min: 61, max: 90, count: 0, value: 0, valueKnown: false },
+        { id: '90+', label: '90+ days', min: 91, max: Infinity, count: 0, value: 0, valueKnown: false }
+      ];
+      var ageNoDate = 0;
+      pendingAll.forEach(function(r) {
+        if (!r.lodgeDate || isNaN(r.lodgeDate.getTime())) {
+          ageNoDate++;
+          return;
+        }
+        var days = Math.floor((now.getTime() - r.lodgeDate.getTime()) / 86400000);
+        if (days < 0) days = 0;
+        var bucket = null;
+        if (days <= 30) bucket = ageBuckets[0];
+        else if (days <= 60) bucket = ageBuckets[1];
+        else if (days <= 90) bucket = ageBuckets[2];
+        else bucket = ageBuckets[3];
+        bucket.count++;
+        if (r.quoted != null) {
+          bucket.value += r.quoted;
+          bucket.valueKnown = true;
+        }
+      });
+
+      var ageEl = document.getElementById('p13-pending-age');
+      if (ageEl) {
+        if (!pendingAll.length) {
+          ageEl.setAttribute('hidden', '');
+          ageEl.innerHTML = '';
+        } else {
+          ageEl.removeAttribute('hidden');
+          var ageHtml =
+            '<div class="p13-pending-age-label">Pending decision age (days since Lodgement Date)</div>' +
+            '<div class="p13-pending-age-row">';
+          ageBuckets.forEach(function(b) {
+            var stale = b.id === '90+' && b.count > 0;
+            ageHtml += '<div class="p13-age-chip' + (stale ? ' p13-age-chip--stale' : '') + '">' +
+              '<span class="p13-age-chip-label">' + b.label + '</span>' +
+              '<span class="p13-age-chip-count">' + b.count + '</span>' +
+              '<span class="p13-age-chip-val">' +
+                (b.valueKnown ? formatCurrency(b.value) : (b.count ? 'Value not entered' : '-')) +
+              '</span></div>';
+          });
+          ageHtml += '</div>';
+          if (ageNoDate) {
+            ageHtml += '<p class="p13-pending-age-note">' + ageNoDate +
+              ' pending tender' + (ageNoDate === 1 ? '' : 's') +
+              ' excluded from age buckets (Lodgement Date missing)</p>';
+          }
+          ageEl.innerHTML = ageHtml;
+        }
+      }
+
+      var concEl = document.getElementById('p13-concentration');
+      if (concEl) {
+        var topPending = null;
+        pendingAll.forEach(function(r) {
+          if (r.quoted == null) return;
+          if (!topPending || r.quoted > topPending.quoted) topPending = r;
+        });
+        var share = (topPending && pipelineKnown && pipelinePending > 0)
+          ? (topPending.quoted / pipelinePending)
+          : 0;
+        if (topPending && share >= 0.30) {
+          concEl.removeAttribute('hidden');
+          concEl.className = 'p2-concentration p2-concentration--risk';
+          var who = topPending.client || topPending.description || 'One tender';
+          concEl.innerHTML = '<strong>Pending value concentration:</strong> ' +
+            p13Escape(who) + ' is ' + formatPct(share * 100) +
+            ' of pending tender value. A single decision here materially swings the pipeline.';
+        } else {
+          concEl.setAttribute('hidden', '');
+          concEl.className = 'p2-concentration';
+          concEl.innerHTML = '';
+        }
+      }
+
       if (winRateValue != null) {
         setP13Kpi(
           'kpi-p13-winvalue',
@@ -18517,8 +18601,22 @@
         'Quoted Total (Inc GST) · Won? blank'
       );
 
-      // Data quality strip
+      // Data quality strip (Lodgement Date gap called out first when present)
       var dq = document.getElementById('p13-data-quality');
+      var lodgeGapEl = document.getElementById('p13-lodge-gap');
+      var noLodge = rows.filter(function(r) { return !r.lodgeDate; }).length;
+      if (lodgeGapEl) {
+        if (noLodge) {
+          lodgeGapEl.removeAttribute('hidden');
+          lodgeGapEl.textContent =
+            'Lodgement Date required: ' + noLodge + ' tender' +
+            (noLodge === 1 ? ' is' : 's are') +
+            ' missing a Lodgement Date. Ageing, this-month submissions, and the trend chart skip those rows until the date is entered on the Tenders tab.';
+        } else {
+          lodgeGapEl.setAttribute('hidden', '');
+          lodgeGapEl.textContent = '';
+        }
+      }
       if (dq) {
         var bits = [];
         bits.push(rows.length ? (rows.length + ' tenders') : 'No tender rows yet');
@@ -18531,9 +18629,9 @@
             ' used quoted value (Final Price blank or 0)'
           );
         }
-        var noLodge = rows.filter(function(r) { return !r.lodgeDate; }).length;
         if (noLodge) bits.push(noLodge + ' missing Lodgement Date');
         dq.textContent = 'Data: ' + bits.join(' · ');
+        dq.className = noLodge ? 'p13-data-quality p13-data-quality--warn' : 'p13-data-quality';
       }
 
       p13RenderTable();
