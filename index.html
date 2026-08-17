@@ -7551,7 +7551,13 @@
         renderP2(leadsR.data, pipeR.data, mktR.data, srcR.data, tgtR.data, quotesR.data);
       } catch (err) {
         console.error('P2 load error:', err);
-        showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions.');
+        var detail = (err && err.message) ? String(err.message) : 'Unknown error';
+        // Only blame sheet permissions when the failure looks like a Sheets API error.
+        if (/Sheets API error|Failed to fetch|NetworkError|403|401/i.test(detail)) {
+          showError('p2', 'Could not load Sales & Pipeline data. Check sheet permissions. (' + detail + ')');
+        } else {
+          showError('p2', 'Sales & Pipeline failed to render: ' + detail);
+        }
       } finally {
         showLoading(false);
         init3DTilt();
@@ -7610,14 +7616,16 @@
 
       var cue = document.getElementById('p2-filter-cue');
       if (cue) {
-        var monthLabel = (!activeMonths || !activeMonths.length)
+        // Do not name this monthLabel — that clashes with the forecast helper
+        // function monthLabel(key) later in this same renderP2 scope (var is function-scoped).
+        var monthCueLabel = (!activeMonths || !activeMonths.length)
           ? 'All months (by Date Created)'
           : ((activeMonths.length === 1 ? activeMonths[0] : activeMonths.length + ' months') +
             ' · Date Created');
         var yearLabel = (!activeYear || activeYear === 'ALL') ? 'All years' : String(activeYear);
         var brandLabel = activeBrand || 'ALL';
         cue.textContent =
-          brandLabel + ' · ' + monthLabel + ' · ' + yearLabel +
+          brandLabel + ' · ' + monthCueLabel + ' · ' + yearLabel +
           ' · Filters apply to: Date Created (leads & opportunities). Forecast chart uses Expected Close.';
       }
 
