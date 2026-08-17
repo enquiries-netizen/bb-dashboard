@@ -269,14 +269,149 @@
           </div>
         </section>
 
-        <!-- ─── P2: Sales & Pipeline (placeholder - data being finalised) ─── -->
-        <section id="page-p2" class="page">
-          <div class="p2-placeholder">
-            <div class="page-header p2-page-header">
-              <span class="page-badge">P2</span>
-              <h1 class="page-title">Sales &amp; Pipeline</h1>
+        <!-- ─── P2: Sales & Pipeline (decision dashboard) ───── -->
+        <!-- p2-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p2" class="page p2-test-palette">
+          <div class="p2-layout">
+            <div class="p2-head">
+              <div class="page-header p2-page-header">
+                <span class="page-badge">P2</span>
+                <h1 class="page-title p2-page-title">Sales &amp; Pipeline</h1>
+              </div>
+              <p class="p2-filter-cue" id="p2-filter-cue">Filters apply to: Date Created (leads &amp; opportunities)</p>
+              <p class="p2-data-quality" id="p2-data-quality" aria-live="polite"></p>
             </div>
-            <p class="p2-placeholder-msg">Sales &amp; Pipeline data is being finalised, this page will be updated soon.</p>
+
+            <!-- Primary KPIs (6) -->
+            <div class="p2-kpi-band" aria-label="Primary sales KPIs">
+              <div class="kpi-card card p2-kpi" data-kpi="open-pipe">
+                <div class="kpi-label">Open Pipeline Value</div>
+                <div class="kpi-value" id="kpi-p2-open">-</div>
+                <div class="kpi-sub" id="kpi-p2-open-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="weighted">
+                <div class="kpi-label">Weighted Pipeline</div>
+                <div class="kpi-value" id="kpi-p2-weighted">-</div>
+                <div class="kpi-sub" id="kpi-p2-weighted-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="coverage">
+                <div class="kpi-label">Target Coverage</div>
+                <div class="kpi-value" id="kpi-p2-coverage">-</div>
+                <div class="kpi-sub" id="kpi-p2-coverage-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="quotes-out">
+                <div class="kpi-label">Quotes Outstanding</div>
+                <div class="kpi-value" id="kpi-p2-quotes-out">-</div>
+                <div class="kpi-sub" id="kpi-p2-quotes-out-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi" data-kpi="winrate">
+                <div class="kpi-label">Quote Win Rate</div>
+                <div class="kpi-value" id="kpi-p2-winrate">-</div>
+                <div class="kpi-sub" id="kpi-p2-winrate-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p2-kpi p2-kpi--risk" data-kpi="stalled">
+                <div class="kpi-label">Stalled Pipeline</div>
+                <div class="kpi-value" id="kpi-p2-stalled">-</div>
+                <div class="kpi-sub" id="kpi-p2-stalled-sub">Loading...</div>
+              </div>
+            </div>
+
+            <!-- Secondary KPIs -->
+            <div class="p2-kpi-secondary" aria-label="Secondary sales metrics">
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Avg job value (won)</span>
+                <span class="p2-sec-value" id="kpi-p2-avg-job">-</span>
+              </div>
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Median sales cycle</span>
+                <span class="p2-sec-value" id="kpi-p2-cycle">-</span>
+              </div>
+              <div class="p2-sec-metric">
+                <span class="p2-sec-label">Pipeline added this month</span>
+                <span class="p2-sec-value" id="kpi-p2-added">-</span>
+              </div>
+              <div class="p2-sec-metric p2-sec-metric--rates">
+                <span class="p2-sec-label">Funnel rates</span>
+                <span class="p2-sec-value p2-sec-rates" id="kpi-p2-funnel-rates">-</span>
+              </div>
+            </div>
+
+            <!-- Row 2: Funnel | Revenue forecast -->
+            <div class="p2-mid-row">
+              <div class="chart-card card p2-funnel-card">
+                <div class="p2-card-head">
+                  <div class="chart-title">Pipeline Funnel</div>
+                  <div class="p2-toggle" role="group" aria-label="Funnel metric">
+                    <button type="button" class="p2-toggle-btn is-active" id="p2-funnel-mode-value" data-mode="value">Value</button>
+                    <button type="button" class="p2-toggle-btn" id="p2-funnel-mode-count" data-mode="count">Count</button>
+                  </div>
+                </div>
+                <div id="p2-funnel-rates" class="p2-funnel-rates" aria-live="polite"></div>
+                <div class="p2-chart-wrap p2-funnel-wrap">
+                  <canvas id="chart-p2-funnel" aria-label="Pipeline funnel by stage"></canvas>
+                </div>
+                <div id="p2-funnel-stage-detail" class="p2-funnel-stage-detail"></div>
+                <p id="p2-funnel-footnote" class="p2-funnel-footnote" hidden></p>
+              </div>
+              <div class="chart-card card p2-forecast-card">
+                <div class="chart-title">Revenue Forecast by Expected Close</div>
+                <p class="p2-section-hint">Stacked by stage certainty · target from Targets sheet when present</p>
+                <div class="p2-chart-wrap p2-forecast-wrap">
+                  <canvas id="chart-p2-forecast" aria-label="Revenue forecast stacked by month"></canvas>
+                </div>
+                <div id="p2-forecast-gap" class="p2-forecast-gap" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <!-- Row 3: Waterfall | Source quality -->
+            <div class="p2-mid-row">
+              <div class="chart-card card p2-waterfall-card">
+                <div class="chart-title">Pipeline Movement Waterfall</div>
+                <p class="p2-section-hint">Opening to closing movement</p>
+                <div id="p2-waterfall-body" class="p2-pending-panel">
+                  <p class="p2-pending-line">Pending - movement needs period opening/closing snapshots (not in GHL_Pipeline)</p>
+                </div>
+                <div class="p2-chart-wrap p2-waterfall-wrap" hidden>
+                  <canvas id="chart-p2-waterfall" aria-label="Pipeline movement waterfall"></canvas>
+                </div>
+              </div>
+              <div class="chart-card card p2-sources-card">
+                <div class="chart-title">Source Quality</div>
+                <div id="p2-concentration" class="p2-concentration" hidden></div>
+                <div id="p2-source-table" class="p2-source-table">Loading sources...</div>
+                <div class="p2-chart-wrap p2-bubble-wrap">
+                  <canvas id="chart-p2-bubble" aria-label="Source quality bubble chart"></canvas>
+                </div>
+                <div class="p2-source-footer" id="p2-source-cpl-note"></div>
+              </div>
+            </div>
+
+            <!-- Bottom: Opportunities requiring action -->
+            <div class="section-card p2-action-card">
+              <div class="section-title-row">
+                <div class="section-title">Opportunities Requiring Action
+                  <span class="p2-section-hint" id="p2-action-hint">Exceptions first · stalled, overdue, high value</span>
+                </div>
+                <button type="button" class="p2-view-all-btn" id="p2-view-all-btn">View all opportunities</button>
+              </div>
+              <div id="p2-action-table">Loading opportunities...</div>
+            </div>
+
+            <!-- Deal ageing Gantt (top 10) -->
+            <div class="section-card p2-gantt-card">
+              <div class="section-title">Deal Ageing
+                <span class="p2-section-hint">Top 10 largest or most stalled open deals</span>
+              </div>
+              <div id="p2-gantt" class="p2-gantt">Loading...</div>
+            </div>
+
+            <!-- Campaign scorecard (secondary - full analysis on P10) -->
+            <div class="section-card p2-campaign-card">
+              <div class="section-title">Campaign Scorecard
+                <span class="p2-section-hint">Paid media snapshot · full analysis on P10 Marketing</span>
+              </div>
+              <div id="p2-campaign-scorecard" class="p2-campaign-scorecard">Loading...</div>
+            </div>
           </div>
         </section>
 
@@ -1427,7 +1562,8 @@
 
     var BB_PAGE_DIRECTORY = {
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
-      P2: 'Sales & Pipeline (placeholder). Page shows title and notice that data is being finalised. Decision-dashboard rebuild paused until Sales & Pipeline data is finalised. Answer only that the page is parked / pending data finalisation; do not invent pipeline, quote, or funnel metrics.',
+      P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall: Pending without opening/closing snapshots. (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value 
+       display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy historical only for completed jobs with final labour and material costs - else exact text that accuracy unavailable; estimator ranks only if 5+ completed jobs with data; job budget/actual on P4. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
@@ -5791,15 +5927,10 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P2 — SALES & PIPELINE (placeholder until data is finalised)
-    // UI parked: title + notice only (mirror P7). Soft-per-tab load,
-    // stale-banner rules, and full renderP2 body retained below so
-    // unparking is flip P2_PLACEHOLDER false without reintroducing
-    // loader fixes. CONFIG.TABS Quotes rename left in config.js.
-    // (p2_sales_pipeline_rebuild.md retained for later rebuild.)
-    // ═══════════════════════════════════════════════════════════════
-    // Set false to resume soft sheet load + full decision dashboard.
-    var P2_PLACEHOLDER = true;
+    // P2 — SALES & PIPELINE (decision dashboard)
+    // Soft-per-tab load + full renderP2. Park again with P2_PLACEHOLDER = true
+    // only if the live UI markup is also swapped back to the placeholder shell.
+    var P2_PLACEHOLDER = false;
 
     var p2ShowAllOpps = false;
     var p2FunnelMode = 'value'; // default Value
