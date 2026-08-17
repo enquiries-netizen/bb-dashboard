@@ -2304,7 +2304,9 @@
 
     // ═══════════════════════════════════════════════════════════
     // ACCESS CONTROL (Firebase Google sign-in + Staff_Access sheet)
-    // Tiers: none | staff (P12) | user (P11+P12) | admin (all)
+    // Prefer Access column page text (e.g. "P13 only", "P11&12 access",
+    // "p12 access only", "Full access"). Fall back to Role when Access
+    // has no parseable pages. Tiers: none | staff | user | admin | custom
     // ═══════════════════════════════════════════════════════════
     var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13'];
     // Internal Hub gate is independent of Staff_Access and of BB AI's BB_ALLOW list.
@@ -2313,6 +2315,7 @@
     var LAST_PAGE_SESSION_KEY = 'bb_last_page';
     var _authUser = null;
     var _accessTier = 'none';
+    var _customPages = null; // when tier === 'custom': allowlist from Access column
     var _staffAccessMap = null;
     var _authReady = false;
     var _authStateGen = 0;
@@ -2374,6 +2377,7 @@
       if (t === 'admin') pages = ALL_PAGE_IDS.slice();
       else if (t === 'user') pages = ['p11', 'p12'];
       else if (t === 'staff') pages = ['p12'];
+      else if (t === 'custom' && _customPages && _customPages.length) pages = _customPages.slice();
       else return [];
       if (canSeeLibraryNav() && pages.indexOf('internal-hub') < 0) pages.push('internal-hub');
       return pages;
@@ -2389,6 +2393,9 @@
       var t = tier || getAccessTier();
       if (t === 'staff') return 'p12';
       if (t === 'user') return 'p11';
+      if (t === 'custom') {
+        return (_customPages && _customPages[0]) || null;
+      }
       if (t === 'admin') {
         try {
           var last = normalizePageId(sessionStorage.getItem(LAST_PAGE_SESSION_KEY));
@@ -2399,13 +2406,77 @@
       return null;
     }
 
-    function resolveAccessTierFromEntry(entry) {
-      if (!entry || !entry.active) return 'none';
+    /**
+     * Parse Staff_Access "Access" text into known page ids.
+     * Examples: "P13 only", "p12 access only", "P11&12 access", "Full access".
+     */
+    function parseAccessPageIds(accessRaw) {
+      var s = String(accessRaw == null ? '' : accessRaw).trim();
+      if (!s) return { kind: 'empty' };
+      if (/full\s*access/i.test(s) || /^full$/i.test(s)) return { kind: 'full' };
+
+      var found = [];
+      var seen = {};
+      function addNum(n) {
+        var id = 'p' + String(parseInt(n, 10));
+        if (ALL_PAGE_IDS.indexOf(id) < 0 || seen[id]) return;
+        seen[id] = true;
+        found.push(id);
+      }
+
+      var m;
+      var reP = /\bp\s*(\d{1,2})\b/gi;
+      while ((m = reP.exec(s)) !== null) addNum(m[1]);
+
+      // Continuations after a P-prefixed list: "P11&12" / "P11+12" / "P11/12"
+      if (found.length) {
+        var reCont = /[&+,/]\s*(\d{1,2})\b/g;
+        while ((m = reCont.exec(s)) !== null) addNum(m[1]);
+      }
+
+      if (!found.length) return { kind: 'empty' };
+      found.sort(function(a, b) {
+        return ALL_PAGE_IDS.indexOf(a) - ALL_PAGE_IDS.indexOf(b);
+      });
+      return { kind: 'pages', pages: found };
+    }
+
+    function pagesMatchSet(pages, expected) {
+      if (!pages || pages.length !== expected.length) return false;
+      for (var i = 0; i < expected.length; i++) {
+        if (pages[i] !== expected[i]) return false;
+      }
+      return true;
+    }
+
+    /**
+     * Resolve { tier, pages } from a Staff_Access row.
+     * Access column wins when it has Full access or parseable page ids.
+     */
+    function resolveAccessFromEntry(entry) {
+      if (!entry || !entry.active) return { tier: 'none', pages: null };
+
+      var parsed = parseAccessPageIds(entry.access);
+      if (parsed.kind === 'full') return { tier: 'admin', pages: null };
+      if (parsed.kind === 'pages') {
+        var pages = parsed.pages;
+        // Keep classic tiers when Access matches Staff/User allowlists (chrome + legacy helpers)
+        if (pagesMatchSet(pages, ['p12'])) return { tier: 'staff', pages: null };
+        if (pagesMatchSet(pages, ['p11', 'p12'])) return { tier: 'user', pages: null };
+        if (pages.length === ALL_PAGE_IDS.length) return { tier: 'admin', pages: null };
+        return { tier: 'custom', pages: pages };
+      }
+
       var role = String(entry.role || '').toLowerCase().trim();
-      if (role === 'admin') return 'admin';
-      if (role === 'user') return 'user';
-      if (role === 'staff') return 'staff';
-      return 'none';
+      if (role === 'admin') return { tier: 'admin', pages: null };
+      if (role === 'user') return { tier: 'user', pages: null };
+      if (role === 'staff') return { tier: 'staff', pages: null };
+      return { tier: 'none', pages: null };
+    }
+
+    /** @deprecated use resolveAccessFromEntry; kept for any external callers */
+    function resolveAccessTierFromEntry(entry) {
+      return resolveAccessFromEntry(entry).tier;
     }
 
     function isActiveYes(raw) {
@@ -2425,7 +2496,8 @@
           if (!email) return;
           var role = String(col(r, 'Role', 'role') || '').trim().toLowerCase();
           var active = isActiveYes(col(r, 'Active', 'active', 'Enabled', 'Status'));
-          map[email] = { role: role, active: active };
+          var access = String(col(r, 'Access', 'access', 'Pages', 'Page Access') || '').trim();
+          map[email] = { role: role, active: active, access: access };
         });
         _staffAccessMap = map;
         return map;
@@ -2447,9 +2519,10 @@
       var tier = getAccessTier();
       var allowed = allowedPages(tier);
       document.body.classList.remove(
-        'app-role-staff', 'app-role-user', 'app-role-admin', 'app-role-none', 'p12-only-access'
+        'app-role-staff', 'app-role-user', 'app-role-admin', 'app-role-custom',
+        'app-role-none', 'p12-only-access'
       );
-      if (tier === 'staff' || tier === 'user' || tier === 'admin') {
+      if (tier === 'staff' || tier === 'user' || tier === 'admin' || tier === 'custom') {
         document.body.classList.add('app-role-' + tier);
       } else {
         document.body.classList.add('app-role-none');
@@ -2564,6 +2637,7 @@
 
     function lockAppUnauthorized(message) {
       _accessTier = 'none';
+      _customPages = null;
       applyAccessChrome();
       showAuthGate();
       setAuthGateUI({
@@ -2582,6 +2656,7 @@
 
       if (!user) {
         _accessTier = 'none';
+        _customPages = null;
         _staffAccessMap = null;
         applyAccessChrome();
         showAuthGate();
@@ -2607,13 +2682,14 @@
         if (gen !== _authStateGen) return;
         var email = String(user.email || '').trim().toLowerCase();
         var entry = (map && email) ? map[email] : null;
-        var tier = resolveAccessTierFromEntry(entry);
-        _accessTier = tier;
-        if (tier === 'none') {
+        var resolved = resolveAccessFromEntry(entry);
+        _accessTier = resolved.tier;
+        _customPages = resolved.pages;
+        if (resolved.tier === 'none') {
           lockAppUnauthorized('Not authorized. Contact Lori.');
           return;
         }
-        bootAppForTier(tier, true);
+        bootAppForTier(resolved.tier, true);
       }).catch(function(err) {
         if (gen !== _authStateGen) return;
         console.error('[Auth] access resolve failed:', err);
@@ -2664,6 +2740,7 @@
       function doSignOut() {
         clearLegacyP12GateStorage();
         _accessTier = 'none';
+        _customPages = null;
         _staffAccessMap = null;
         _appBooted = false;
         if (typeof firebase !== 'undefined' && firebase.auth) {

@@ -80,7 +80,8 @@ const CONFIG = {
     // Nightly open-opportunity snapshots for P2 pipeline movement waterfall.
     PIPELINE_SNAPSHOTS:  'Pipeline_Snapshots',
     TENDERS:             'Tenders',
-    // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
+    // Email → Role → Active → Access (page allowlist text). Access column is
+    // parsed dynamically for page ids (P13 only, P11&12, Full access, etc.).
     STAFF_ACCESS:        'Staff_Access',
     // BBBS Internal Hub guides. Fetched server-side in /api/ask.js from
     // CONFIG.LIBRARY_SHEET_ID (standalone sheet, not the Master Dashboard file).
