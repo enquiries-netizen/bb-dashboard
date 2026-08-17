@@ -76,6 +76,8 @@ const CONFIG = {
     // Manual tender pipeline (Emily). Duplicate GST / Total (Inc GST) headers
     // (quote vs final) are disambiguated in fetchTendersParsed (sheets.js).
     // Optional O/P: Month + Monthly Target (reference rows, not per-tender).
+    // Nightly open-opportunity snapshots for P2 pipeline movement waterfall.
+    PIPELINE_SNAPSHOTS:  'Pipeline_Snapshots',
     TENDERS:             'Tenders',
     // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
     STAFF_ACCESS:        'Staff_Access',

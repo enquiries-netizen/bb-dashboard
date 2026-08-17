@@ -3520,7 +3520,11 @@ body.bb-ai-off #ai-panel {
 }
 
 .p2-waterfall-wrap {
-  height: 220px;
+  height: 260px;
+}
+
+.p2-waterfall-notes {
+  margin: 0 0 8px;
 }
 
 .p2-bubble-wrap {

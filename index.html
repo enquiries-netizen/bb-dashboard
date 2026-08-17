@@ -368,11 +368,11 @@
             <div class="p2-mid-row">
               <div class="chart-card card p2-waterfall-card">
                 <div class="chart-title">Pipeline Movement Waterfall</div>
-                <p class="p2-section-hint">Opening to closing movement</p>
+                <p class="p2-section-hint">Opening to closing movement from Pipeline_Snapshots</p>
                 <div id="p2-waterfall-body" class="p2-pending-panel">
-                  <p class="p2-pending-line">Pending - movement needs period opening/closing snapshots (not in GHL_Pipeline)</p>
+                  <p class="p2-pending-line">Pending, building snapshot history</p>
                 </div>
-                <div class="p2-chart-wrap p2-waterfall-wrap" hidden>
+                <div class="p2-chart-wrap p2-waterfall-wrap" id="p2-waterfall-chart-wrap" hidden>
                   <canvas id="chart-p2-waterfall" aria-label="Pipeline movement waterfall"></canvas>
                 </div>
               </div>
@@ -7517,7 +7517,8 @@
       marketing: { ok: false, status: null },
       sources: { ok: false, status: null },
       targets: { ok: false, status: null },
-      quotes: { ok: false, status: null }
+      quotes: { ok: false, status: null },
+      snapshots: { ok: false, status: null }
     };
 
     // confirm threshold with Lori/Ben
@@ -7546,6 +7547,172 @@
       });
     }
 
+    function p2EndOfToday() {
+      var n = new Date();
+      return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 23, 59, 59, 999);
+    }
+
+    function p2StartOfDay(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function p2DateKey(d) {
+      var day = p2StartOfDay(d);
+      if (!day) return '';
+      return day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + day.getDate()).slice(-2);
+    }
+
+    function p2FormatAuDate(d) {
+      if (!d || isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function p2SnapStatus(raw) {
+      var t = String(raw == null ? '' : raw).trim().toLowerCase();
+      if (t === 'won') return 'won';
+      if (t === 'lost') return 'lost';
+      if (t === 'open') return 'open';
+      if (t === 'close' || t === 'closed') return 'close';
+      return t || '';
+    }
+
+    function p2SnapGhlId(r) {
+      return String(col(r, 'GHL ID', 'ghl_id', 'GHLID') || '').trim();
+    }
+
+    function p2SnapValue(r) {
+      var raw = rawColByNames(r, ['Value ($)', 'Value', 'value', 'Deal Value', 'Opportunity Value']);
+      if (raw === '' || raw == null) return 0;
+      var n = parseNum(raw);
+      if (isNaN(n) || n === 0 || (n > 0 && n <= 1.01)) return 0;
+      return n;
+    }
+
+    /** Global Brand / Month / Year as a calendar window for snapshot matching. */
+    function p2ReportingPeriod() {
+      var now = new Date();
+      var yearOn = activeYear && activeYear !== 'ALL';
+      var monthsOn = activeMonths && activeMonths.length > 0;
+      var year = yearOn ? parseInt(activeYear, 10) : now.getFullYear();
+      if (!yearOn && !monthsOn) {
+        return { start: null, end: p2EndOfToday(), unbounded: true, label: 'All months' };
+      }
+      if (yearOn && !monthsOn) {
+        var yStart = new Date(year, 0, 1);
+        var yEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+        if (yEnd > now) yEnd = p2EndOfToday();
+        return { start: yStart, end: yEnd, unbounded: false, label: String(year) };
+      }
+      var idxs = [];
+      (activeMonths || []).forEach(function(sel) {
+        var tok = String(sel || '').trim().substring(0, 3).toLowerCase();
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === tok) idxs.push(i);
+        }
+      });
+      idxs.sort(function(a, b) { return a - b; });
+      if (!idxs.length) {
+        return { start: null, end: p2EndOfToday(), unbounded: true, label: 'All months' };
+      }
+      var y = yearOn ? year : now.getFullYear();
+      var start = new Date(y, idxs[0], 1);
+      var last = idxs[idxs.length - 1];
+      var end = new Date(y, last + 1, 0, 23, 59, 59, 999);
+      if (end > now) end = p2EndOfToday();
+      return { start: start, end: end, unbounded: false, label: 'selected months' };
+    }
+
+    /**
+     * Pipeline movement between two snapshot dates, keyed by GHL ID.
+     * Opening set = Open rows on the opening date.
+     * Closing set = all statuses on the closing date.
+     * New is never also Won/Lost (Won/Lost require presence in the opening set).
+     * Slipped is still-open timing movement and is NOT subtracted from closing stock.
+     */
+    function p2ComputePipelineMovement(openingRows, closingRows) {
+      function keyMap(rows, openOnly) {
+        var map = {};
+        (rows || []).forEach(function(r) {
+          var id = p2SnapGhlId(r);
+          if (!id) return;
+          if (openOnly && p2SnapStatus(col(r, 'Status', 'status')) !== 'open') return;
+          map[id] = r;
+        });
+        return map;
+      }
+      var skippedOpen = 0;
+      var skippedClose = 0;
+      (openingRows || []).forEach(function(r) { if (!p2SnapGhlId(r)) skippedOpen++; });
+      (closingRows || []).forEach(function(r) { if (!p2SnapGhlId(r)) skippedClose++; });
+      var O = keyMap(openingRows, true);
+      var C = keyMap(closingRows, false);
+      var openIds = Object.keys(O);
+      var closeIds = Object.keys(C);
+
+      var opening = 0;
+      openIds.forEach(function(id) { opening += p2SnapValue(O[id]); });
+
+      var closing = 0;
+      closeIds.forEach(function(id) {
+        if (p2SnapStatus(col(C[id], 'Status', 'status')) === 'open') closing += p2SnapValue(C[id]);
+      });
+
+      var neu = 0;
+      var neuCount = 0;
+      closeIds.forEach(function(id) {
+        if (O[id]) return;
+        neuCount++;
+        if (p2SnapStatus(col(C[id], 'Status', 'status')) === 'open') neu += p2SnapValue(C[id]);
+      });
+
+      var won = 0, wonCount = 0, lost = 0, lostCount = 0, exited = 0, exitedCount = 0;
+      var dVal = 0, slipped = 0, slippedCount = 0;
+      openIds.forEach(function(id) {
+        var c = C[id];
+        if (!c) {
+          exited += p2SnapValue(O[id]);
+          exitedCount++;
+          return;
+        }
+        var st = p2SnapStatus(col(c, 'Status', 'status'));
+        if (st === 'won') { won += p2SnapValue(O[id]); wonCount++; return; }
+        if (st === 'lost') { lost += p2SnapValue(O[id]); lostCount++; return; }
+        if (st !== 'open') { exited += p2SnapValue(O[id]); exitedCount++; return; }
+        dVal += p2SnapValue(c) - p2SnapValue(O[id]);
+        var ecdO = parseFlexibleDate(col(O[id], 'Expected Close Date', 'expected_close_date') || '');
+        var ecdC = parseFlexibleDate(col(c, 'Expected Close Date', 'expected_close_date') || '');
+        if (ecdO && ecdC && ecdC.getTime() > ecdO.getTime()) {
+          slipped += p2SnapValue(c);
+          slippedCount++;
+        }
+      });
+
+      var lostBar = lost + exited;
+      var recon = opening + neu + dVal - won - lostBar;
+      return {
+        skippedBlankId: skippedOpen + skippedClose,
+        skippedOpen: skippedOpen,
+        skippedClose: skippedClose,
+        trackableOpen: openIds.length,
+        trackableClose: closeIds.length,
+        opening: opening,
+        neu: neu,
+        neuCount: neuCount,
+        dVal: dVal,
+        won: won,
+        wonCount: wonCount,
+        lost: lostBar,
+        lostCount: lostCount,
+        exitedCount: exitedCount,
+        slipped: slipped,
+        slippedCount: slippedCount,
+        closing: closing,
+        gap: Math.round((recon - closing) * 100) / 100
+      };
+    }
+
     async function loadP2() {
       showLoading(true);
       removeError('p2');
@@ -7567,7 +7734,8 @@
           p2FetchSheet(CONFIG.TABS.MARKETING_PAID),
           p2FetchSheet(CONFIG.TABS.MARKETING_SOURCES),
           p2FetchSheet(CONFIG.TABS.TARGETS),
-          p2FetchSheet(CONFIG.TABS.GHL_QUOTES)
+          p2FetchSheet(CONFIG.TABS.GHL_QUOTES),
+          p2FetchSheet(CONFIG.TABS.PIPELINE_SNAPSHOTS || 'Pipeline_Snapshots')
         ]);
         var leadsR = settled[0];
         var pipeR = settled[1];
@@ -7575,6 +7743,7 @@
         var srcR = settled[3];
         var tgtR = settled[4];
         var quotesR = settled[5];
+        var snapR = settled[6];
 
         _p2SheetMeta = {
           leads: { ok: leadsR.ok, status: leadsR.status },
@@ -7582,7 +7751,8 @@
           marketing: { ok: mktR.ok, status: mktR.status },
           sources: { ok: srcR.ok, status: srcR.status },
           targets: { ok: tgtR.ok, status: tgtR.status },
-          quotes: { ok: quotesR.ok, status: quotesR.status }
+          quotes: { ok: quotesR.ok, status: quotesR.status },
+          snapshots: { ok: snapR.ok, status: snapR.status }
         };
 
         var leadsOk = !!leadsR.ok;
@@ -7610,7 +7780,7 @@
         }
 
         // Quote KPIs still derive from pipeline stages; quotes rows reserved for when tab exists
-        renderP2(leadsR.data, pipeR.data, mktR.data, srcR.data, tgtR.data, quotesR.data);
+        renderP2(leadsR.data, pipeR.data, mktR.data, srcR.data, tgtR.data, quotesR.data, snapR.data);
       } catch (err) {
         console.error('P2 load error:', err);
         var detail = (err && err.message) ? String(err.message) : 'Unknown error';
@@ -7626,7 +7796,7 @@
       }
     }
 
-    function renderP2(leads, pipeline, marketing, sources, targets, ghlQuotes) {
+    function renderP2(leads, pipeline, marketing, sources, targets, ghlQuotes, snapshots) {
       // No charts or KPI fill while parked (DOM is placeholder-only).
       if (P2_PLACEHOLDER) return;
 
@@ -7636,7 +7806,8 @@
         marketing: marketing || [],
         sources: sources || [],
         targets: targets || [],
-        ghlQuotes: ghlQuotes || []
+        ghlQuotes: ghlQuotes || [],
+        snapshots: snapshots || []
       };
 
       // ── Date field for page period filters (documented choice) ──
@@ -8602,13 +8773,271 @@
         }
       }
 
-      // ── Waterfall: Pending (no movement history) ──
+      // ── Pipeline movement waterfall (Pipeline_Snapshots) ──
+      window._p2WaterfallLast = null;
       var wfBody = document.getElementById('p2-waterfall-body');
-      if (wfBody) {
-        wfBody.innerHTML =
-          '<p class="p2-pending-line">Pending - Opening / New / Won / Lost / Slipped movement needs period snapshots not present in GHL_Pipeline.</p>' +
-          '<p class="p2-pending-line">Live snapshot: ' + openRows.length + ' open · ' +
-          winsCount + ' won · ' + lostPipe.length + ' lost in filtered Created Date window.</p>';
+      var wfWrap = document.getElementById('p2-waterfall-chart-wrap');
+      function p2HideWaterfallChart() {
+        if (wfWrap) wfWrap.setAttribute('hidden', '');
+        if (_charts['chart-p2-waterfall']) {
+          _charts['chart-p2-waterfall'].destroy();
+          delete _charts['chart-p2-waterfall'];
+        }
+      }
+      function p2ShowWaterfallPending(html) {
+        p2HideWaterfallChart();
+        if (wfBody) {
+          wfBody.className = 'p2-pending-panel';
+          wfBody.innerHTML = html;
+        }
+      }
+
+      var snapMeta = (_p2SheetMeta && _p2SheetMeta.snapshots) || {};
+      var snapRows = filterByBrand(snapshots || [], activeBrand);
+      if (snapMeta.ok === false) {
+        p2ShowWaterfallPending(
+          '<p class="p2-pending-line">Pending, building snapshot history. Pipeline_Snapshots could not be loaded' +
+          (snapMeta.status != null ? ' (API ' + snapMeta.status + ')' : '') + '.</p>'
+        );
+      } else {
+        var byDate = {};
+        var dateList = [];
+        snapRows.forEach(function(r) {
+          var d = parseFlexibleDate(col(r, 'Snapshot Date', 'snapshot_date', 'Date') || '');
+          var key = p2DateKey(d);
+          if (!key) return;
+          if (!byDate[key]) {
+            byDate[key] = { date: p2StartOfDay(d), rows: [] };
+            dateList.push(key);
+          }
+          byDate[key].rows.push(r);
+        });
+        dateList.sort();
+        if (dateList.length < 2) {
+          var oneDate = dateList.length === 1
+            ? p2FormatAuDate(byDate[dateList[0]].date)
+            : '';
+          var blankAll = snapRows.filter(function(r) { return !p2SnapGhlId(r); }).length;
+          p2ShowWaterfallPending(
+            '<p class="p2-pending-line">Pending, building snapshot history' +
+            (dateList.length === 1
+              ? '. 1 snapshot date so far (' + escapeP2(oneDate) + '). Movement needs two or more distinct snapshot dates.'
+              : '. No snapshot dates in Pipeline_Snapshots yet.') +
+            '</p>' +
+            (blankAll
+              ? '<p class="p2-pending-line">Skipped ' + blankAll +
+                ' snapshot row' + (blankAll === 1 ? '' : 's') +
+                ' with a blank GHL ID (cannot track over time).</p>'
+              : '')
+          );
+        } else {
+          var period = p2ReportingPeriod();
+          var earliestKey = dateList[0];
+          var latestKey = dateList[dateList.length - 1];
+          var earliestD = byDate[earliestKey].date;
+          var latestD = byDate[latestKey].date;
+          var periodEndCap = period.end && period.end < p2EndOfToday() ? period.end : p2EndOfToday();
+
+          var spansPeriod = !!period.unbounded;
+          if (!period.unbounded && period.start) {
+            spansPeriod = earliestD.getTime() <= period.start.getTime() &&
+              latestD.getTime() >= p2StartOfDay(periodEndCap).getTime();
+          }
+
+          var openKey = earliestKey;
+          var closeKey = latestKey;
+          if (spansPeriod && !period.unbounded && period.start) {
+            var i;
+            var foundOpen = null;
+            var foundClose = null;
+            for (i = 0; i < dateList.length; i++) {
+              var dt = byDate[dateList[i]].date;
+              if (dt.getTime() <= period.start.getTime()) foundOpen = dateList[i];
+              if (dt.getTime() <= p2StartOfDay(periodEndCap).getTime()) foundClose = dateList[i];
+            }
+            if (foundOpen) openKey = foundOpen;
+            else openKey = earliestKey;
+            if (foundClose) closeKey = foundClose;
+            else closeKey = latestKey;
+          }
+          if (openKey === closeKey) {
+            openKey = earliestKey;
+            closeKey = latestKey;
+          }
+
+          var approx = !spansPeriod || openKey === earliestKey && !period.unbounded && period.start &&
+            earliestD.getTime() > period.start.getTime();
+          if (period.unbounded) approx = false;
+
+          var move = p2ComputePipelineMovement(byDate[openKey].rows, byDate[closeKey].rows);
+          if (move.gap !== 0) {
+            console.warn('[P2] Waterfall did not reconcile. gap=', move.gap, move);
+          }
+
+          var notes = [];
+          if (approx) {
+            notes.push(
+              'Approximate, based on available history from ' +
+              p2FormatAuDate(byDate[openKey].date) + ' to ' +
+              p2FormatAuDate(byDate[closeKey].date) +
+              ', full month coverage not yet available'
+            );
+          } else {
+            notes.push(
+              'Opening ' + p2FormatAuDate(byDate[openKey].date) +
+              ' · closing ' + p2FormatAuDate(byDate[closeKey].date)
+            );
+          }
+          if (move.skippedOpen || move.skippedClose) {
+            notes.push(
+              'Skipped ' + move.skippedOpen + ' opening and ' + move.skippedClose +
+              ' closing snapshot rows with a blank GHL ID (cannot track over time)'
+            );
+          }
+          notes.push(
+            move.trackableOpen + ' trackable open deals at opening · ' +
+            move.trackableClose + ' trackable deals at closing'
+          );
+          if (move.exitedCount) {
+            notes.push(
+              move.exitedCount +
+              ' opening deal' + (move.exitedCount === 1 ? '' : 's') +
+              ' left the pipeline without Won or Lost (included in Lost)'
+            );
+          }
+          if (move.slippedCount) {
+            notes.push(
+              'Slipped is still inside Closing Pipeline (expected close moved later) · ' +
+              move.slippedCount + ' deal' + (move.slippedCount === 1 ? '' : 's')
+            );
+          }
+          if (move.gap !== 0) {
+            notes.push('Waterfall did not reconcile (gap ' + formatCurrency(move.gap) + '). Check matching logic.');
+          }
+
+          if (wfBody) {
+            wfBody.className = 'p2-waterfall-notes';
+            wfBody.innerHTML = notes.map(function(n) {
+              return '<p class="p2-pending-line">' + escapeP2(n) + '</p>';
+            }).join('');
+          }
+          if (wfWrap) wfWrap.removeAttribute('hidden');
+
+          var running = 0;
+          var wfLabels = [];
+          var floatBase = [];
+          var floatVal = [];
+          var floatColor = [];
+          var signedTip = [];
+          function wfTotal(label, val, color) {
+            wfLabels.push(label);
+            floatBase.push(0);
+            floatVal.push(val);
+            floatColor.push(color);
+            signedTip.push(val);
+            running = val;
+          }
+          function wfDelta(label, val, colorUp, colorDown) {
+            wfLabels.push(label);
+            signedTip.push(val);
+            if (val >= 0) {
+              floatBase.push(running);
+              floatVal.push(val);
+              floatColor.push(colorUp);
+              running += val;
+            } else {
+              var mag = Math.abs(val);
+              floatBase.push(running - mag);
+              floatVal.push(mag);
+              floatColor.push(colorDown);
+              running -= mag;
+            }
+          }
+          function wfInfo(label, val, color) {
+            wfLabels.push(label);
+            floatBase.push(0);
+            floatVal.push(val);
+            floatColor.push(color);
+            signedTip.push(val);
+          }
+          wfTotal('Opening Pipeline', move.opening, P2_TEXT);
+          wfDelta('+ New', move.neu, P2_ACTION, P2_MUTED);
+          wfDelta('+ Value Changes', move.dVal, P2_ACTION, P2_MUTED);
+          wfDelta('- Won', -move.won, P2_ACTION, P2_MUTED);
+          wfDelta('- Lost', -move.lost, P2_ACTION, P2_MUTED);
+          wfInfo('± Slipped', move.slipped, P2_ACCENT);
+          wfTotal('Closing Pipeline', move.closing, P2_TEXT);
+
+          makeChart('chart-p2-waterfall', {
+            type: 'bar',
+            data: {
+              labels: wfLabels,
+              datasets: [
+                {
+                  label: 'base',
+                  data: floatBase,
+                  backgroundColor: 'transparent',
+                  borderWidth: 0,
+                  stack: 'wf',
+                  barPercentage: 0.7
+                },
+                {
+                  label: 'step',
+                  data: floatVal,
+                  backgroundColor: floatColor,
+                  borderWidth: 0,
+                  stack: 'wf',
+                  barPercentage: 0.7
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  filter: function(item) { return item.datasetIndex === 1; },
+                  callbacks: {
+                    label: function(ctx) {
+                      var i = ctx.dataIndex;
+                      var v = signedTip[i];
+                      var sign = v > 0 && i > 0 && i < wfLabels.length - 1 && wfLabels[i].charAt(0) !== '±' ? '+' : '';
+                      return wfLabels[i] + ': ' + (v < 0 ? '-' : sign) + formatCurrency(Math.abs(v));
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  stacked: true,
+                  ticks: { color: P2_MUTED, font: { size: 9 }, maxRotation: 45, minRotation: 0 },
+                  grid: { display: false },
+                  border: { color: P2_BORDER }
+                },
+                y: {
+                  stacked: true,
+                  ticks: {
+                    color: P2_MUTED,
+                    font: { size: 10 },
+                    callback: function(v) {
+                      return '$' + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+                    }
+                  },
+                  grid: P2_GRID,
+                  border: { color: P2_BORDER }
+                }
+              }
+            }
+          });
+
+          window._p2WaterfallLast = {
+            openDate: openKey,
+            closeDate: closeKey,
+            approximate: approx,
+            move: move
+          };
+        }
       }
 
       // ── Source quality ──
@@ -8874,7 +9303,8 @@
                 _p2LastPayload.marketing,
                 _p2LastPayload.sources,
                 _p2LastPayload.targets,
-                _p2LastPayload.ghlQuotes
+                _p2LastPayload.ghlQuotes,
+                _p2LastPayload.snapshots
               );
             }
           });
@@ -9043,15 +9473,18 @@
           pipeline: hasPipe,
           marketing: hasMkt,
           targets: hasTargets,
-          ghlQuotes: !!( _p2SheetMeta.quotes && _p2SheetMeta.quotes.ok )
+          ghlQuotes: !!( _p2SheetMeta.quotes && _p2SheetMeta.quotes.ok ),
+          snapshots: !!( _p2SheetMeta.snapshots && _p2SheetMeta.snapshots.ok )
         },
         sheetStatus: {
           leads: _p2SheetMeta.leads,
           pipeline: _p2SheetMeta.pipeline,
           marketing: _p2SheetMeta.marketing,
-          quotes: _p2SheetMeta.quotes
+          quotes: _p2SheetMeta.quotes,
+          snapshots: _p2SheetMeta.snapshots
         },
-        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Waterfall pending without snapshots. Quotes tab is optional (soft load; quote KPIs still from pipeline).'
+        waterfall: window._p2WaterfallLast || { pending: true },
+        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Pipeline movement waterfall uses Pipeline_Snapshots (GHL ID join). Quotes tab is optional (soft load; quote KPIs still from pipeline).'
       });
     }
 
