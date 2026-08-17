@@ -185,9 +185,11 @@ function getRowMonth(row) {
  * Tenders tab parser for P13.
  * The sheet has duplicate header labels (GST, Total (Inc GST)) for quote vs final
  * price blocks, so generic fetchSheet header maps collide. We map A-M by position.
+ * P13 displays Quote Total (ex GST) col E and Final Price Total (ex GST) col K.
  *
  * Monthly submitted-value targets are NOT on this tab (see Targets ALL/ALL:
- * Date + Monthly Tender Target/Tender Submissions ($)).
+ * Date + Monthly Tender Target/Tender Submissions ($) column P;
+ * conversion-rate target is column Q on the same row).
  *
  * Returns { tenders: [...], targets: [], rawRowCount }.
  */

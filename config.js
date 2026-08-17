@@ -75,8 +75,8 @@ const CONFIG = {
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
     // Manual tender pipeline (Emily). Duplicate GST / Total (Inc GST) headers
     // (quote vs final) are disambiguated in fetchTendersParsed (sheets.js).
-    // Monthly submitted-value target lives on Targets (ALL/ALL, column P),
-    // not on this Tenders tab.
+    // P13 shows Quote Total / Final Price Total (ex GST). Monthly $ target is
+    // Targets ALL/ALL column P; conversion-rate target is column Q.
     // Nightly open-opportunity snapshots for P2 pipeline movement waterfall.
     PIPELINE_SNAPSHOTS:  'Pipeline_Snapshots',
     TENDERS:             'Tenders',

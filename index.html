@@ -1618,9 +1618,10 @@
         <!-- ─── P13: Tender Pipeline (Admin) ─── -->
         <!--
           Source: Tenders tab (manual, Emily). Admin tier only (same as financial pages).
-          Quote vs final Total (Inc GST) disambiguated in fetchTendersParsed.
-          Monthly submitted-value target from Targets ALL/ALL row
+          Quote vs final amounts shown ex GST (columns E / K via fetchTendersParsed).
+          Monthly submitted-value target from Targets ALL/ALL column P
           (Date + Monthly Tender Target/Tender Submissions ($)).
+          Conversion-rate target from the same ALL/ALL row, column Q.
         -->
         <section id="page-p13" class="page">
           <div class="p13-layout">
@@ -1630,7 +1631,7 @@
                 <h1 class="page-title">Tender Pipeline</h1>
               </div>
               <p class="p13-scope-note" id="p13-scope-note">
-                Manual Tenders tab · submissions and decisions · monthly submitted-value target from Targets (ALL/ALL)
+                Manual Tenders tab · submissions and decisions · values ex GST · monthly $ and conversion targets from Targets (ALL/ALL)
               </p>
               <p class="p13-data-quality" id="p13-data-quality" aria-live="polite">Loading...</p>
               <p class="p13-lodge-gap" id="p13-lodge-gap" hidden></p>
@@ -1638,7 +1639,7 @@
 
             <div class="p13-kpi-row" aria-label="Tender pipeline KPIs">
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-target">
-                <div class="kpi-label">Submission Target vs Actual</div>
+                <div class="kpi-label">Submission Target vs Actual (ex GST)</div>
                 <div class="kpi-value" id="kpi-p13-target">-</div>
                 <div class="p13-kpi-target-of" id="kpi-p13-target-of"></div>
                 <div class="kpi-sub" id="kpi-p13-target-sub">Loading...</div>
@@ -1651,6 +1652,7 @@
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-conversion">
                 <div class="kpi-label">Conversion Rate</div>
                 <div class="kpi-value" id="kpi-p13-conversion">-</div>
+                <div class="p13-kpi-target-of" id="kpi-p13-conversion-of"></div>
                 <div class="kpi-sub" id="kpi-p13-conversion-sub">Loading...</div>
               </div>
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-pending">
@@ -1664,7 +1666,7 @@
                 <div class="kpi-sub" id="kpi-p13-winvalue-sub">Loading...</div>
               </div>
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-pipeline">
-                <div class="kpi-label">Pipeline Value (Pending)</div>
+                <div class="kpi-label">Pipeline Value (Pending, ex GST)</div>
                 <div class="kpi-value" id="kpi-p13-pipeline">-</div>
                 <div class="kpi-sub" id="kpi-p13-pipeline-sub">Loading...</div>
               </div>
@@ -1676,14 +1678,18 @@
             <div class="section-card p13-panel">
               <div class="section-title">All Tenders</div>
               <p class="p13-section-hint">Click a column header to sort · default: most recent lodgement first</p>
+              <div class="p13-table-toolbar">
+                <label class="p13-search-label" for="p13-tender-search">Search</label>
+                <input type="search" id="p13-tender-search" class="p13-search-input" placeholder="Filter by description, client, or where" autocomplete="off">
+              </div>
               <div id="p13-tenders-table" class="p13-table-wrap">Loading...</div>
             </div>
 
             <div class="section-card p13-panel p13-trend-panel">
-              <div class="section-title">Submitted Value vs Monthly Target</div>
-              <p class="p13-section-hint">Last 6 months · bars = quoted value lodged · line = ALL/ALL target when set</p>
+              <div class="section-title">Submitted Value vs Monthly Target (ex GST)</div>
+              <p class="p13-section-hint">Last 6 months · bars = quoted value lodged (ex GST) · line = ALL/ALL target when set</p>
               <div class="p13-chart-wrap">
-                <canvas id="chart-p13-trend" aria-label="Submitted tender value versus monthly target"></canvas>
+                <canvas id="chart-p13-trend" aria-label="Submitted tender value versus monthly target (ex GST)"></canvas>
               </div>
               <p class="p13-trend-footnote" id="p13-trend-footnote" hidden></p>
             </div>
@@ -1793,7 +1799,7 @@
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
       P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.',
-      P13: 'Tender Pipeline (Admin). Source: Tenders tab (manual). KPIs: monthly submitted-value target vs actual ($X of $Y from Targets ALL/ALL, ignore brand filter), submissions this month (count), conversion rate of decided tenders only, pending decision count, win rate by value, pipeline value pending. Table of all tenders with status Won/Lost/Pending. Trend: submitted quoted value vs monthly $ target last 6 months. Won with blank/zero Final Price falls back to quoted Total (Inc GST) and is flagged in data quality. Never invent numbers. Answer only from live P13 page data.'
+      P13: 'Tender Pipeline (Admin). Source: Tenders tab (manual). Dollar figures shown ex GST (Quote Total / Final Price Total not-inc-GST). KPIs: monthly submitted-value target vs actual ($X of $Y from Targets ALL/ALL, ignore brand filter), submissions this month (count), conversion rate of decided tenders vs ALL/ALL conversion target (Targets column Q) when set, pending decision count, win rate by value, pipeline value pending. Table of all tenders with status Won/Lost/Pending and Where source badges; client-side search on Description, Client, Where. Trend: submitted quoted value vs monthly $ target last 6 months (ex GST). Won with blank/zero Final Price falls back to quoted value (ex GST) and is flagged in data quality. Never invent numbers. Answer only from live P13 page data.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -18577,12 +18583,15 @@
     // ═══════════════════════════════════════════════════════════════
     // P13 - TENDER PIPELINE (Admin)
     // Source: Tenders tab (manual, Emily). No Make.com.
-    // Quote vs final GST / Total (Inc GST) via fetchTendersParsed.
+    // Quote vs final shown ex GST via fetchTendersParsed (cols E / K).
     // Monthly submitted-value target: Targets tab ALL/ALL row,
-    // Date + Monthly Tender Target/Tender Submissions ($). Company-wide; ignore brand filter.
+    // Date + Monthly Tender Target/Tender Submissions ($) column P.
+    // Conversion-rate target: same ALL/ALL row, column Q.
+    // Company-wide; ignore brand filter.
     // ═══════════════════════════════════════════════════════════════
     var _p13Sort = { key: 'lodge', dir: 'desc' };
     var _p13Rows = [];
+    var _p13Search = '';
     var _p13Bound = false;
 
     function p13Yn(raw) {
@@ -18697,6 +18706,33 @@
       return map;
     }
 
+    /** Company-wide monthly conversion-rate target (%) from Targets ALL/ALL column Q. */
+    function p13BuildConversionTargetsByMonth(targetRows) {
+      var map = {};
+      (targetRows || []).forEach(function(r) {
+        if (!p13IsTargetsAllAll(r)) return;
+        var key = p13TargetsMonthKey(r);
+        if (!key) return;
+        if (map[key] != null) return;
+        var raw = rawColByNames(r, [
+          'Monthly Tender Target (Conversion Rate)',
+          'Monthly Tender Target (Conversion Rate %)'
+        ]);
+        if (raw === '' || raw == null || !String(raw).trim()) return;
+        var n = parseNum(raw);
+        if (isNaN(n)) return;
+        map[key] = n;
+      });
+      return map;
+    }
+
+    function p13FormatTargetPct(n) {
+      if (n == null || isNaN(n)) return '';
+      var rounded = Math.round(n);
+      if (Math.abs(n - rounded) < 0.05) return rounded + '%';
+      return formatPct(n);
+    }
+
     function p13SubmittedValueForMonth(rows, monthKey) {
       var sum = 0;
       (rows || []).forEach(function(r) {
@@ -18735,8 +18771,8 @@
     function p13NormalizeTender(raw) {
       var submitted = p13Yn(raw['Tender Submitted?']);
       var wonRaw = p13Yn(raw['Won?']);
-      var quoted = p13MoneyOrNull(raw['Quoted Total (Inc GST)']);
-      var finalV = p13MoneyOrNull(raw['Final Total (Inc GST)']);
+      var quoted = p13MoneyOrNull(raw['Quote Total (ex GST)']);
+      var finalV = p13MoneyOrNull(raw['Final Price Total (ex GST)']);
       var lodgeRaw = raw['Lodgement Date'] || '';
       var lodgeDate = parseFlexibleDate(lodgeRaw);
       var status = wonRaw === 'Y' ? 'Won' : (wonRaw === 'N' ? 'Lost' : 'Pending');
@@ -18822,6 +18858,7 @@
       _p13Rows = rows;
 
       var targetsByKey = p13BuildTenderTargetsByMonth(targetRows);
+      var conversionTargetsByKey = p13BuildConversionTargetsByMonth(targetRows);
 
       var submissionsThisMonth = rows.filter(function(r) {
         return r.submitted === 'Y' && r.lodgeKey === thisKey;
@@ -18829,6 +18866,9 @@
 
       var submittedValueThisMonth = p13SubmittedValueForMonth(rows, thisKey);
       var monthTarget = targetsByKey[thisKey] != null ? targetsByKey[thisKey] : null;
+      var conversionTarget = conversionTargetsByKey[thisKey] != null
+        ? conversionTargetsByKey[thisKey]
+        : null;
 
       var wonRows = rows.filter(function(r) { return r.status === 'Won'; });
       var lostRows = rows.filter(function(r) { return r.status === 'Lost'; });
@@ -18897,20 +18937,48 @@
         'Tender Submitted = Y · by Lodgement Date in ' + thisLabel
       );
 
+      var convCard = document.getElementById('p13-kpi-conversion');
+      if (convCard) {
+        convCard.classList.remove('p13-kpi-card--above', 'p13-kpi-card--below');
+      }
+      var convOfEl = document.getElementById('kpi-p13-conversion-of');
+      var convDecidedSub = wonRows.length + ' won / ' + decidedCount + ' decided tenders (excludes pending)';
       if (conversion != null) {
-        setP13Kpi(
-          'kpi-p13-conversion',
-          'kpi-p13-conversion-sub',
-          formatPct(conversion),
-          wonRows.length + ' won / ' + decidedCount + ' decided tenders (excludes pending)'
-        );
+        if (conversionTarget != null) {
+          var convAbove = conversion >= conversionTarget;
+          if (convCard) {
+            convCard.classList.add(convAbove ? 'p13-kpi-card--above' : 'p13-kpi-card--below');
+          }
+          setP13Kpi(
+            'kpi-p13-conversion',
+            'kpi-p13-conversion-sub',
+            formatPct(conversion) + ' vs ' + p13FormatTargetPct(conversionTarget) + ' target',
+            convDecidedSub
+          );
+          if (convOfEl) {
+            convOfEl.innerHTML = '<span class="p13-conv-chip p13-conv-chip--' +
+              (convAbove ? 'above' : 'below') + '">' +
+              (convAbove ? 'above target' : 'below target') + '</span>';
+          }
+        } else {
+          setP13Kpi(
+            'kpi-p13-conversion',
+            'kpi-p13-conversion-sub',
+            formatPct(conversion),
+            'conversion target not set yet · ' + convDecidedSub
+          );
+          if (convOfEl) convOfEl.textContent = '';
+        }
       } else {
         setP13Kpi(
           'kpi-p13-conversion',
           'kpi-p13-conversion-sub',
           'Pending',
-          'No decided tenders yet (Won or Lost)'
+          conversionTarget != null
+            ? ('No decided tenders yet (Won or Lost) · ' + thisLabel + ' target ' + p13FormatTargetPct(conversionTarget))
+            : 'No decided tenders yet (Won or Lost)'
         );
+        if (convOfEl) convOfEl.textContent = '';
       }
 
       setP13Kpi(
@@ -18955,7 +19023,7 @@
         } else {
           ageEl.removeAttribute('hidden');
           var ageHtml =
-            '<div class="p13-pending-age-label">Pending decision age (days since Lodgement Date)</div>' +
+            '<div class="p13-pending-age-label">Pending decision age (days since Lodgement Date, ex GST)</div>' +
             '<div class="p13-pending-age-row">';
           ageBuckets.forEach(function(b) {
             var stale = b.id === '90+' && b.count > 0;
@@ -19005,7 +19073,7 @@
           'kpi-p13-winvalue',
           'kpi-p13-winvalue-sub',
           formatPct(winRateValue),
-          'Won value / (won + lost value) · Final Price with quoted fallback'
+          'Won value / (won + lost value) · Final Price with quoted fallback (ex GST)'
         );
       } else {
         setP13Kpi(
@@ -19020,7 +19088,7 @@
         'kpi-p13-pipeline',
         'kpi-p13-pipeline-sub',
         pipelineKnown ? formatCurrency(pipelinePending) : (pendingSubmitted.length || rows.some(function(r) { return r.status === 'Pending'; }) ? 'Value not entered' : formatCurrency(0)),
-        'Quoted Total (Inc GST) · Won? blank'
+        'Quoted value (ex GST) · Won? blank'
       );
 
       // Data quality strip (Lodgement Date gap called out first when present)
@@ -19070,6 +19138,10 @@
             ? (formatCurrency(submittedValueThisMonth) + ' of ' + formatCurrency(monthTarget))
             : (formatCurrency(submittedValueThisMonth) + ' of -'),
           conversionRateOfDecided: conversion,
+          conversionTarget: conversionTarget,
+          conversionVsTarget: (conversion != null && conversionTarget != null)
+            ? (formatPct(conversion) + ' vs ' + p13FormatTargetPct(conversionTarget) + ' target')
+            : null,
           decidedCount: decidedCount,
           wonCount: wonRows.length,
           lostCount: lostRows.length,
@@ -19080,7 +19152,7 @@
         },
         tenderCount: rows.length,
         targetMonths: Object.keys(targetsByKey).length,
-        note: 'Conversion rate is of decided tenders only. Won with blank/zero Final Price uses quoted Total (Inc GST).'
+        note: 'Dollar figures are ex GST. Conversion rate is of decided tenders only, compared to Targets ALL/ALL conversion target when set. Won with blank/zero Final Price uses quoted value (ex GST).'
       });
     }
 
@@ -19124,12 +19196,43 @@
       return list;
     }
 
+    function p13FilteredRows() {
+      var q = String(_p13Search || '').trim().toLowerCase();
+      var list = p13SortedRows();
+      if (!q) return list;
+      return list.filter(function(r) {
+        var desc = String(r.description || '').toLowerCase();
+        var client = String(r.client || '').toLowerCase();
+        var where = String(r.where || '').toLowerCase();
+        return desc.indexOf(q) >= 0 || client.indexOf(q) >= 0 || where.indexOf(q) >= 0;
+      });
+    }
+
+    function p13SourceVariant(where) {
+      var s = String(where || '').toLowerCase();
+      if (s.indexOf('portal') !== -1 || s.indexOf('buy nsw') !== -1) return 'portal';
+      if (s.indexOf('email') !== -1) return 'email';
+      return 'other';
+    }
+
+    function p13SourceBadge(where) {
+      var text = String(where || '').trim();
+      if (!text) return '-';
+      var variant = p13SourceVariant(text);
+      return '<span class="p13-source p13-source--' + variant + '" title="' + p13Escape(text) + '">' +
+        p13Escape(text) + '</span>';
+    }
+
     function p13RenderTable() {
       var wrap = document.getElementById('p13-tenders-table');
       if (!wrap) return;
-      var list = p13SortedRows();
-      if (!list.length) {
+      if (!_p13Rows.length) {
         wrap.innerHTML = '<p class="p13-pending-line">No tenders in the Tenders tab yet.</p>';
+        return;
+      }
+      var list = p13FilteredRows();
+      if (!list.length) {
+        wrap.innerHTML = '<p class="p13-pending-line">No tenders match this search.</p>';
         return;
       }
 
@@ -19143,9 +19246,9 @@
         '<th class="p13-sortable" data-p13-sort="client">Client' + sortMark('client') + '</th>' +
         '<th class="p13-sortable" data-p13-sort="where">Where' + sortMark('where') + '</th>' +
         '<th class="p13-sortable" data-p13-sort="lodge">Lodgement Date' + sortMark('lodge') + '</th>' +
-        '<th class="p13-sortable text-right" data-p13-sort="quoted">Quoted Value' + sortMark('quoted') + '</th>' +
+        '<th class="p13-sortable text-right" data-p13-sort="quoted">Quoted Value (ex GST)' + sortMark('quoted') + '</th>' +
         '<th class="p13-sortable" data-p13-sort="status">Status' + sortMark('status') + '</th>' +
-        '<th class="p13-sortable text-right" data-p13-sort="final">Final Value' + sortMark('final') + '</th>' +
+        '<th class="p13-sortable text-right" data-p13-sort="final">Final Value (ex GST)' + sortMark('final') + '</th>' +
         '<th>Notes</th>' +
         '</tr></thead><tbody>';
 
@@ -19158,7 +19261,7 @@
           if (r.final != null) finalCell = formatCurrency(r.final);
           else if (r.finalFallback) {
             finalCell = formatCurrency(r.valueUsed) +
-              ' <span class="p13-fallback-note" title="Final Price blank or 0; using quoted Total (Inc GST)">(quoted)</span>';
+              ' <span class="p13-fallback-note" title="Final Price blank or 0; using quoted value (ex GST)">(quoted)</span>';
           } else {
             finalCell = '<span class="p13-value-pending">Not entered</span>';
           }
@@ -19173,7 +19276,7 @@
         html += '<tr>' +
           '<td>' + p13Escape(r.description) + '</td>' +
           '<td>' + p13Escape(r.client || '-') + '</td>' +
-          '<td>' + p13Escape(r.where || '-') + '</td>' +
+          '<td>' + p13SourceBadge(r.where) + '</td>' +
           '<td>' + p13Escape(lodgeTxt) + '</td>' +
           '<td class="text-right">' +
             (r.quoted != null ? formatCurrency(r.quoted) : '<span class="p13-value-pending">Not entered</span>') +
@@ -19191,20 +19294,29 @@
       if (_p13Bound) return;
       _p13Bound = true;
       var wrap = document.getElementById('p13-tenders-table');
-      if (!wrap) return;
-      wrap.addEventListener('click', function(ev) {
-        var th = ev.target && ev.target.closest ? ev.target.closest('[data-p13-sort]') : null;
-        if (!th) return;
-        var key = th.getAttribute('data-p13-sort');
-        if (!key) return;
-        if (_p13Sort.key === key) {
-          _p13Sort.dir = _p13Sort.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-          _p13Sort.key = key;
-          _p13Sort.dir = (key === 'lodge' || key === 'quoted' || key === 'final') ? 'desc' : 'asc';
-        }
-        p13RenderTable();
-      });
+      if (wrap) {
+        wrap.addEventListener('click', function(ev) {
+          var th = ev.target && ev.target.closest ? ev.target.closest('[data-p13-sort]') : null;
+          if (!th) return;
+          var key = th.getAttribute('data-p13-sort');
+          if (!key) return;
+          if (_p13Sort.key === key) {
+            _p13Sort.dir = _p13Sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            _p13Sort.key = key;
+            _p13Sort.dir = (key === 'lodge' || key === 'quoted' || key === 'final') ? 'desc' : 'asc';
+          }
+          p13RenderTable();
+        });
+      }
+      var search = document.getElementById('p13-tender-search');
+      if (search) {
+        _p13Search = search.value || '';
+        search.addEventListener('input', function() {
+          _p13Search = search.value || '';
+          p13RenderTable();
+        });
+      }
     }
 
     function p13RenderTrend(rows, targetsByKey, thisKey) {
@@ -19231,7 +19343,7 @@
           foot.textContent = 'No submitted value or monthly targets in the last 6 months yet.';
           foot.removeAttribute('hidden');
         } else if (!anyTarget) {
-          foot.textContent = 'Monthly tender targets on the Targets tab are not filled in yet. Showing submitted value only.';
+          foot.textContent = 'Monthly tender targets on the Targets tab are not filled in yet. Showing submitted value (ex GST) only.';
           foot.removeAttribute('hidden');
         } else {
           foot.setAttribute('hidden', '');
@@ -19246,7 +19358,7 @@
 
       var datasets = [{
         type: 'bar',
-        label: 'Submitted value',
+        label: 'Submitted value (ex GST)',
         data: submittedValue,
         backgroundColor: '#374151',
         borderWidth: 0,
@@ -19255,7 +19367,7 @@
       if (anyTarget) {
         datasets.push({
           type: 'line',
-          label: 'Monthly target',
+          label: 'Monthly target (ex GST)',
           data: targets,
           borderColor: '#2563EB',
           backgroundColor: '#2563EB',
