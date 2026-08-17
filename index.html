@@ -846,14 +846,188 @@
           </div>
         </section>
 
-        <!-- ─── P7: Client Satisfaction (placeholder - full rebuild paused) ─── -->
-        <section id="page-p7" class="page">
-          <div class="p7-placeholder">
-            <div class="page-header p7-page-header">
-              <span class="page-badge">P7</span>
-              <h1 class="page-title">Client Satisfaction</h1>
+        <!-- ─── P7: Client Satisfaction (customer-journey) ─── -->
+        <!-- p7-test-palette = scoped visual test (CSS/JS only for this page) -->
+        <section id="page-p7" class="page p7-test-palette">
+          <div class="p7-layout">
+            <div class="p7-head">
+              <div class="page-header p7-page-header">
+                <span class="page-badge">P7</span>
+                <h1 class="page-title">Client Satisfaction</h1>
+              </div>
+              <p class="p7-updated" id="p7-last-updated">Last updated...</p>
+              <div class="p7-controls" id="p7-controls">
+                <div class="p7-controls-row">
+                  <label class="p7-filter">
+                    <span class="filter-label">Period</span>
+                    <select class="filter-select page-filter-select" id="p7-period-filter" aria-label="Filter by period">
+                      <option value="all">All periods</option>
+                      <option value="30">Last 30 days</option>
+                      <option value="90">Last 90 days</option>
+                      <option value="365">Last 12 months</option>
+                      <option value="ytd">Year to date</option>
+                    </select>
+                  </label>
+                  <label class="p7-filter">
+                    <span class="filter-label">Department</span>
+                    <select class="filter-select page-filter-select" id="p7-dept-filter" aria-label="Filter by department">
+                      <option value="ALL">All departments</option>
+                    </select>
+                  </label>
+                  <label class="p7-filter">
+                    <span class="filter-label">Project stage</span>
+                    <select class="filter-select page-filter-select" id="p7-stage-filter" aria-label="Filter by project stage">
+                      <option value="ALL">All stages</option>
+                      <option value="Quote Experience">Quote Experience</option>
+                      <option value="Pre-construction">Pre-construction</option>
+                      <option value="During-construction">During-construction</option>
+                      <option value="Handover">Handover</option>
+                      <option value="30-day post">30-day post</option>
+                      <option value="Public Reputation">Public Reputation</option>
+                      <option value="Service Recovery">Service Recovery</option>
+                      <option value="Unspecified">Unspecified</option>
+                    </select>
+                  </label>
+                  <label class="p7-filter">
+                    <span class="filter-label">Source</span>
+                    <select class="filter-select page-filter-select" id="p7-source-filter" aria-label="Filter by source">
+                      <option value="ALL">All sources</option>
+                      <option value="survey">CX Surveys</option>
+                      <option value="public">Public Reputation</option>
+                      <option value="recovery">Service Recovery</option>
+                    </select>
+                  </label>
+                </div>
+                <p class="p7-filter-cue">Brand filter applies above · global Month/Year do not limit P7 period (use Period here)</p>
+              </div>
+              <p class="p7-data-quality" id="p7-data-quality" aria-live="polite"></p>
             </div>
-            <p class="p7-placeholder-msg">Client Satisfaction data is being finalised, this page will be updated soon.</p>
+
+            <!-- Type summary strip (do not blend into one Total Reviews hero) -->
+            <div class="p7-type-strip" id="p7-type-strip" aria-label="Feedback type counts">
+              <div class="p7-type-chip"><span class="p7-type-label">CX Surveys</span><span class="p7-type-value" id="p7-type-survey">Pending</span></div>
+              <div class="p7-type-chip"><span class="p7-type-label">Public Reputation</span><span class="p7-type-value" id="p7-type-public">Pending</span></div>
+              <div class="p7-type-chip"><span class="p7-type-label">Service Recovery</span><span class="p7-type-value" id="p7-type-recovery">Pending</span></div>
+            </div>
+
+            <div class="p7-kpi-row" aria-label="Client satisfaction KPIs">
+              <div class="kpi-card card p7-kpi-card">
+                <div class="kpi-label">CSAT</div>
+                <div class="kpi-value" id="kpi-p7-csat">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-csat-sub">Valid CX surveys only</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card">
+                <div class="kpi-label">NPS</div>
+                <div class="kpi-value" id="kpi-p7-nps">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-nps-sub">0-10 recommend question only</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card">
+                <div class="kpi-label">Survey Response Rate</div>
+                <div class="kpi-value" id="kpi-p7-survey-rr">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-survey-rr-sub">Pending survey send data</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card p7-kpi-card--risk">
+                <div class="kpi-label">At-Risk Clients</div>
+                <div class="kpi-value" id="kpi-p7-atrisk">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-atrisk-sub">Low score or open issues</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card">
+                <div class="kpi-label">Resolution SLA</div>
+                <div class="kpi-value" id="kpi-p7-sla">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-sla-sub">Closed-loop resolution</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card">
+                <div class="kpi-label">Public Review Response</div>
+                <div class="kpi-value" id="kpi-p7-public-rr">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-public-rr-sub">Within 48 hours</div>
+              </div>
+              <div class="kpi-card card p7-kpi-card" id="p7-kpi-conversion-wrap" hidden>
+                <div class="kpi-label">Review Conversion</div>
+                <div class="kpi-value" id="kpi-p7-conversion">Not available</div>
+                <div class="kpi-sub" id="kpi-p7-conversion-sub">Invites to published reviews</div>
+              </div>
+            </div>
+
+            <div class="p7-row-two">
+              <div class="section-card p7-panel">
+                <div class="section-title">Customer Journey Satisfaction
+                  <span class="p7-section-hint">CX stages · Status Healthy / Watch / At Risk / Strong</span>
+                </div>
+                <div id="p7-journey-table">Loading journey...</div>
+              </div>
+              <div class="section-card p7-panel">
+                <div class="section-title">At-Risk Clients
+                  <span class="p7-section-hint">Action queue · severity · next action</span>
+                </div>
+                <div id="p7-atrisk-table">Loading at-risk clients...</div>
+              </div>
+            </div>
+
+            <div class="p7-row-two">
+              <div class="section-card p7-panel">
+                <div class="section-title">Satisfaction drivers
+                  <span class="p7-section-hint">Themes with sample sizes · low-n greyed</span>
+                </div>
+                <div class="p7-chart-wrap" id="p7-drivers-wrap">
+                  <canvas id="chart-p7-drivers" aria-label="Satisfaction drivers themes"></canvas>
+                </div>
+                <p class="no-data-msg" id="p7-drivers-empty" hidden>Not enough themed feedback to chart drivers.</p>
+              </div>
+              <div class="section-card p7-panel">
+                <div class="section-title">Closed-loop resolution
+                  <span class="p7-section-hint">Stages and KPIs from recovery data only</span>
+                </div>
+                <div id="p7-resolution-body">Loading resolution...</div>
+              </div>
+            </div>
+
+            <div class="p7-row-two p7-row-bottom">
+              <div class="section-card p7-panel p7-panel--wide">
+                <div class="section-title">Recent feedback
+                  <span class="p7-section-hint">Click a row for detail · themes included</span>
+                </div>
+                <div id="p7-feedback-table">Loading feedback...</div>
+              </div>
+              <div class="section-card p7-panel" id="p7-trend-panel">
+                <div class="section-title" id="p7-trend-title">Monthly trend</div>
+                <div class="p7-chart-wrap" id="p7-monthly-wrap">
+                  <canvas id="chart-p7-monthly" aria-label="Monthly satisfaction trend"></canvas>
+                </div>
+                <div id="p7-individual-list" hidden></div>
+                <p class="no-data-msg" id="p7-trend-empty" hidden>Not enough sample for a monthly trend.</p>
+              </div>
+            </div>
+
+            <div class="section-card p7-panel" id="p7-dq-section">
+              <div class="section-title">Data quality queue
+                <span class="p7-section-hint">Incomplete records excluded from main metrics</span>
+              </div>
+              <div id="p7-dq-table">Loading...</div>
+            </div>
+
+            <!-- Rating distribution (hidden when no valid ratings) -->
+            <div class="section-card p7-panel" id="p7-dist-section" hidden>
+              <div class="section-title">Rating distribution
+                <span class="p7-section-hint">Valid scores only · missing rating never counted as zero</span>
+              </div>
+              <div class="p7-chart-wrap">
+                <canvas id="chart-p7-distribution" aria-label="Rating distribution"></canvas>
+              </div>
+            </div>
+
+            <!-- Feedback detail drawer (P4 pattern) -->
+            <div class="p7-drawer-backdrop" id="p7-drawer-backdrop" hidden></div>
+            <aside class="p7-drawer" id="p7-drawer" hidden aria-label="Feedback details">
+              <div class="p7-drawer-head">
+                <div>
+                  <div class="p7-drawer-kicker">Feedback detail</div>
+                  <h3 class="p7-drawer-title" id="p7-drawer-title">-</h3>
+                  <p class="p7-drawer-sub" id="p7-drawer-sub"></p>
+                </div>
+                <button type="button" class="p7-drawer-close" id="p7-drawer-close" aria-label="Close">x</button>
+              </div>
+              <div id="p7-drawer-body"></div>
+            </aside>
           </div>
         </section>
 
@@ -1568,7 +1742,7 @@
       P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Pending / Awaiting Xero_Bills when Total Actual incomplete), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (partial actuals = labour+variations until Total Actual live). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM, size contract, colour status; incomplete = Data Incomplete neutral colour) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
-      P7: 'Client Satisfaction (placeholder). Page shows title and notice that data is being finalised. Full customer-journey rebuild paused until updated Client Satisfaction data arrives. Answer only that the page is parked / pending data finalisation; do not invent CSAT, NPS, or review metrics.',
+      P7: 'Client Satisfaction (customer-journey dashboard). Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Review Response (within 48h); optional Review Conversion only when invite data exists. Layout: journey satisfaction table, at-risk action table, theme drivers with n= sample sizes (low-n greyed), closed-loop resolution, recent feedback table + side drawer. Monthly trend only when sample is enough. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (ISO week Mon-Sun), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
@@ -4250,28 +4424,1368 @@
 
 
     // ═══════════════════════════════════════════════════════════════
-    // P7 — CLIENT SATISFACTION (placeholder)
-    // Full customer-journey rebuild paused. Resume when Lori ships
-    // updated Client Satisfaction data (p7_client_satisfaction_rebuild.md).
+    // P7 — CLIENT SATISFACTION (customer-journey dashboard)
+    // Sources: Client_Reviews (soft) + Defects_Rework (soft, service recovery)
+    // Types stay separate: CX Surveys · Public Reputation · Service Recovery
+    // Incomplete rows → data-quality queue (excluded from main metrics)
+    // Missing rating is NEVER treated as zero.
     // ═══════════════════════════════════════════════════════════════
-    async function loadP7() {
-      showLoading(true);
-      removeError('p7');
-      try {
-        // No sheet load while the page is parked as a placeholder.
-        setBBPageData('P7', 'P7: Client Satisfaction', {
-          status: 'Placeholder',
-          note: 'Client Satisfaction data is being finalised, this page will be updated soon. Full rebuild paused until updated data arrives.'
-        });
-      } catch (err) {
-        console.error('P7 placeholder error:', err);
-      } finally {
-        showLoading(false);
+    var P7_NA = 'Not available';
+    var P7_PENDING = 'Pending';
+    var P7_JOURNEY_STAGES = [
+      'Quote Experience',
+      'Pre-construction',
+      'During-construction',
+      'Handover',
+      '30-day post'
+    ];
+    var P7_THEME_RULES = [
+      { key: 'Communication', re: /\b(communicat|kept me informed|update|response|call|email|listen)\b/i },
+      { key: 'Quality of work', re: /\b(quality|workmanship|standard|detail|excellent|professional|craft)\b/i },
+      { key: 'Timeliness', re: /\b(on time|timeline|schedule|punctual|delay|prompt|fast)\b/i },
+      { key: 'Cleanliness', re: /\b(clean|tidy|mess|site)\b/i },
+      { key: 'Staff / team', re: /\b(team|staff|tradesmen|crew|reliable|friendly|courteous)\b/i },
+      { key: 'Recommend', re: /\b(recommend|refer|highly)\b/i },
+      { key: 'Value', re: /\b(value|price|cost|budget|worth)\b/i },
+      { key: 'Issues / defects', re: /\b(defect|complaint|issue|problem|damage|rework|fault)\b/i }
+    ];
+    var _p7Records = [];
+    var _p7Defects = [];
+    var _p7FiltersBound = false;
+    var _p7DrawerBound = false;
+    var _p7LoadedAt = null;
+    var _p7Period = 'all';
+    var _p7Dept = 'ALL';
+    var _p7Stage = 'ALL';
+    var _p7Source = 'ALL';
+
+    function p7Esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function p7Cell(row) {
+      var names = Array.prototype.slice.call(arguments, 1);
+      var raw = col.apply(null, [row].concat(names));
+      return unwrapSheetCellValue(raw);
+    }
+
+    /** Parse rating only when a real score is present. Never coerce blank to 0. */
+    function p7ParseRating(val) {
+      var s = unwrapSheetCellValue(val);
+      if (!s) return null;
+      // Sentiment labels with no numeric score
+      var low = s.toLowerCase();
+      if (/^(star|stars|rating|n\/a|na|none|null|undefined)$/i.test(s)) return null;
+      if (/^\d+(\.\d+)?\s*\/\s*5/.test(s)) {
+        var m5 = s.match(/^(\d+(?:\.\d+)?)/);
+        if (m5) {
+          var r5 = parseFloat(m5[1]);
+          return isNaN(r5) ? null : r5;
+        }
+      }
+      // Pure number (1-5 stars or 0-10 if clearly numeric string without long text)
+      if (/^\d+(\.\d+)?$/.test(s)) {
+        var n = parseFloat(s);
+        if (isNaN(n)) return null;
+        // Accept 0 only when explicitly written (0-star / zero). Still a valid score.
+        return n;
+      }
+      // "5 star" / "5 stars" / "★★★★★"
+      var starWord = s.match(/^(\d+(?:\.\d+)?)\s*stars?$/i);
+      if (starWord) {
+        var sw = parseFloat(starWord[1]);
+        return isNaN(sw) ? null : sw;
+      }
+      var stars = (s.match(/[★⭐]/g) || []).length;
+      if (stars >= 1 && stars <= 5 && s.length <= 10) return stars;
+      // Long text is not a rating
+      if (s.length > 8 || /[a-zA-Z]{3,}/.test(s)) return null;
+      return null;
+    }
+
+    /** NPS score: only true 0-10 recommendation questions (not 1-5 stars). */
+    function p7ParseNpsScore(val) {
+      var s = unwrapSheetCellValue(val);
+      if (!s || !/^\d+(\.\d+)?$/.test(s)) return null;
+      var n = parseFloat(s);
+      if (isNaN(n) || n < 0 || n > 10) return null;
+      // Require explicit 0-10 scale marker on the field path; caller supplies field intent.
+      // If value is 1-5 only without a recommend field name, do not treat as NPS.
+      return n;
+    }
+
+    function p7IsPlaceholderToken(s) {
+      var t = String(s || '').trim();
+      if (!t) return true;
+      return /^(DD|MM|YYYY|YY|N\/A|NA|NULL|UNDEFINED|NONE)$/i.test(t) ||
+        /^(DD|D)[\-\/.]/i.test(t) ||
+        /^\{[\s]*\}/.test(t);
+    }
+
+    function p7LooksLikePlatform(s) {
+      return /^(google|facebook|fb|yelp|product\s*review|trustpilot|word of mouth|hipages|service\s*nsw|google\s*business)/i.test(String(s || '').trim());
+    }
+
+    function p7LooksLikePersonName(s) {
+      var t = String(s || '').trim();
+      if (!t || t.length < 2 || t.length > 60) return false;
+      if (p7LooksLikePlatform(t)) return false;
+      if (/^\d+(\.\d+)?$/.test(t)) return false;
+      if (t.length > 80) return false;
+      return /[a-zA-Z]/.test(t) && !/^accounts\//i.test(t);
+    }
+
+    function p7LooksLikeReviewText(s) {
+      var t = String(s || '').trim();
+      return t.length >= 12 && /[a-zA-Z]{3,}/.test(t);
+    }
+
+    function p7IsYes(val) {
+      var s = String(unwrapSheetCellValue(val) || '').trim().toLowerCase();
+      return s === 'y' || s === 'yes' || s === 'true' || s === '1';
+    }
+
+    function p7IsNo(val) {
+      var s = String(unwrapSheetCellValue(val) || '').trim().toLowerCase();
+      return s === 'n' || s === 'no' || s === 'false' || s === '0';
+    }
+
+    function p7NormalizeStage(raw) {
+      var s = String(unwrapSheetCellValue(raw) || '').trim().toLowerCase();
+      if (!s) return '';
+      if (/quote/.test(s)) return 'Quote Experience';
+      if (/pre[-\s]?construct/.test(s) || s === 'pre construction') return 'Pre-construction';
+      if (/during[-\s]?construct|construction|on[-\s]?site/.test(s)) return 'During-construction';
+      if (/hand\s*over|practical completion|pc\b/.test(s)) return 'Handover';
+      if (/30[-\s]?day|post[-\s]?handover|defects liability|dlp/.test(s)) return '30-day post';
+      if (/public|reputation|google|facebook/.test(s)) return 'Public Reputation';
+      if (/service recovery|complaint|defect|recovery/.test(s)) return 'Service Recovery';
+      // Exact known labels
+      for (var i = 0; i < P7_JOURNEY_STAGES.length; i++) {
+        if (s === P7_JOURNEY_STAGES[i].toLowerCase()) return P7_JOURNEY_STAGES[i];
+      }
+      return '';
+    }
+
+    function p7ClassifyType(platform, source, stage, flagged, category) {
+      var blob = [platform, source, stage, category].join(' ').toLowerCase();
+      if (/survey|csat|nps|ghl|customer experience|quote experience|pre-construct|handover|30-day/.test(blob)) {
+        return 'survey';
+      }
+      if (/complaint|defect|rework|service recovery|escalat/.test(blob) || p7IsYes(flagged)) {
+        // Flagged alone is not enough for recovery; keep public when platform is review site
+        if (/complaint|defect|rework|service recovery|escalat/.test(blob)) return 'recovery';
+      }
+      if (p7LooksLikePlatform(platform) || p7LooksLikePlatform(source) ||
+          /google|facebook|trustpilot|hipages|yelp|public/.test(blob)) {
+        return 'public';
+      }
+      if (stage && P7_JOURNEY_STAGES.indexOf(stage) !== -1) return 'survey';
+      return 'public'; // review-shaped rows without survey markers
+    }
+
+    function p7ThemesFromText(text) {
+      var t = String(text || '');
+      if (!t) return [];
+      var found = [];
+      P7_THEME_RULES.forEach(function(rule) {
+        if (rule.re.test(t)) found.push(rule.key);
+      });
+      return found;
+    }
+
+    function p7StatusFromCsat(avg, n) {
+      if (n == null || n === 0 || avg == null || isNaN(avg)) return 'Pending';
+      if (avg >= 4.5) return 'Strong';
+      if (avg >= 4.0) return 'Healthy';
+      if (avg >= 3.0) return 'Watch';
+      return 'At Risk';
+    }
+
+    function p7StatusClass(status) {
+      var s = String(status || '').toLowerCase();
+      if (s === 'at risk') return 'p7-status--risk';
+      if (s === 'watch') return 'p7-status--watch';
+      if (s === 'strong') return 'p7-status--strong';
+      if (s === 'healthy') return 'p7-status--healthy';
+      return 'p7-status--gap';
+    }
+
+    function p7DaysBetween(a, b) {
+      if (!a || !b || isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+      return Math.floor((b.getTime() - a.getTime()) / 86400000);
+    }
+
+    function p7FormatDate(d) {
+      if (!d || isNaN(d.getTime())) return P7_NA;
+      return d.toLocaleDateString('en-AU');
+    }
+
+    function p7BindFilters() {
+      if (_p7FiltersBound) return;
+      _p7FiltersBound = true;
+      var periodEl = document.getElementById('p7-period-filter');
+      var deptEl = document.getElementById('p7-dept-filter');
+      var stageEl = document.getElementById('p7-stage-filter');
+      var sourceEl = document.getElementById('p7-source-filter');
+      function rerender() {
+        if (periodEl) _p7Period = periodEl.value || 'all';
+        if (deptEl) _p7Dept = deptEl.value || 'ALL';
+        if (stageEl) _p7Stage = stageEl.value || 'ALL';
+        if (sourceEl) _p7Source = sourceEl.value || 'ALL';
+        renderP7Dashboard();
+      }
+      if (periodEl) periodEl.addEventListener('change', rerender);
+      if (deptEl) deptEl.addEventListener('change', rerender);
+      if (stageEl) stageEl.addEventListener('change', rerender);
+      if (sourceEl) sourceEl.addEventListener('change', rerender);
+    }
+
+    function p7BindDrawer() {
+      if (_p7DrawerBound) return;
+      _p7DrawerBound = true;
+      var closeBtn = document.getElementById('p7-drawer-close');
+      var backdrop = document.getElementById('p7-drawer-backdrop');
+      if (closeBtn) closeBtn.addEventListener('click', p7CloseDrawer);
+      if (backdrop) backdrop.addEventListener('click', p7CloseDrawer);
+    }
+
+    function p7CloseDrawer() {
+      var drawer = document.getElementById('p7-drawer');
+      var backdrop = document.getElementById('p7-drawer-backdrop');
+      if (drawer) drawer.hidden = true;
+      if (backdrop) backdrop.hidden = true;
+    }
+
+    function p7OpenDrawer(rec) {
+      if (!rec) return;
+      var drawer = document.getElementById('p7-drawer');
+      var backdrop = document.getElementById('p7-drawer-backdrop');
+      var title = document.getElementById('p7-drawer-title');
+      var sub = document.getElementById('p7-drawer-sub');
+      var body = document.getElementById('p7-drawer-body');
+      if (!drawer || !body) return;
+      if (title) title.textContent = rec.client || rec.project || 'Feedback';
+      if (sub) {
+        sub.textContent = [
+          rec.typeLabel || '',
+          rec.stage || '',
+          rec.platform || rec.source || ''
+        ].filter(Boolean).join(' · ');
+      }
+      var rows = [
+        ['Date', rec.dateObj ? p7FormatDate(rec.dateObj) : (rec.dateRaw || P7_NA)],
+        ['Client', rec.client || P7_NA],
+        ['Project', rec.project || P7_NA],
+        ['Brand', rec.brand || P7_NA],
+        ['Department / Division', rec.division || P7_NA],
+        ['Stage', rec.stage || 'Unspecified'],
+        ['Type', rec.typeLabel || P7_NA],
+        ['Platform / Source', rec.platform || rec.source || P7_NA],
+        ['Rating', rec.rating != null ? String(rec.rating) : P7_NA],
+        ['NPS (0-10)', rec.npsScore != null ? String(rec.npsScore) : P7_NA],
+        ['Responded', rec.responded === true ? 'Yes' : (rec.responded === false ? 'No' : P7_NA)],
+        ['Response date', rec.responseDateObj ? p7FormatDate(rec.responseDateObj) : P7_NA],
+        ['Response time (hours)', rec.responseHours != null ? String(rec.responseHours) : P7_NA],
+        ['Owner', rec.owner || P7_NA],
+        ['Status', rec.status || P7_NA],
+        ['Severity', rec.severity || P7_NA],
+        ['Flagged', rec.flagged ? 'Yes' : 'No'],
+        ['Themes', rec.themes.length ? rec.themes.join(', ') : P7_NA],
+        ['Review / comment', rec.comment || P7_NA],
+        ['Reply', rec.reply || P7_NA],
+        ['Internal notes', rec.notes || P7_NA],
+        ['Action required', rec.actionRequired || P7_NA],
+        ['Data quality', rec.incomplete ? 'Incomplete record' : 'Usable'],
+        ['Missing fields', rec.missingFields.length ? rec.missingFields.join(', ') : 'None']
+      ];
+      body.innerHTML = '<dl class="p7-drawer-dl">' + rows.map(function(pair) {
+        return '<div><dt>' + p7Esc(pair[0]) + '</dt><dd>' + p7Esc(pair[1]) + '</dd></div>';
+      }).join('') + '</dl>';
+      drawer.hidden = false;
+      if (backdrop) backdrop.hidden = false;
+    }
+
+    /**
+     * Normalize one Client_Reviews sheet row into a structured record.
+     * Salvages known Make.com field mis-maps without inventing numbers.
+     */
+    function p7NormalizeReviewRow(row, idx) {
+      var raw = {};
+      Object.keys(row || {}).forEach(function(k) {
+        raw[k] = unwrapSheetCellValue(row[k]);
+      });
+
+      var reviewId = p7Cell(row, 'Review ID', 'ReviewID', 'ID', 'id');
+      var dateRaw = p7Cell(row, 'Date', 'date', 'Review_Date', 'Review Date', 'Submitted', 'Created', 'created_at', 'Date Submitted');
+      var brand = p7Cell(row, 'Brand', 'brand');
+      var division = p7Cell(row, 'Division(if identifiable)', 'Division', 'division', 'Department', 'Service', 'Category');
+      var platform = p7Cell(row, 'Platform', 'platform', 'Channel');
+      var project = p7Cell(row, 'Project ID', 'Project', 'project', 'Job #', 'Job Number', 'Xero Project ID');
+      var client = p7Cell(row, 'Reviewer Name', 'Client_Name', 'Client', 'Name', 'Customer', 'customer_name', 'Contact', 'Reviewer');
+      var ratingRaw = p7Cell(row, 'Star Rating/ Sentiment', 'Star Rating', 'Rating', 'rating', 'Score', 'Stars', 'star_rating', 'Review Rating', 'Sentiment');
+      var comment = p7Cell(row, 'Review Text', 'Review', 'Review_Text', 'Comment', 'review_text', 'Feedback', 'Body', 'Comment Text');
+      var reply = p7Cell(row, 'Reply Text', 'Reply', 'Response Text', 'Response', 'Business Reply');
+      var respondedRaw = p7Cell(row, 'Responded?', 'Responded', 'responded', 'Replied', 'replied');
+      var responseDateRaw = p7Cell(row, 'Response Date', 'Reply Date', 'Date Responded');
+      var responseDaysRaw = p7Cell(row, 'Response time (Days)?', 'Response time (Days)', 'Response Time Days', 'Response Time (Hours)', 'Response Hours');
+      var location = p7Cell(row, 'Reviewer Location', 'Location');
+      var source = p7Cell(row, 'Source', 'source');
+      var flaggedRaw = p7Cell(row, 'Flagged?', 'Flagged', 'flagged');
+      var notes = p7Cell(row, 'Internal Notes', 'Notes', 'Internal notes');
+      var actionRequired = p7Cell(row, 'Action Required', 'Next Action', 'Action');
+      var stageRaw = p7Cell(row, 'Stage', 'Project Stage', 'Journey Stage', 'Survey Stage', 'CX Stage');
+      var owner = p7Cell(row, 'Owner', 'Assignee', 'Responsible', 'Manager');
+      var status = p7Cell(row, 'Status', 'Review Status', 'Case Status');
+      var severity = p7Cell(row, 'Severity', 'Priority');
+      var npsRaw = p7Cell(row, 'NPS', 'NPS Score', 'Recommend Score', 'Likelihood to Recommend', 'Recommendation Score', '0-10 Score');
+      var surveysSentRaw = p7Cell(row, 'Surveys Sent', 'Invites Sent', 'Survey Sent');
+      var lastContactRaw = p7Cell(row, 'Last Contact', 'Last Contacted', 'Last Contact Date');
+      var dueRaw = p7Cell(row, 'Due Date', 'Due', 'Follow Up Date');
+
+      // ── Salvage known Make column shift (Google review dump) ──
+      // Division holds platform; Project ID holds client; Reviewer Name holds star "1"-"5";
+      // Star Rating field holds review text; Review Text empty; Reply Text holds Yes/No-ish.
+      var rating = p7ParseRating(ratingRaw);
+      if (rating == null && p7LooksLikeReviewText(ratingRaw) && !p7LooksLikeReviewText(comment)) {
+        comment = comment || ratingRaw;
+        ratingRaw = '';
+        rating = null;
+      }
+      if (rating == null) {
+        var ratingFromClient = p7ParseRating(client);
+        if (ratingFromClient != null && ratingFromClient >= 0 && ratingFromClient <= 5) {
+          rating = ratingFromClient;
+          client = '';
+        }
+      }
+      if (!p7LooksLikePersonName(client) && p7LooksLikePersonName(project) && !/^J\d+/i.test(project)) {
+        client = project;
+        project = '';
+      }
+      if (!platform && p7LooksLikePlatform(division)) {
+        platform = division;
+        division = '';
+      }
+      if (!platform && p7LooksLikePlatform(source)) platform = source;
+      if (!source && platform) source = platform;
+
+      // Responded salvage: Responded? empty but Reply Text is Yes/No, or reply contains actual text
+      var responded = null;
+      if (p7IsYes(respondedRaw)) responded = true;
+      else if (p7IsNo(respondedRaw)) responded = false;
+      else if (p7IsYes(reply) && !p7LooksLikeReviewText(reply)) {
+        responded = true;
+        reply = '';
+      } else if (p7IsNo(reply) && !p7LooksLikeReviewText(reply)) {
+        responded = false;
+        reply = '';
+      } else if (p7LooksLikeReviewText(reply)) {
+        responded = true;
+      }
+
+      if (p7IsPlaceholderToken(dateRaw)) dateRaw = '';
+      if (p7IsPlaceholderToken(client)) client = '';
+      if (p7IsPlaceholderToken(project)) project = '';
+      if (p7IsPlaceholderToken(platform)) platform = '';
+      if (p7IsPlaceholderToken(comment)) comment = '';
+      if (p7IsPlaceholderToken(reply)) reply = '';
+
+      var dateObj = parseFlexibleDate(dateRaw);
+      var responseDateObj = parseFlexibleDate(responseDateRaw);
+      var lastContactObj = parseFlexibleDate(lastContactRaw);
+      var dueObj = parseFlexibleDate(dueRaw);
+
+      // Response time: prefer explicit hours/days field
+      var responseHours = null;
+      var rd = unwrapSheetCellValue(responseDaysRaw);
+      if (rd && /^\d+(\.\d+)?$/.test(rd)) {
+        var rdn = parseFloat(rd);
+        if (!isNaN(rdn)) {
+          // Field header says Days; convert to hours for 48h SLA. If value is huge, treat as hours already unlikely.
+          responseHours = Math.round(rdn * 24 * 10) / 10;
+        }
+      }
+      if (responseHours == null && dateObj && responseDateObj) {
+        var dh = (responseDateObj.getTime() - dateObj.getTime()) / 3600000;
+        if (!isNaN(dh) && dh >= 0) responseHours = Math.round(dh * 10) / 10;
+      }
+
+      // NPS: only from dedicated 0-10 recommend field (never from 5-star rating)
+      var npsScore = null;
+      if (npsRaw) {
+        var ns = unwrapSheetCellValue(npsRaw);
+        if (/^\d+(\.\d+)?$/.test(ns)) {
+          var nn = parseFloat(ns);
+          // Accept 0-10 inclusive; if value is 1-5 only and field says star-like, skip
+          if (!isNaN(nn) && nn >= 0 && nn <= 10) {
+            // If the "NPS" column is actually a 1-5 star mislabel without 6-10 ever present, we still
+            // only accept when field name intends NPS/recommend (already restricted by col aliases).
+            npsScore = nn;
+          }
+        }
+      }
+
+      var stage = p7NormalizeStage(stageRaw);
+      var type = p7ClassifyType(platform, source, stage, flaggedRaw, division);
+      if (!stage) {
+        if (type === 'public') stage = 'Public Reputation';
+        else if (type === 'recovery') stage = 'Service Recovery';
+        else stage = 'Unspecified';
+      }
+
+      var themes = p7ThemesFromText(comment || '');
+      var hasScore = rating != null && !isNaN(rating);
+      var hasComment = !!(comment && String(comment).trim());
+      // Only valid score OR comment counts as feedback content
+      var isFeedback = hasScore || hasComment;
+
+      var missingFields = [];
+      if (!client) missingFields.push('client');
+      if (!project) missingFields.push('project');
+      if (!platform && !source) missingFields.push('platform');
+      if (!hasScore) missingFields.push('rating');
+      if (!hasComment) missingFields.push('review content');
+
+      // Incomplete: any core field still missing (surfaced in DQ queue).
+      // Public reviews often have no project ID; surveys need project when available
+      // but do not invent it.
+      var incomplete = missingFields.length > 0;
+
+      // Usable in main KPIs / journey: must be real feedback with identity + channel.
+      // Missing rating alone is OK if comment exists (rating not coerced to 0).
+      // Public: project optional. Survey/recovery: client or project required.
+      var hasIdentity = !!(client || project);
+      var hasChannel = !!(platform || source) || type === 'recovery';
+      var usableForKpi = isFeedback && hasIdentity && hasChannel;
+
+      // Severity for action queue: orange only for high severity / at risk
+      var sev = unwrapSheetCellValue(severity) || '';
+      if (!sev && hasScore && rating <= 2) sev = 'High';
+      else if (!sev && hasScore && rating <= 3) sev = 'Medium';
+      else if (!sev && p7IsYes(flaggedRaw)) sev = 'Medium';
+
+      var isAtRisk = false;
+      if (usableForKpi) {
+        if (hasScore && rating <= 3) isAtRisk = true;
+        if (p7IsYes(flaggedRaw)) isAtRisk = true;
+        if (String(sev).toLowerCase() === 'high') isAtRisk = true;
+        if (/complaint|defect|issue/i.test(comment || actionRequired || '')) isAtRisk = true;
+      }
+
+      var daysOpen = null;
+      if (dateObj) daysOpen = p7DaysBetween(dateObj, new Date());
+
+      return {
+        id: reviewId || ('rev-' + idx),
+        idx: idx,
+        raw: row,
+        dateRaw: dateRaw,
+        dateObj: dateObj,
+        brand: brand,
+        division: division,
+        department: division,
+        platform: platform,
+        project: project,
+        client: client,
+        rating: hasScore ? rating : null,
+        npsScore: npsScore,
+        comment: comment,
+        reply: reply,
+        responded: responded,
+        responseDateObj: responseDateObj,
+        responseHours: responseHours,
+        location: location,
+        source: source,
+        flagged: p7IsYes(flaggedRaw),
+        notes: notes,
+        actionRequired: actionRequired,
+        stage: stage,
+        owner: owner,
+        status: status,
+        severity: sev,
+        themes: themes,
+        lastContactObj: lastContactObj,
+        dueObj: dueObj,
+        surveysSent: surveysSentRaw && /^\d+$/.test(surveysSentRaw) ? parseInt(surveysSentRaw, 10) : null,
+        type: type,
+        typeLabel: type === 'survey' ? 'CX Survey' : (type === 'recovery' ? 'Service Recovery' : 'Public Reputation'),
+        isFeedback: isFeedback,
+        incomplete: incomplete,
+        usableForKpi: usableForKpi,
+        missingFields: missingFields,
+        isAtRisk: isAtRisk,
+        daysOpen: daysOpen,
+        origin: 'Client_Reviews'
+      };
+    }
+
+    function p7NormalizeDefectRow(row, idx) {
+      var client = p7Cell(row, 'Client', 'Client Name', 'Customer');
+      var project = p7Cell(row, 'Job Name', 'Xero Project ID', 'Project', 'Job #');
+      var brand = p7Cell(row, 'Brand');
+      var division = p7Cell(row, 'Department', 'Division');
+      var desc = p7Cell(row, 'Description', 'Issue', 'Defect', 'Root Cause');
+      var resolved = p7Cell(row, 'Resolved (Y/N)', 'Resolved', 'Status');
+      var dateRaw = p7Cell(row, 'Date Logged', 'Date', 'Created');
+      var dateRes = p7Cell(row, 'Date Resolved', 'Resolved Date');
+      var owner = p7Cell(row, 'Team Member Responsible', 'Owner', 'Responsible');
+      var category = p7Cell(row, 'Category');
+      var dateObj = parseFlexibleDate(dateRaw);
+      var resObj = parseFlexibleDate(dateRes);
+      var isResolved = p7IsYes(resolved);
+      var daysOpen = dateObj ? p7DaysBetween(dateObj, isResolved && resObj ? resObj : new Date()) : null;
+      var hasContent = !!(desc && desc.trim());
+      return {
+        id: p7Cell(row, 'Defect ID', 'ID') || ('def-' + idx),
+        idx: idx,
+        dateRaw: dateRaw,
+        dateObj: dateObj,
+        brand: brand,
+        division: division,
+        department: division,
+        platform: '',
+        project: project,
+        client: client || project,
+        rating: null,
+        npsScore: null,
+        comment: desc,
+        reply: '',
+        responded: isResolved ? true : (hasContent ? false : null),
+        responseDateObj: resObj,
+        responseHours: (dateObj && resObj) ? Math.round((resObj - dateObj) / 3600000 * 10) / 10 : null,
+        source: 'Defects_Rework',
+        flagged: true,
+        notes: p7Cell(row, 'Prevention Action', 'Root Cause'),
+        actionRequired: isResolved ? 'Closed' : 'Resolve defect',
+        stage: 'Service Recovery',
+        owner: owner,
+        status: isResolved ? 'Closed' : 'Open',
+        severity: isResolved ? 'Low' : 'High',
+        themes: p7ThemesFromText(desc || ''),
+        lastContactObj: resObj || dateObj,
+        dueObj: null,
+        surveysSent: null,
+        type: 'recovery',
+        typeLabel: 'Service Recovery',
+        isFeedback: hasContent,
+        incomplete: !hasContent || (!client && !project),
+        usableForKpi: hasContent && !!(client || project),
+        missingFields: [
+          !client ? 'client' : '',
+          !project ? 'project' : '',
+          !hasContent ? 'review content' : '',
+          'rating'
+        ].filter(Boolean),
+        isAtRisk: hasContent && !isResolved,
+        daysOpen: daysOpen,
+        origin: 'Defects_Rework',
+        category: category
+      };
+    }
+
+    function p7InPeriod(rec, period) {
+      if (!period || period === 'all') return true;
+      if (!rec.dateObj) return false;
+      var now = new Date();
+      var t = rec.dateObj.getTime();
+      if (period === 'ytd') {
+        return rec.dateObj.getFullYear() === now.getFullYear();
+      }
+      var days = parseInt(period, 10);
+      if (!isNaN(days) && days > 0) {
+        return t >= (now.getTime() - days * 86400000);
+      }
+      return true;
+    }
+
+    function p7ApplyPageFilters(records) {
+      return (records || []).filter(function(r) {
+        if (activeBrand && activeBrand !== 'ALL') {
+          var b = String(r.brand || '').toUpperCase().trim();
+          if (b && b !== String(activeBrand).toUpperCase()) return false;
+          // Empty brand: keep (cannot exclude without inventing assignment)
+        }
+        if (_p7Dept && _p7Dept !== 'ALL') {
+          if (normalizeDeptKey(r.department || r.division || '') !== normalizeDeptKey(_p7Dept)) {
+            return false;
+          }
+        }
+        if (_p7Stage && _p7Stage !== 'ALL') {
+          if (String(r.stage || '') !== _p7Stage) return false;
+        }
+        if (_p7Source && _p7Source !== 'ALL') {
+          if (r.type !== _p7Source) return false;
+        }
+        if (!p7InPeriod(r, _p7Period)) return false;
+        return true;
+      });
+    }
+
+    function p7DestroyChart(id) {
+      if (_charts[id]) {
+        _charts[id].destroy();
+        delete _charts[id];
       }
     }
 
-    function renderP7() {
-      // No charts or KPI fill while parked.
+    function p7SetText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text == null ? '' : String(text);
+    }
+
+    function p7PopulateDeptFilter(records) {
+      var sel = document.getElementById('p7-dept-filter');
+      if (!sel) return;
+      var prev = sel.value || _p7Dept || 'ALL';
+      var depts = {};
+      (records || []).forEach(function(r) {
+        var d = canonicalDeptName(r.department || r.division || '');
+        if (d) depts[normalizeDeptKey(d)] = d;
+      });
+      // Always include master list where useful
+      var master = (typeof CONFIG !== 'undefined' && CONFIG.DEPARTMENTS) ? CONFIG.DEPARTMENTS : [];
+      master.forEach(function(d) {
+        var can = canonicalDeptName(d);
+        if (can) depts[normalizeDeptKey(can)] = can;
+      });
+      var keys = Object.keys(depts).sort(function(a, b) {
+        return depts[a].localeCompare(depts[b]);
+      });
+      sel.innerHTML = '<option value="ALL">All departments</option>' +
+        keys.map(function(k) {
+          return '<option value="' + p7Esc(depts[k]) + '">' + p7Esc(depts[k]) + '</option>';
+        }).join('');
+      // Restore selection if still present
+      var found = false;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === prev) { found = true; break; }
+      }
+      sel.value = found ? prev : 'ALL';
+      _p7Dept = sel.value;
+    }
+
+    async function loadP7() {
+      showLoading(true);
+      removeError('p7');
+      p7BindFilters();
+      p7BindDrawer();
+      try {
+        var results = await Promise.all([
+          fetchSheet(CONFIG.TABS.CLIENT_REVIEWS).catch(function(err) {
+            console.warn('[P7] Client_Reviews load failed:', err);
+            return null;
+          }),
+          fetchSheet(CONFIG.TABS.DEFECTS_REWORK).catch(function(err) {
+            console.warn('[P7] Defects_Rework load failed:', err);
+            return null;
+          })
+        ]);
+        var reviews = results[0];
+        var defects = results[1];
+        _p7LoadedAt = new Date();
+        _p7Records = [];
+        _p7Defects = [];
+
+        if (reviews === null) {
+          showError('p7', 'Could not load Client Reviews data. Other sources may still show.');
+        } else {
+          (reviews || []).forEach(function(row, i) {
+            _p7Records.push(p7NormalizeReviewRow(row, i));
+          });
+        }
+        if (defects !== null) {
+          (defects || []).forEach(function(row, i) {
+            var rec = p7NormalizeDefectRow(row, i);
+            _p7Defects.push(rec);
+            // Only surface recovery rows that have content into the combined set
+            if (rec.isFeedback) _p7Records.push(rec);
+          });
+        }
+        p7PopulateDeptFilter(_p7Records);
+        renderP7Dashboard();
+      } catch (err) {
+        console.error('P7 load error:', err);
+        showError('p7', 'Could not load Client Satisfaction data.');
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP7(reviews) {
+      // Legacy entry point if called with raw rows
+      _p7Records = (reviews || []).map(function(row, i) {
+        return p7NormalizeReviewRow(row, i);
+      });
+      _p7LoadedAt = new Date();
+      p7PopulateDeptFilter(_p7Records);
+      p7BindFilters();
+      p7BindDrawer();
+      renderP7Dashboard();
+    }
+
+    function renderP7Dashboard() {
+      var all = _p7Records || [];
+      var filtered = p7ApplyPageFilters(all);
+
+      // DQ queue: rows still missing any core fields (after unwrap/salvage)
+      var incomplete = filtered.filter(function(r) { return r.incomplete; });
+      // Main metrics: only usable feedback (valid score OR comment + identity + channel)
+      var usable = filtered.filter(function(r) { return r.usableForKpi; });
+      var surveys = usable.filter(function(r) { return r.type === 'survey'; });
+      var publicRep = usable.filter(function(r) { return r.type === 'public'; });
+      var recovery = usable.filter(function(r) { return r.type === 'recovery'; });
+
+      // Banner N: records still missing any of the named core fields
+      var incompleteMissingCore = incomplete.filter(function(r) {
+        return r.missingFields.indexOf('client') !== -1 ||
+          r.missingFields.indexOf('project') !== -1 ||
+          r.missingFields.indexOf('platform') !== -1 ||
+          r.missingFields.indexOf('rating') !== -1 ||
+          r.missingFields.indexOf('review content') !== -1;
+      });
+
+      // ── Last updated ──
+      var lu = document.getElementById('p7-last-updated');
+      if (lu) {
+        lu.textContent = _p7LoadedAt
+          ? ('Last updated ' + _p7LoadedAt.toLocaleString('en-AU') +
+            ' · Brand: ' + (activeBrand || 'ALL') +
+            (_p7Period && _p7Period !== 'all' ? ' · Period: ' + _p7Period : ''))
+          : 'Last updated: Pending';
+      }
+
+      // ── Data quality banner ──
+      var dqEl = document.getElementById('p7-data-quality');
+      if (dqEl) {
+        var nMiss = incompleteMissingCore.length;
+        if (!all.length) {
+          dqEl.textContent = 'Feedback data pending. Client_Reviews has no rows yet (or failed to load).';
+          dqEl.className = 'p7-data-quality p7-dq--warn';
+        } else if (nMiss > 0) {
+          dqEl.textContent = 'Feedback data incomplete, ' + nMiss +
+            ' records are missing client, project, platform, rating and review content.';
+          dqEl.className = 'p7-data-quality p7-dq--warn';
+        } else {
+          dqEl.textContent = 'Feedback data quality: core fields present on all filtered records.';
+          dqEl.className = 'p7-data-quality p7-dq--ok';
+        }
+      }
+
+      // ── Type strip (do not blend into Total Reviews hero) ──
+      p7SetText('p7-type-survey', String(surveys.length));
+      p7SetText('p7-type-public', String(publicRep.length));
+      p7SetText('p7-type-recovery', String(recovery.length));
+
+      // ── KPIs ──
+      // CSAT: valid surveys only with a numeric rating
+      var surveyRatings = surveys.map(function(r) { return r.rating; }).filter(function(n) {
+        return n != null && !isNaN(n);
+      });
+      if (surveyRatings.length) {
+        var csat = surveyRatings.reduce(function(a, b) { return a + b; }, 0) / surveyRatings.length;
+        setKPI('kpi-p7-csat', 'kpi-p7-csat-sub',
+          csat.toFixed(1) + ' / 5',
+          'n=' + surveyRatings.length + ' valid survey scores');
+      } else {
+        setKPI('kpi-p7-csat', 'kpi-p7-csat-sub', P7_NA,
+          surveys.length ? 'Surveys present but no valid scores' : 'No valid CX survey scores yet');
+      }
+
+      // NPS: only 0-10 recommend field (never from 5-star)
+      var npsScores = usable.map(function(r) { return r.npsScore; }).filter(function(n) {
+        return n != null && !isNaN(n) && n >= 0 && n <= 10;
+      });
+      if (npsScores.length) {
+        var promoters = npsScores.filter(function(n) { return n >= 9; }).length;
+        var detractors = npsScores.filter(function(n) { return n <= 6; }).length;
+        var nps = Math.round((promoters - detractors) / npsScores.length * 100);
+        setKPI('kpi-p7-nps', 'kpi-p7-nps-sub', String(nps),
+          'n=' + npsScores.length + ' from 0-10 recommend question');
+      } else {
+        setKPI('kpi-p7-nps', 'kpi-p7-nps-sub', P7_NA,
+          'No 0-10 recommend scores (not derived from 5-star)');
+      }
+
+      // Survey Response Rate: needs sent + responses
+      var sentKnown = surveys.filter(function(r) { return r.surveysSent != null; });
+      if (sentKnown.length) {
+        var sentTotal = sentKnown.reduce(function(a, r) { return a + (r.surveysSent || 0); }, 0);
+        var respCount = surveys.length;
+        if (sentTotal > 0) {
+          setKPI('kpi-p7-survey-rr', 'kpi-p7-survey-rr-sub',
+            Math.round(respCount / sentTotal * 100) + '%',
+            respCount + ' responses / ' + sentTotal + ' sent');
+        } else {
+          setKPI('kpi-p7-survey-rr', 'kpi-p7-survey-rr-sub', P7_NA, 'Surveys sent is zero or blank');
+        }
+      } else {
+        setKPI('kpi-p7-survey-rr', 'kpi-p7-survey-rr-sub', P7_PENDING,
+          'Survey send volume not in sheet');
+      }
+
+      // At-Risk Clients
+      var atRisk = usable.filter(function(r) { return r.isAtRisk; });
+      setKPI('kpi-p7-atrisk', 'kpi-p7-atrisk-sub',
+        String(atRisk.length),
+        atRisk.length ? 'Open low-score or flagged issues' : 'None in current filters');
+
+      // Resolution SLA: % of recovery/at-risk items resolved within target (7 days default when we have closed dates)
+      var recoveryItems = usable.filter(function(r) {
+        return r.type === 'recovery' || r.isAtRisk;
+      });
+      var withResTiming = recoveryItems.filter(function(r) {
+        return r.responseHours != null || (r.responded === true && r.daysOpen != null);
+      });
+      if (withResTiming.length) {
+        var within = withResTiming.filter(function(r) {
+          if (r.responseHours != null) return r.responseHours <= (7 * 24);
+          return r.responded === true && r.daysOpen != null && r.daysOpen <= 7;
+        }).length;
+        setKPI('kpi-p7-sla', 'kpi-p7-sla-sub',
+          Math.round(within / withResTiming.length * 100) + '%',
+          within + ' of ' + withResTiming.length + ' resolved ≤7 days');
+      } else if (recoveryItems.length) {
+        setKPI('kpi-p7-sla', 'kpi-p7-sla-sub', P7_PENDING,
+          recoveryItems.length + ' open issues · resolution timestamps missing');
+      } else {
+        setKPI('kpi-p7-sla', 'kpi-p7-sla-sub', P7_NA, 'No recovery / at-risk cases in view');
+      }
+
+      // Public Review Response within 48h
+      var publicWithResponseData = publicRep.filter(function(r) {
+        return r.responded === true || r.responded === false || r.responseHours != null;
+      });
+      if (publicWithResponseData.length) {
+        var within48 = publicWithResponseData.filter(function(r) {
+          if (r.responseHours != null) return r.responded === true && r.responseHours <= 48;
+          return false; // yes/no without timing = not counted as meeting 48h
+        }).length;
+        var knownTiming = publicWithResponseData.filter(function(r) {
+          return r.responseHours != null;
+        });
+        if (knownTiming.length) {
+          var hit = knownTiming.filter(function(r) {
+            return r.responded === true && r.responseHours <= 48;
+          }).length;
+          setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub',
+            Math.round(hit / knownTiming.length * 100) + '%',
+            hit + ' of ' + knownTiming.length + ' public replies within 48h');
+        } else {
+          var yesCount = publicWithResponseData.filter(function(r) { return r.responded === true; }).length;
+          setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_PENDING,
+            yesCount + ' replied · response timestamps missing for 48h SLA');
+        }
+      } else if (publicRep.length) {
+        setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_PENDING,
+          publicRep.length + ' public reviews · no response fields');
+      } else {
+        setKPI('kpi-p7-public-rr', 'kpi-p7-public-rr-sub', P7_NA, 'No public reputation reviews in view');
+      }
+
+      // Optional Review Conversion
+      var convWrap = document.getElementById('p7-kpi-conversion-wrap');
+      var invRows = usable.filter(function(r) {
+        return r.surveysSent != null || /invite|request/i.test(r.source || '');
+      });
+      // Only show when explicit conversion signal exists (invites + public reviews linked)
+      if (invRows.length && publicRep.length) {
+        if (convWrap) convWrap.hidden = false;
+        setKPI('kpi-p7-conversion', 'kpi-p7-conversion-sub', P7_PENDING,
+          'Invite volume present but conversion link not complete');
+      } else {
+        if (convWrap) convWrap.hidden = true;
+      }
+
+      // ── Journey table ──
+      var journeyEl = document.getElementById('p7-journey-table');
+      if (journeyEl) {
+        var journeyRows = P7_JOURNEY_STAGES.map(function(stage) {
+          var stageRecs = surveys.filter(function(r) { return r.stage === stage; });
+          var ratings = stageRecs.map(function(r) { return r.rating; }).filter(function(n) {
+            return n != null && !isNaN(n);
+          });
+          var responses = stageRecs.length;
+          // Surveys sent: only if field present
+          var sentParts = stageRecs.filter(function(r) { return r.surveysSent != null; });
+          var sent = sentParts.length
+            ? sentParts.reduce(function(a, r) { return a + r.surveysSent; }, 0)
+            : null;
+          var rr = (sent != null && sent > 0)
+            ? (Math.round(responses / sent * 100) + '%')
+            : P7_PENDING;
+          var csatVal = ratings.length
+            ? (ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length)
+            : null;
+          var status = p7StatusFromCsat(csatVal, ratings.length);
+          return {
+            stage: stage,
+            sent: sent != null ? String(sent) : P7_PENDING,
+            responses: String(responses),
+            rr: rr,
+            csat: csatVal != null ? csatVal.toFixed(1) : P7_NA,
+            status: status
+          };
+        });
+        // Also show Public Reputation + Service Recovery summary rows (not blended into CSAT)
+        function auxRow(label, recs) {
+          var ratings = recs.map(function(r) { return r.rating; }).filter(function(n) {
+            return n != null && !isNaN(n);
+          });
+          var csatVal = ratings.length
+            ? (ratings.reduce(function(a, b) { return a + b; }, 0) / ratings.length)
+            : null;
+          return {
+            stage: label,
+            sent: '-',
+            responses: String(recs.length),
+            rr: '-',
+            csat: csatVal != null ? csatVal.toFixed(1) : P7_NA,
+            status: p7StatusFromCsat(csatVal, ratings.length)
+          };
+        }
+        journeyRows.push(auxRow('Public Reputation', publicRep));
+        journeyRows.push(auxRow('Service Recovery', recovery));
+
+        journeyEl.innerHTML =
+          '<div class="table-wrap"><table class="data-table p7-table">' +
+          '<thead><tr>' +
+          '<th>Stage</th><th>Surveys Sent</th><th>Responses</th><th>Response Rate</th><th>CSAT</th><th>Status</th>' +
+          '</tr></thead><tbody>' +
+          journeyRows.map(function(jr) {
+            return '<tr>' +
+              '<td>' + p7Esc(jr.stage) + '</td>' +
+              '<td>' + p7Esc(jr.sent) + '</td>' +
+              '<td>' + p7Esc(jr.responses) + '</td>' +
+              '<td>' + p7Esc(jr.rr) + '</td>' +
+              '<td>' + p7Esc(jr.csat) + '</td>' +
+              '<td><span class="p7-status ' + p7StatusClass(jr.status) + '">' + p7Esc(jr.status) + '</span></td>' +
+              '</tr>';
+          }).join('') +
+          '</tbody></table></div>';
+      }
+
+      // ── At-risk action table ──
+      var riskEl = document.getElementById('p7-atrisk-table');
+      if (riskEl) {
+        if (!atRisk.length) {
+          riskEl.innerHTML = '<p class="no-data-msg">No at-risk clients in the current filters.</p>';
+        } else {
+          var riskSorted = atRisk.slice().sort(function(a, b) {
+            var sa = String(a.severity || '').toLowerCase() === 'high' ? 0 : 1;
+            var sb = String(b.severity || '').toLowerCase() === 'high' ? 0 : 1;
+            if (sa !== sb) return sa - sb;
+            return (b.daysOpen || 0) - (a.daysOpen || 0);
+          });
+          riskEl.innerHTML =
+            '<div class="table-wrap"><table class="data-table p7-table p7-table--click">' +
+            '<thead><tr>' +
+            '<th>Client / Project</th><th>Stage</th><th>Score / Issue</th><th>Days Open</th>' +
+            '<th>Owner</th><th>Next Action</th><th>Severity</th><th>Last Contact</th><th>Status</th><th>Due</th>' +
+            '</tr></thead><tbody>' +
+            riskSorted.map(function(r, i) {
+              var issue = r.rating != null
+                ? ('Score ' + r.rating + (r.comment ? ' · ' + r.comment.substring(0, 60) : ''))
+                : (r.comment ? r.comment.substring(0, 80) : (r.actionRequired || 'Issue'));
+              var sevClass = String(r.severity || '').toLowerCase() === 'high' ? ' p7-sev--high' : '';
+              return '<tr class="p7-row-click" data-p7-id="' + p7Esc(r.id) + '">' +
+                '<td>' + p7Esc((r.client || P7_NA) + (r.project ? ' / ' + r.project : '')) + '</td>' +
+                '<td>' + p7Esc(r.stage || 'Unspecified') + '</td>' +
+                '<td>' + p7Esc(issue) + '</td>' +
+                '<td>' + (r.daysOpen != null ? r.daysOpen : P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.owner || P7_PENDING) + '</td>' +
+                '<td>' + p7Esc(r.actionRequired || P7_PENDING) + '</td>' +
+                '<td><span class="p7-sev' + sevClass + '">' + p7Esc(r.severity || P7_NA) + '</span></td>' +
+                '<td>' + (r.lastContactObj ? p7FormatDate(r.lastContactObj) : P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.status || (r.responded ? 'Responded' : 'Open')) + '</td>' +
+                '<td>' + (r.dueObj ? p7FormatDate(r.dueObj) : P7_PENDING) + '</td>' +
+                '</tr>';
+            }).join('') +
+            '</tbody></table></div>';
+        }
+      }
+
+      // ── Satisfaction drivers (themes with n=) ──
+      var themeCounts = {};
+      P7_THEME_RULES.forEach(function(rule) { themeCounts[rule.key] = 0; });
+      usable.forEach(function(r) {
+        r.themes.forEach(function(t) {
+          themeCounts[t] = (themeCounts[t] || 0) + 1;
+        });
+      });
+      var themeLabels = Object.keys(themeCounts).filter(function(k) {
+        return themeCounts[k] > 0;
+      });
+      var driversEmpty = document.getElementById('p7-drivers-empty');
+      var driversWrap = document.getElementById('p7-drivers-wrap');
+      p7DestroyChart('chart-p7-drivers');
+      if (!themeLabels.length) {
+        if (driversEmpty) driversEmpty.hidden = false;
+        if (driversWrap) driversWrap.hidden = true;
+      } else {
+        if (driversEmpty) driversEmpty.hidden = true;
+        if (driversWrap) driversWrap.hidden = false;
+        var themeData = themeLabels.map(function(k) { return themeCounts[k]; });
+        var themeColors = themeLabels.map(function(k) {
+          return themeCounts[k] < 3 ? '#9CA3AF' : '#4B7A5A';
+        });
+        makeChart('chart-p7-drivers', {
+          type: 'bar',
+          data: {
+            labels: themeLabels.map(function(k) {
+              return k + ' (n=' + themeCounts[k] + ')';
+            }),
+            datasets: [{
+              label: 'Mentions',
+              data: themeData,
+              backgroundColor: themeColors,
+              borderWidth: 0,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    var n = ctx.raw;
+                    return ' n=' + n + (n < 3 ? ' (low sample)' : '');
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { beginAtZero: true, ticks: { stepSize: 1 } },
+              y: { ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // ── Closed-loop resolution ──
+      var resEl = document.getElementById('p7-resolution-body');
+      if (resEl) {
+        var openRec = recovery.filter(function(r) {
+          return r.status !== 'Closed' && r.responded !== true;
+        });
+        var closedRec = recovery.filter(function(r) {
+          return r.status === 'Closed' || r.responded === true;
+        });
+        if (!recovery.length) {
+          resEl.innerHTML =
+            '<p class="no-data-msg">Service recovery source empty or pending. Defects_Rework has no customer-issue rows in view.</p>' +
+            '<div class="p7-res-kpis">' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Open</div><div class="p7-res-value">' + P7_NA + '</div></div>' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Closed</div><div class="p7-res-value">' + P7_NA + '</div></div>' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Avg days to close</div><div class="p7-res-value">' + P7_NA + '</div></div>' +
+            '</div>';
+        } else {
+          var closedDays = closedRec.map(function(r) { return r.daysOpen; }).filter(function(n) {
+            return n != null && !isNaN(n);
+          });
+          var avgDays = closedDays.length
+            ? (closedDays.reduce(function(a, b) { return a + b; }, 0) / closedDays.length)
+            : null;
+          resEl.innerHTML =
+            '<div class="p7-res-kpis">' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Open</div><div class="p7-res-value' +
+              (openRec.length ? ' p7-res-value--risk' : '') + '">' + openRec.length + '</div></div>' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Closed</div><div class="p7-res-value">' + closedRec.length + '</div></div>' +
+            '<div class="p7-res-kpi"><div class="p7-res-label">Avg days to close</div><div class="p7-res-value">' +
+              (avgDays != null ? avgDays.toFixed(1) : P7_PENDING) + '</div></div>' +
+            '</div>' +
+            '<ol class="p7-res-stages">' +
+            '<li>Logged <span>' + recovery.length + '</span></li>' +
+            '<li>Owned / actioning <span>' + openRec.filter(function(r) { return !!r.owner; }).length + '</span></li>' +
+            '<li>Client contacted <span>' + recovery.filter(function(r) { return !!r.lastContactObj; }).length + '</span></li>' +
+            '<li>Resolved <span>' + closedRec.length + '</span></li>' +
+            '</ol>';
+        }
+      }
+
+      // ── Recent feedback table ──
+      var fbEl = document.getElementById('p7-feedback-table');
+      var recent = usable.slice().sort(function(a, b) {
+        var ta = a.dateObj ? a.dateObj.getTime() : 0;
+        var tb = b.dateObj ? b.dateObj.getTime() : 0;
+        return tb - ta;
+      }).slice(0, 40);
+      if (fbEl) {
+        if (!recent.length) {
+          fbEl.innerHTML = '<p class="no-data-msg">No valid feedback with score or comment in the current filters. See data quality queue for incomplete rows.</p>';
+        } else {
+          fbEl.innerHTML =
+            '<div class="table-wrap"><table class="data-table p7-table p7-table--click">' +
+            '<thead><tr>' +
+            '<th>Date</th><th>Client</th><th>Project</th><th>Type</th><th>Stage</th>' +
+            '<th>Platform</th><th>Rating</th><th>Themes</th><th>Comment</th><th>Responded</th>' +
+            '</tr></thead><tbody>' +
+            recent.map(function(r) {
+              var ratingDisp = r.rating != null ? String(r.rating) : P7_NA;
+              var respDisp = r.responded === true ? 'Yes' : (r.responded === false ? 'No' : P7_NA);
+              var commentDisp = r.comment
+                ? (r.comment.length > 90 ? r.comment.substring(0, 90) + '...' : r.comment)
+                : P7_NA;
+              return '<tr class="p7-row-click" data-p7-id="' + p7Esc(r.id) + '">' +
+                '<td>' + (r.dateObj ? p7FormatDate(r.dateObj) : (r.dateRaw || P7_NA)) + '</td>' +
+                '<td>' + p7Esc(r.client || P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.project || P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.typeLabel) + '</td>' +
+                '<td>' + p7Esc(r.stage || 'Unspecified') + '</td>' +
+                '<td>' + p7Esc(r.platform || r.source || P7_NA) + '</td>' +
+                '<td>' + p7Esc(ratingDisp) + '</td>' +
+                '<td>' + p7Esc(r.themes.length ? r.themes.join(', ') : '-') + '</td>' +
+                '<td>' + p7Esc(commentDisp) + '</td>' +
+                '<td>' + p7Esc(respDisp) + '</td>' +
+                '</tr>';
+            }).join('') +
+            '</tbody></table></div>';
+        }
+      }
+
+      // Bind row clicks for drawer
+      var pageRoot = document.getElementById('page-p7');
+      if (pageRoot) {
+        pageRoot.querySelectorAll('tr.p7-row-click').forEach(function(tr) {
+          tr.addEventListener('click', function() {
+            var id = tr.getAttribute('data-p7-id');
+            var rec = usable.concat(atRisk).concat(incomplete).filter(function(r) {
+              return r.id === id;
+            })[0] || all.filter(function(r) { return r.id === id; })[0];
+            p7OpenDrawer(rec);
+          });
+        });
+      }
+
+      // ── Monthly trend only if sample enough (min 5 dated usable feedback spanning 2+ months) ──
+      var dated = usable.filter(function(r) { return r.dateObj; });
+      var byMonth = {};
+      dated.forEach(function(r) {
+        var key = r.dateObj.getFullYear() + '-' +
+          String(r.dateObj.getMonth() + 1).padStart(2, '0');
+        if (!byMonth[key]) byMonth[key] = { n: 0, sum: 0, rated: 0 };
+        byMonth[key].n += 1;
+        if (r.rating != null) {
+          byMonth[key].sum += r.rating;
+          byMonth[key].rated += 1;
+        }
+      });
+      var monthKeys = Object.keys(byMonth).sort();
+      var trendEnough = dated.length >= 5 && monthKeys.length >= 2;
+      var monthlyWrap = document.getElementById('p7-monthly-wrap');
+      var individualList = document.getElementById('p7-individual-list');
+      var trendEmpty = document.getElementById('p7-trend-empty');
+      var trendTitle = document.getElementById('p7-trend-title');
+      p7DestroyChart('chart-p7-monthly');
+      if (trendEnough) {
+        if (trendTitle) trendTitle.textContent = 'Monthly trend';
+        if (monthlyWrap) monthlyWrap.hidden = false;
+        if (individualList) { individualList.hidden = true; individualList.innerHTML = ''; }
+        if (trendEmpty) trendEmpty.hidden = true;
+        var labels = monthKeys.map(function(k) {
+          var parts = k.split('-');
+          var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+          return d.toLocaleString('en-AU', { month: 'short', year: '2-digit' }) +
+            ' (n=' + byMonth[k].n + ')';
+        });
+        var avgSeries = monthKeys.map(function(k) {
+          return byMonth[k].rated
+            ? Math.round(byMonth[k].sum / byMonth[k].rated * 10) / 10
+            : null;
+        });
+        var countSeries = monthKeys.map(function(k) { return byMonth[k].n; });
+        makeChart('chart-p7-monthly', {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                type: 'line',
+                label: 'Avg rating',
+                data: avgSeries,
+                borderColor: '#111827',
+                backgroundColor: '#111827',
+                yAxisID: 'y1',
+                spanGaps: true,
+                tension: 0.25,
+                pointRadius: 4
+              },
+              {
+                type: 'bar',
+                label: 'Feedback count',
+                data: countSeries,
+                backgroundColor: '#D2D4D5',
+                yAxisID: 'y',
+                borderWidth: 0,
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true, position: 'bottom' } },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Count' } },
+              y1: {
+                beginAtZero: true,
+                max: 5,
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: 'Avg rating' }
+              }
+            }
+          }
+        });
+      } else {
+        if (trendTitle) trendTitle.textContent = 'Individual feedback';
+        if (monthlyWrap) monthlyWrap.hidden = true;
+        if (trendEmpty) trendEmpty.hidden = true;
+        if (individualList) {
+          individualList.hidden = false;
+          if (!dated.length && !usable.length) {
+            individualList.innerHTML = '<p class="no-data-msg">No individual feedback to list yet.</p>';
+          } else {
+            var listItems = (usable.length ? usable : recent).slice(0, 15);
+            individualList.innerHTML =
+              '<p class="p7-section-hint">Sample too small for a monthly trend (need ≥5 dated items across 2+ months). Showing individual feedback.</p>' +
+              '<ul class="p7-individual">' +
+              listItems.map(function(r) {
+                return '<li class="p7-individual-item p7-row-click" data-p7-id="' + p7Esc(r.id) + '">' +
+                  '<strong>' + p7Esc(r.client || r.project || 'Feedback') + '</strong> ' +
+                  '<span class="p7-muted">' +
+                  p7Esc(r.dateObj ? p7FormatDate(r.dateObj) : P7_NA) +
+                  (r.rating != null ? ' · ' + r.rating : '') +
+                  ' · ' + p7Esc(r.typeLabel) +
+                  '</span>' +
+                  (r.comment ? '<div class="p7-individual-text">' + p7Esc(r.comment.substring(0, 140)) + '</div>' : '') +
+                  '</li>';
+              }).join('') +
+              '</ul>';
+            individualList.querySelectorAll('.p7-row-click').forEach(function(el) {
+              el.addEventListener('click', function() {
+                var id = el.getAttribute('data-p7-id');
+                var rec = all.filter(function(r) { return r.id === id; })[0];
+                p7OpenDrawer(rec);
+              });
+            });
+          }
+        }
+      }
+
+      // ── Rating distribution: hide entirely when no valid ratings ──
+      var distSection = document.getElementById('p7-dist-section');
+      var allRatings = usable.map(function(r) { return r.rating; }).filter(function(n) {
+        return n != null && !isNaN(n) && n >= 1 && n <= 5;
+      });
+      p7DestroyChart('chart-p7-distribution');
+      if (distSection) {
+        if (!allRatings.length) {
+          distSection.hidden = true;
+        } else {
+          distSection.hidden = false;
+          var dist = [1, 2, 3, 4, 5].map(function(n) {
+            return allRatings.filter(function(r) { return Math.round(r) === n; }).length;
+          });
+          makeChart('chart-p7-distribution', {
+            type: 'bar',
+            data: {
+              labels: ['1', '2', '3', '4', '5'],
+              datasets: [{
+                label: 'Ratings',
+                data: dist,
+                backgroundColor: ['#9CA3AF', '#F59E0B', '#F59E0B', '#4B7A5A', '#4B7A5A'],
+                borderWidth: 0,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+          });
+        }
+      }
+
+      // ── Data quality queue ──
+      var dqTable = document.getElementById('p7-dq-table');
+      if (dqTable) {
+        if (!incomplete.length) {
+          dqTable.innerHTML = '<p class="no-data-msg">No incomplete records in the current filters.</p>';
+        } else {
+          dqTable.innerHTML =
+            '<div class="table-wrap"><table class="data-table p7-table p7-table--click">' +
+            '<thead><tr>' +
+            '<th>Raw date</th><th>Salvaged client</th><th>Project</th><th>Platform</th>' +
+            '<th>Rating</th><th>Has comment</th><th>Missing</th><th>Origin</th>' +
+            '</tr></thead><tbody>' +
+            incomplete.slice(0, 50).map(function(r) {
+              return '<tr class="p7-row-click" data-p7-id="' + p7Esc(r.id) + '">' +
+                '<td>' + p7Esc(r.dateRaw || P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.client || P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.project || P7_NA) + '</td>' +
+                '<td>' + p7Esc(r.platform || r.source || P7_NA) + '</td>' +
+                '<td>' + (r.rating != null ? r.rating : P7_NA) + '</td>' +
+                '<td>' + (r.comment ? 'Yes' : 'No') + '</td>' +
+                '<td>' + p7Esc(r.missingFields.join(', ') || '-') + '</td>' +
+                '<td>' + p7Esc(r.origin) + '</td>' +
+                '</tr>';
+            }).join('') +
+            '</tbody></table></div>';
+          dqTable.querySelectorAll('tr.p7-row-click').forEach(function(tr) {
+            tr.addEventListener('click', function() {
+              var id = tr.getAttribute('data-p7-id');
+              var rec = all.filter(function(r) { return r.id === id; })[0];
+              p7OpenDrawer(rec);
+            });
+          });
+        }
+      }
+
+      // ── BB page data for assistant ──
+      setBBPageData('P7', 'P7: Client Satisfaction', {
+        filters: {
+          brand: activeBrand,
+          period: _p7Period,
+          department: _p7Dept,
+          stage: _p7Stage,
+          source: _p7Source
+        },
+        lastUpdated: _p7LoadedAt ? _p7LoadedAt.toISOString() : null,
+        counts: {
+          totalRows: all.length,
+          filtered: filtered.length,
+          usableFeedback: usable.length,
+          incomplete: incomplete.length,
+          surveys: surveys.length,
+          publicReputation: publicRep.length,
+          serviceRecovery: recovery.length,
+          atRisk: atRisk.length
+        },
+        kpis: {
+          csat: surveyRatings.length
+            ? Math.round(surveyRatings.reduce(function(a, b) { return a + b; }, 0) / surveyRatings.length * 10) / 10
+            : null,
+          csatN: surveyRatings.length,
+          nps: npsScores.length ? true : null,
+          npsAvailable: npsScores.length > 0,
+          atRisk: atRisk.length
+        },
+        incompleteBanner: incompleteMissingCore.length
+          ? ('Feedback data incomplete, ' + incompleteMissingCore.length +
+            ' records are missing client, project, platform, rating and review content.')
+          : null,
+        note: 'CSAT uses valid survey scores only. NPS never derived from 5-star. Missing rating is not zero. Incomplete rows excluded from main metrics.',
+        flagsForLori: 'Survey automation and field standardization is a Make/GHL follow-up (not coded here).'
+      });
     }
 
 
