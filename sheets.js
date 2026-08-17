@@ -182,6 +182,126 @@ function getRowMonth(row) {
 }
 
 /**
+ * Tenders tab parser for P13.
+ * The sheet has duplicate header labels (GST, Total (Inc GST)) for quote vs final
+ * price blocks, so generic fetchSheet header maps collide. We map A-M by position
+ * and resolve Month / Monthly Target by header name when present (cols O/P).
+ *
+ * Returns { tenders: [...], targets: [...], rawRowCount }.
+ * Target rows: Month and/or Monthly Target filled, no tender Description.
+ * Tender rows: Description present.
+ */
+async function fetchTendersParsed(tabName) {
+  tabName = tabName || ((typeof CONFIG !== 'undefined' && CONFIG.TABS && CONFIG.TABS.TENDERS)
+    ? CONFIG.TABS.TENDERS
+    : 'Tenders');
+  var cacheKey = tabName + '::__tenders_parsed';
+  if (_cache[cacheKey]) return _cache[cacheKey];
+
+  if (!CONFIG.API_KEY || CONFIG.API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+    console.warn('[Sheets] API key not set — Tenders empty.');
+    var empty = { tenders: [], targets: [], rawRowCount: 0 };
+    _cache[cacheKey] = empty;
+    return empty;
+  }
+
+  var url =
+    'https://sheets.googleapis.com/v4/spreadsheets/' +
+    CONFIG.SHEET_ID + '/values/' +
+    encodeURIComponent(tabName) + '?key=' + CONFIG.API_KEY;
+
+  var response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Sheets API error ' + response.status + ' for tab: ' + tabName);
+  }
+
+  var json = await response.json();
+  var values = json.values || [];
+  if (values.length < 2) {
+    console.warn('[Sheets] Tab "' + tabName + '" is empty or headers-only.');
+    var empty2 = { tenders: [], targets: [], rawRowCount: 0 };
+    _cache[cacheKey] = empty2;
+    return empty2;
+  }
+
+  var headers = values[0].map(function(h) { return String(h == null ? '' : h).trim(); });
+
+  function normH(h) {
+    return String(h || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  }
+
+  var monthIdx = -1;
+  var targetIdx = -1;
+  for (var hi = 0; hi < headers.length; hi++) {
+    var nh = normH(headers[hi]);
+    if (monthIdx < 0 && (nh === 'month' || nh === 'targetmonth')) monthIdx = hi;
+    if (targetIdx < 0 && (
+      nh === 'monthlytarget' ||
+      nh === 'monthtarget' ||
+      nh.indexOf('monthlytarget') !== -1
+    )) targetIdx = hi;
+  }
+  // Prefer O/P (index 14/15) when headers not yet renamed
+  if (monthIdx < 0 && headers.length > 14) monthIdx = 14;
+  if (targetIdx < 0 && headers.length > 15) targetIdx = 15;
+
+  var tenders = [];
+  var targets = [];
+
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r] || [];
+    function cell(i) {
+      if (i < 0 || i >= row.length) return '';
+      return row[i] !== undefined && row[i] !== null ? row[i] : '';
+    }
+    var description = String(cell(0)).trim();
+    var monthRaw = monthIdx >= 0 ? String(cell(monthIdx)).trim() : '';
+    var targetRaw = targetIdx >= 0 ? String(cell(targetIdx)).trim() : '';
+
+    var anyCell = row.some(function(v) { return v !== undefined && v !== null && String(v).trim() !== ''; });
+    if (!anyCell) continue;
+
+    if (!description && (monthRaw || targetRaw)) {
+      targets.push({
+        Month: monthRaw,
+        'Monthly Target': targetRaw,
+        _rowIndex: r + 1
+      });
+      continue;
+    }
+
+    if (!description) continue;
+
+    tenders.push({
+      Description: description,
+      'Tender Submitted?': String(cell(1)).trim(),
+      'Where?': String(cell(2)).trim(),
+      ClientName: String(cell(3)).trim(),
+      'Quote Total (ex GST)': cell(4),
+      'Quote GST': cell(5),
+      'Quoted Total (Inc GST)': cell(6),
+      'Lodgement Date': String(cell(7)).trim(),
+      'Won?': String(cell(8)).trim(),
+      Notes: String(cell(9)).trim(),
+      'Final Price Total (ex GST)': cell(10),
+      'Final GST': cell(11),
+      'Final Total (Inc GST)': cell(12),
+      Month: monthRaw,
+      'Monthly Target': targetRaw,
+      _rowIndex: r + 1
+    });
+  }
+
+  var out = { tenders: tenders, targets: targets, rawRowCount: values.length - 1 };
+  _cache[cacheKey] = out;
+  console.log(
+    '[Sheets] Tenders parsed: ' + tenders.length + ' tenders, ' +
+    targets.length + ' monthly target rows from "' + tabName + '"'
+  );
+  return out;
+}
+
+/**
  * Safely parses a value to a number.
  * Handles "$1,234.56", "40%", "1,234", blanks.
  */

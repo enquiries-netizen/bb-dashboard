@@ -114,6 +114,7 @@
           <li class="nav-item" data-page="p10">P10: Marketing</li>
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
           <li class="nav-item" data-page="p12">P12: Site Diaries</li>
+          <li class="nav-item" data-page="p13">P13: Tender Pipeline</li>
           <li class="nav-item" data-page="internal-hub" id="nav-internal-hub" hidden>BBBS Internal Hub</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
@@ -949,22 +950,7 @@
             </div>
 
             <div class="p7-row-two">
-              <div class="section-card p7-panel">
-                <div class="section-title">Customer Journey Satisfaction
-                  <span class="p7-section-hint">CX stages · Status Healthy / Watch / At Risk / Strong</span>
-                </div>
-                <div id="p7-journey-table">Loading journey...</div>
-              </div>
-              <div class="section-card p7-panel">
-                <div class="section-title">At-Risk Clients
-                  <span class="p7-section-hint">Action queue · severity · next action</span>
-                </div>
-                <div id="p7-atrisk-table">Loading at-risk clients...</div>
-              </div>
-            </div>
-
-            <div class="p7-row-two">
-              <div class="section-card p7-panel">
+              <div class="section-card p7-panel p7-panel--wide">
                 <div class="section-title">Satisfaction drivers
                   <span class="p7-section-hint">Themes with sample sizes · low-n greyed</span>
                 </div>
@@ -972,12 +958,6 @@
                   <canvas id="chart-p7-drivers" aria-label="Satisfaction drivers themes"></canvas>
                 </div>
                 <p class="no-data-msg" id="p7-drivers-empty" hidden>Not enough themed feedback to chart drivers.</p>
-              </div>
-              <div class="section-card p7-panel">
-                <div class="section-title">Closed-loop resolution
-                  <span class="p7-section-hint">Stages and KPIs from recovery data only</span>
-                </div>
-                <div id="p7-resolution-body">Loading resolution...</div>
               </div>
             </div>
 
@@ -998,13 +978,6 @@
               </div>
             </div>
 
-            <div class="section-card p7-panel" id="p7-dq-section">
-              <div class="section-title">Data quality queue
-                <span class="p7-section-hint">Incomplete records excluded from main metrics</span>
-              </div>
-              <div id="p7-dq-table">Loading...</div>
-            </div>
-
             <!-- Rating distribution (hidden when no valid ratings) -->
             <div class="section-card p7-panel" id="p7-dist-section" hidden>
               <div class="section-title">Rating distribution
@@ -1012,6 +985,21 @@
               </div>
               <div class="p7-chart-wrap">
                 <canvas id="chart-p7-distribution" aria-label="Rating distribution"></canvas>
+              </div>
+            </div>
+
+            <div class="p7-row-two">
+              <div class="section-card p7-panel">
+                <div class="section-title">Customer Journey Satisfaction
+                  <span class="p7-section-hint">CX stages · Status Healthy / Watch / At Risk / Strong</span>
+                </div>
+                <div id="p7-journey-table">Loading journey...</div>
+              </div>
+              <div class="section-card p7-panel">
+                <div class="section-title">At-Risk Clients
+                  <span class="p7-section-hint">Action queue · severity · next action</span>
+                </div>
+                <div id="p7-atrisk-table">Loading at-risk clients...</div>
               </div>
             </div>
 
@@ -1644,6 +1632,75 @@
           </div>
         </section>
 
+        <!-- ─── P13: Tender Pipeline (Admin) ─── -->
+        <!--
+          Source: Tenders tab (manual, Emily). Admin tier only (same as financial pages).
+          Quote vs final Total (Inc GST) disambiguated in fetchTendersParsed.
+          Optional Month / Monthly Target reference rows (cols O/P).
+        -->
+        <section id="page-p13" class="page">
+          <div class="p13-layout">
+            <div class="p13-head">
+              <div class="page-header p13-page-header">
+                <span class="page-badge">P13</span>
+                <h1 class="page-title">Tender Pipeline</h1>
+              </div>
+              <p class="p13-scope-note" id="p13-scope-note">
+                Manual Tenders tab · submissions, decisions, and monthly opportunity targets
+              </p>
+              <p class="p13-data-quality" id="p13-data-quality" aria-live="polite">Loading...</p>
+            </div>
+
+            <div class="p13-kpi-row" aria-label="Tender pipeline KPIs">
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-target">
+                <div class="kpi-label">Monthly Opportunity Target vs Actual</div>
+                <div class="kpi-value" id="kpi-p13-target">-</div>
+                <div class="kpi-sub" id="kpi-p13-target-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-submissions">
+                <div class="kpi-label">Submissions This Month</div>
+                <div class="kpi-value" id="kpi-p13-submissions">-</div>
+                <div class="kpi-sub" id="kpi-p13-submissions-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-conversion">
+                <div class="kpi-label">Conversion Rate</div>
+                <div class="kpi-value" id="kpi-p13-conversion">-</div>
+                <div class="kpi-sub" id="kpi-p13-conversion-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-pending">
+                <div class="kpi-label">Pending Decision</div>
+                <div class="kpi-value" id="kpi-p13-pending">-</div>
+                <div class="kpi-sub" id="kpi-p13-pending-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-winvalue">
+                <div class="kpi-label">Win Rate by Value</div>
+                <div class="kpi-value" id="kpi-p13-winvalue">-</div>
+                <div class="kpi-sub" id="kpi-p13-winvalue-sub">Loading...</div>
+              </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-pipeline">
+                <div class="kpi-label">Pipeline Value (Pending)</div>
+                <div class="kpi-value" id="kpi-p13-pipeline">-</div>
+                <div class="kpi-sub" id="kpi-p13-pipeline-sub">Loading...</div>
+              </div>
+            </div>
+
+            <div class="section-card p13-panel">
+              <div class="section-title">All Tenders</div>
+              <p class="p13-section-hint">Click a column header to sort · default: most recent lodgement first</p>
+              <div id="p13-tenders-table" class="p13-table-wrap">Loading...</div>
+            </div>
+
+            <div class="section-card p13-panel p13-trend-panel">
+              <div class="section-title">Submissions vs Monthly Target</div>
+              <p class="p13-section-hint">Last 6 months · bars = submissions · line = target when set</p>
+              <div class="p13-chart-wrap">
+                <canvas id="chart-p13-trend" aria-label="Tender submissions versus monthly target"></canvas>
+              </div>
+              <p class="p13-trend-footnote" id="p13-trend-footnote" hidden></p>
+            </div>
+          </div>
+        </section>
+
         <!-- ─── BBBS Internal Hub (Phase 1 shell: chat + gating, no guide content yet) ── -->
         <section id="page-internal-hub" class="page">
           <div class="lib-layout">
@@ -1746,7 +1803,8 @@
       P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
-      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.'
+      P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.',
+      P13: 'Tender Pipeline (Admin). Source: Tenders tab (manual). KPIs: monthly opportunity target vs submissions (X of Y), submissions this month, conversion rate of decided tenders only, pending decision count, win rate by value, pipeline value pending. Table of all tenders with status Won/Lost/Pending. Trend: submissions vs monthly target last 6 months. Won with blank/zero Final Price falls back to quoted Total (Inc GST) and is flagged in data quality. Never invent numbers. Answer only from live P13 page data.'
     };
 
     // Session conversation memory for BB follow-ups (last 8 exchanges = 16 turns).
@@ -2259,7 +2317,7 @@
     // ACCESS CONTROL (Firebase Google sign-in + Staff_Access sheet)
     // Tiers: none | staff (P12) | user (P11+P12) | admin (all)
     // ═══════════════════════════════════════════════════════════
-    var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12'];
+    var ALL_PAGE_IDS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13'];
     // Internal Hub gate is independent of Staff_Access and of BB AI's BB_ALLOW list.
     // Hardcoded email only. Do not add names or other emails here.
     var LIBRARY_ALLOW_EMAILS = ['enquiries@bbbuildingservices.com.au'];
@@ -3250,7 +3308,7 @@
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
         showPage(pageId);
       }
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, 'internal-hub': loadLibrary };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, p13: loadP13, 'internal-hub': loadLibrary };
       var placeholders = {};
       var fn = loaders[pageId];
       // Belt and braces: never run a loader outside the role allow-list
@@ -18145,6 +18203,596 @@
     }
 
 
+    // ═══════════════════════════════════════════════════════════════
+    // P13 - TENDER PIPELINE (Admin)
+    // Source: Tenders tab (manual, Emily). No Make.com.
+    // Quote vs final GST / Total (Inc GST) via fetchTendersParsed.
+    // Optional Month / Monthly Target reference rows (cols O/P).
+    // ═══════════════════════════════════════════════════════════════
+    var _p13Sort = { key: 'lodge', dir: 'desc' };
+    var _p13Rows = [];
+    var _p13Bound = false;
+
+    function p13Yn(raw) {
+      var s = String(raw == null ? '' : raw).trim().toLowerCase();
+      if (!s) return '';
+      if (s === 'y' || s === 'yes' || s === 'true' || s === '1') return 'Y';
+      if (s === 'n' || s === 'no' || s === 'false' || s === '0') return 'N';
+      return '';
+    }
+
+    /** True when a money cell has a real positive amount (blank/0 = not entered). */
+    function p13MoneyPositive(raw) {
+      if (raw === '' || raw == null) return false;
+      var n = parseNum(raw);
+      return !isNaN(n) && n > 0;
+    }
+
+    function p13MoneyOrNull(raw) {
+      if (!p13MoneyPositive(raw)) return null;
+      return parseNum(raw);
+    }
+
+    /** Parse "Aug 2026" / "August 2026" / "2026-08" into { key, label, year, monthIdx }. */
+    function p13ParseMonthLabel(raw) {
+      var s = String(raw == null ? '' : raw).trim();
+      if (!s) return null;
+      var m1 = s.match(/^([A-Za-z]{3,9})\s+(\d{4})$/);
+      if (m1) {
+        var monTok = m1[1].substring(0, 3).toLowerCase();
+        var yi = parseInt(m1[2], 10);
+        var mi = -1;
+        for (var i = 0; i < _MONTH_ABBR.length; i++) {
+          if (_MONTH_ABBR[i].toLowerCase() === monTok) { mi = i; break; }
+        }
+        if (mi < 0) {
+          var full = new Date(Date.parse(m1[1] + ' 1, ' + m1[2]));
+          if (!isNaN(full.getTime())) mi = full.getMonth();
+        }
+        if (mi >= 0 && yi > 1900) {
+          return {
+            key: yi + '-' + ('0' + (mi + 1)).slice(-2),
+            label: _MONTH_ABBR[mi] + ' ' + yi,
+            year: yi,
+            monthIdx: mi
+          };
+        }
+      }
+      var m2 = s.match(/^(\d{4})-(\d{1,2})$/);
+      if (m2) {
+        var y2 = parseInt(m2[1], 10);
+        var mo2 = parseInt(m2[2], 10) - 1;
+        if (y2 > 1900 && mo2 >= 0 && mo2 <= 11) {
+          return {
+            key: y2 + '-' + ('0' + (mo2 + 1)).slice(-2),
+            label: _MONTH_ABBR[mo2] + ' ' + y2,
+            year: y2,
+            monthIdx: mo2
+          };
+        }
+      }
+      var d = parseFlexibleDate(s);
+      if (d && !isNaN(d.getTime())) {
+        return {
+          key: d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2),
+          label: _MONTH_ABBR[d.getMonth()] + ' ' + d.getFullYear(),
+          year: d.getFullYear(),
+          monthIdx: d.getMonth()
+        };
+      }
+      return null;
+    }
+
+    function p13MonthKeyFromDate(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+    }
+
+    function p13MonthLabelFromKey(key) {
+      var p = String(key || '').split('-');
+      if (p.length < 2) return key || '';
+      var yi = parseInt(p[0], 10);
+      var mi = parseInt(p[1], 10) - 1;
+      if (!(yi > 1900) || mi < 0 || mi > 11) return key;
+      return _MONTH_ABBR[mi] + ' ' + yi;
+    }
+
+    function p13Escape(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function p13NormalizeTender(raw) {
+      var submitted = p13Yn(raw['Tender Submitted?']);
+      var wonRaw = p13Yn(raw['Won?']);
+      var quoted = p13MoneyOrNull(raw['Quoted Total (Inc GST)']);
+      var finalV = p13MoneyOrNull(raw['Final Total (Inc GST)']);
+      var lodgeRaw = raw['Lodgement Date'] || '';
+      var lodgeDate = parseFlexibleDate(lodgeRaw);
+      var status = wonRaw === 'Y' ? 'Won' : (wonRaw === 'N' ? 'Lost' : 'Pending');
+      var valueUsed = null;
+      var valueSource = 'none';
+      var finalFallback = false;
+      if (status === 'Won') {
+        if (finalV != null) {
+          valueUsed = finalV;
+          valueSource = 'final';
+        } else if (quoted != null) {
+          valueUsed = quoted;
+          valueSource = 'quoted-fallback';
+          finalFallback = true;
+        }
+      } else if (status === 'Lost') {
+        if (finalV != null) {
+          valueUsed = finalV;
+          valueSource = 'final';
+        } else if (quoted != null) {
+          valueUsed = quoted;
+          valueSource = 'quoted';
+        }
+      } else {
+        if (quoted != null) {
+          valueUsed = quoted;
+          valueSource = 'quoted';
+        }
+      }
+      return {
+        description: String(raw.Description || '').trim(),
+        client: String(raw.ClientName || '').trim(),
+        where: String(raw['Where?'] || '').trim(),
+        submitted: submitted,
+        lodgeRaw: lodgeRaw,
+        lodgeDate: lodgeDate,
+        lodgeKey: p13MonthKeyFromDate(lodgeDate),
+        status: status,
+        notes: String(raw.Notes || '').trim(),
+        quoted: quoted,
+        final: finalV,
+        valueUsed: valueUsed,
+        valueSource: valueSource,
+        finalFallback: finalFallback
+      };
+    }
+
+    async function loadP13() {
+      showLoading(true);
+      removeError('p13');
+      try {
+        if (!isPageAllowed('p13')) {
+          showPage(defaultLandingPage(getAccessTier()) || 'p1');
+          return;
+        }
+        var tab = (CONFIG.TABS && CONFIG.TABS.TENDERS) ? CONFIG.TABS.TENDERS : 'Tenders';
+        var bundle = await fetchTendersParsed(tab);
+        renderP13(bundle.tenders || [], bundle.targets || []);
+      } catch (err) {
+        console.error('P13 load error:', err);
+        var detail = (err && err.message) ? String(err.message) : 'Unknown error';
+        if (/Sheets API error|Failed to fetch|NetworkError|403|401/i.test(detail)) {
+          showError('p13', 'Could not load Tenders data. Check sheet permissions. (' + detail + ')');
+        } else {
+          showError('p13', 'Tender Pipeline failed to load: ' + detail);
+        }
+      } finally {
+        showLoading(false);
+        init3DTilt();
+      }
+    }
+
+    function renderP13(tenderRows, targetRows) {
+      var now = new Date();
+      var thisKey = p13MonthKeyFromDate(now);
+      var thisLabel = p13MonthLabelFromKey(thisKey);
+
+      var rows = (tenderRows || []).map(p13NormalizeTender).filter(function(r) {
+        return !!r.description;
+      });
+      _p13Rows = rows;
+
+      var targetsByKey = {};
+      (targetRows || []).forEach(function(t) {
+        var parsed = p13ParseMonthLabel(t.Month || t.month || '');
+        if (!parsed) return;
+        var n = parseNum(t['Monthly Target'] != null ? t['Monthly Target'] : t['monthly target']);
+        if (!(n > 0)) return;
+        targetsByKey[parsed.key] = (targetsByKey[parsed.key] || 0) + n;
+      });
+
+      var submissionsThisMonth = rows.filter(function(r) {
+        return r.submitted === 'Y' && r.lodgeKey === thisKey;
+      }).length;
+
+      var monthTarget = targetsByKey[thisKey] != null ? targetsByKey[thisKey] : null;
+
+      var wonRows = rows.filter(function(r) { return r.status === 'Won'; });
+      var lostRows = rows.filter(function(r) { return r.status === 'Lost'; });
+      var decidedCount = wonRows.length + lostRows.length;
+      var conversion = decidedCount > 0 ? (wonRows.length / decidedCount) * 100 : null;
+
+      var pendingSubmitted = rows.filter(function(r) {
+        return r.submitted === 'Y' && r.status === 'Pending';
+      });
+
+      var wonValue = 0;
+      var wonValueKnown = false;
+      wonRows.forEach(function(r) {
+        if (r.valueUsed != null) { wonValue += r.valueUsed; wonValueKnown = true; }
+      });
+      var lostValue = 0;
+      var lostValueKnown = false;
+      lostRows.forEach(function(r) {
+        if (r.valueUsed != null) { lostValue += r.valueUsed; lostValueKnown = true; }
+      });
+      var winRateValue = null;
+      if (wonValueKnown || lostValueKnown) {
+        var denom = wonValue + lostValue;
+        if (denom > 0) winRateValue = (wonValue / denom) * 100;
+      }
+
+      var pipelinePending = 0;
+      var pipelineKnown = false;
+      rows.filter(function(r) { return r.status === 'Pending'; }).forEach(function(r) {
+        if (r.quoted != null) { pipelinePending += r.quoted; pipelineKnown = true; }
+      });
+
+      var fallbackWins = rows.filter(function(r) { return r.finalFallback; });
+
+      // KPIs
+      function setP13Kpi(id, subId, val, sub) {
+        var el = document.getElementById(id);
+        var subEl = document.getElementById(subId);
+        if (el) el.textContent = (val != null && val !== '') ? val : 'Pending';
+        if (subEl) subEl.textContent = sub || '';
+      }
+
+      if (monthTarget != null) {
+        setP13Kpi(
+          'kpi-p13-target',
+          'kpi-p13-target-sub',
+          submissionsThisMonth + ' of ' + monthTarget + ' submitted',
+          thisLabel + ' · opportunity target from Tenders Month/Target rows'
+        );
+      } else {
+        setP13Kpi(
+          'kpi-p13-target',
+          'kpi-p13-target-sub',
+          submissionsThisMonth + ' of - submitted',
+          thisLabel + ' · monthly target not set yet'
+        );
+      }
+
+      setP13Kpi(
+        'kpi-p13-submissions',
+        'kpi-p13-submissions-sub',
+        String(submissionsThisMonth),
+        'Tender Submitted = Y · by Lodgement Date in ' + thisLabel
+      );
+
+      if (conversion != null) {
+        setP13Kpi(
+          'kpi-p13-conversion',
+          'kpi-p13-conversion-sub',
+          formatPct(conversion),
+          wonRows.length + ' won / ' + decidedCount + ' decided tenders (excludes pending)'
+        );
+      } else {
+        setP13Kpi(
+          'kpi-p13-conversion',
+          'kpi-p13-conversion-sub',
+          'Pending',
+          'No decided tenders yet (Won or Lost)'
+        );
+      }
+
+      setP13Kpi(
+        'kpi-p13-pending',
+        'kpi-p13-pending-sub',
+        String(pendingSubmitted.length),
+        'Submitted · Won? still blank'
+      );
+
+      if (winRateValue != null) {
+        setP13Kpi(
+          'kpi-p13-winvalue',
+          'kpi-p13-winvalue-sub',
+          formatPct(winRateValue),
+          'Won value / (won + lost value) · Final Price with quoted fallback'
+        );
+      } else {
+        setP13Kpi(
+          'kpi-p13-winvalue',
+          'kpi-p13-winvalue-sub',
+          'Pending',
+          'Need decided tender values'
+        );
+      }
+
+      setP13Kpi(
+        'kpi-p13-pipeline',
+        'kpi-p13-pipeline-sub',
+        pipelineKnown ? formatCurrency(pipelinePending) : (pendingSubmitted.length || rows.some(function(r) { return r.status === 'Pending'; }) ? 'Value not entered' : formatCurrency(0)),
+        'Quoted Total (Inc GST) · Won? blank'
+      );
+
+      // Data quality strip
+      var dq = document.getElementById('p13-data-quality');
+      if (dq) {
+        var bits = [];
+        bits.push(rows.length ? (rows.length + ' tenders') : 'No tender rows yet');
+        bits.push(Object.keys(targetsByKey).length
+          ? (Object.keys(targetsByKey).length + ' monthly targets')
+          : 'Monthly targets not filled in yet');
+        if (fallbackWins.length) {
+          bits.push(
+            fallbackWins.length + ' won tender' + (fallbackWins.length === 1 ? '' : 's') +
+            ' used quoted value (Final Price blank or 0)'
+          );
+        }
+        var noLodge = rows.filter(function(r) { return !r.lodgeDate; }).length;
+        if (noLodge) bits.push(noLodge + ' missing Lodgement Date');
+        dq.textContent = 'Data: ' + bits.join(' · ');
+      }
+
+      p13RenderTable();
+      p13BindSortOnce();
+      p13RenderTrend(rows, targetsByKey, thisKey);
+
+      setBBPageData('P13', 'P13: Tender Pipeline', {
+        month: thisLabel,
+        kpis: {
+          submissionsThisMonth: submissionsThisMonth,
+          monthTarget: monthTarget,
+          targetDisplay: monthTarget != null
+            ? (submissionsThisMonth + ' of ' + monthTarget + ' submitted')
+            : (submissionsThisMonth + ' of - submitted'),
+          conversionRateOfDecided: conversion,
+          decidedCount: decidedCount,
+          wonCount: wonRows.length,
+          lostCount: lostRows.length,
+          pendingDecision: pendingSubmitted.length,
+          winRateByValue: winRateValue,
+          pipelineValuePending: pipelineKnown ? pipelinePending : null,
+          quotedFallbackWins: fallbackWins.length
+        },
+        tenderCount: rows.length,
+        targetMonths: Object.keys(targetsByKey).length,
+        note: 'Conversion rate is of decided tenders only. Won with blank/zero Final Price uses quoted Total (Inc GST).'
+      });
+    }
+
+    function p13SortedRows() {
+      var key = _p13Sort.key;
+      var dir = _p13Sort.dir === 'asc' ? 1 : -1;
+      var list = _p13Rows.slice();
+      list.sort(function(a, b) {
+        var av;
+        var bv;
+        if (key === 'lodge') {
+          av = a.lodgeDate ? a.lodgeDate.getTime() : 0;
+          bv = b.lodgeDate ? b.lodgeDate.getTime() : 0;
+          if (av === bv) {
+            return dir * String(a.description).localeCompare(String(b.description));
+          }
+          return dir * (av - bv);
+        }
+        if (key === 'quoted') {
+          av = a.quoted != null ? a.quoted : -1;
+          bv = b.quoted != null ? b.quoted : -1;
+          return dir * (av - bv);
+        }
+        if (key === 'final') {
+          av = a.final != null ? a.final : (a.finalFallback && a.valueUsed != null ? a.valueUsed : -1);
+          bv = b.final != null ? b.final : (b.finalFallback && b.valueUsed != null ? b.valueUsed : -1);
+          return dir * (av - bv);
+        }
+        if (key === 'status') {
+          var order = { Won: 0, Pending: 1, Lost: 2 };
+          av = order[a.status] != null ? order[a.status] : 9;
+          bv = order[b.status] != null ? order[b.status] : 9;
+          return dir * (av - bv);
+        }
+        av = String(a[key] || '').toLowerCase();
+        bv = String(b[key] || '').toLowerCase();
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+      return list;
+    }
+
+    function p13RenderTable() {
+      var wrap = document.getElementById('p13-tenders-table');
+      if (!wrap) return;
+      var list = p13SortedRows();
+      if (!list.length) {
+        wrap.innerHTML = '<p class="p13-pending-line">No tenders in the Tenders tab yet.</p>';
+        return;
+      }
+
+      function sortMark(k) {
+        if (_p13Sort.key !== k) return '';
+        return _p13Sort.dir === 'asc' ? ' ▲' : ' ▼';
+      }
+
+      var html = '<div class="table-wrap"><table class="data-table p13-table"><thead><tr>' +
+        '<th class="p13-sortable" data-p13-sort="description">Description' + sortMark('description') + '</th>' +
+        '<th class="p13-sortable" data-p13-sort="client">Client' + sortMark('client') + '</th>' +
+        '<th class="p13-sortable" data-p13-sort="where">Where' + sortMark('where') + '</th>' +
+        '<th class="p13-sortable" data-p13-sort="lodge">Lodgement Date' + sortMark('lodge') + '</th>' +
+        '<th class="p13-sortable text-right" data-p13-sort="quoted">Quoted Value' + sortMark('quoted') + '</th>' +
+        '<th class="p13-sortable" data-p13-sort="status">Status' + sortMark('status') + '</th>' +
+        '<th class="p13-sortable text-right" data-p13-sort="final">Final Value' + sortMark('final') + '</th>' +
+        '<th>Notes</th>' +
+        '</tr></thead><tbody>';
+
+      list.forEach(function(r) {
+        var statusClass = r.status === 'Won'
+          ? 'p13-status p13-status--won'
+          : (r.status === 'Lost' ? 'p13-status p13-status--lost' : 'p13-status p13-status--pending');
+        var finalCell;
+        if (r.status === 'Won') {
+          if (r.final != null) finalCell = formatCurrency(r.final);
+          else if (r.finalFallback) {
+            finalCell = formatCurrency(r.valueUsed) +
+              ' <span class="p13-fallback-note" title="Final Price blank or 0; using quoted Total (Inc GST)">(quoted)</span>';
+          } else {
+            finalCell = '<span class="p13-value-pending">Not entered</span>';
+          }
+        } else if (r.final != null) {
+          finalCell = formatCurrency(r.final);
+        } else {
+          finalCell = '<span class="p13-value-pending">-</span>';
+        }
+        var lodgeTxt = r.lodgeDate
+          ? r.lodgeDate.toLocaleDateString('en-AU')
+          : (r.lodgeRaw || '-');
+        html += '<tr>' +
+          '<td>' + p13Escape(r.description) + '</td>' +
+          '<td>' + p13Escape(r.client || '-') + '</td>' +
+          '<td>' + p13Escape(r.where || '-') + '</td>' +
+          '<td>' + p13Escape(lodgeTxt) + '</td>' +
+          '<td class="text-right">' +
+            (r.quoted != null ? formatCurrency(r.quoted) : '<span class="p13-value-pending">Not entered</span>') +
+          '</td>' +
+          '<td><span class="' + statusClass + '">' + p13Escape(r.status) + '</span></td>' +
+          '<td class="text-right">' + finalCell + '</td>' +
+          '<td>' + p13Escape(r.notes || '-') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+      wrap.innerHTML = html;
+    }
+
+    function p13BindSortOnce() {
+      if (_p13Bound) return;
+      _p13Bound = true;
+      var wrap = document.getElementById('p13-tenders-table');
+      if (!wrap) return;
+      wrap.addEventListener('click', function(ev) {
+        var th = ev.target && ev.target.closest ? ev.target.closest('[data-p13-sort]') : null;
+        if (!th) return;
+        var key = th.getAttribute('data-p13-sort');
+        if (!key) return;
+        if (_p13Sort.key === key) {
+          _p13Sort.dir = _p13Sort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          _p13Sort.key = key;
+          _p13Sort.dir = (key === 'lodge' || key === 'quoted' || key === 'final') ? 'desc' : 'asc';
+        }
+        p13RenderTable();
+      });
+    }
+
+    function p13RenderTrend(rows, targetsByKey, thisKey) {
+      var foot = document.getElementById('p13-trend-footnote');
+      var keys = [];
+      var base = new Date();
+      base.setDate(1);
+      for (var i = 5; i >= 0; i--) {
+        var d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+        keys.push(p13MonthKeyFromDate(d));
+      }
+
+      var submissions = keys.map(function(k) {
+        return rows.filter(function(r) {
+          return r.submitted === 'Y' && r.lodgeKey === k;
+        }).length;
+      });
+      var targets = keys.map(function(k) {
+        return targetsByKey[k] != null ? targetsByKey[k] : null;
+      });
+      var anyTarget = targets.some(function(v) { return v != null; });
+      var anySub = submissions.some(function(n) { return n > 0; });
+
+      if (foot) {
+        if (!anySub && !anyTarget) {
+          foot.textContent = 'No submissions or monthly targets in the last 6 months yet.';
+          foot.removeAttribute('hidden');
+        } else if (!anyTarget) {
+          foot.textContent = 'Monthly targets (Month / Monthly Target columns) not filled in yet. Showing submissions only.';
+          foot.removeAttribute('hidden');
+        } else {
+          foot.setAttribute('hidden', '');
+          foot.textContent = '';
+        }
+      }
+
+      if (_charts['chart-p13-trend']) {
+        _charts['chart-p13-trend'].destroy();
+        delete _charts['chart-p13-trend'];
+      }
+
+      var datasets = [{
+        type: 'bar',
+        label: 'Submissions',
+        data: submissions,
+        backgroundColor: '#374151',
+        borderWidth: 0,
+        order: 2
+      }];
+      if (anyTarget) {
+        datasets.push({
+          type: 'line',
+          label: 'Monthly target',
+          data: targets,
+          borderColor: '#2563EB',
+          backgroundColor: '#2563EB',
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0,
+          spanGaps: false,
+          order: 1
+        });
+      }
+
+      makeChart('chart-p13-trend', {
+        type: 'bar',
+        data: {
+          labels: keys.map(p13MonthLabelFromKey),
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#111827', font: { size: 10 }, boxWidth: 10 }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.raw == null) return ctx.dataset.label + ': Not set';
+                  return ctx.dataset.label + ': ' + ctx.raw;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#6B7280', font: { size: 10 } },
+              grid: { display: false },
+              border: { color: '#E2E4E8' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#6B7280',
+                font: { size: 10 },
+                precision: 0
+              },
+              grid: { color: 'rgba(226,228,232,0.9)', lineWidth: 0.75 },
+              border: { color: '#E2E4E8' }
+            }
+          }
+        }
+      });
+    }
+
+
 // ═══════════════════════════════════════════════════════════════
     // P5 - PROFITABILITY (exception-led financial dashboard)
     // Sources: Xero_Financials · Xero_Invoices · Xero_Overhead
@@ -24255,7 +24903,9 @@
       p10: 'P10', '10': 'P10', marketing: 'P10', ads: 'P10', campaigns: 'P10',
       p11: 'P11', '11': 'P11', qa: 'P11', 'site diary quality': 'P11',
       'diary quality': 'P11', variations: 'P11', 'variations exceptions': 'P11',
-      p12: 'P12', '12': 'P12', diaries: 'P12', 'site diaries': 'P12', crew: 'P12'
+      p12: 'P12', '12': 'P12', diaries: 'P12', 'site diaries': 'P12', crew: 'P12',
+      p13: 'P13', '13': 'P13', tender: 'P13', tenders: 'P13',
+      'tender pipeline': 'P13', 'tenders pipeline': 'P13'
     };
 
     var BB_PAGE_NAMES = {
@@ -24270,7 +24920,8 @@
       P9: 'P9: Cash Flow',
       P10: 'P10: Marketing',
       P11: 'P11: Site Diary Quality and Variations Exceptions',
-      P12: 'P12: Site Diaries'
+      P12: 'P12: Site Diaries',
+      P13: 'P13: Tender Pipeline'
     };
 
     function bbResolvePageAlias(pageName) {
@@ -24289,7 +24940,7 @@
       }
       if (m) {
         var n = parseInt(m[1], 10);
-        if (n >= 1 && n <= 12) key = 'P' + n;
+        if (n >= 1 && n <= 13) key = 'P' + n;
         else return null;
       }
       if (!key && BB_PAGE_ALIASES[norm]) key = BB_PAGE_ALIASES[norm];
@@ -24346,7 +24997,8 @@
         P8: function() { return loadP8({ silent: true }); },
         P9: function() { return loadP9(); },
         P10: function() { return loadP10(); },
-        P11: function() { return loadP11(); }
+        P11: function() { return loadP11(); },
+        P13: function() { return loadP13(); }
       };
 
       var fn = loaders[pageKey];

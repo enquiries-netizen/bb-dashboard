@@ -73,6 +73,10 @@ const CONFIG = {
     VARIATIONS_LOG:      'Variations_Log',
     DEFECTS_REWORK:      'Defects_Rework',
     CASHFLOW_FORECAST:  'CashFlow_Forecast',
+    // Manual tender pipeline (Emily). Duplicate GST / Total (Inc GST) headers
+    // (quote vs final) are disambiguated in fetchTendersParsed (sheets.js).
+    // Optional O/P: Month + Monthly Target (reference rows, not per-tender).
+    TENDERS:             'Tenders',
     // Email → Role (Staff | User | Admin) → Active (Yes | No). Case-insensitive match.
     STAFF_ACCESS:        'Staff_Access',
     // BBBS Internal Hub guides. Fetched server-side in /api/ask.js from

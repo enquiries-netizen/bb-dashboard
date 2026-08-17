@@ -9913,3 +9913,151 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   }
 }
 
+/* ============================================================
+   P13 — Tender Pipeline (Admin, permanent palette tokens)
+   ============================================================ */
+#page-p13 .p13-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#page-p13 .p13-head {
+  margin-bottom: 2px;
+}
+
+#page-p13 .p13-scope-note,
+#page-p13 .p13-section-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+#page-p13 .p13-data-quality {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+#page-p13 .p13-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+#page-p13 .p13-kpi-card {
+  min-width: 0;
+  padding: 12px 12px 10px;
+  border: 1px solid var(--ui-border);
+  border-top: 3px solid var(--ui-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+#page-p13 .p13-kpi-card .kpi-label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+#page-p13 .p13-kpi-card .kpi-value {
+  font-size: clamp(14px, 1.25vw, 20px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+#page-p13 .p13-kpi-card .kpi-sub {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.3;
+  margin-top: auto;
+}
+
+#page-p13 .p13-panel {
+  margin-bottom: 0;
+}
+
+#page-p13 .p13-table-wrap {
+  margin-top: 8px;
+}
+
+#page-p13 .p13-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+#page-p13 .p13-sortable:hover {
+  color: var(--action);
+}
+
+#page-p13 .p13-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+#page-p13 .p13-status--won {
+  color: var(--healthy);
+}
+
+#page-p13 .p13-status--lost {
+  color: var(--muted);
+}
+
+#page-p13 .p13-status--pending {
+  color: var(--watch);
+}
+
+#page-p13 .p13-value-pending,
+#page-p13 .p13-fallback-note {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#page-p13 .p13-pending-line {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#page-p13 .p13-chart-wrap {
+  position: relative;
+  height: 260px;
+  margin-top: 8px;
+}
+
+#page-p13 .p13-trend-footnote {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  #page-p13 .p13-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  #page-p13 .p13-kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
