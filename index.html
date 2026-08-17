@@ -1657,6 +1657,7 @@
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-target">
                 <div class="kpi-label">Submission Target vs Actual</div>
                 <div class="kpi-value" id="kpi-p13-target">-</div>
+                <div class="p13-kpi-target-of" id="kpi-p13-target-of"></div>
                 <div class="kpi-sub" id="kpi-p13-target-sub">Loading...</div>
               </div>
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-submissions">
@@ -18942,19 +18943,19 @@
         var targetPctSub = monthTarget > 0
           ? (formatPct((submittedValueThisMonth / monthTarget) * 100) + ' of monthly target · ' + thisLabel)
           : (thisLabel + ' · submitted-value target from Targets ALL/ALL');
-        setP13Kpi(
-          'kpi-p13-target',
-          'kpi-p13-target-sub',
-          formatCurrency(submittedValueThisMonth) + ' of ' + formatCurrency(monthTarget),
-          targetPctSub
-        );
+        var targetValEl = document.getElementById('kpi-p13-target');
+        var targetOfEl = document.getElementById('kpi-p13-target-of');
+        var targetSubEl = document.getElementById('kpi-p13-target-sub');
+        if (targetValEl) targetValEl.textContent = formatCurrency(submittedValueThisMonth);
+        if (targetOfEl) targetOfEl.textContent = 'of ' + formatCurrency(monthTarget);
+        if (targetSubEl) targetSubEl.textContent = targetPctSub;
       } else {
-        setP13Kpi(
-          'kpi-p13-target',
-          'kpi-p13-target-sub',
-          formatCurrency(submittedValueThisMonth) + ' of -',
-          thisLabel + ' · monthly target not set yet'
-        );
+        var targetValEl2 = document.getElementById('kpi-p13-target');
+        var targetOfEl2 = document.getElementById('kpi-p13-target-of');
+        var targetSubEl2 = document.getElementById('kpi-p13-target-sub');
+        if (targetValEl2) targetValEl2.textContent = formatCurrency(submittedValueThisMonth);
+        if (targetOfEl2) targetOfEl2.textContent = 'of -';
+        if (targetSubEl2) targetSubEl2.textContent = thisLabel + ' · monthly target not set yet';
       }
 
       setP13Kpi(
