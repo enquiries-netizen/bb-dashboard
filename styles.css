@@ -3325,7 +3325,6 @@ body.bb-ai-off #ai-panel {
 #page-p2.p2-test-palette .kpi-label,
 #page-p2.p2-test-palette .kpi-sub,
 #page-p2.p2-test-palette .p2-filter-cue,
-#page-p2.p2-test-palette .p2-data-quality,
 #page-p2.p2-test-palette .p2-section-hint,
 #page-p2.p2-test-palette .p2-pending-line,
 #page-p2.p2-test-palette .no-data-msg {
@@ -3339,7 +3338,7 @@ body.bb-ai-off #ai-panel {
 }
 
 .p2-head {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .p2-page-header {
@@ -3347,19 +3346,12 @@ body.bb-ai-off #ai-panel {
 }
 
 .p2-filter-cue {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 11px;
   font-weight: 400;
   color: var(--p2-muted, var(--gray));
   letter-spacing: 0.02em;
   line-height: 1.45;
-}
-
-.p2-data-quality {
-  margin: 0;
-  font-size: 10.5px;
-  color: var(--p2-muted, var(--gray));
-  line-height: 1.4;
 }
 
 /* 6 primary KPI cards */
@@ -3452,7 +3444,11 @@ body.bb-ai-off #ai-panel {
 .p2-forecast-card,
 .p2-waterfall-card,
 .p2-sources-card {
-  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 14px 16px 14px;
+  height: 100%;
 }
 
 .p2-card-head {
@@ -3521,15 +3517,37 @@ body.bb-ai-off #ai-panel {
 
 .p2-waterfall-wrap {
   height: 260px;
+  flex-shrink: 0;
 }
 
 .p2-waterfall-notes {
   margin: 0 0 8px;
+  flex: 0 0 auto;
+}
+
+/* Pending waterfall: fill remaining card height so mid-row columns match */
+.p2-waterfall-card > .p2-pending-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  min-height: 260px;
+  margin: 0;
+}
+
+.p2-waterfall-card > .p2-pending-panel .p2-pending-line:last-child {
+  margin-bottom: 0;
+}
+
+.p2-sources-card .p2-source-table {
+  flex: 0 0 auto;
 }
 
 .p2-bubble-wrap {
   height: 220px;
   margin-top: 12px;
+  flex-shrink: 0;
 }
 
 .p2-chart-wrap canvas {
@@ -3593,8 +3611,23 @@ body.bb-ai-off #ai-panel {
   line-height: 1.45;
 }
 
+.p2-pending-panel {
+  margin: 0;
+}
+
 .p2-pending-line {
   margin: 0 0 6px;
+}
+
+.p2-funnel-card .p2-funnel-wrap,
+.p2-forecast-card .p2-forecast-wrap {
+  flex-shrink: 0;
+}
+
+.p2-funnel-card .p2-funnel-stage-detail,
+.p2-forecast-card .p2-forecast-gap {
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .p2-mini-table,
@@ -3703,7 +3736,7 @@ body.bb-ai-off #ai-panel {
 .p2-gantt-card,
 .p2-campaign-card {
   margin-bottom: 16px;
-  padding: 16px 18px 14px;
+  padding: 14px 16px;
 }
 
 .p2-value-pending {

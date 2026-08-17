@@ -280,7 +280,6 @@
                 <h1 class="page-title p2-page-title">Sales &amp; Pipeline</h1>
               </div>
               <p class="p2-filter-cue" id="p2-filter-cue">Filters apply to: Date Created (leads &amp; opportunities)</p>
-              <p class="p2-data-quality" id="p2-data-quality" aria-live="polite"></p>
             </div>
 
             <!-- Primary KPIs (6) -->
@@ -8424,56 +8423,6 @@
                 : '') +
             '</span>'
             : '');
-      }
-
-      // Data quality strip (includes real API status for failed tabs when known)
-      var dq = document.getElementById('p2-data-quality');
-      if (dq) {
-        var bits = [];
-        var meta = _p2SheetMeta || {};
-        function tabStatusBit(label, hasRows, rowNote, key) {
-          var m = meta[key] || {};
-          if (m.ok === false) {
-            var st = m.status != null ? ' (API ' + m.status + ')' : '';
-            return label + ' not available' + st;
-          }
-          if (hasRows) return label + ' live' + (rowNote || '');
-          return label + ' empty';
-        }
-        bits.push(tabStatusBit(
-          'GHL_Leads',
-          hasLeads,
-          ' (' + leadsFiltered.length + ' filtered)',
-          'leads'
-        ));
-        bits.push(tabStatusBit(
-          'GHL_Pipeline',
-          hasPipe,
-          ' (' + pipeFiltered.length + ' filtered)',
-          'pipeline'
-        ));
-        var quotesLive = !!(meta.quotes && meta.quotes.ok && (ghlQuotes || []).length);
-        var quotesOkEmpty = !!(meta.quotes && meta.quotes.ok);
-        if (quotesLive) {
-          bits.push('Quotes live (' + (ghlQuotes || []).length + ')');
-        } else if (quotesOkEmpty) {
-          bits.push('Quotes live (empty)');
-        } else {
-          bits.push(tabStatusBit('Quotes', false, '', 'quotes'));
-        }
-        bits.push(tabStatusBit('Marketing_Paid', hasMkt, '', 'marketing'));
-        if (openRows.length) {
-          var phN = openRows.length - openWithRealValue.length;
-          if (phN > 0) bits.push(phN + ' open deals with Value not entered ($1/blank)');
-        }
-        var daysFilled = pipeFiltered.filter(function(r) {
-          return col(r, 'Days in Stage') !== '' && col(r, 'Days in Stage') != null;
-        }).length;
-        if (hasPipe && daysFilled < pipeFiltered.length * 0.2) {
-          bits.push('Days in Stage mostly empty - age uses Created Date');
-        }
-        bits.push('Stalled threshold: ' + P2_STALLED_DAYS + '+ days no activity');
-        dq.textContent = 'Data: ' + bits.join(' · ');
       }
 
       function clearP2Charts() {
