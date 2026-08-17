@@ -10127,6 +10127,10 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   word-break: break-word;
 }
 
+#page-p13 #p13-kpi-conversion .p13-kpi-target-of {
+  white-space: normal;
+}
+
 #page-p13 #p13-kpi-conversion.p13-kpi-card--above {
   border-color: var(--action);
   border-top-color: var(--action);
@@ -10141,7 +10145,7 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
 
 #page-p13 .p13-conv-chip {
   display: inline-block;
-  margin-left: 0;
+  margin-left: 4px;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.3px;
