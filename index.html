@@ -1158,8 +1158,8 @@
                   </select>
                 </label>
                 <label class="p9-filter">
-                  <span class="filter-label">Week Ending</span>
-                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Week ending"></select>
+                  <span class="filter-label">Week</span>
+                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Cash flow week"></select>
                 </label>
               </div>
               <p class="p9-updated" id="p9-last-updated">Last updated...</p>
@@ -13133,10 +13133,7 @@
         return (dd < 10 ? '0' : '') + dd + ' ' + _MONTH_ABBR[thu.getMonth()];
       }
       function p9WeekSelectLabel(fridayStart) {
-        if (!fridayStart) return '-';
-        var parts = (typeof p8PayrollParts === 'function') ? p8PayrollParts(fridayStart) : null;
-        var endLabel = p9WeekEndingLabel(fridayStart);
-        return parts ? (endLabel + ' (W' + parts.week + ')') : endLabel;
+        return p9WeekRangeLabel(fridayStart);
       }
       function p9WeekRangeLabel(fridayStart) {
         if (!fridayStart) return '-';
@@ -13257,40 +13254,74 @@
       });
 
       var today = new Date(); today.setHours(0, 0, 0, 0);
-      var horizonStart = p9PayrollFridayStart(today);
-      if (!horizonStart) horizonStart = today;
-      var horizon = [];
-      for (var hi = 0; hi < 13; hi++) horizon.push(p9AddDays(horizonStart, hi * 7));
-      var byKey = {};
-      sheetWeeks.forEach(function(w) { byKey[w.key] = w; });
+      // Dropdown + charts use CashFlow_Forecast Week Start rows (sheet order).
+      // Do not generate an independent rolling 13-week calendar.
+      sheetWeeks.forEach(function(w) {
+        var fri = p9PayrollFridayStart(w.date) || w.date;
+        var thu = p9PayrollThursday(fri);
+        w.payrollFriday = fri;
+        w.payrollThursday = thu;
+        w.isCurrentWeek = today.getTime() >= fri.getTime() && today.getTime() <= thu.getTime();
+        w.isActual = thu.getTime() < today.getTime();
+        w.rangeLabel = p9WeekRangeLabel(fri);
+        w.selectLabel = w.rangeLabel + (w.isCurrentWeek ? ' (this week)' : '');
+      });
+
+      var weekSel = document.getElementById('p9-week-select');
+      var sheetKeys = sheetWeeks.map(function(w) { return w.key; });
+      if (weekSel) {
+        var prevSel = window._p9SelectedWeek;
+        weekSel.innerHTML = sheetWeeks.map(function(w) {
+          return '<option value="' + w.key + '">' + w.selectLabel + '</option>';
+        }).join('');
+        if (!prevSel || sheetKeys.indexOf(prevSel) < 0) {
+          var pick = sheetWeeks.filter(function(w) { return w.isCurrentWeek; })[0];
+          if (!pick) {
+            for (var pi = sheetWeeks.length - 1; pi >= 0; pi--) {
+              if (sheetWeeks[pi].date.getTime() <= today.getTime()) { pick = sheetWeeks[pi]; break; }
+            }
+          }
+          if (!pick) pick = sheetWeeks[0];
+          prevSel = pick ? pick.key : null;
+          window._p9SelectedWeek = prevSel;
+        }
+        weekSel.value = prevSel || '';
+      }
+      var selectedKey = window._p9SelectedWeek || (sheetWeeks[0] && sheetWeeks[0].key);
+      var selectedSheetIdx = 0;
+      for (var ssi = 0; ssi < sheetWeeks.length; ssi++) {
+        if (sheetWeeks[ssi].key === selectedKey) { selectedSheetIdx = ssi; break; }
+      }
+      var selectedSheet = sheetWeeks[selectedSheetIdx] || sheetWeeks[0] || null;
+
+      var horizonStartIdx = selectedSheetIdx;
+      var horizonEndIdx = Math.min(sheetWeeks.length, horizonStartIdx + 13);
+      var horizonRows = sheetWeeks.slice(horizonStartIdx, horizonEndIdx);
+
       var lastKnown = null;
       for (var li = sheetWeeks.length - 1; li >= 0; li--) {
         if (sheetWeeks[li].close != null) { lastKnown = sheetWeeks[li]; break; }
       }
-      var firstH = null;
-      for (var fi = 0; fi < sheetWeeks.length; fi++) {
-        if (sheetWeeks[fi].date.getTime() >= horizonStart.getTime()) { firstH = sheetWeeks[fi]; break; }
-      }
-      var openingBank = bankKnown != null ? bankKnown
-        : (firstH && firstH.open != null ? firstH.open
-        : (lastKnown && lastKnown.close != null ? lastKnown.close
-        : (sheetWeeks[0] && sheetWeeks[0].open != null ? sheetWeeks[0].open : null)));
+      var windowOpen = (horizonRows[0] && horizonRows[0].open != null) ? horizonRows[0].open
+        : (horizonRows[0] && horizonRows[0].bank != null ? horizonRows[0].bank
+        : (bankKnown != null ? bankKnown
+        : (lastKnown && lastKnown.close != null ? lastKnown.close : null)));
+      var selectedOpen = selectedSheet && selectedSheet.open != null ? selectedSheet.open
+        : (selectedSheet && selectedSheet.bank != null ? selectedSheet.bank : null);
+      var openingBank = selectedOpen != null ? selectedOpen : windowOpen;
 
-      var horizonMapped = 0;
-      var weeks = horizon.map(function(d, idx) {
-        var key = p9DateKey(d);
-        var match = byKey[key] || null;
-        if (match) horizonMapped++;
+      var weeks = horizonRows.map(function(w, idx) {
+        var fri = w.payrollFriday || w.date;
         return {
-          date: d, key: key, label: p9WeekLabel(d), match: match, idx: idx,
-          cashIn: match ? match.cashIn : null, cashOut: match ? match.cashOut : null,
-          net: match ? match.net : null, open: match ? match.open : null, close: match ? match.close : null,
-          notes: match ? match.notes : '', pending: match ? match.pending : false,
-          confidence: match ? match.confidence : 'Awaiting',
-          isActual: p9PayrollThursday(d).getTime() < today.getTime(),
-          isCurrentWeek: d.getTime() <= today.getTime() && p9PayrollThursday(d).getTime() >= today.getTime()
+          date: w.date, key: w.key, label: p9WeekLabel(fri), match: w, idx: idx,
+          cashIn: w.cashIn, cashOut: w.cashOut, net: w.net, open: w.open, close: w.close,
+          notes: w.notes, pending: w.pending, confidence: w.confidence,
+          isActual: !!w.isActual, isCurrentWeek: !!w.isCurrentWeek
         };
       });
+      var horizonMapped = weeks.filter(function(w) {
+        return !w.pending && (w.cashIn != null || w.cashOut != null || w.close != null);
+      }).length;
 
       var scConfig = {
         base: { label: 'Base', receiptDelayWeeks: 0, costFactor: 1, capitalFactor: 1, facilityOn: true,
@@ -13306,6 +13337,7 @@
       var sc = scConfig[scenario] || scConfig.base;
 
       function buildSeries(scfg) {
+        var n = weeks.length;
         var series = weeks.map(function(w) {
           return { label: w.label, key: w.key, date: w.date, isActual: w.isActual, isCurrentWeek: w.isCurrentWeek,
             match: w.match, cashIn: null, cashOut: null, close: null, open: null, net: null,
@@ -13313,7 +13345,8 @@
         });
         var rawIn = weeks.map(function(w) { return w.cashIn; });
         var rawOut = weeks.map(function(w) { return w.cashOut; });
-        for (var i = 0; i < 13; i++) {
+        var isBase = scfg.receiptDelayWeeks === 0 && scfg.costFactor === 1 && scfg.capitalFactor === 1;
+        for (var i = 0; i < n; i++) {
           var inVal = null, outVal = null;
           if (scfg.receiptDelayWeeks === 0) inVal = rawIn[i];
           else {
@@ -13327,19 +13360,22 @@
             } else outVal = rawOut[i] * scfg.costFactor;
           }
           series[i].cashIn = inVal; series[i].cashOut = outVal;
-          series[i].net = (inVal != null || outVal != null) ? ((inVal || 0) - (outVal || 0)) : null;
+          if (inVal != null && outVal != null) series[i].net = inVal - outVal;
+          else if (isBase && weeks[i].net != null) series[i].net = weeks[i].net;
+          else series[i].net = null;
         }
-        var run = openingBank;
-        for (var j = 0; j < 13; j++) {
+        var run = windowOpen;
+        for (var j = 0; j < n; j++) {
           var s = series[j], w0 = weeks[j];
-          if (scfg.receiptDelayWeeks === 0 && scfg.costFactor === 1 && scfg.capitalFactor === 1 && w0.close != null) {
+          if (isBase && w0.close != null) {
             s.close = w0.close; s.open = w0.open != null ? w0.open : run; run = w0.close;
           } else if (s.net != null && run != null) {
             s.open = run; s.close = run + s.net; run = s.close;
           } else if (s.net != null && run == null && w0.open != null) {
             s.open = w0.open; s.close = w0.open + s.net; run = s.close;
           } else {
-            s.close = w0.close; if (s.close != null) run = s.close;
+            s.close = w0.close; s.open = w0.open != null ? w0.open : s.open;
+            if (s.close != null) run = s.close;
           }
         }
         return series;
@@ -13349,13 +13385,14 @@
       var primary = buildSeries(sc);
       var downsideSeries = buildSeries(scConfig.downside);
       var upsideSeries = buildSeries(scConfig.upside);
-      var anyInOut = primary.some(function(s) { return s.cashIn != null || s.cashOut != null; });
-      var cashIn13 = null, cashOut13 = null, net13 = null;
-      if (anyInOut) {
-        cashIn13 = primary.reduce(function(sum, s) { return sum + (s.cashIn || 0); }, 0);
-        cashOut13 = primary.reduce(function(sum, s) { return sum + (s.cashOut || 0); }, 0);
-        net13 = cashIn13 - cashOut13;
-      }
+      var knownIn = primary.filter(function(s) { return s.cashIn != null; });
+      var knownOut = primary.filter(function(s) { return s.cashOut != null; });
+      var knownNet = primary.filter(function(s) { return s.net != null; });
+      var anyInOut = knownIn.length > 0 || knownOut.length > 0;
+      var cashIn13 = knownIn.length ? knownIn.reduce(function(sum, s) { return sum + s.cashIn; }, 0) : null;
+      var cashOut13 = knownOut.length ? knownOut.reduce(function(sum, s) { return sum + s.cashOut; }, 0) : null;
+      var net13 = knownNet.length ? knownNet.reduce(function(sum, s) { return sum + s.net; }, 0)
+        : (cashIn13 != null && cashOut13 != null ? cashIn13 - cashOut13 : null);
       var lowest = null, lowestWeek = null;
       primary.forEach(function(s) {
         if (s.close == null) return;
@@ -13438,12 +13475,10 @@
       var overdueAR = bucketMap['1-30'].amount + bucketMap['31-60'].amount + bucketMap['61-90'].amount + bucketMap['90+'].amount;
       var hasAR = invLive && invOpen.length > 0 && totalAR > 0;
       var arFromSheet = false;
-      var curHorizonWeek = weeks.find(function(w) { return w.isCurrentWeek; }) || weeks[0];
-      if (curHorizonWeek && curHorizonWeek.match && curHorizonWeek.match.arBuckets) {
-        var sb = curHorizonWeek.match.arBuckets;
-        var sheetArTotal = (sb['0-30'] || 0) + (sb['31-60'] || 0) + (sb['61-90'] || 0) + (sb['90+'] || 0);
+      if (selectedSheet && selectedSheet.arBuckets) {
+        var sb = selectedSheet.arBuckets;
         var sheetArKnown = sb['0-30'] != null || sb['31-60'] != null || sb['61-90'] != null || sb['90+'] != null;
-        if (sheetArKnown && sheetArTotal > 0) {
+        if (sheetArKnown) {
           arFromSheet = true;
           hasAR = true;
           bucketOrder.forEach(function(b) { bucketMap[b] = { amount: 0, count: 0, clients: {}, disputed: 0, promised: 0 }; });
@@ -13474,64 +13509,64 @@
       });
       var collectionTop = collectionRows.slice(0, 12);
 
-      var weekSel = document.getElementById('p9-week-select');
-      if (weekSel) {
-        var prev = window._p9SelectedWeek;
-        weekSel.innerHTML = weeks.map(function(w) {
-          return '<option value="' + w.key + '">' + p9WeekSelectLabel(w.date) + (w.isCurrentWeek ? ' · this week' : '') + '</option>';
-        }).join('');
-        var keys = weeks.map(function(w) { return w.key; });
-        if (!prev || keys.indexOf(prev) < 0) {
-          var pick = weeks.find(function(w) { return w.isCurrentWeek; }) || weeks.find(function(w) { return w.match; }) || weeks[0];
-          prev = pick ? pick.key : null;
-          window._p9SelectedWeek = prev;
-        }
-        weekSel.value = prev || '';
-      }
-      var selectedKey = window._p9SelectedWeek || (weeks[0] && weeks[0].key);
       var selectedIdx = 0;
       for (var si = 0; si < primary.length; si++) if (primary[si].key === selectedKey) { selectedIdx = si; break; }
       var selectedWeek = primary[selectedIdx] || primary[0];
 
       var brandLabel = brand || 'ALL';
-      var horizonLabel = weeks.length ? (p9WeekRangeLabel(weeks[0].date) + ' to ' + p9WeekRangeLabel(weeks[12].date)) : 'Pending';
+      var firstRange = weeks[0] ? p9WeekRangeLabel(weeks[0].match && weeks[0].match.payrollFriday ? weeks[0].match.payrollFriday : weeks[0].date) : '';
+      var lastRange = weeks.length ? p9WeekRangeLabel(weeks[weeks.length - 1].match && weeks[weeks.length - 1].match.payrollFriday ? weeks[weeks.length - 1].match.payrollFriday : weeks[weeks.length - 1].date) : '';
+      var horizonLabel = weeks.length ? (firstRange + ' to ' + lastRange) : 'Pending';
+      var selectedLabel = selectedSheet ? selectedSheet.selectLabel : 'Pending';
+      var sheetSpan = sheetWeeks.length
+        ? (p9WeekRangeLabel(sheetWeeks[0].payrollFriday || sheetWeeks[0].date) + ' to ' +
+          p9WeekRangeLabel(sheetWeeks[sheetWeeks.length - 1].payrollFriday || sheetWeeks[sheetWeeks.length - 1].date))
+        : 'Pending';
       setT('p9-last-updated',
-        'Forecast start ' + (weeks[0] ? p9DateKey(weeks[0].date) : 'Pending') +
-        ' (payroll Fri) · Brand ' + brandLabel + ' · Scenario ' + sc.label + ' · Horizon ' + horizonLabel +
+        'Selected ' + selectedLabel +
+        ' · Brand ' + brandLabel + ' · Scenario ' + sc.label +
+        ' · Sheet weeks ' + sheetSpan +
         (cfLastUpdated ? (' · CashFlow_Forecast last updated ' + cfLastUpdated) : '') +
         (_p9Cache.loadedAt ? (' · Page loaded ' + _p9Cache.loadedAt.toLocaleString('en-AU')) : ''));
       var q = [];
       q.push(cfLive
-        ? ('CashFlow_Forecast live (' + sheetWeeks.length + ' week rows · ' + horizonMapped + '/13 horizon matches)')
+        ? ('CashFlow_Forecast live (' + sheetWeeks.length + ' week rows)')
         : 'CashFlow_Forecast Pending / empty');
-      if (horizonMapped === 0 && sheetWeeks.length) q.push('Sheet weeks outside current 13-week window - forecast needs refresh');
       q.push(invLive ? ('Xero_Invoices live (' + invOpen.length + ' open authorised/sent)') : 'Xero_Invoices Pending');
       if (facilityKnown == null) q.push('Credit facility: Pending');
       if (minCashKnown == null) q.push('Min cash threshold: Pending');
-      if (openingBank == null) q.push('Reconciled bank opening: Pending');
+      if (openingBank == null) q.push('Opening balance: Pending');
+      if (selectedSheet && selectedSheet.pending) q.push('Selected week Pending' + (selectedSheet.notes ? (' - ' + selectedSheet.notes) : ''));
       setT('p9-data-quality', q.join(' · '));
 
       var availSub = [];
-      if (openingBank != null) {
+      if (selectedOpen != null) {
+        availSub.push('Opening ' + formatCurrency(selectedOpen) + ' (selected week)');
+        availSub.push(facilityKnown != null && sc.facilityOn ? ('facility ' + formatCurrency(facilityKnown)) : 'facility Pending');
+      } else if (openingBank != null) {
         availSub.push('Bank ' + formatCurrency(openingBank));
         availSub.push(facilityKnown != null && sc.facilityOn ? ('facility ' + formatCurrency(facilityKnown)) : 'facility Pending');
-        if (horizonMapped === 0 && lastKnown) availSub.push('last sheet close ' + p9WeekLabel(lastKnown.date));
-      } else availSub.push('Awaiting reconciled bank on CashFlow_Forecast');
+      } else availSub.push('Awaiting Opening Balance on selected CashFlow_Forecast row');
+      if (selectedSheet && selectedSheet.pending && selectedSheet.notes) availSub.push(selectedSheet.notes);
       setKPI('kpi-p9-avail', 'kpi-p9-avail-sub', p9Fmt(availableCash), availSub.join(' · '));
       setTone('p9-kpi-avail', availableCash == null ? 'gap' : 'healthy');
-      setKPI('kpi-p9-cash-in', 'kpi-p9-cash-in-sub', anyInOut ? formatCurrency(cashIn13) : 'Pending',
-        anyInOut ? (sc.label + ' · receipts (not invoiced revenue) · ' + horizonMapped + ' matched weeks') : 'Awaiting Cash In on horizon weeks');
-      setTone('p9-kpi-in', anyInOut ? null : 'gap');
-      setKPI('kpi-p9-cash-out', 'kpi-p9-cash-out-sub', anyInOut ? formatCurrency(cashOut13) : 'Pending',
-        anyInOut ? (sc.label + ' · committed outflows · ' + horizonMapped + ' matched weeks') : 'Awaiting Cash Out on horizon weeks');
-      setTone('p9-kpi-out', anyInOut ? null : 'gap');
-      setKPI('kpi-p9-net', 'kpi-p9-net-sub', anyInOut ? formatCurrency(net13) : 'Pending',
-        anyInOut ? (sc.label + ' · 13-week net movement') : 'Pending until in/out live');
-      setTone('p9-kpi-net', !anyInOut ? 'gap' : (net13 < 0 ? 'watch' : null));
+      var inOutSubBits = sc.label + ' · ' + knownIn.length + ' of ' + weeks.length + ' sheet weeks with figures';
+      setKPI('kpi-p9-cash-in', 'kpi-p9-cash-in-sub', cashIn13 != null ? formatCurrency(cashIn13) : 'Pending',
+        cashIn13 != null ? (inOutSubBits + ' · Cash In (Expected)') : (selectedSheet && selectedSheet.pending ? ('Pending for selected week' + (selectedSheet.notes ? (' - ' + selectedSheet.notes) : '')) : 'Awaiting Cash In (Expected) on sheet weeks'));
+      setTone('p9-kpi-in', cashIn13 != null ? null : 'gap');
+      setKPI('kpi-p9-cash-out', 'kpi-p9-cash-out-sub', cashOut13 != null ? formatCurrency(cashOut13) : 'Pending',
+        cashOut13 != null ? (inOutSubBits + ' · Cash Out (Committed)') : (selectedSheet && selectedSheet.pending && !anyInOut ? ('Pending for selected week' + (selectedSheet.notes ? (' - ' + selectedSheet.notes) : '')) : 'Awaiting Cash Out (Committed) on sheet weeks'));
+      setTone('p9-kpi-out', cashOut13 != null ? null : 'gap');
+      var selectedNet = selectedWeek && selectedWeek.net != null ? selectedWeek.net : (selectedSheet && selectedSheet.net != null ? selectedSheet.net : null);
+      setKPI('kpi-p9-net', 'kpi-p9-net-sub', selectedNet != null ? formatCurrency(selectedNet) : (net13 != null ? formatCurrency(net13) : 'Pending'),
+        selectedNet != null
+          ? ('Selected week Net Movement · ' + selectedLabel)
+          : (net13 != null ? (sc.label + ' · net across weeks with figures') : (selectedSheet && selectedSheet.pending ? ('Pending for selected week' + (selectedSheet.notes ? (' - ' + selectedSheet.notes) : '')) : 'Pending until Net Movement is on the sheet')));
+      setTone('p9-kpi-net', (selectedNet == null && net13 == null) ? 'gap' : ((selectedNet != null ? selectedNet : net13) < 0 ? 'watch' : null));
       setKPI('kpi-p9-low', 'kpi-p9-low-sub', lowest != null ? formatCurrency(lowest) : 'Pending',
         lowest != null
           ? ('Week of ' + (lowestWeek || '-') + (minCashKnown != null ? (' · reserve ' + formatCurrency(minCashKnown)) : ' · reserve Pending'))
-          : 'No closings on current horizon');
+          : (selectedSheet && selectedSheet.pending && !horizonMapped ? ('Pending for selected week' + (selectedSheet.notes ? (' - ' + selectedSheet.notes) : '')) : 'No Closing Balance on selected sheet weeks'));
       var lowTone = 'gap';
       if (lowest != null) {
         if ((minCashKnown != null && lowest < minCashKnown) || lowest < 0) lowTone = 'risk';
@@ -13541,11 +13576,11 @@
       setTone('p9-kpi-low', lowTone);
       setKPI('kpi-p9-ar', 'kpi-p9-ar-sub', hasAR ? formatCurrency(overdueAR) : (invLive || arFromSheet ? formatCurrency(0) : 'Pending'),
         hasAR
-          ? ((arFromSheet ? 'From CashFlow_Forecast current week · ' : '') +
+          ? ((arFromSheet ? 'From CashFlow_Forecast selected week · ' : '') +
             'Past due 1d+ · expected this month ' + (expectedThisMonth != null ? formatCurrency(expectedThisMonth) : 'Pending') + ' · open AR ' + formatCurrency(totalAR))
           : (invLive || arFromSheet ? 'No past-due open invoices' : 'Awaiting Xero_Invoices or CashFlow_Forecast AR buckets'));
       setTone('p9-kpi-ar', !hasAR && !invLive ? 'gap' : (overdueAR > 100000 ? 'watch' : null));
-      setT('p9-horizon-hint', 'Rolling ' + horizonLabel + ' · ' + horizonMapped + ' weeks linked to sheet · scenario ' + sc.label);
+      setT('p9-horizon-hint', 'Sheet weeks ' + horizonLabel + ' · ' + weeks.length + ' consecutive rows from CashFlow_Forecast · scenario ' + sc.label);
 
       // Position chart
       clearPh('p9-forecast-wrap', 'chart-p9-forecast'); destroyIf('chart-p9-forecast');
@@ -13558,12 +13593,14 @@
       var noteEl = document.getElementById('p9-forecast-note');
       if (!hasAnyClose) {
         emptyChart('p9-forecast-wrap', 'chart-p9-forecast',
-          'Not available for current 13-week window. CashFlow_Forecast weeks do not overlap horizon - refresh sheet from current week.');
+          selectedSheet && selectedSheet.pending
+            ? ('Pending for selected week - ' + (selectedSheet.notes || 'no Xero_Financials data for this month yet'))
+            : 'Awaiting Closing Balance on CashFlow_Forecast for the selected sheet weeks.');
         if (noteEl) {
           noteEl.textContent = sheetWeeks.length
-            ? ('Last sheet week ' + p9WeekLabel(sheetWeeks[sheetWeeks.length - 1].date) +
+            ? ('Sheet has ' + sheetWeeks.length + ' week rows · selected ' + selectedLabel +
               (cfLastUpdated ? (' · updated ' + cfLastUpdated) : '') +
-              '. Opening shown in KPIs from last known close when available. No invented forward path.')
+              '. No invented forward path.')
             : 'Awaiting CashFlow_Forecast data.';
         }
       } else {
@@ -13661,8 +13698,8 @@
           var notes = ['Solid charcoal = actual · solid blue = base · dashed orange = downside'];
           notes.push(minCashKnown != null ? 'amber line = min cash' : 'min cash threshold: Pending (line not drawn)');
           if (facilityKnown == null) notes.push('facility headroom: Pending');
-          if (horizonMapped === 0) notes.push('no sheet weeks in horizon');
-          else if (horizonMapped < 13) notes.push((13 - horizonMapped) + ' horizon weeks still Awaiting on sheet');
+          var pendingOnChart = weeks.filter(function(w) { return w.pending; }).length;
+          if (pendingOnChart) notes.push(pendingOnChart + ' selected-window weeks Pending on sheet (other weeks unchanged)');
           notes.push('Cash In = receipts/expected collections · not revenue invoiced');
           noteEl.textContent = notes.join(' · ');
         }
@@ -13671,7 +13708,7 @@
       // Waterfall
       clearPh('p9-waterfall-wrap', 'chart-p9-waterfall'); destroyIf('chart-p9-waterfall');
       var sw = selectedWeek;
-      setT('p9-waterfall-hint', (sw ? p9WeekSelectLabel(weeks[selectedIdx] ? weeks[selectedIdx].date : sw.date) : '-') + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
+      setT('p9-waterfall-hint', (selectedSheet ? selectedSheet.selectLabel : (sw ? p9WeekSelectLabel(sw.date) : '-')) + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
       var swPending = sw && (sw.pending || (weeks[selectedIdx] && weeks[selectedIdx].pending));
       if (!sw || swPending || (sw.open == null && sw.close == null && sw.cashIn == null && sw.cashOut == null)) {
         emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall',
@@ -13740,7 +13777,10 @@
 
       // In/out bars
       clearPh('p9-inout-wrap', 'chart-p9-inout'); destroyIf('chart-p9-inout');
-      if (!anyInOut) emptyChart('p9-inout-wrap', 'chart-p9-inout', 'Not available - no weekly Cash In / Cash Out on current horizon.');
+      if (!anyInOut) emptyChart('p9-inout-wrap', 'chart-p9-inout',
+        selectedSheet && selectedSheet.pending && !anyInOut
+          ? ('Pending for selected week - ' + (selectedSheet.notes || 'no Cash In / Cash Out on this row'))
+          : 'Not available - no weekly Cash In / Cash Out on selected sheet weeks.');
       else {
         makeChart('chart-p9-inout', {
           type: 'bar',
@@ -13779,7 +13819,7 @@
           '<div class="p9-age-chip-meta">Disputed ' + (bm.disputed ? formatCurrency(bm.disputed) : 'Pending') +
           ' · Promised ' + (bm.promised ? formatCurrency(bm.promised) : 'Pending') + '</div></div>';
       }).join(''));
-      if (!invLive && !arFromSheet) emptyChart('p9-ageing-wrap', 'chart-p9-ageing', 'Xero_Invoices not available · AR buckets on CashFlow_Forecast current week only');
+      if (!invLive && !arFromSheet) emptyChart('p9-ageing-wrap', 'chart-p9-ageing', 'Xero_Invoices not available · AR buckets on CashFlow_Forecast selected week only');
       else {
         var ageColors = bucketOrder.map(function(b) {
           if (b === '90+' || b === '61-90') return P9c.accent;
@@ -13846,7 +13886,7 @@
       commitments.sort(function(a, b) { return b.Amount - a.Amount; });
       commitments = commitments.slice(0, 15);
       if (!commitments.length) {
-        setH('p9-commitments-table', '<p class="no-data-msg">No payment commitments on current horizon. Awaiting Cash Out on CashFlow_Forecast.</p>');
+        setH('p9-commitments-table', '<p class="no-data-msg">No payment commitments on selected sheet weeks. Awaiting Cash Out on CashFlow_Forecast.</p>');
       } else {
         setH('p9-commitments-table', buildTable(commitments, [
           { label: 'Payment', key: 'Payment' }, { label: 'Supplier / Category', key: 'Supplier' },
@@ -13860,11 +13900,6 @@
       function pushAction(priority, issue, impact, action, owner, due) {
         if (actions.length >= 5) return;
         actions.push({ priority: priority, issue: issue, impact: impact, action: action, owner: owner || 'Finance', due: due || 'This week' });
-      }
-      if (horizonMapped === 0 && sheetWeeks.length) {
-        pushAction('High', '13-week forecast does not cover current period',
-          'Horizon starts ' + (weeks[0] ? p9WeekLabel(weeks[0].date) : '-') + ' · last sheet week ' + p9WeekLabel(sheetWeeks[sheetWeeks.length - 1].date),
-          'Refresh CashFlow_Forecast from current payroll week (Friday start) with bank opening, payroll, BAS, supplier runs', 'Finance', 'This week');
       }
       if (lowest != null && minCashKnown != null && lowest < minCashKnown) {
         pushAction('High', 'Path dips below min cash reserve',
