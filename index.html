@@ -1229,6 +1229,7 @@
                 <div class="p9-chart-wrap">
                   <canvas id="chart-p9-inout" aria-label="Weekly cash in vs out"></canvas>
                 </div>
+                <p class="p9-section-hint p9-inout-summary" id="p9-inout-summary"></p>
               </div>
               <div class="section-card p9-panel" id="p9-ageing-wrap">
                 <div class="chart-title">AR ageing · collection risk</div>
@@ -13922,6 +13923,9 @@
           plugins: inoutPlugins
         });
       }
+      setT('p9-inout-summary',
+        'Total inflows (visible weeks): ' + (cashIn13 != null ? formatCurrency(cashIn13) : 'Pending') +
+        ' · Total outflows: ' + (cashOut13 != null ? formatCurrency(cashOut13) : 'Pending') + '.');
 
       // AR chart
       clearPh('p9-ageing-wrap', 'chart-p9-ageing'); destroyIf('chart-p9-ageing');
