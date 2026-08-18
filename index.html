@@ -1163,6 +1163,7 @@
                 </label>
               </div>
               <p class="p9-updated" id="p9-last-updated">Last updated...</p>
+              <p class="p9-window-status" id="p9-window-status"></p>
               <p class="p9-data-quality" id="p9-data-quality" aria-live="polite"></p>
               <p class="p9-gst-note" id="p9-gst-note">GST basis: amounts shown GST-inclusive where source provides Inc GST (prefer inclusive if uncertain).</p>
             </div>
@@ -1217,6 +1218,7 @@
                 <div class="p9-chart-wrap">
                   <canvas id="chart-p9-waterfall" aria-label="Week cash waterfall"></canvas>
                 </div>
+                <p class="p9-section-hint" id="p9-waterfall-note"></p>
               </div>
             </div>
 
@@ -13188,6 +13190,80 @@
         el.classList.remove('p9-kpi--risk', 'p9-kpi--watch', 'p9-kpi--healthy', 'p9-kpi--gap');
         if (tone) el.classList.add('p9-kpi--' + tone);
       }
+      function p9PendingMonthSpan(list) {
+        var first = null, last = null;
+        (list || []).forEach(function(w) {
+          var d = w && w.date;
+          if (!d) return;
+          if (!first || d < first) first = d;
+          if (!last || d > last) last = d;
+        });
+        if (!first) return 'Sep-Nov';
+        var a = _MONTH_ABBR[first.getMonth()];
+        var b = _MONTH_ABBR[last.getMonth()];
+        return a === b ? a : (a + '-' + b);
+      }
+      function p9PendingBandPlugin(pluginId, mask, label) {
+        return {
+          id: pluginId,
+          beforeDatasetsDraw: function(chart) {
+            var n = mask && mask.length ? mask.length : 0;
+            if (!n) return;
+            var ranges = [];
+            var rs = -1;
+            for (var i = 0; i < n; i++) {
+              if (mask[i]) { if (rs < 0) rs = i; }
+              else if (rs >= 0) { ranges.push([rs, i - 1]); rs = -1; }
+            }
+            if (rs >= 0) ranges.push([rs, n - 1]);
+            if (!ranges.length) return;
+            var xScale = chart.scales.x;
+            var area = chart.chartArea;
+            if (!xScale || !area) return;
+            var ctx = chart.ctx;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+            ctx.clip();
+            var best = ranges[0];
+            ranges.forEach(function(rg) {
+              if ((rg[1] - rg[0]) > (best[1] - best[0])) best = rg;
+              var left = rg[0] === 0 ? area.left : (xScale.getPixelForValue(rg[0] - 1) + xScale.getPixelForValue(rg[0])) / 2;
+              var right = rg[1] === n - 1 ? area.right : (xScale.getPixelForValue(rg[1]) + xScale.getPixelForValue(rg[1] + 1)) / 2;
+              if (!(right > left)) return;
+              ctx.fillStyle = 'rgba(37, 99, 235, 0.07)';
+              ctx.fillRect(left, area.top, right - left, area.bottom - area.top);
+              ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(left + 0.5, area.top);
+              ctx.lineTo(left + 0.5, area.bottom);
+              ctx.stroke();
+            });
+            if (label) {
+              var l0 = best[0] === 0 ? area.left : (xScale.getPixelForValue(best[0] - 1) + xScale.getPixelForValue(best[0])) / 2;
+              var r0 = best[1] === n - 1 ? area.right : (xScale.getPixelForValue(best[1]) + xScale.getPixelForValue(best[1] + 1)) / 2;
+              ctx.fillStyle = P9c.muted;
+              ctx.font = '10px sans-serif';
+              var pad = 8;
+              var maxW = Math.max(0, r0 - l0 - pad * 2);
+              var tw = ctx.measureText(label).width;
+              if (maxW > 24 && tw > maxW) {
+                var comma = label.indexOf(', ');
+                if (comma > 0) {
+                  ctx.fillText(label.slice(0, comma), l0 + pad, area.top + 14);
+                  ctx.fillText(label.slice(comma + 2), l0 + pad, area.top + 26);
+                } else if (maxW > 40) {
+                  ctx.fillText(label, l0 + pad, area.top + 14);
+                }
+              } else if (maxW > 40) {
+                ctx.fillText(label, l0 + pad, area.top + 14);
+              }
+            }
+            ctx.restore();
+          }
+        };
+      }
       function presentNum(raw) {
         if (raw === '' || raw == null || String(raw).trim() === '') return null;
         return parseNum(raw);
@@ -13528,6 +13604,35 @@
         ' · Sheet weeks ' + sheetSpan +
         (cfLastUpdated ? (' · CashFlow_Forecast last updated ' + cfLastUpdated) : '') +
         (_p9Cache.loadedAt ? (' · Page loaded ' + _p9Cache.loadedAt.toLocaleString('en-AU')) : ''));
+      var pendingWindowWeeks = weeks.filter(function(w) {
+        return w.pending || (w.cashIn == null && w.cashOut == null && w.close == null);
+      });
+      var pendingMonthSpan = p9PendingMonthSpan(pendingWindowWeeks);
+      var pendingWeekCount = Math.max(0, weeks.length - horizonMapped);
+      if (!weeks.length) {
+        setT('p9-window-status', '');
+      } else {
+        var windowStatus = horizonMapped + ' of ' + weeks.length + ' weeks have real forecast data';
+        if (pendingWeekCount > 0) {
+          windowStatus += ', ' + pendingWeekCount + ' weeks pending ' + pendingMonthSpan + ' entries in Xero_Financials.';
+        } else {
+          windowStatus += '.';
+        }
+        setT('p9-window-status', windowStatus);
+      }
+      var pendingCloseMask = weeks.map(function(w, i) {
+        var s = primary[i];
+        if (w.pending || (s && s.pending)) return true;
+        var has = (s && (s.close != null || s.cashIn != null || s.cashOut != null || s.net != null))
+          || (w.close != null || w.cashIn != null || w.cashOut != null || w.net != null);
+        return !has;
+      });
+      var pendingInOutMask = primary.map(function(s, i) {
+        var w = weeks[i];
+        if ((w && w.pending) || (s && s.pending)) return true;
+        return !(s && (s.cashIn != null || s.cashOut != null));
+      });
+      var pendingBandLabel = 'Forecast pending, awaiting ' + pendingMonthSpan + ' data';
       var q = [];
       q.push(cfLive
         ? ('CashFlow_Forecast live (' + sheetWeeks.length + ' week rows)')
@@ -13645,9 +13750,9 @@
         var datasets = [];
         if (facilityKnown != null && openingBank != null && sc.facilityOn) {
           datasets.push({
-            label: 'Facility ceiling', data: scClose.map(function() { return openingBank + facilityKnown; }),
+            label: 'Facility ceiling', data: scClose.map(function(v, i) { return pendingCloseMask[i] ? null : (openingBank + facilityKnown); }),
             borderColor: 'rgba(37,99,235,0.35)', backgroundColor: 'transparent', fill: false,
-            pointRadius: 0, borderWidth: 1, borderDash: [2, 2], tension: 0, order: 5
+            pointRadius: 0, borderWidth: 1, borderDash: [2, 2], tension: 0, spanGaps: false, order: 5
           });
         }
         datasets.push({
@@ -13671,10 +13776,14 @@
         });
         if (minCashKnown != null) {
           datasets.push({
-            label: 'Min cash threshold', data: scClose.map(function() { return minCashKnown; }),
+            label: 'Min cash threshold', data: scClose.map(function(v, i) { return pendingCloseMask[i] ? null : minCashKnown; }),
             borderColor: P9c.watch, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [8, 4],
-            pointRadius: 0, tension: 0, order: 4
+            pointRadius: 0, tension: 0, spanGaps: false, order: 4
           });
+        }
+        var forecastPlugins = [todayPlugin];
+        if (pendingCloseMask.some(function(p) { return p; })) {
+          forecastPlugins.push(p9PendingBandPlugin('p9PendingBandForecast', pendingCloseMask, pendingBandLabel));
         }
         makeChart('chart-p9-forecast', {
           type: 'line', data: { labels: labels, datasets: datasets },
@@ -13692,7 +13801,7 @@
                 grid: { color: 'rgba(226,228,232,0.8)' } }
             }
           },
-          plugins: [todayPlugin]
+          plugins: forecastPlugins
         });
         if (noteEl) {
           var notes = ['Solid charcoal = actual · solid blue = base · dashed orange = downside'];
@@ -13708,9 +13817,11 @@
       // Waterfall
       clearPh('p9-waterfall-wrap', 'chart-p9-waterfall'); destroyIf('chart-p9-waterfall');
       var sw = selectedWeek;
+      var wfNoteEl = document.getElementById('p9-waterfall-note');
       setT('p9-waterfall-hint', (selectedSheet ? selectedSheet.selectLabel : (sw ? p9WeekSelectLabel(sw.date) : '-')) + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
       var swPending = sw && (sw.pending || (weeks[selectedIdx] && weeks[selectedIdx].pending));
       if (!sw || swPending || (sw.open == null && sw.close == null && sw.cashIn == null && sw.cashOut == null)) {
+        if (wfNoteEl) wfNoteEl.textContent = '';
         emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall',
           swPending && sw && sw.notes
             ? ('Pending for selected week - ' + sw.notes)
@@ -13731,22 +13842,21 @@
           if (isOut) { floatBase.push(running - mag); floatVal.push(mag); floatColor.push(P9c.muted); running -= mag; }
           else { floatBase.push(running); floatVal.push(mag); floatColor.push(P9c.action); running += mag; }
         }
-        wfTotal('Opening', openW, P9c.text);
-        wfDelta('Customer Receipts', receipts, false);
-        wfLabels.push('Other Inflows'); floatBase.push(running); floatVal.push(null); floatColor.push(P9c.gap);
-        if (totalOut != null) {
-          wfDelta('Committed Outflows', totalOut, true);
-          ['Payroll', 'Suppliers', 'Subcontractors', 'Overheads', 'Tax / Super / BAS', 'Capital / Finance'].forEach(function(lbl) {
-            wfLabels.push(lbl); floatBase.push(running); floatVal.push(null); floatColor.push(P9c.gap);
-          });
-        } else {
-          ['Payroll', 'Suppliers', 'Subcontractors', 'Overheads', 'Tax / Super / BAS', 'Capital / Finance'].forEach(function(lbl) {
-            wfDelta(lbl, null, true);
-          });
-        }
+        if (openW != null) wfTotal('Opening', openW, P9c.text);
+        if (receipts != null) wfDelta('Customer Receipts', receipts, false);
+        if (totalOut != null) wfDelta('Committed Outflows', totalOut, true);
         var closeVal = sw.close != null ? sw.close : ((receipts != null || totalOut != null) && openW != null ? running : null);
-        wfTotal('Closing', closeVal, P9c.text);
-        makeChart('chart-p9-waterfall', {
+        if (closeVal != null) wfTotal('Closing', closeVal, P9c.text);
+        var wfOnlyOpenClose = openW != null && closeVal != null && receipts == null && totalOut == null;
+        if (wfNoteEl) {
+          wfNoteEl.textContent = wfOnlyOpenClose
+            ? 'Only Opening and Closing balances available for this week, category breakdown not on sheet yet.'
+            : '';
+        }
+        if (!wfLabels.length) {
+          emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall', 'Not available for selected week - awaiting forecast row.');
+        } else {
+          makeChart('chart-p9-waterfall', {
           type: 'bar',
           data: {
             labels: wfLabels,
@@ -13772,7 +13882,8 @@
               y: { stacked: true, ticks: Object.assign({ color: P9c.muted, font: { size: 10 } }, moneyTicks()), grid: { color: 'rgba(226,228,232,0.8)' } }
             }
           }
-        });
+          });
+        }
       }
 
       // In/out bars
@@ -13782,6 +13893,10 @@
           ? ('Pending for selected week - ' + (selectedSheet.notes || 'no Cash In / Cash Out on this row'))
           : 'Not available - no weekly Cash In / Cash Out on selected sheet weeks.');
       else {
+        var inoutPlugins = [];
+        if (pendingInOutMask.some(function(p) { return p; })) {
+          inoutPlugins.push(p9PendingBandPlugin('p9PendingBandInout', pendingInOutMask, pendingBandLabel));
+        }
         makeChart('chart-p9-inout', {
           type: 'bar',
           data: {
@@ -13803,7 +13918,8 @@
               x: { stacked: true, ticks: { color: P9c.muted, maxRotation: 45, font: { size: 10 } }, grid: { display: false } },
               y: { stacked: true, ticks: Object.assign({ color: P9c.muted, font: { size: 10 } }, moneyTicks()), grid: { color: 'rgba(226,228,232,0.8)' } }
             }
-          }
+          },
+          plugins: inoutPlugins
         });
       }
 
@@ -13873,7 +13989,7 @@
         var conf = (s.notes && /confirm|bas|payroll|loan/i.test(s.notes)) ? 'Confirmed' : 'Estimated';
         var action = conf === 'Estimated' ? 'Confirm liability' : 'Funded';
         if (s.cashOut > 150000 || (lowest != null && minCashKnown != null && lowest < minCashKnown)) action = 'Review timing';
-        var payName = 'Weekly payment run';
+        var payName = 'Weekly payment run (estimated)';
         if (s.notes) {
           if (/payroll/i.test(s.notes)) payName = 'Payroll';
           else if (/bas|gst/i.test(s.notes)) payName = 'BAS / GST';
