@@ -1222,50 +1222,50 @@
               </div>
             </div>
 
-            <div class="p9-row-two">
-              <div class="section-card p9-panel" id="p9-inout-wrap">
-                <div class="chart-title">Weekly inflows vs outflows</div>
-                <p class="p9-section-hint">Category splits Pending when not on CashFlow_Forecast · totals from weekly receipts/payments</p>
-                <div class="p9-chart-wrap">
-                  <canvas id="chart-p9-inout" aria-label="Weekly cash in vs out"></canvas>
+            <div class="p9-masonry">
+              <div class="p9-masonry-col">
+                <div class="section-card p9-panel p9-m-inout" id="p9-inout-wrap">
+                  <div class="chart-title">Weekly inflows vs outflows</div>
+                  <p class="p9-section-hint">Category splits Pending when not on CashFlow_Forecast · totals from weekly receipts/payments</p>
+                  <div class="p9-chart-wrap">
+                    <canvas id="chart-p9-inout" aria-label="Weekly cash in vs out"></canvas>
+                  </div>
+                  <p class="p9-section-hint p9-inout-summary" id="p9-inout-summary"></p>
                 </div>
-                <p class="p9-section-hint p9-inout-summary" id="p9-inout-summary"></p>
-              </div>
-              <div class="section-card p9-panel" id="p9-ageing-wrap">
-                <div class="chart-title">AR ageing · collection risk</div>
-                <p class="p9-section-hint">Open authorised/sent only · paid excluded · chronological buckets</p>
-                <div class="p9-chart-wrap p9-chart-wrap--ageing">
-                  <canvas id="chart-p9-ageing" aria-label="AR ageing"></canvas>
+                <div class="section-card p9-panel p9-action-panel p9-m-actions">
+                  <div class="section-title">Cash actions <span class="p9-section-hint">Up to 5 real flags only</span></div>
+                  <div id="p9-action-list">Loading...</div>
                 </div>
-                <div id="p9-ageing-summary" class="p9-ageing-summary"></div>
-                <div class="section-title p9-subhead">Collection priority</div>
-                <div id="p9-collection-table" class="p9-table-scroll">Loading...</div>
+                <div class="section-card p9-panel p9-m-commitments">
+                  <div class="section-title">Payment commitments</div>
+                  <p class="p9-section-hint">Funded / review timing / confirm liability · not overhead budget variance (that is P5)</p>
+                  <div id="p9-commitments-table" class="p9-table-scroll">Loading...</div>
+                </div>
+                <div class="section-card p9-panel p9-m-scenario" id="p9-scenario-panel">
+                  <div class="section-title">Scenario controls · assumptions</div>
+                  <div id="p9-scenario-assumptions" class="p9-assumptions"></div>
+                  <div id="p9-scenario-effects" class="p9-scenario-effects"></div>
+                </div>
               </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel">
-                <div class="section-title">Payment commitments</div>
-                <p class="p9-section-hint">Funded / review timing / confirm liability · not overhead budget variance (that is P5)</p>
-                <div id="p9-commitments-table" class="p9-table-scroll">Loading...</div>
-              </div>
-              <div class="section-card p9-panel p9-action-panel">
-                <div class="section-title">Cash actions <span class="p9-section-hint">Up to 5 real flags only</span></div>
-                <div id="p9-action-list">Loading...</div>
-              </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel" id="p9-scenario-panel">
-                <div class="section-title">Scenario controls · assumptions</div>
-                <div id="p9-scenario-assumptions" class="p9-assumptions"></div>
-                <div id="p9-scenario-effects" class="p9-scenario-effects"></div>
-              </div>
-              <div class="section-card p9-panel">
-                <div class="section-title">Forecast accuracy</div>
-                <p class="p9-section-hint">Forecast closing vs actual closing when both exist</p>
-                <div id="p9-accuracy-table" class="p9-table-scroll">Loading...</div>
-                <p class="p9-section-hint" id="p9-accuracy-note"></p>
+              <div class="p9-masonry-col">
+                <div class="section-card p9-panel p9-m-ageing" id="p9-ageing-wrap">
+                  <div class="chart-title">AR ageing · collection risk</div>
+                  <p class="p9-section-hint">Open authorised/sent only · paid excluded · chronological buckets</p>
+                  <div class="p9-chart-wrap p9-chart-wrap--ageing">
+                    <canvas id="chart-p9-ageing" aria-label="AR ageing"></canvas>
+                  </div>
+                  <div id="p9-ageing-summary" class="p9-ageing-summary"></div>
+                </div>
+                <div class="section-card p9-panel p9-m-collection">
+                  <div class="section-title">Collection priority</div>
+                  <div id="p9-collection-table" class="p9-table-scroll">Loading...</div>
+                </div>
+                <div class="section-card p9-panel p9-m-accuracy">
+                  <div class="section-title">Forecast accuracy</div>
+                  <p class="p9-section-hint">Forecast closing vs actual closing when both exist</p>
+                  <div id="p9-accuracy-table" class="p9-table-scroll">Loading...</div>
+                  <p class="p9-section-hint" id="p9-accuracy-note"></p>
+                </div>
               </div>
             </div>
 
