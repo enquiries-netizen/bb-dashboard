@@ -19731,6 +19731,7 @@
     var _p5TrendMetric = 'revenue';
     var _p5WaterfallView = 'consolidated';
     var _p5SelectedProjectKey = null;
+    var _p5ShowAllProjects = false;
     var _p5Bound = false;
     var _p5Cache = null;
 
@@ -20531,7 +20532,8 @@
           statusKey: statusKey,
           riskAmount: riskAmount,
           dataIncomplete: dataIncomplete,
-          knownCost: hasKnownCost ? knownCost : null
+          knownCost: hasKnownCost ? knownCost : null,
+          endMs: endD ? endD.getTime() : null
         });
       });
 
@@ -20540,7 +20542,12 @@
         var ra = rank[a.statusKey] != null ? rank[a.statusKey] : 9;
         var rb = rank[b.statusKey] != null ? rank[b.statusKey] : 9;
         if (ra !== rb) return ra - rb;
-        return (b.budget || 0) - (a.budget || 0);
+        var ba = a.budget || 0;
+        var bb = b.budget || 0;
+        if (ba !== bb) return bb - ba;
+        var ea = a.endMs != null ? a.endMs : Infinity;
+        var eb = b.endMs != null ? b.endMs : Infinity;
+        return ea - eb;
       });
 
       var marginAtRiskAmt = null;
@@ -21330,7 +21337,8 @@
           el.innerHTML = '<p class="no-data-msg">No Xero_Projects for the selected brand.</p>';
           return;
         }
-        var show = projectRows.slice(0, 12);
+        var cap = 8;
+        var show = _p5ShowAllProjects ? projectRows : projectRows.slice(0, cap);
         var html = '<div class="table-wrap"><table class="data-table p5-proj-table"><thead><tr>' +
           '<th>Job</th><th>Client</th><th>Brand</th><th class="text-right">Contract</th>' +
           '<th class="text-right">Completion</th><th>Forecast GM</th><th>Status</th></tr></thead><tbody>';
@@ -21346,9 +21354,15 @@
             '<td>' + statusBadge(p) + '</td></tr>';
         });
         html += '</tbody></table></div>';
-        if (projectRows.length > 12) {
-          html += '<p class="p5-section-hint">' + (projectRows.length - 12) +
-            ' more projects · open Job Performance (P4) for full list</p>';
+        if (projectRows.length > cap) {
+          if (_p5ShowAllProjects) {
+            html += '<p class="p5-section-hint">Showing all ' + projectRows.length + ' projects.</p>';
+          } else {
+            html += '<p class="p5-section-hint">Top ' + cap + ' projects · ' +
+              projectRows.length + ' total projects · use View all projects for full list.</p>';
+          }
+          html += '<button type="button" class="p5-view-all-btn" id="p5-view-all-projects-btn">' +
+            (_p5ShowAllProjects ? 'Show top projects' : 'View all projects') + '</button>';
         }
         el.innerHTML = html;
         el.querySelectorAll('tr[data-p5-project]').forEach(function(tr) {
@@ -21361,6 +21375,14 @@
             highlightProjectTable(key);
           });
         });
+        var viewBtn = document.getElementById('p5-view-all-projects-btn');
+        if (viewBtn) {
+          viewBtn.addEventListener('click', function() {
+            _p5ShowAllProjects = !_p5ShowAllProjects;
+            renderProjectTable();
+            highlightProjectTable(_p5SelectedProjectKey);
+          });
+        }
       }
 
       function highlightProjectTable(key) {
