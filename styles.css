@@ -8708,6 +8708,18 @@ body.p11-lightbox-open {
    Base structure scoped to #page-p9; palette tokens in test block.
 =============================================================== */
 .p9-layout { display: flex; flex-direction: column; gap: 0; }
+#page-p9 .p9-placeholder {
+  max-width: 640px;
+  padding: 8px 4px 32px;
+}
+#page-p9 .p9-placeholder-msg {
+  margin: 18px 0 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--p9-muted, #6B7280);
+  max-width: 36rem;
+}
 .p9-head { margin-bottom: 12px; }
 .p9-page-header { margin-bottom: 6px; }
 .p9-filters { display: flex; flex-wrap: wrap; gap: 12px 18px; margin: 4px 0 8px; align-items: flex-end; }

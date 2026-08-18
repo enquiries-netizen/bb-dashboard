@@ -1140,136 +1140,14 @@
           </div>
         </section>
 
-        <!-- ─── P9: Cash Flow (13-week liquidity control) ─── -->
+        <!-- ─── P9: Cash Flow (placeholder - data being finalised) ─── -->
         <section id="page-p9" class="page">
-          <div class="p9-layout">
-            <div class="p9-head">
-              <div class="page-header p9-page-header">
-                <span class="page-badge">P9</span>
-                <h1 class="page-title">Cash Flow</h1>
-              </div>
-              <div class="p9-filters" id="p9-filters">
-                <label class="p9-filter">
-                  <span class="filter-label">Scenario</span>
-                  <select id="p9-scenario" class="filter-select page-filter-select p9-select" aria-label="Cash scenario">
-                    <option value="base">Base</option>
-                    <option value="downside">Downside</option>
-                    <option value="upside">Upside</option>
-                  </select>
-                </label>
-                <label class="p9-filter">
-                  <span class="filter-label">Week (waterfall)</span>
-                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Selected week"></select>
-                </label>
-              </div>
-              <p class="p9-updated" id="p9-last-updated">Last updated...</p>
-              <p class="p9-data-quality" id="p9-data-quality" aria-live="polite"></p>
-              <p class="p9-gst-note" id="p9-gst-note">GST basis: amounts shown GST-inclusive where source provides Inc GST (prefer inclusive if uncertain).</p>
+          <div class="p9-placeholder">
+            <div class="page-header p9-page-header">
+              <span class="page-badge">P9</span>
+              <h1 class="page-title">Cash Flow</h1>
             </div>
-
-            <div class="p9-kpi-row" aria-label="Cash flow KPIs">
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-avail">
-                <div class="kpi-label">Available Cash</div>
-                <div class="kpi-value" id="kpi-p9-avail">-</div>
-                <div class="kpi-sub" id="kpi-p9-avail-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-in">
-                <div class="kpi-label">13-Week Cash In</div>
-                <div class="kpi-value" id="kpi-p9-cash-in">-</div>
-                <div class="kpi-sub" id="kpi-p9-cash-in-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-out">
-                <div class="kpi-label">13-Week Cash Out</div>
-                <div class="kpi-value" id="kpi-p9-cash-out">-</div>
-                <div class="kpi-sub" id="kpi-p9-cash-out-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-net">
-                <div class="kpi-label">Net Cash Movement</div>
-                <div class="kpi-value" id="kpi-p9-net">-</div>
-                <div class="kpi-sub" id="kpi-p9-net-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-low">
-                <div class="kpi-label">Lowest Forecast Balance</div>
-                <div class="kpi-value" id="kpi-p9-low">-</div>
-                <div class="kpi-sub" id="kpi-p9-low-sub">Loading...</div>
-              </div>
-              <div class="kpi-card card p9-kpi-card" id="p9-kpi-ar">
-                <div class="kpi-label">Overdue Receivables</div>
-                <div class="kpi-value" id="kpi-p9-ar">-</div>
-                <div class="kpi-sub" id="kpi-p9-ar-sub">Loading...</div>
-              </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel p9-panel--wide" id="p9-forecast-wrap">
-                <div class="p9-card-head">
-                  <div class="chart-title">13-week cash position</div>
-                  <span class="p9-section-hint" id="p9-horizon-hint">Rolling from current week</span>
-                </div>
-                <div class="p9-chart-wrap p9-chart-wrap--main">
-                  <canvas id="chart-p9-forecast" aria-label="13-week cash position"></canvas>
-                </div>
-                <p class="p9-section-hint" id="p9-forecast-note"></p>
-              </div>
-              <div class="section-card p9-panel" id="p9-waterfall-wrap">
-                <div class="p9-card-head"><div class="chart-title">Selected-week bridge</div></div>
-                <p class="p9-section-hint" id="p9-waterfall-hint">Opening to closing for selected week</p>
-                <div class="p9-chart-wrap">
-                  <canvas id="chart-p9-waterfall" aria-label="Week cash waterfall"></canvas>
-                </div>
-              </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel" id="p9-inout-wrap">
-                <div class="chart-title">Weekly inflows vs outflows</div>
-                <p class="p9-section-hint">Category splits Pending when not on CashFlow_Forecast · totals from weekly receipts/payments</p>
-                <div class="p9-chart-wrap">
-                  <canvas id="chart-p9-inout" aria-label="Weekly cash in vs out"></canvas>
-                </div>
-              </div>
-              <div class="section-card p9-panel" id="p9-ageing-wrap">
-                <div class="chart-title">AR ageing · collection risk</div>
-                <p class="p9-section-hint">Open authorised/sent only · paid excluded · chronological buckets</p>
-                <div class="p9-chart-wrap p9-chart-wrap--ageing">
-                  <canvas id="chart-p9-ageing" aria-label="AR ageing"></canvas>
-                </div>
-                <div id="p9-ageing-summary" class="p9-ageing-summary"></div>
-                <div class="section-title p9-subhead">Collection priority</div>
-                <div id="p9-collection-table" class="p9-table-scroll">Loading...</div>
-              </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel">
-                <div class="section-title">Payment commitments</div>
-                <p class="p9-section-hint">Funded / review timing / confirm liability · not overhead budget variance (that is P5)</p>
-                <div id="p9-commitments-table" class="p9-table-scroll">Loading...</div>
-              </div>
-              <div class="section-card p9-panel p9-action-panel">
-                <div class="section-title">Cash actions <span class="p9-section-hint">Up to 5 real flags only</span></div>
-                <div id="p9-action-list">Loading...</div>
-              </div>
-            </div>
-
-            <div class="p9-row-two">
-              <div class="section-card p9-panel" id="p9-scenario-panel">
-                <div class="section-title">Scenario controls · assumptions</div>
-                <div id="p9-scenario-assumptions" class="p9-assumptions"></div>
-                <div id="p9-scenario-effects" class="p9-scenario-effects"></div>
-              </div>
-              <div class="section-card p9-panel">
-                <div class="section-title">Forecast accuracy</div>
-                <p class="p9-section-hint">Forecast closing vs actual closing when both exist</p>
-                <div id="p9-accuracy-table" class="p9-table-scroll">Loading...</div>
-                <p class="p9-section-hint" id="p9-accuracy-note"></p>
-              </div>
-            </div>
-
-            <div class="section-card p9-panel p9-sources-panel">
-              <div class="section-title">Data sources</div>
-              <div id="p9-sources-table" class="p9-table-scroll"></div>
-            </div>
+            <p class="p9-placeholder-msg">Cash Flow data is being finalised, this page will be updated soon.</p>
           </div>
         </section>
 
@@ -1795,7 +1673,7 @@
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (payroll week Fri-Thu, ending Thursday), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
-      P9: 'Cash Flow (13-week liquidity control). Answer: when cash pressure happens, why, and what finance should do. Layout: six KPIs, rolling 13w position from current week, week bridge, weekly in/out, AR ageing Current to 90+, collection priority, payment commitments (not overhead vs budget), cash actions max 5, scenarios, forecast accuracy. Live CashFlow_Forecast + Xero_Invoices. Facility/min cash Pending when missing. Never invent zeros. Not weekly hub (P8).',
+      P9: 'Cash Flow (placeholder). Page shows title and notice that data is being finalised. 13-week liquidity dashboard paused until Cash Flow data is finalised. Answer only that the page is parked / pending data finalisation; do not invent cash, waterfall, AR, or forecast metrics.',
       P10: 'Marketing (profitable demand dashboard). Answer: which marketing investment generates qualified, profitable, deliverable work - not raw lead volume or ad-platform ROAS. Layout: (1) Filters Department/Channel/Attribution plus global Brand/Month/Year. (2) Six KPIs: Marketing Spend vs budget, Qualified Leads, Cost per Qualified Lead, Marketing-Sourced Pipeline, CAC (spend/won jobs), Marketing ROI = (Attributed GP - Spend)/Spend when GP live else Pending. Never treat contract value as ROAS success. (3) Secondary: raw leads, quality %, lead-to-quote, quote-to-win, channel concentration. (4) Commercial funnel impressions to GP. (5) Budget pacing + capacity. (6) Campaign bubble matrix CPQL x win rate. (7) Channel/dept mix with concentration warning if ~80%+ one platform. (8) Demand-to-capacity vs P2 pipeline and P6 Capacity. (9) Funnel diagnostics with benchmark/actual/n/confidence. (10) Campaign actions. (11) Attribution strip. Live: Marketing_Paid; soft: Weekly Summary(Marketing), Marketing_Sources, Targets, GHL_Leads, GHL_Pipeline, Capacity. Pending when unconfirmed. Orange only for over-budget / low confidence / genuine risk. Week-over-week Marketing on P8.',
       P11: 'Site Diary Quality and Variations Exceptions (NOT full QA). Data: Buildpass_Site Diaries, Variations_Log, Defects_Rework (soft-load). Six KPIs: Site Diary Entries, Issues/Blockers (same definition as exceptions table), Issue Rate, Photo Evidence, Defects Logged as N recorded never No defects, Variations Raised with $0-unconfirmed caveat. Rework cost: Unavailable source not connected never $0. Variation approval blank = Not recorded never inferred Pending. Work Stopped: No vs Not recorded. Safety: N not confirmed as no issue when ambiguous. Orange only for work stopped / safety / genuine exceptions. Missing defect data is not good quality. Answer only from live page data.',
       P12: 'Site Diaries (crew full-width diary summaries). Google sign-in + Staff_Access role. No Ask BB on this page. Week selector drives list of Job # groups and person-only entries (e.g. Meli\'s Record Keeping, Fabrication and Welding BBYARD). List+detail pattern: left job/person rows with workers and entry count; right pane day-by-day notes. Photos from column P only. Column Q Other Details (any entry, pipe sections line-broken) when non-blank, never URL/PDF. Soft-load Variations_Log description only. Not merged with P11. No Gantt, charts, or financial panels.',
@@ -13008,9 +12886,13 @@
 
 
     // ===============================================================
-    // P9 - CASH FLOW (13-week liquidity control)
-    // Sources: CashFlow_Forecast · Xero_Invoices (+ Xero_Financials status)
+    // P9 - CASH FLOW (placeholder until data is finalised)
+    // UI parked: title + notice only (mirror P2). Soft sheet load and
+    // full renderP9 body retained below so unparking is flip
+    // P9_PLACEHOLDER false plus restoring the live page markup.
+    // Set false to resume sheet load + 13-week liquidity dashboard.
     // ===============================================================
+    var P9_PLACEHOLDER = true;
     var _p9Cache = null;
     var _p9SheetMeta = {};
     if (typeof window._p9Scenario === 'undefined') window._p9Scenario = 'base';
@@ -13020,6 +12902,15 @@
       showLoading(true);
       removeError('p9');
       try {
+        // Parked: no sheet load; soft-load + render still below when unparked.
+        if (P9_PLACEHOLDER) {
+          setBBPageData('P9', 'P9: Cash Flow', {
+            status: 'Placeholder',
+            note: 'Cash Flow data is being finalised, this page will be updated soon. Full rebuild paused until data is finalised.'
+          });
+          return;
+        }
+
         function capture(tabKey) {
           return fetchSheet(CONFIG.TABS[tabKey]).then(function(rows) {
             return { ok: Array.isArray(rows) && rows.length > 0, rows: rows || [], error: null, loadedAt: new Date() };
@@ -13058,6 +12949,8 @@
     }
 
     function renderP9() {
+      // No charts or KPI fill while parked (DOM is placeholder-only).
+      if (P9_PLACEHOLDER) return;
       if (!_p9Cache) return;
       var P9c = { text: '#111827', muted: '#6B7280', accent: '#EA580C', watch: '#F59E0B', healthy: '#4B7A5A', action: '#2563EB', gap: '#9CA3AF' };
       var brand = (typeof activeBrand !== 'undefined' && activeBrand) ? activeBrand : 'ALL';
