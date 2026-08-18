@@ -413,6 +413,7 @@ function libraryMetaPayload(answer, claimedSource, confidenceRaw, guides) {
   return {
     answer: stripEmDashesLib(answer),
     source: matched,
+    answerKind: matched ? 'guide' : 'none',
     citationLabel: citationLabelFor(matched),
     confidence: {
       label: confLabel,
@@ -424,6 +425,98 @@ function libraryMetaPayload(answer, claimedSource, confidenceRaw, guides) {
 
 function stripEmDashesLib(text) {
   return String(text || '').replace(/\u2014/g, ',').replace(/\u2013/g, '-');
+}
+
+const LIBRARY_NO_GUIDE_MSG = 'No guide was found for that topic.';
+const LIBRARY_GENERAL_DISCLAIMER =
+  'General construction guidance, not a confirmed BB process. Confirm specifics like fixings, product, and spacing with your supervisor before relying on this on site.';
+
+function libraryNoGuidePayload(answer) {
+  return {
+    answer: stripEmDashesLib(answer || LIBRARY_NO_GUIDE_MSG),
+    source: null,
+    answerKind: 'none',
+    citationLabel: 'No guide found',
+    confidence: {
+      label: 'Low',
+      estimated: true,
+      note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
+    }
+  };
+}
+
+function libraryGeneralPayload(answer) {
+  return {
+    answer: stripEmDashesLib(answer),
+    source: 'general',
+    answerKind: 'general',
+    citationLabel: 'General construction guidance',
+    disclaimer: LIBRARY_GENERAL_DISCLAIMER,
+    confidence: {
+      label: 'Low',
+      estimated: true,
+      note: 'General industry guidance, not a matched Internal Hub guide'
+    }
+  };
+}
+
+function libraryGeneralJsonFormatRules() {
+  return (
+    ' RESPONSE FORMAT (mandatory): Reply with a single JSON object only. No markdown fences. No extra text. Shape: ' +
+    '{"answer":"plain text for the user","source":"general","confidence":{"label":"Low"}} ' +
+    'source must be the string general. Never invent a Guide ID or Title. ' +
+    'Never use em dashes in answer text, use commas or colons instead.'
+  );
+}
+
+function classifyLibraryText(raw) {
+  var s = String(raw || '')
+    .toLowerCase()
+    .replace(/['’]/g, '');
+  if (!s.trim()) return '';
+
+  // Operational / compliance / IT: stay guide-only even if wording sounds like a how-to.
+  if (
+    /\b(site\s*diar|daily\s*diar|submit\s+(a\s+)?(site\s+)?diar|ppe\b|personal protective|hard hat|hi-?vis|high vis|safety (boot|glass|helmet|gear)|steel (cap|toe)|incident\b|near miss|accident report|injur(y|ies)|it support|it help|help ?desk|password|wifi|wi-fi|laptop|computer|printer|email (account|access|login)|timesheet|leave request|payroll|roster\b|onboarding|hr\b|human resources|company policy|bb (process|procedure|policy)|whs (policy|procedure)|swms\b|induction\b|toolbox talk|first aid|report an incident|get it support|clock[- ]?(in|off)|sign[- ]off|staff access|log ?in|dashboard access)\b/i.test(
+      s
+    )
+  ) {
+    return 'operational';
+  }
+
+  if (
+    /\b(roof(ing|s)?|sheds?\b|modulars?\b|transportable|granny flat|flashing|cladding|fascia|gutters?|barge|ridge(\s*cap)?|battens?|truss(es)?|rafters?|purlins?|colourbond|colorbond|corrugated|trimdek|kliplok|custom\s*orb|sarking|sisalation|insulation|gyprock|plasterboard|linings?|eaves?|soffit|downpipes?|box\s*gutter|skillion|gables?|hips?\s*roof|verandahs?|patios?|carports?|awnings?|footings?|slabs?\b|stumps?\b|bearers?|joists?|piers?\b|fixings?|tek screws?|roofing screws?|screw spacing|batten spacing|waterproof(ing)?|membranes?|sealants?|silicone|how to install|how do i install|installation|install (a |the )?(roof|shed|flash|clad|gutter|window|door|panel|truss|batten)|wall panels?|steel frame|kit (home|shed)|ncc\b|bushfire|bal[- ]?\d+)\b/i.test(
+      s
+    )
+  ) {
+    return 'construction';
+  }
+
+  if (
+    /\b(how (do i|to|can i)|whats the (best |correct )?(way|method|spacing|fixing)|what is the (best |correct )?(way|method|spacing|fixing))\b/.test(s) &&
+    /\b(install|fit|fix|build|screw|nail|seal|flash|clad|frame|concrete|timber|steel|panel|sheet|spacing)\b/.test(s)
+  ) {
+    return 'construction';
+  }
+
+  return '';
+}
+
+function libraryQuestionKind(question, history) {
+  var q = String(question || '').trim();
+  if (/^(thanks|thank you|ok|okay|cheers|got it)\b/i.test(q)) return 'operational';
+  var direct = classifyLibraryText(q);
+  if (direct) return direct;
+  if (!Array.isArray(history)) return 'operational';
+  var i;
+  var t;
+  for (i = history.length - 1; i >= 0; i--) {
+    t = history[i];
+    if (!t || (t.role !== 'user' && t.role !== 'User')) continue;
+    var prev = classifyLibraryText(String(t.text || ''));
+    if (prev) return prev;
+  }
+  return 'operational';
 }
 
 export default async function handler(req, res) {
@@ -641,48 +734,55 @@ export default async function handler(req, res) {
       });
     }
 
-    let prompt;
-    if (sheetEmpty) {
-      prompt =
+    async function answerConstructionGeneral() {
+      const generalPrompt =
         'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
         'You are speaking with ' +
         who +
-        '. ' +
-        'The Library_Guides sheet is empty or not available yet. ' +
-        'Reply with exactly this message (you may greet them by name first): ' +
-        '"Internal Hub content is still being added, check back soon." ' +
-        'Do not answer from general knowledge. Do not invent guides. ' +
-        'Never use em dashes in your answers, use commas or colons instead.' +
-        libraryJsonFormatRules() +
+        '. Address them by name naturally where appropriate. ' +
+        'No Internal Hub guide matches this construction how-to question. ' +
+        'Answer using general Australian construction industry knowledge for roofing, sheds, modulars, and related site work. ' +
+        'This is general industry guidance, NOT a verified BB Building Services process, method, specification, or approved product list. ' +
+        'Do not claim this is BB procedure. Do not invent a Guide ID, Title, or company policy. ' +
+        'Keep steps practical. Call out that fixings, product, and spacing must be confirmed with a supervisor before use on site. ' +
+        'Do not put a long disclaimer in the answer body; the app shows a warning banner. ' +
+        'Prefer clear language. Never use em dashes; use commas or colons instead. ' +
+        'If asked who you are, say you are BB, the BBBS Internal Hub assistant. ' +
+        'Use CONVERSATION SO FAR only to interpret follow-up questions.' +
+        libraryGeneralJsonFormatRules() +
         historyBlock +
         '\n\nCurrent question: ' +
         question;
-    } else if (!guides.length) {
-      prompt =
-        'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
-        'You are speaking with ' +
-        who +
-        '. ' +
-        'No Internal Hub guides are available for this person\'s division. ' +
-        'Say plainly that no guide was found for that topic. ' +
-        'Do not answer from general knowledge. Do not invent guides. ' +
-        'Never use em dashes in your answers, use commas or colons instead.' +
-        libraryJsonFormatRules() +
-        historyBlock +
-        '\n\nCurrent question: ' +
-        question;
-    } else {
+      const generalResult = await callGemini({
+        contents: [{ role: 'user', parts: [{ text: generalPrompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      });
+      const dataGen = generalResult.data;
+      const extractedGen = extractAnswer(dataGen);
+      let answerGen = extractedGen.answer;
+      if (!answerGen) {
+        return libraryNoGuidePayload(LIBRARY_NO_GUIDE_MSG);
+      }
+      const parsedGen = parseLibraryStructuredAnswer(answerGen);
+      const text = parsedGen.answer || answerGen;
+      if (!text || /^BB error:/i.test(text)) {
+        return libraryNoGuidePayload(LIBRARY_NO_GUIDE_MSG);
+      }
+      return libraryGeneralPayload(text);
+    }
+
+    if (guides.length) {
       const guidesPayload = JSON.stringify(guides).slice(0, 80000);
-      prompt =
+      const prompt =
         'You are BB, the BBBS Internal Hub assistant for BB Building Services. ' +
-        'You help team members find how-to guides and internal info from the company Internal Hub only. ' +
+        'You help team members find how-to guides and internal info from the company Internal Hub. ' +
         'You are speaking with ' +
         who +
         '. Address them by name naturally where appropriate. ' +
         'GROUNDING RULES (mandatory): ' +
-        '1) Answer ONLY from the INTERNAL HUB GUIDES data provided below. Do not use general knowledge. ' +
+        '1) Answer ONLY from the INTERNAL HUB GUIDES data provided below. Do not use general knowledge in this step. ' +
         '2) Do not invent steps, policies, tools, or guides that are not in the data. ' +
-        '3) If no guide matches the question, say plainly that no guide was found for that topic. ' +
+        '3) If no guide matches the question, set source to null and say plainly that no guide was found for that topic. ' +
         'Do not guess or fill gaps. Suggest they try different wording only if helpful. ' +
         '4) When a guide matches, use its Title, Category, Content/Steps, and Media Link as relevant. ' +
         '5) Prefer clear, practical language. Never use em dashes; use commas or colons instead. ' +
@@ -696,25 +796,44 @@ export default async function handler(req, res) {
         guidesPayload +
         '\n\nCurrent question: ' +
         question;
+
+      const libResult = await callGemini({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      });
+      const dataLib = libResult.data;
+      const extractedLib = extractAnswer(dataLib);
+      let answerLib = extractedLib.answer;
+      if (!answerLib) {
+        answerLib =
+          'BB error: ' +
+          (dataLib.error ? dataLib.error.message : JSON.stringify(dataLib).slice(0, 300));
+        return res.status(200).json(libraryMetaPayload(answerLib, null, 'Low', guides));
+      }
+      const parsedLib = parseLibraryStructuredAnswer(answerLib);
+      const guidePayload = libraryMetaPayload(
+        parsedLib.answer,
+        parsedLib.source,
+        parsedLib.confidenceLabel,
+        guides
+      );
+      if (guidePayload.source && typeof guidePayload.source === 'object') {
+        return res.status(200).json(guidePayload);
+      }
     }
 
-    const libResult = await callGemini({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' }
-    });
-    const dataLib = libResult.data;
-    const extractedLib = extractAnswer(dataLib);
-    let answerLib = extractedLib.answer;
-    if (!answerLib) {
-      answerLib =
-        'BB error: ' +
-        (dataLib.error ? dataLib.error.message : JSON.stringify(dataLib).slice(0, 300));
-      return res.status(200).json(libraryMetaPayload(answerLib, null, 'Low', guides));
+    const kind = libraryQuestionKind(question, history);
+    console.log('[ask] library unmatched kind=', kind, 'q=', String(question || '').slice(0, 80));
+    if (kind === 'construction') {
+      return res.status(200).json(await answerConstructionGeneral());
     }
-    const parsedLib = parseLibraryStructuredAnswer(answerLib);
-    return res.status(200).json(
-      libraryMetaPayload(parsedLib.answer, parsedLib.source, parsedLib.confidenceLabel, guides)
-    );
+
+    if (sheetEmpty) {
+      return res.status(200).json(
+        libraryNoGuidePayload('Internal Hub content is still being added, check back soon.')
+      );
+    }
+    return res.status(200).json(libraryNoGuidePayload(LIBRARY_NO_GUIDE_MSG));
   }
 
   // ─── Cross-page tools. Client executes (sheets in browser); server only orchestrates. ───

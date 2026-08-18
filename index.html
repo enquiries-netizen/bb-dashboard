@@ -1706,7 +1706,7 @@
               <div class="page-header lib-page-header">
                 <h1 class="page-title lib-page-title">BBBS Internal Hub</h1>
               </div>
-              <p class="lib-scope-note">Ask BB about company how-to guides and internal info. Answers come from Internal Hub guides only.</p>
+              <p class="lib-scope-note">Ask BB about company how-to guides and internal info. I'll use a BB guide when one exists. For construction how-to questions without a guide yet, I'll give general industry guidance, clearly marked as not BB-verified.</p>
             </div>
 
             <div class="lib-chat-shell" id="lib-chat-shell">
@@ -24720,9 +24720,12 @@
     // BBBS INTERNAL HUB (chat + Lori gating; guide filter is server-side)
     // Does not load Library_Guides in the browser. /api/ask fetches and
     // filters by Division/Role Tag before Gemini or the client see content.
+    // Construction how-to with no matching guide may return source: 'general'.
     // ═══════════════════════════════════════════════════════════
     var _libraryBound = false;
     var LIBRARY_EMPTY_MSG = 'Internal Hub content is still being added, check back soon.';
+    var LIBRARY_INTRO_MSG = 'I\'ll use a BB guide when one exists. For construction how-to questions without a guide yet, I\'ll give general industry guidance, clearly marked as not BB-verified.';
+    var LIBRARY_GENERAL_DISCLAIMER = 'General construction guidance, not a confirmed BB process. Confirm specifics like fixings, product, and spacing with your supervisor before relying on this on site.';
 
     function refreshLibraryAccess() {
       if (typeof applyAccessChrome === 'function') applyAccessChrome();
@@ -24813,26 +24816,52 @@
       });
     }
 
+    function libIsGeneralFallback(meta) {
+      if (!meta) return false;
+      if (meta.answerKind === 'general') return true;
+      return meta.source === 'general';
+    }
+
     function libAppendAssistant(text, meta) {
       var box = document.getElementById('lib-messages');
       if (!box || !text) return;
       var turn = document.createElement('div');
       turn.className = 'lib-turn lib-turn--assistant';
       if (meta && meta.pending) turn.setAttribute('data-lib-pending', '1');
+      var general = !!(meta && !meta.pending && !meta.intro && libIsGeneralFallback(meta));
+      if (general) turn.classList.add('lib-turn--general');
       var bubble = document.createElement('div');
-      bubble.className = 'lib-msg lib-msg--assistant';
-      bubble.textContent = text;
+      bubble.className = 'lib-msg lib-msg--assistant' + (general ? ' lib-msg--general' : '');
+      if (general) {
+        var banner = document.createElement('div');
+        banner.className = 'lib-general-banner';
+        var badge = document.createElement('span');
+        badge.className = 'lib-general-badge';
+        badge.textContent = 'General industry guidance';
+        var disc = document.createElement('p');
+        disc.className = 'lib-general-disclaimer';
+        disc.textContent = (meta && meta.disclaimer) ? meta.disclaimer : LIBRARY_GENERAL_DISCLAIMER;
+        banner.appendChild(badge);
+        banner.appendChild(disc);
+        var body = document.createElement('div');
+        body.className = 'lib-msg-body';
+        body.textContent = text;
+        bubble.appendChild(banner);
+        bubble.appendChild(body);
+      } else {
+        bubble.textContent = text;
+      }
       turn.appendChild(bubble);
 
       if (meta && !meta.pending && !meta.intro) {
-        var citation = meta.citationLabel || 'No guide found';
+        var citation = meta.citationLabel || (general ? 'General construction guidance' : 'No guide found');
         var confLabel = (meta.confidence && meta.confidence.label) ? meta.confidence.label : 'Low';
         var confClass = 'lib-conf lib-conf--' + String(confLabel).toLowerCase();
         var metaRow = document.createElement('div');
         metaRow.className = 'lib-msg-meta';
 
         var cite = document.createElement('span');
-        cite.className = 'lib-cite';
+        cite.className = 'lib-cite' + (general ? ' lib-cite--general' : '');
         cite.textContent = citation;
         metaRow.appendChild(cite);
 
@@ -24874,8 +24903,10 @@
         pre.className = 'lib-json';
         pre.hidden = true;
         pre.textContent = JSON.stringify({
-          source: meta.source || null,
+          source: general ? 'general' : (meta.source || null),
+          answerKind: general ? 'general' : (meta.answerKind || (meta.source ? 'guide' : 'none')),
           citationLabel: citation,
+          disclaimer: general ? (meta.disclaimer || LIBRARY_GENERAL_DISCLAIMER) : undefined,
           confidence: meta.confidence || {
             label: confLabel,
             estimated: true,
@@ -24956,12 +24987,9 @@
       if (sw) sw.textContent = 'Not ' + name + '? Switch user';
       if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
         if (window._libraryHubEmpty) {
-          libAppendAssistant(LIBRARY_EMPTY_MSG, { intro: true });
+          libAppendAssistant(LIBRARY_EMPTY_MSG + ' ' + LIBRARY_INTRO_MSG, { intro: true });
         } else {
-          libAppendAssistant(
-            'I answer from Internal Hub guides only. If nothing matches, I will say no guide was found.',
-            { intro: true }
-          );
+          libAppendAssistant(LIBRARY_INTRO_MSG, { intro: true });
         }
       }
     }
@@ -25092,25 +25120,6 @@
       var name = '';
       try { name = localStorage.getItem('bb_name') || ''; } catch (e) { name = ''; }
 
-      // Client-side empty-state: no API call needed when the sheet has no guides.
-      if (window._libraryHubEmpty) {
-        libAppendMessage('user', q);
-        libAppendAssistant(LIBRARY_EMPTY_MSG, {
-          intro: false,
-          source: null,
-          citationLabel: 'No guide found',
-          confidence: {
-            label: 'Low',
-            estimated: true,
-            note: 'Gemini self-estimate of how directly the guide answers, not a retrieval score'
-          }
-        });
-        if (qEl) qEl.value = '';
-        window._libraryChatHistory.push({ role: 'user', text: q });
-        window._libraryChatHistory.push({ role: 'assistant', text: LIBRARY_EMPTY_MSG });
-        return;
-      }
-
       libAppendMessage('user', q);
       libAppendAssistant('BB is thinking...', { pending: true });
       if (qEl) qEl.value = '';
@@ -25133,9 +25142,12 @@
       .then(function(r) { return r.json(); })
       .then(function(d) {
         var answer = d.answer || d.error || 'No answer.';
+        var isGeneral = d.source === 'general' || d.answerKind === 'general';
         var meta = {
-          source: d.source || null,
-          citationLabel: d.citationLabel || 'No guide found',
+          source: isGeneral ? 'general' : (d.source || null),
+          answerKind: isGeneral ? 'general' : (d.answerKind || (d.source ? 'guide' : 'none')),
+          disclaimer: d.disclaimer || '',
+          citationLabel: d.citationLabel || (isGeneral ? 'General construction guidance' : 'No guide found'),
           confidence: d.confidence || {
             label: 'Low',
             estimated: true,

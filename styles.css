@@ -9860,6 +9860,53 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   background: #302e2f;
   color: #F8FAFC;
 }
+#page-internal-hub .lib-msg--general {
+  background: #3a2e1f;
+  border: 1px solid #F59E0B;
+  padding: 0;
+  overflow: hidden;
+  white-space: normal;
+}
+#page-internal-hub .lib-general-banner {
+  background: #B45309;
+  color: #FFF7ED;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+#page-internal-hub .lib-general-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #F59E0B;
+  color: #1a1919;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+#page-internal-hub .lib-general-disclaimer {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #FFF7ED;
+  font-weight: 500;
+  white-space: normal;
+}
+#page-internal-hub .lib-msg--general .lib-msg-body {
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#page-internal-hub .lib-cite--general {
+  border-color: #F59E0B;
+  background: #3a2e1f;
+  color: #F59E0B;
+}
 #page-internal-hub .lib-msg--user {
   background: #F8FAFC;
   color: #262425;
