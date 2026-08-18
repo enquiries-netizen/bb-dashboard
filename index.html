@@ -1158,8 +1158,8 @@
                   </select>
                 </label>
                 <label class="p9-filter">
-                  <span class="filter-label">Week (waterfall)</span>
-                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Selected week"></select>
+                  <span class="filter-label">Week Ending</span>
+                  <select id="p9-week-select" class="filter-select page-filter-select p9-select" aria-label="Week ending"></select>
                 </label>
               </div>
               <p class="p9-updated" id="p9-last-updated">Last updated...</p>
@@ -13094,23 +13094,59 @@
         var d2 = new Date(s);
         return isNaN(d2.getTime()) ? null : d2;
       }
-      function p9MondayOf(d) {
-        var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        var day = x.getDay();
-        x.setDate(x.getDate() + (day === 0 ? -6 : 1 - day));
-        x.setHours(0, 0, 0, 0);
-        return x;
-      }
       function p9AddDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
       function p9DateKey(d) {
         if (!d) return '';
         var dd = d.getDate(), mm = d.getMonth() + 1;
         return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm + '/' + d.getFullYear();
       }
+      /** Payroll week Friday start (Fri-Thu), same as P6/P8/P12. */
+      function p9PayrollFridayStart(d) {
+        if (typeof p8PayrollParts === 'function' && typeof p8PayrollFridayStart === 'function') {
+          var parts = p8PayrollParts(d);
+          return parts ? p8PayrollFridayStart(parts.year, parts.week) : null;
+        }
+        var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        x.setHours(0, 0, 0, 0);
+        var day = x.getDay();
+        x.setDate(x.getDate() + (day >= 5 ? 5 - day : -(day + 2)));
+        return x;
+      }
+      function p9PayrollThursday(fridayStart) {
+        if (typeof p8PayrollParts === 'function' && typeof p8PayrollThursday === 'function') {
+          var parts = p8PayrollParts(fridayStart);
+          return parts ? p8PayrollThursday(parts.year, parts.week) : p9AddDays(fridayStart, 6);
+        }
+        return p9AddDays(fridayStart, 6);
+      }
+      function p9WeekEndingLabel(fridayStart) {
+        if (!fridayStart) return '-';
+        var thu = p9PayrollThursday(fridayStart);
+        if (typeof p8FmtDayMonthYear === 'function') return p8FmtDayMonthYear(thu);
+        var dd = thu.getDate();
+        return (dd < 10 ? '0' : '') + dd + ' ' + _MONTH_ABBR[thu.getMonth()] + ' ' + thu.getFullYear();
+      }
       function p9WeekLabel(d) {
         if (!d) return '-';
-        var dd = d.getDate();
-        return (dd < 10 ? '0' : '') + dd + ' ' + _MONTH_ABBR[d.getMonth()];
+        var thu = p9PayrollThursday(d);
+        var dd = thu.getDate();
+        return (dd < 10 ? '0' : '') + dd + ' ' + _MONTH_ABBR[thu.getMonth()];
+      }
+      function p9WeekSelectLabel(fridayStart) {
+        if (!fridayStart) return '-';
+        var parts = (typeof p8PayrollParts === 'function') ? p8PayrollParts(fridayStart) : null;
+        var endLabel = p9WeekEndingLabel(fridayStart);
+        return parts ? (endLabel + ' (W' + parts.week + ')') : endLabel;
+      }
+      function p9WeekRangeLabel(fridayStart) {
+        if (!fridayStart) return '-';
+        var parts = (typeof p8PayrollParts === 'function') ? p8PayrollParts(fridayStart) : null;
+        if (parts && typeof p12WeekLabelFromKey === 'function') return p12WeekLabelFromKey(parts.key);
+        var thu = p9PayrollThursday(fridayStart);
+        var fri = fridayStart;
+        var left = fri.getDate() + ' ' + _MONTH_ABBR[fri.getMonth()];
+        var right = thu.getDate() + ' ' + _MONTH_ABBR[thu.getMonth()] + ' ' + thu.getFullYear();
+        return left + ' - ' + right + (parts ? (' · ' + parts.key) : '');
       }
       function p9MoneyCompact(v) {
         if (v == null || isNaN(v)) return 'Pending';
@@ -13173,16 +13209,32 @@
       var cfBrand = filterByBrand(cfAll, brand);
       var sheetWeeks = cfBrand.map(function(r) {
         var d = p9ParseDate(col(r, 'Week Start', 'week_start', 'Week', 'week'));
-        var cashIn = parseNum(col(r, 'Cash In (Expected)', 'Cash In', 'Money In', 'cash_in'));
-        var cashOut = parseNum(col(r, 'Cash Out (Committed)', 'Cash Out', 'Money Out', 'cash_out'));
+        var cashInRaw = col(r, 'Cash In (Expected)', 'Cash In', 'Money In', 'cash_in');
+        var cashOutRaw = col(r, 'Cash Out (Committed)', 'Cash Out', 'Money Out', 'cash_out');
         var netRaw = col(r, 'Net Movement', 'Net Cash Flow', 'Cash Flow', 'net_movement');
+        var notes = String(col(r, 'Notes', 'notes') || '').trim();
+        var pending = /pending/i.test(notes);
+        var cashIn = presentNum(cashInRaw);
+        var cashOut = presentNum(cashOutRaw);
+        var net = presentNum(netRaw);
+        if (net == null && cashIn != null && cashOut != null) net = cashIn - cashOut;
+        if (pending) { cashIn = null; cashOut = null; net = null; }
+        var closeRaw = col(r, 'Closing Balance', 'closing_balance', 'Close Balance');
+        var close = pending ? null : presentNum(closeRaw);
         return {
           row: r, date: d, key: p9DateKey(d), cashIn: cashIn, cashOut: cashOut,
-          net: (netRaw !== '' && netRaw != null) ? parseNum(netRaw) : cashIn - cashOut,
+          net: net,
           open: presentNum(col(r, 'Opening Balance', 'opening_balance', 'Open Balance')),
-          close: presentNum(col(r, 'Closing Balance', 'closing_balance', 'Close Balance')),
-          notes: String(col(r, 'Notes', 'notes') || '').trim(),
-          confidence: String(col(r, 'Confidence', 'confidence') || '').trim() || ((cashIn === 0 && cashOut === 0) ? 'Placeholder' : 'Estimated'),
+          close: close,
+          notes: notes,
+          pending: pending,
+          confidence: pending ? 'Pending' : 'Estimated',
+          arBuckets: {
+            '0-30': presentNum(col(r, 'AR 0-30', 'AR 0-30 days', '0-30')),
+            '31-60': presentNum(col(r, 'AR 31-60', 'AR 31-60 days', '31-60')),
+            '61-90': presentNum(col(r, 'AR 61-90', 'AR 61-90 days', '61-90')),
+            '90+': presentNum(col(r, 'AR 90+', 'AR 90+ days', '90+'))
+          },
           facility: presentNum(col(r, 'Available Facility', 'Facility Headroom', 'Credit Facility', 'Facility Available')),
           minCash: presentNum(col(r, 'Min Cash', 'Minimum Cash', 'Cash Reserve', 'Min Balance', 'Reserve Threshold')),
           bank: presentNum(col(r, 'Bank Balance', 'Reconciled Bank', 'Reconciled Balance', 'Banked Balance'))
@@ -13205,7 +13257,8 @@
       });
 
       var today = new Date(); today.setHours(0, 0, 0, 0);
-      var horizonStart = p9MondayOf(today);
+      var horizonStart = p9PayrollFridayStart(today);
+      if (!horizonStart) horizonStart = today;
       var horizon = [];
       for (var hi = 0; hi < 13; hi++) horizon.push(p9AddDays(horizonStart, hi * 7));
       var byKey = {};
@@ -13232,9 +13285,10 @@
           date: d, key: key, label: p9WeekLabel(d), match: match, idx: idx,
           cashIn: match ? match.cashIn : null, cashOut: match ? match.cashOut : null,
           net: match ? match.net : null, open: match ? match.open : null, close: match ? match.close : null,
-          notes: match ? match.notes : '', confidence: match ? match.confidence : 'Awaiting',
-          isActual: d.getTime() + 6 * 86400000 < today.getTime(),
-          isCurrentWeek: d.getTime() <= today.getTime() && p9AddDays(d, 6).getTime() >= today.getTime()
+          notes: match ? match.notes : '', pending: match ? match.pending : false,
+          confidence: match ? match.confidence : 'Awaiting',
+          isActual: p9PayrollThursday(d).getTime() < today.getTime(),
+          isCurrentWeek: d.getTime() <= today.getTime() && p9PayrollThursday(d).getTime() >= today.getTime()
         };
       });
 
@@ -13255,7 +13309,7 @@
         var series = weeks.map(function(w) {
           return { label: w.label, key: w.key, date: w.date, isActual: w.isActual, isCurrentWeek: w.isCurrentWeek,
             match: w.match, cashIn: null, cashOut: null, close: null, open: null, net: null,
-            confidence: w.confidence, notes: w.notes };
+            confidence: w.confidence, notes: w.notes, pending: w.pending };
         });
         var rawIn = weeks.map(function(w) { return w.cashIn; });
         var rawOut = weeks.map(function(w) { return w.cashOut; });
@@ -13383,6 +13437,24 @@
       var totalAR = bucketOrder.reduce(function(s, b) { return s + bucketMap[b].amount; }, 0);
       var overdueAR = bucketMap['1-30'].amount + bucketMap['31-60'].amount + bucketMap['61-90'].amount + bucketMap['90+'].amount;
       var hasAR = invLive && invOpen.length > 0 && totalAR > 0;
+      var arFromSheet = false;
+      var curHorizonWeek = weeks.find(function(w) { return w.isCurrentWeek; }) || weeks[0];
+      if (curHorizonWeek && curHorizonWeek.match && curHorizonWeek.match.arBuckets) {
+        var sb = curHorizonWeek.match.arBuckets;
+        var sheetArTotal = (sb['0-30'] || 0) + (sb['31-60'] || 0) + (sb['61-90'] || 0) + (sb['90+'] || 0);
+        var sheetArKnown = sb['0-30'] != null || sb['31-60'] != null || sb['61-90'] != null || sb['90+'] != null;
+        if (sheetArKnown && sheetArTotal > 0) {
+          arFromSheet = true;
+          hasAR = true;
+          bucketOrder.forEach(function(b) { bucketMap[b] = { amount: 0, count: 0, clients: {}, disputed: 0, promised: 0 }; });
+          if (sb['0-30'] != null) bucketMap['1-30'].amount = sb['0-30'];
+          if (sb['31-60'] != null) bucketMap['31-60'].amount = sb['31-60'];
+          if (sb['61-90'] != null) bucketMap['61-90'].amount = sb['61-90'];
+          if (sb['90+'] != null) bucketMap['90+'].amount = sb['90+'];
+          totalAR = bucketOrder.reduce(function(s, b) { return s + bucketMap[b].amount; }, 0);
+          overdueAR = bucketMap['1-30'].amount + bucketMap['31-60'].amount + bucketMap['61-90'].amount + bucketMap['90+'].amount;
+        }
+      }
       var expectedThisMonth = null;
       if (hasAR) {
         expectedThisMonth = 0;
@@ -13406,7 +13478,7 @@
       if (weekSel) {
         var prev = window._p9SelectedWeek;
         weekSel.innerHTML = weeks.map(function(w) {
-          return '<option value="' + w.key + '">' + w.label + (w.isCurrentWeek ? ' · this week' : '') + '</option>';
+          return '<option value="' + w.key + '">' + p9WeekSelectLabel(w.date) + (w.isCurrentWeek ? ' · this week' : '') + '</option>';
         }).join('');
         var keys = weeks.map(function(w) { return w.key; });
         if (!prev || keys.indexOf(prev) < 0) {
@@ -13422,10 +13494,10 @@
       var selectedWeek = primary[selectedIdx] || primary[0];
 
       var brandLabel = brand || 'ALL';
-      var horizonLabel = weeks.length ? (p9WeekLabel(weeks[0].date) + ' to ' + p9WeekLabel(weeks[12].date)) : 'Pending';
+      var horizonLabel = weeks.length ? (p9WeekRangeLabel(weeks[0].date) + ' to ' + p9WeekRangeLabel(weeks[12].date)) : 'Pending';
       setT('p9-last-updated',
         'Forecast start ' + (weeks[0] ? p9DateKey(weeks[0].date) : 'Pending') +
-        ' · Brand ' + brandLabel + ' · Scenario ' + sc.label + ' · Horizon ' + horizonLabel +
+        ' (payroll Fri) · Brand ' + brandLabel + ' · Scenario ' + sc.label + ' · Horizon ' + horizonLabel +
         (cfLastUpdated ? (' · CashFlow_Forecast last updated ' + cfLastUpdated) : '') +
         (_p9Cache.loadedAt ? (' · Page loaded ' + _p9Cache.loadedAt.toLocaleString('en-AU')) : ''));
       var q = [];
@@ -13467,10 +13539,11 @@
         else lowTone = 'healthy';
       }
       setTone('p9-kpi-low', lowTone);
-      setKPI('kpi-p9-ar', 'kpi-p9-ar-sub', hasAR ? formatCurrency(overdueAR) : (invLive ? formatCurrency(0) : 'Pending'),
+      setKPI('kpi-p9-ar', 'kpi-p9-ar-sub', hasAR ? formatCurrency(overdueAR) : (invLive || arFromSheet ? formatCurrency(0) : 'Pending'),
         hasAR
-          ? ('Past due 1d+ · expected this month ' + (expectedThisMonth != null ? formatCurrency(expectedThisMonth) : 'Pending') + ' · open AR ' + formatCurrency(totalAR))
-          : (invLive ? 'No past-due open invoices' : 'Awaiting Xero_Invoices'));
+          ? ((arFromSheet ? 'From CashFlow_Forecast current week · ' : '') +
+            'Past due 1d+ · expected this month ' + (expectedThisMonth != null ? formatCurrency(expectedThisMonth) : 'Pending') + ' · open AR ' + formatCurrency(totalAR))
+          : (invLive || arFromSheet ? 'No past-due open invoices' : 'Awaiting Xero_Invoices or CashFlow_Forecast AR buckets'));
       setTone('p9-kpi-ar', !hasAR && !invLive ? 'gap' : (overdueAR > 100000 ? 'watch' : null));
       setT('p9-horizon-hint', 'Rolling ' + horizonLabel + ' · ' + horizonMapped + ' weeks linked to sheet · scenario ' + sc.label);
 
@@ -13598,9 +13671,13 @@
       // Waterfall
       clearPh('p9-waterfall-wrap', 'chart-p9-waterfall'); destroyIf('chart-p9-waterfall');
       var sw = selectedWeek;
-      setT('p9-waterfall-hint', (sw ? sw.label : '-') + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
-      if (!sw || (sw.open == null && sw.close == null && sw.cashIn == null && sw.cashOut == null)) {
-        emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall', 'Not available for selected week - awaiting forecast row.');
+      setT('p9-waterfall-hint', (sw ? p9WeekSelectLabel(weeks[selectedIdx] ? weeks[selectedIdx].date : sw.date) : '-') + ' · confidence ' + (sw && sw.confidence ? sw.confidence : 'Pending') + (sw && sw.notes ? (' · ' + sw.notes) : ''));
+      var swPending = sw && (sw.pending || (weeks[selectedIdx] && weeks[selectedIdx].pending));
+      if (!sw || swPending || (sw.open == null && sw.close == null && sw.cashIn == null && sw.cashOut == null)) {
+        emptyChart('p9-waterfall-wrap', 'chart-p9-waterfall',
+          swPending && sw && sw.notes
+            ? ('Pending for selected week - ' + sw.notes)
+            : 'Not available for selected week - awaiting forecast row.');
       } else {
         var openW = sw.open != null ? sw.open : (openingBank != null && selectedIdx === 0 ? openingBank : null);
         var receipts = sw.cashIn, totalOut = sw.cashOut;
@@ -13702,7 +13779,7 @@
           '<div class="p9-age-chip-meta">Disputed ' + (bm.disputed ? formatCurrency(bm.disputed) : 'Pending') +
           ' · Promised ' + (bm.promised ? formatCurrency(bm.promised) : 'Pending') + '</div></div>';
       }).join(''));
-      if (!invLive) emptyChart('p9-ageing-wrap', 'chart-p9-ageing', 'Xero_Invoices not available');
+      if (!invLive && !arFromSheet) emptyChart('p9-ageing-wrap', 'chart-p9-ageing', 'Xero_Invoices not available · AR buckets on CashFlow_Forecast current week only');
       else {
         var ageColors = bucketOrder.map(function(b) {
           if (b === '90+' || b === '61-90') return P9c.accent;
@@ -13787,7 +13864,7 @@
       if (horizonMapped === 0 && sheetWeeks.length) {
         pushAction('High', '13-week forecast does not cover current period',
           'Horizon starts ' + (weeks[0] ? p9WeekLabel(weeks[0].date) : '-') + ' · last sheet week ' + p9WeekLabel(sheetWeeks[sheetWeeks.length - 1].date),
-          'Refresh CashFlow_Forecast from current Monday with bank opening, payroll, BAS, supplier runs', 'Finance', 'This week');
+          'Refresh CashFlow_Forecast from current payroll week (Friday start) with bank opening, payroll, BAS, supplier runs', 'Finance', 'This week');
       }
       if (lowest != null && minCashKnown != null && lowest < minCashKnown) {
         pushAction('High', 'Path dips below min cash reserve',
@@ -13857,7 +13934,7 @@
       // Accuracy
       var accuracyRows = [];
       sheetWeeks.forEach(function(w) {
-        if (w.date.getTime() + 6 * 86400000 >= today.getTime()) return;
+        if (p9PayrollThursday(w.date).getTime() >= today.getTime()) return;
         var fc = col(w.row, 'Forecast Closing', 'Forecast Close', 'Forecasted Closing');
         var ac = col(w.row, 'Actual Closing', 'Actual Close', 'Actual Closing Balance');
         if (fc === '' || fc == null || ac === '' || ac == null) return;
