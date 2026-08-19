@@ -533,7 +533,7 @@
             <!-- Estimating Accuracy (historical / drill-down only) -->
             <div class="section-card p3-accuracy-card">
               <div class="section-title">Estimating Accuracy
-                <span class="p3-section-hint">Completed jobs with final labour and material costs only</span>
+                <span class="p3-section-hint">All quotes by Date Quoted; actuals shown when Xero job cost data is available</span>
               </div>
               <div id="p3-accuracy-body">Loading accuracy data...</div>
               <p class="p3-section-hint p3-accuracy-foot" id="p3-accuracy-foot">
@@ -1739,6 +1739,7 @@
                     <button type="button" class="lib-chip" data-lib-fill="What PPE do I need on site?">PPE on site</button>
                     <button type="button" class="lib-chip" data-lib-fill="How do I report an incident?">Report an incident</button>
                     <button type="button" class="lib-chip" data-lib-fill="How do I get IT support?">IT support</button>
+                    <button type="button" class="lib-chip" data-lib-admin="1" hidden data-lib-fill="How do I complete the weekly timesheet review and approval?">Weekly timesheet review</button>
                   </div>
                 </div>
                 <div id="lib-messages" class="lib-messages" aria-live="polite"></div>
@@ -2333,6 +2334,7 @@
     window._libraryGuides = [];
     window._libraryChatHistory = window._libraryChatHistory || [];
     window._libraryHubEmpty = true;
+    window._libraryIsAdmin = false;
 
     function signedInHubEmail() {
       return (_authUser && _authUser.email)
@@ -9601,6 +9603,34 @@
       function isBlank(v) {
         return v === null || v === undefined || String(v).trim() === '';
       }
+      /** Estimating_Accuracy: J-Q populated when Xero actuals exist (blank = no data yet). */
+      function accHasRealActualData(r) {
+        var rev = rawColByNames(r, ['Actual Revenue', 'actual_revenue']);
+        var cost = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs', 'Total Actual Cost']);
+        var margin = rawColByNames(r, ['Actual Margin %', 'Actual Margin', 'actual_margin_pct']);
+        if (!isBlank(rev)) return true;
+        if (!isBlank(cost)) return true;
+        if (!isBlank(margin)) return true;
+        return false;
+      }
+
+      function accDateQuotedOf(r) {
+        return col(r, 'Date Quoted', 'date_quoted') || '';
+      }
+      function accFmtActualPct(raw, hasActual) {
+        if (!hasActual || isBlank(raw)) return 'Awaiting job data';
+        return formatPct(parseNum(raw));
+      }
+      function accFmtQuotedPct(raw) {
+        if (isBlank(raw)) return 'Pending';
+        return formatPct(parseNum(raw));
+      }
+      function accFmtScore(raw, hasActual) {
+        if (!hasActual || isBlank(raw)) return 'Awaiting job data';
+        var n = parseNum(raw);
+        if (n <= 1 && n >= 0) return formatPct(n * 100);
+        return formatPct(n);
+      }
       function statusOf(r) {
         return String(col(r, 'Status', 'status') || '').trim();
       }
@@ -9929,19 +9959,14 @@
       dqParts.push(quotesLive ? 'Quotes: live' : 'Quotes: no rows for selection');
       var accCompleteN = 0;
       accuracyFiltered.forEach(function(r) {
-        var acRaw = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']);
-        var alRaw = rawColByNames(r, ['Labour Variance %', 'Labour Variance', 'Actual Labour']);
-        var amRaw = rawColByNames(r, ['Materials Variance %', 'Materials Variance', 'Actual Materials']);
-        var ac = !isBlank(acRaw) && parseNum(acRaw) > 0;
-        // Require positive actual cost as minimum completion signal
-        if (ac) accCompleteN++;
-        // silence unused: labour/materials fields checked later for richer metrics
-        void alRaw; void amRaw;
+        if (accHasRealActualData(r)) accCompleteN++;
       });
       if (accCompleteN > 0) {
-        dqParts.push('Estimating_Accuracy: ' + accCompleteN + ' completed with actual cost');
+        dqParts.push('Estimating_Accuracy: ' + accCompleteN + ' with actual job data');
+      } else if (accuracyFiltered.length > 0) {
+        dqParts.push('Estimating_Accuracy: ' + accuracyFiltered.length + ' quote(s), awaiting actuals');
       } else {
-        dqParts.push('Estimating_Accuracy: pending final labour/material costs');
+        dqParts.push('Estimating_Accuracy: no rows for selection');
       }
       if (!hasDueDates) dqParts.push('Due dates: pending (overdue uses age proxy)');
       if (!hasBookedHours) dqParts.push('Booking hours: pending (capacity uses proxy)');
@@ -10638,217 +10663,139 @@
         );
       }
 
-      // ── Estimating Accuracy (completed jobs only) ────────────
+      // ── Estimating Accuracy (Estimating_Accuracy tab) ─────────
       var accBody = document.getElementById('p3-accuracy-body');
-      function hasFinalActualCost(r) {
-        var acRaw = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs', 'Total Actual Cost']);
-        if (isBlank(acRaw)) return false;
-        var n = parseNum(acRaw);
-        return n > 0;
-      }
-      function hasLabourActualSignal(r) {
-        var keys = [
-          'Labour Variance %', 'Labour Variance', 'Actual Labour',
-          'Actual Labour Hours', 'Labour Actual', 'Actual Labour Cost'
-        ];
-        for (var i = 0; i < keys.length; i++) {
-          var raw = rawColByNames(r, [keys[i]]);
-          if (!isBlank(raw) && String(raw).trim() !== '0' && String(raw).trim() !== '0%') return true;
-        }
-        return false;
-      }
-      function hasMaterialsActualSignal(r) {
-        var keys = [
-          'Materials Variance %', 'Materials Variance', 'Actual Materials',
-          'Materials Actual', 'Actual Materials Cost'
-        ];
-        for (var i = 0; i < keys.length; i++) {
-          var raw = rawColByNames(r, [keys[i]]);
-          if (!isBlank(raw) && String(raw).trim() !== '0' && String(raw).trim() !== '0%') return true;
-        }
-        return false;
-      }
-
-      var completedAcc = accuracyFiltered.filter(function(r) {
-        // enough actual cost data = positive Actual Cost (ideally labour+materials)
-        return hasFinalActualCost(r);
+      var accSorted = accuracyFiltered.slice().sort(function(a, b) {
+        var da = parseFlexibleDate(accDateQuotedOf(a));
+        var db = parseFlexibleDate(accDateQuotedOf(b));
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return db.getTime() - da.getTime();
       });
+      var accWithActuals = accSorted.filter(accHasRealActualData);
 
       if (accBody) {
-        if (!completedAcc.length) {
-          // Exact required unavailable text - no 0% gauges
+        if (!accSorted.length) {
           accBody.innerHTML =
-            '<p class="p3-accuracy-unavailable">Accuracy unavailable, requires completed jobs with final labour and material costs</p>' +
-            '<p class="p3-section-hint">Estimating_Accuracy has ' + accuracyFiltered.length +
-            ' row' + (accuracyFiltered.length === 1 ? '' : 's') +
-            ' for this selection, but none include final actual cost. Live job budget vs actual is tracked on P4.</p>';
+            '<p class="p3-accuracy-unavailable">No estimating accuracy rows for this brand, year, and month selection.</p>' +
+            '<p class="p3-section-hint">Estimating_Accuracy is populated daily from Quotes joined to Xero_Projects.</p>';
         } else {
-          // Build metrics table for completed only
-          var byEstAcc = {};
-          completedAcc.forEach(function(r) {
-            var name = String(col(r, 'Estimator', 'Estimator Name', 'estimator') || '').trim() || 'Unassigned';
-            if (!byEstAcc[name]) {
-              byEstAcc[name] = {
-                n: 0,
-                qcSum: 0, acSum: 0, qcN: 0, acN: 0,
-                labVarSum: 0, labVarN: 0,
-                matVarSum: 0, matVarN: 0,
-                qmSum: 0, qmN: 0, amSum: 0, amN: 0,
-                scoreSum: 0, scoreN: 0
-              };
-            }
-            var a = byEstAcc[name];
-            a.n++;
-            var qc = rawColByNames(r, ['Quoted Cost', 'quoted_cost']);
-            var ac = rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']);
-            if (!isBlank(qc)) { a.qcSum += parseNum(qc); a.qcN++; }
-            if (!isBlank(ac)) { a.acSum += parseNum(ac); a.acN++; }
-            var lv = rawColByNames(r, ['Labour Variance %', 'Labour Variance']);
-            if (!isBlank(lv)) { a.labVarSum += parseNum(lv); a.labVarN++; }
-            var mv = rawColByNames(r, ['Materials Variance %', 'Materials Variance']);
-            if (!isBlank(mv)) { a.matVarSum += parseNum(mv); a.matVarN++; }
-            var qm = rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']);
-            if (!isBlank(qm)) { a.qmSum += parseNum(qm); a.qmN++; }
-            var am = rawColByNames(r, ['Actual Margin %', 'Actual Margin']);
-            if (!isBlank(am)) { a.amSum += parseNum(am); a.amN++; }
-            var sc = rawColByNames(r, ['Accuracy Score', 'accuracy_score', 'Score']);
-            if (!isBlank(sc)) { a.scoreSum += parseNum(sc); a.scoreN++; }
-          });
-
-          var estAccList = Object.keys(byEstAcc).map(function(k) {
-            var a = byEstAcc[k];
-            return {
-              name: k,
-              n: a.n,
-              estVsActual: (a.qcN && a.acN)
-                ? (a.acSum - a.qcSum)
-                : null,
-              labVar: a.labVarN ? a.labVarSum / a.labVarN : null,
-              matVar: a.matVarN ? a.matVarSum / a.matVarN : null,
-              quotedMargin: a.qmN ? a.qmSum / a.qmN : null,
-              actualMargin: a.amN ? a.amSum / a.amN : null,
-              score: a.scoreN ? a.scoreSum / a.scoreN : null
-            };
-          }).sort(function(a, b) { return b.n - a.n; });
-
-          var htmlAcc = '<p class="p3-section-hint">' + completedAcc.length +
-            ' completed job' + (completedAcc.length === 1 ? '' : 's') +
-            ' with final actual cost data.</p>';
-
-          // Summary metrics
-          var sumQc = 0, sumAc = 0, sumQm = 0, sumAm = 0, nQm = 0, nAm = 0;
-          completedAcc.forEach(function(r) {
-            sumQc += parseNum(rawColByNames(r, ['Quoted Cost', 'quoted_cost']));
-            sumAc += parseNum(rawColByNames(r, ['Actual Cost', 'actual_cost', 'Actual Costs']));
-            var qm = rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']);
-            var am = rawColByNames(r, ['Actual Margin %', 'Actual Margin']);
-            if (!isBlank(qm)) { sumQm += parseNum(qm); nQm++; }
-            if (!isBlank(am)) { sumAm += parseNum(am); nAm++; }
-          });
-          htmlAcc += '<div class="p3-acc-summary">' +
-            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Est vs Actual Cost</span>' +
-              '<span class="p3-acc-mval">' + formatCurrency(sumAc - sumQc) +
-              ' <span class="p3-acc-delta">(actual − quoted)</span></span></div>' +
-            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Quoted Margin</span>' +
-              '<span class="p3-acc-mval">' + (nQm ? formatPct(sumQm / nQm) : 'Pending') + '</span></div>' +
-            '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Final Margin</span>' +
-              '<span class="p3-acc-mval">' + (nAm ? formatPct(sumAm / nAm) : 'Pending') + '</span></div>' +
-            '</div>';
-
-          // Rank only if >= 5 completed jobs per estimator
-          var rankable = estAccList.filter(function(e) { return e.n >= 5; });
-          if (rankable.length) {
-            rankable.sort(function(a, b) {
-              var as = a.score != null ? a.score : -999;
-              var bs = b.score != null ? b.score : -999;
-              return bs - as;
-            });
-            htmlAcc += '<div class="p3-subhead">Estimator ranks (≥ 5 completed jobs with data)</div>';
-            htmlAcc += '<div class="table-wrap"><table class="data-table"><thead><tr>' +
-              '<th class="text-left">Estimator</th>' +
-              '<th class="text-right">Jobs</th>' +
-              '<th class="text-right">Cost Δ</th>' +
-              '<th class="text-right">Labour Var</th>' +
-              '<th class="text-right">Materials Var</th>' +
-              '<th class="text-right">Quoted vs Final Margin</th>' +
-              '<th class="text-right">Accuracy Score</th>' +
-              '</tr></thead><tbody>';
-            rankable.forEach(function(e) {
-              htmlAcc += '<tr>' +
-                '<td class="text-left">' + escapeP3(e.name) + '</td>' +
-                '<td class="text-right">' + e.n + '</td>' +
-                '<td class="text-right">' + (e.estVsActual !== null ? formatCurrency(e.estVsActual) : '—') + '</td>' +
-                '<td class="text-right">' + (e.labVar !== null ? formatPct(e.labVar) : '—') + '</td>' +
-                '<td class="text-right">' + (e.matVar !== null ? formatPct(e.matVar) : '—') + '</td>' +
-                '<td class="text-right">' +
-                  (e.quotedMargin !== null ? formatPct(e.quotedMargin) : '—') +
-                  ' → ' +
-                  (e.actualMargin !== null ? formatPct(e.actualMargin) : '—') +
-                '</td>' +
-                '<td class="text-right">' +
-                  (e.score !== null
-                    ? (e.score <= 1 ? formatPct(e.score * 100) : formatPct(e.score))
-                    : '—') +
-                '</td></tr>';
-            });
-            htmlAcc += '</tbody></table></div>';
+          var htmlAcc = '<p class="p3-section-hint">' + accSorted.length +
+            ' quote' + (accSorted.length === 1 ? '' : 's') + ' by Date Quoted';
+          if (accWithActuals.length) {
+            htmlAcc += ' · ' + accWithActuals.length + ' with actual job data';
           } else {
-            htmlAcc += '<p class="p3-section-hint">Estimator ranks hidden until an estimator has at least 5 completed jobs with final cost data.</p>';
+            htmlAcc += ' · actual cost data pending in Xero';
+          }
+          htmlAcc += '.</p>';
+
+          if (accWithActuals.length) {
+            var sumQm = 0, nQm = 0, sumAm = 0, nAm = 0;
+            var sumMv = 0, nMv = 0, sumSc = 0, nSc = 0;
+            accWithActuals.forEach(function(r) {
+              var qm = rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']);
+              var am = rawColByNames(r, ['Actual Margin %', 'Actual Margin']);
+              var mv = rawColByNames(r, ['Margin Variance %', 'Margin Variance']);
+              var sc = rawColByNames(r, ['Accuracy Score', 'accuracy_score', 'Score']);
+              if (!isBlank(qm)) { sumQm += parseNum(qm); nQm++; }
+              if (!isBlank(am)) { sumAm += parseNum(am); nAm++; }
+              if (!isBlank(mv)) { sumMv += parseNum(mv); nMv++; }
+              if (!isBlank(sc)) {
+                var sn = parseNum(sc);
+                sumSc += (sn <= 1 && sn >= 0) ? sn * 100 : sn;
+                nSc++;
+              }
+            });
+            htmlAcc += '<div class="p3-acc-summary">' +
+              '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Avg Quoted Margin</span>' +
+                '<span class="p3-acc-mval">' + (nQm ? formatPct(sumQm / nQm) : 'Pending') + '</span></div>' +
+              '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Avg Actual Margin</span>' +
+                '<span class="p3-acc-mval">' + (nAm ? formatPct(sumAm / nAm) : 'Pending') + '</span></div>' +
+              '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Avg Margin Variance</span>' +
+                '<span class="p3-acc-mval">' + (nMv ? formatPct(sumMv / nMv) : 'Pending') + '</span></div>' +
+              '<div class="p3-acc-metric"><span class="p3-acc-mlabel">Avg Accuracy Score</span>' +
+                '<span class="p3-acc-mval">' + (nSc ? formatPct(sumSc / nSc) : 'Pending') + '</span></div>' +
+              '</div>';
           }
 
-          // Job-level detail table
-          htmlAcc += '<div class="p3-subhead">Completed jobs detail</div>';
-          var jobRows = completedAcc.map(function(r) {
+          var byEstAcc = {};
+          accWithActuals.forEach(function(r) {
+            var name = String(col(r, 'Estimator', 'Estimator Name', 'estimator') || '').trim() || 'Unassigned';
+            if (!byEstAcc[name]) byEstAcc[name] = { n: 0, mvSum: 0, mvN: 0, scSum: 0, scN: 0 };
+            var bucket = byEstAcc[name];
+            bucket.n++;
+            var mv = rawColByNames(r, ['Margin Variance %', 'Margin Variance']);
+            if (!isBlank(mv)) { bucket.mvSum += parseNum(mv); bucket.mvN++; }
+            var sc = rawColByNames(r, ['Accuracy Score', 'accuracy_score', 'Score']);
+            if (!isBlank(sc)) {
+              var sn = parseNum(sc);
+              bucket.scSum += (sn <= 1 && sn >= 0) ? sn * 100 : sn;
+              bucket.scN++;
+            }
+          });
+          var estRollup = Object.keys(byEstAcc).map(function(k) {
+            var b = byEstAcc[k];
+            return {
+              name: k,
+              n: b.n,
+              avgMv: b.mvN ? b.mvSum / b.mvN : null,
+              avgSc: b.scN ? b.scSum / b.scN : null
+            };
+          }).sort(function(a, b) {
+            var as = a.avgSc != null ? a.avgSc : -999;
+            var bs = b.avgSc != null ? b.avgSc : -999;
+            return bs - as;
+          });
+
+          if (estRollup.length) {
+            htmlAcc += '<div class="p3-subhead">Per-estimator rollup (jobs with actual data only)</div>';
+            htmlAcc += '<div class="p3-acc-est-chips">';
+            estRollup.forEach(function(e) {
+              htmlAcc += '<div class="p3-acc-est-chip">' +
+                '<span class="p3-acc-est-name">' + escapeP3(e.name) + '</span>' +
+                '<span class="p3-acc-est-meta">' + e.n + ' job' + (e.n === 1 ? '' : 's') + '</span>' +
+                '<span class="p3-acc-est-stat">' +
+                  (e.avgSc != null ? 'Score ' + formatPct(e.avgSc) : 'Score Pending') +
+                  ' · ' +
+                  (e.avgMv != null ? 'Margin var ' + formatPct(e.avgMv) : 'Margin var Pending') +
+                '</span></div>';
+            });
+            htmlAcc += '</div>';
+          }
+
+          htmlAcc += '<div class="p3-subhead">Quote accuracy detail</div>';
+          var accTableRows = accSorted.map(function(r) {
+            var hasActual = accHasRealActualData(r);
+            var status = hasActual ? 'Actuals available' : 'Awaiting job data';
             return {
               'Quote': col(r, 'GHL Quote ID', 'Quote ID', 'QuoteID') || '—',
+              'Date Quoted': accDateQuotedOf(r),
               'Estimator': col(r, 'Estimator', 'Estimator Name') || '—',
-              'Quoted Cost': parseNum(rawColByNames(r, ['Quoted Cost'])),
-              'Actual Cost': parseNum(rawColByNames(r, ['Actual Cost', 'Actual Costs'])),
-              'Labour Var %': rawColByNames(r, ['Labour Variance %', 'Labour Variance']),
-              'Materials Var %': rawColByNames(r, ['Materials Variance %', 'Materials Variance']),
-              'Quoted Margin %': rawColByNames(r, ['Quoted Margin %', 'Quoted Margin']),
-              'Actual Margin %': rawColByNames(r, ['Actual Margin %', 'Actual Margin'])
+              'Brand': col(r, 'Brand', 'brand') || '—',
+              'Department': col(r, 'Department', 'department') || '—',
+              'Quoted Margin %': accFmtQuotedPct(rawColByNames(r, ['Quoted Margin %', 'Quoted Margin'])),
+              'Actual Margin %': accFmtActualPct(rawColByNames(r, ['Actual Margin %', 'Actual Margin']), hasActual),
+              'Margin Variance %': accFmtActualPct(rawColByNames(r, ['Margin Variance %', 'Margin Variance']), hasActual),
+              'Labour Variance %': accFmtActualPct(rawColByNames(r, ['Labour Variance %', 'Labour Variance']), hasActual),
+              'Materials Variance %': accFmtActualPct(rawColByNames(r, ['Materials Variance %', 'Materials Variance']), hasActual),
+              'Accuracy Score': accFmtScore(rawColByNames(r, ['Accuracy Score', 'accuracy_score', 'Score']), hasActual),
+              'Status': status
             };
           });
-          htmlAcc += buildTable(jobRows, [
+          htmlAcc += buildTable(accTableRows, [
             { label: 'Quote', key: 'Quote', align: 'left' },
+            { label: 'Date Quoted', key: 'Date Quoted', align: 'left' },
             { label: 'Estimator', key: 'Estimator', align: 'left' },
-            {
-              label: 'Quoted Cost', key: 'Quoted Cost', align: 'right',
-              format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
-            },
-            {
-              label: 'Actual Cost', key: 'Actual Cost', align: 'right',
-              format: function(v) { return v ? formatCurrency(parseNum(v)) : '—'; }
-            },
-            {
-              label: 'Labour Var', key: 'Labour Var %', align: 'right',
-              format: function(v) {
-                if (v === '' || v === null || v === undefined) return '—';
-                return formatPct(parseNum(v));
-              }
-            },
-            {
-              label: 'Materials Var', key: 'Materials Var %', align: 'right',
-              format: function(v) {
-                if (v === '' || v === null || v === undefined) return '—';
-                return formatPct(parseNum(v));
-              }
-            },
-            {
-              label: 'Quoted Margin', key: 'Quoted Margin %', align: 'right',
-              format: function(v) {
-                if (v === '' || v === null || v === undefined) return '—';
-                return formatPct(parseNum(v));
-              }
-            },
-            {
-              label: 'Final Margin', key: 'Actual Margin %', align: 'right',
-              format: function(v) {
-                if (v === '' || v === null || v === undefined) return '—';
-                return formatPct(parseNum(v));
-              }
-            }
+            { label: 'Brand', key: 'Brand', align: 'left' },
+            { label: 'Department', key: 'Department', align: 'left' },
+            { label: 'Quoted Margin', key: 'Quoted Margin %', align: 'right' },
+            { label: 'Actual Margin', key: 'Actual Margin %', align: 'right' },
+            { label: 'Margin Var', key: 'Margin Variance %', align: 'right' },
+            { label: 'Labour Var', key: 'Labour Variance %', align: 'right' },
+            { label: 'Materials Var', key: 'Materials Variance %', align: 'right' },
+            { label: 'Score', key: 'Accuracy Score', align: 'right' },
+            { label: 'Status', key: 'Status', align: 'left' }
           ]);
           accBody.innerHTML = htmlAcc;
         }
@@ -24718,8 +24665,9 @@
 
     // ═══════════════════════════════════════════════════════════
     // BBBS INTERNAL HUB (chat + Lori gating; guide filter is server-side)
-    // Does not load Library_Guides in the browser. /api/ask fetches and
-    // filters by Division/Role Tag before Gemini or the client see content.
+    // Does not load Library_Guides bodies in the browser. /api/ask fetches and
+    // filters by Division/Role Tag and Access Level (Admin vs All Staff) before
+    // Gemini or the client see content. Bootstrap may return title-only chips.
     // Construction how-to with no matching guide may return source: 'general'.
     // ═══════════════════════════════════════════════════════════
     var _libraryBound = false;
@@ -24759,6 +24707,18 @@
           ? 'Searching Internal Hub guides with Gemini Pro'
           : 'Ask about an Internal Hub guide'
       );
+    }
+
+    function canSeeLibraryAdminGuides() {
+      return getAccessTier() === 'admin' || !!window._libraryIsAdmin;
+    }
+
+    function refreshLibraryAdminChips() {
+      var showAdmin = canSeeLibraryAdminGuides();
+      var chips = document.querySelectorAll('#lib-chips [data-lib-admin]');
+      for (var i = 0; i < chips.length; i++) {
+        chips[i].hidden = !showAdmin;
+      }
     }
 
     function libFillChip(text) {
@@ -24985,6 +24945,7 @@
       if (greet) greet.textContent = 'Hey ' + name + ', ask me about an Internal Hub guide.';
       var sw = document.getElementById('lib-switch-user');
       if (sw) sw.textContent = 'Not ' + name + '? Switch user';
+      refreshLibraryAdminChips();
       if (!document.getElementById('lib-messages') || !document.getElementById('lib-messages').children.length) {
         if (window._libraryHubEmpty) {
           libAppendAssistant(LIBRARY_EMPTY_MSG + ' ' + LIBRARY_INTRO_MSG, { intro: true });
@@ -25076,6 +25037,7 @@
         chips.addEventListener('click', function(ev) {
           var t = ev.target && ev.target.closest ? ev.target.closest('[data-lib-fill]') : null;
           if (!t) return;
+          if (t.getAttribute('data-lib-admin') && !canSeeLibraryAdminGuides()) return;
           libFillChip(t.getAttribute('data-lib-fill') || '');
         });
       }
@@ -25202,12 +25164,17 @@
           return { empty: true, visibleCount: 0 };
         });
         window._libraryHubEmpty = !boot || boot.empty !== false;
+        window._libraryIsAdmin = !!(boot && boot.isAdmin);
+        window._libraryGuides = (boot && Array.isArray(boot.guides)) ? boot.guides : [];
+        refreshLibraryAdminChips();
         libClearMessages();
         refreshLibraryPanel();
       } catch (err) {
         console.warn('[Library] bootstrap failed:', err);
         window._libraryGuides = [];
         window._libraryHubEmpty = true;
+        window._libraryIsAdmin = false;
+        refreshLibraryAdminChips();
         libClearMessages();
         refreshLibraryPanel();
       } finally {
