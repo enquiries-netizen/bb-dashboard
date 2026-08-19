@@ -9747,6 +9747,12 @@
       function accDateQuotedOf(r) {
         return col(r, 'Date Quoted', 'date_quoted') || '';
       }
+      function accJobNumOf(r) {
+        return String(col(r,
+          'Job #', 'Job Number', 'job_number', 'Job No', 'Job#',
+          'Xero Project J#', 'Xero Project ID', 'xero_project_id'
+        ) || '').trim();
+      }
       function accFmtActualPct(raw, hasActual) {
         if (!hasActual || isBlank(raw)) return 'Awaiting job data';
         return formatPct(parseNum(raw));
