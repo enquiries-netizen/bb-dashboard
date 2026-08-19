@@ -3093,6 +3093,26 @@ select {
 .p5-proj-table tr.p5-row-active {
   background: rgba(37, 99, 235, 0.06);
 }
+.p5-proj-detail td {
+  padding: 0;
+  background: #F8FAFC;
+  border-top: none;
+}
+.p5-cost-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 8px 10px 10px;
+  font-size: 11px;
+  color: var(--p5-muted, #6B7280);
+}
+.p5-cost-bit strong {
+  color: var(--p5-text, #111827);
+  font-weight: 600;
+}
+.p5-cost-lab {
+  margin-right: 4px;
+}
 .p5-heat-wrap {
   max-height: 360px;
   overflow: auto;
