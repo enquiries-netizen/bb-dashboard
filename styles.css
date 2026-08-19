@@ -10457,4 +10457,31 @@ body.p12-only-access .filter-group.p12-hide-for-staff {
   }
 }
 
+#page-p13 .p13-lost-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#page-p13 .p13-lost-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  font-size: 0.97rem;
+  line-height: 1.45;
+}
+#page-p13 .p13-lost-item:last-child {
+  border-bottom: none;
+}
+#page-p13 .p13-lost-desc {
+  font-weight: 600;
+  min-width: 0;
+  flex: 1 1 40%;
+}
+#page-p13 .p13-lost-reason {
+  color: var(--text-muted, #6b7280);
+  flex: 1 1 60%;
+  min-width: 0;
+}
+
 

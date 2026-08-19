@@ -1647,6 +1647,11 @@
                 <div class="p13-kpi-target-of" id="kpi-p13-target-of"></div>
                 <div class="kpi-sub" id="kpi-p13-target-sub">Loading...</div>
               </div>
+              <div class="kpi-card card p13-kpi-card" id="p13-kpi-opportunities">
+                <div class="kpi-label">Opportunities Identified</div>
+                <div class="kpi-value" id="kpi-p13-opportunities">-</div>
+                <div class="kpi-sub" id="kpi-p13-opportunities-sub">Loading...</div>
+              </div>
               <div class="kpi-card card p13-kpi-card" id="p13-kpi-submissions">
                 <div class="kpi-label">Submissions This Month</div>
                 <div class="kpi-value" id="kpi-p13-submissions">-</div>
@@ -1686,6 +1691,11 @@
                 <input type="search" id="p13-tender-search" class="p13-search-input" placeholder="Filter by description, client, or where" autocomplete="off">
               </div>
               <div id="p13-tenders-table" class="p13-table-wrap">Loading...</div>
+            </div>
+
+            <div class="section-card p13-panel" id="p13-lost-reasons" hidden>
+              <div class="section-title">Lost Tenders - Loss Reasons</div>
+              <div id="p13-lost-reasons-list"></div>
             </div>
 
             <div class="section-card p13-panel p13-trend-panel">
@@ -19455,6 +19465,13 @@
       }
 
       setP13Kpi(
+        'kpi-p13-opportunities',
+        'kpi-p13-opportunities-sub',
+        String(rows.length),
+        'Total tenders tracked (all rows, regardless of submission status)'
+      );
+
+      setP13Kpi(
         'kpi-p13-submissions',
         'kpi-p13-submissions-sub',
         String(submissionsThisMonth),
@@ -19647,6 +19664,27 @@
         if (noLodge) bits.push(noLodge + ' missing Lodgement Date');
         dq.textContent = 'Data: ' + bits.join(' · ');
         dq.className = noLodge ? 'p13-data-quality p13-data-quality--warn' : 'p13-data-quality';
+      }
+
+      var lostPanel = document.getElementById('p13-lost-reasons');
+      var lostList = document.getElementById('p13-lost-reasons-list');
+      if (lostPanel && lostList) {
+        if (lostRows.length === 0) {
+          lostPanel.setAttribute('hidden', '');
+          lostList.innerHTML = '';
+        } else {
+          lostPanel.removeAttribute('hidden');
+          var lostHtml = '<ul class="p13-lost-list">';
+          lostRows.forEach(function(r) {
+            var reason = (r.notes && r.notes.trim()) ? p13Escape(r.notes.trim()) : 'No reason provided';
+            lostHtml += '<li class="p13-lost-item">' +
+              '<span class="p13-lost-desc">' + p13Escape(r.description) + '</span>' +
+              '<span class="p13-lost-reason">' + reason + '</span>' +
+              '</li>';
+          });
+          lostHtml += '</ul>';
+          lostList.innerHTML = lostHtml;
+        }
       }
 
       p13RenderTable();
