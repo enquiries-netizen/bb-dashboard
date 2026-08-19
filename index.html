@@ -790,7 +790,7 @@
             <div class="p5-row-two">
               <div class="section-card p5-panel">
                 <div class="section-title">Project margin health
-                  <span class="p5-section-hint">Table and bubble · jobs without Total Actual or Revenue stay Data Incomplete, awaiting Xero_Bills</span>
+                  <span class="p5-section-hint">Table and bubble · jobs without Total Actual or Revenue stay Awaiting Data</span>
                 </div>
                 <div class="p5-chart-wrap p5-chart-wrap--bubble">
                   <canvas id="chart-p5-bubble" aria-label="Project margin bubble chart"></canvas>
@@ -1794,8 +1794,8 @@
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
       P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall from Pipeline_Snapshots (GHL ID join; Pending until 2+ snapshot dates; approximate note when history does not cover the selected period). (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value $1 display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy from Estimating_Accuracy by Date Quoted: Estimator, Brand, Department, Quoted vs Actual Margin, Margin/Labour/Materials Variance, Accuracy Score. Blank J-Q actuals show Awaiting job data, never 0%. Averages and per-estimator rollup use only rows with real actuals. Quotes without Job # stay visible as Awaiting job data. Live job cost on P4/P5. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
-      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Data Incomplete, awaiting Xero_Bills), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
-      P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM from Gross Profit / Revenue, size contract, colour status; Total Actual and Gross Profit shown directly; jobs with both Total Actual and Revenue at $0 or blank stay Data Incomplete, awaiting Xero_Bills; Materials and Subbies as separate line items) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
+      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Awaiting Data), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (4) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (5) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (6) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (7) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule. Never invent $0 for incomplete formulas.',
+      P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM from Gross Profit / Revenue, size contract, colour status; Total Actual and Gross Profit shown directly; jobs with both Total Actual and Revenue at $0 or blank stay Awaiting Data; Materials and Subbies as separate line items) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
       P8: 'Weekly Overview (management meeting dashboard). One reporting period for the whole page via Week Ending selector (payroll week Fri-Thu, ending Thursday), shown as "Week ending D Month YYYY · range". Six KPI cards (Revenue, Leads and Qualified, Quotes Sent, Jobs Won, Productive Labour, Project Delivery) each with Actual, Target, Absolute Variance, Previous Week, 4-Week Average, Status. Secondary strip: Gross Margin, Cash Collected, Overdue AR, Variations Awaiting Approval, Safety/Quality Incidents, Customer Issues. Scorecard table (Area/KPI/This Week/Target/Last Week/4-Week Avg/Status) linking to P2/P3/P4/P5/P6/P10. Management Attention table from real exceptions only. Four 8-week small-multiple trends (not dual-axis): Sales funnel, Financial, Delivery, Workforce, each with 4-week average line. Seven-day commitments timeline Mon-Fri. Wins/Risks/Decisions max 3 real items each. Data freshness table for Sales/CRM, Xero, Labour, Marketing. Never invent numbers; blanks use 0 | Not available | Not yet posted | Not applicable. Orange only for At Risk / overdue / high priority. Answer only from live P8 page data.',
@@ -3164,7 +3164,7 @@
      * J Actual-Labour, K Actual Materials, L Actual-Subbies/Contractor,
      * M Actual-Variations, N Total Actual, O Revenue, P Gross Profit.
      * A job has real cost data only when Total Actual (N) or Revenue (O) is non-zero.
-     * Genuine $0 on both N and O (or both blank) stays Data Incomplete, awaiting Xero_Bills.
+     * Genuine $0 on both N and O (or both blank) stays Awaiting Data.
      */
     function readXeroProjectLive(row) {
       if (!row) {
@@ -3236,7 +3236,7 @@
     }
 
     function xeroJobCostIncompleteLabel() {
-      return 'Data Incomplete, awaiting Xero_Bills';
+      return 'Awaiting Data';
     }
 
     function xeroProjectsPendingLabel() {
@@ -11851,7 +11851,7 @@
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
-        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Data Incomplete, awaiting Xero_Bills. Labour Variance awaits budgeted labour field.'
+        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field.'
       });
 
       var activeList = filteredRollups.filter(function(p) { return p.isActive; });
@@ -20880,7 +20880,7 @@
       if (incompleteProjects > 0) {
         pushException('Medium', 'Project costs incomplete',
           incompleteProjects + ' project' + (incompleteProjects !== 1 ? 's' : '') +
-            ' Data Incomplete, awaiting Xero_Bills',
+            ' Awaiting Data',
           'Data Incomplete');
       }
 
@@ -20931,7 +20931,7 @@
             costBits.push(completeProjects + ' with actual cost data');
           }
           if (incompleteProjects) {
-            costBits.push(incompleteProjects + ' Data Incomplete, awaiting Xero_Bills');
+            costBits.push(incompleteProjects + ' Awaiting Data');
           }
           parts.push(costBits.join(' · '));
         } else {
@@ -20954,7 +20954,7 @@
       setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub',
         fmtMoneyOrPending(totalRevYtd), revSub || 'YTD revenue');
 
-      setWarnDot('p5-w-gp', incompleteProjects > 0, 'Some jobs Data Incomplete, awaiting Xero_Bills; brand P&L GP from Xero_Financials when present');
+      setWarnDot('p5-w-gp', incompleteProjects > 0, 'Some jobs Awaiting Data; brand P&L GP from Xero_Financials when present');
       setKPI('kpi-p5-gp', 'kpi-p5-gp-sub',
         fmtMoneyOrPending(totalGpYtd),
         totalGpYtd != null ? 'From Xero_Financials YTD' : 'Pending in Xero_Financials');
@@ -21011,7 +21011,7 @@
       } else if (incompleteProjects > 0) {
         setKPI('kpi-p5-risk', 'kpi-p5-risk-sub',
           'Review required',
-          incompleteProjects + ' jobs Data Incomplete, awaiting Xero_Bills');
+          incompleteProjects + ' jobs Awaiting Data');
         setWarnDot('p5-w-risk', true, 'Forecast margin incomplete without Total Actual or Revenue');
         setKpiCardRisk('p5-kpi-risk', 'gap');
       } else {
@@ -22063,7 +22063,7 @@
             note: p.hasJobCostData ? '' : xeroJobCostIncompleteLabel()
           };
         }),
-        pendingNote: 'Jobs without non-zero Total Actual or Revenue stay Data Incomplete, awaiting Xero_Bills. Cost split waterfall steps Pending when not in Xero_Financials. Full AR ageing on P9.'
+        pendingNote: 'Jobs without non-zero Total Actual or Revenue stay Awaiting Data. Cost split waterfall steps Pending when not in Xero_Financials. Full AR ageing on P9.'
       });
     }
 
