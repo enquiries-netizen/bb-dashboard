@@ -107,12 +107,32 @@ async function verifyHubIdToken(authHeader) {
 
 function hubLibraryDenied(res, action) {
   if (action === 'bootstrap') {
-    return res.status(200).json({ empty: true, visibleCount: 0 });
+    return res.status(200).json({ empty: true, visibleCount: 0, isAdmin: false, guides: [] });
   }
   return res.status(200).json({
     answer: 'BBBS Internal Hub is not available for your account yet.'
   });
 }
+
+const TIMESHEET_REVIEW_DOC_ID = '1O-UYD0tovf1_PxM5gg7MeTDHgTYSDTp8';
+const TIMESHEET_REVIEW_DOC_URL =
+  'https://docs.google.com/document/d/' + TIMESHEET_REVIEW_DOC_ID + '/edit';
+
+// Seeded Admin-only guides until Lori adds the same Guide ID or Doc ID in Library_Guides.
+const KNOWN_LIBRARY_GUIDES = [
+  {
+    guideId: 'PAY-001',
+    title: 'Weekly Timesheet Review & Approval',
+    category: 'Payroll',
+    content: '',
+    divisionRoleTag: 'Admin/Office',
+    mediaLink: TIMESHEET_REVIEW_DOC_URL,
+    accessLevel: 'admin',
+    docId: TIMESHEET_REVIEW_DOC_ID
+  }
+];
+
+var _docTextCache = { byId: {} };
 
 // Division tags only, keyed by email. Staff_Access "Division" column overrides
 // when present and non-blank. Does not grant Hub page access.
@@ -252,6 +272,32 @@ async function fetchSheetValues(tabName, spreadsheetId) {
   }
 }
 
+function parseGuideAccessLevel(raw) {
+  var s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+  if (!s) return 'all';
+  if (s === 'admin' || s === 'admin only' || s === 'admins' || s === 'administrator') {
+    return 'admin';
+  }
+  return 'all';
+}
+
+function isGuideAdminOnly(guide) {
+  return !!(guide && guide.accessLevel === 'admin');
+}
+
+function extractGoogleDocId(raw) {
+  var s = String(raw || '').trim();
+  if (!s) return '';
+  var m = s.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(s) && s.indexOf('http') !== 0) return s;
+  return '';
+}
+
 function normalizeLibraryGuides(rows) {
   if (!rows || !rows.length) return [];
   var out = [];
@@ -264,6 +310,14 @@ function normalizeLibraryGuides(rows) {
     ]) || '').trim();
     var id = String(pickCol(r, ['Guide ID', 'GuideID', 'ID', 'Id']) || '').trim();
     if (!title && !content && !id) continue;
+    var mediaLink = String(pickCol(r, ['Media Link', 'Media', 'Link', 'URL']) || '').trim();
+    var docId = String(pickCol(r, [
+      'Doc ID',
+      'Google Doc ID',
+      'Document ID',
+      'GDoc ID'
+    ]) || '').trim();
+    docId = extractGoogleDocId(docId) || extractGoogleDocId(mediaLink);
     out.push({
       guideId: id,
       title: title,
@@ -276,10 +330,152 @@ function normalizeLibraryGuides(rows) {
         'Role Tag',
         'Role'
       ]) || '').trim(),
-      mediaLink: String(pickCol(r, ['Media Link', 'Media', 'Link', 'URL']) || '').trim()
+      mediaLink: mediaLink,
+      accessLevel: parseGuideAccessLevel(pickCol(r, [
+        'Access Level',
+        'Guide Access',
+        'Visibility',
+        'Audience'
+      ])),
+      docId: docId
     });
   }
   return out;
+}
+
+function mergeKnownLibraryGuides(sheetGuides) {
+  var out = (sheetGuides || []).slice();
+  var seen = {};
+  out.forEach(function (g) {
+    if (g && g.guideId) seen['id:' + String(g.guideId).trim().toLowerCase()] = true;
+    var docId = (g && g.docId) || extractGoogleDocId(g && g.mediaLink);
+    if (docId) seen['doc:' + String(docId).trim().toLowerCase()] = true;
+  });
+  KNOWN_LIBRARY_GUIDES.forEach(function (seed) {
+    var idKey = 'id:' + String(seed.guideId || '').trim().toLowerCase();
+    var docKey = seed.docId ? 'doc:' + String(seed.docId).trim().toLowerCase() : '';
+    if (seen[idKey] || (docKey && seen[docKey])) return;
+    out.push({
+      guideId: seed.guideId,
+      title: seed.title,
+      category: seed.category,
+      content: seed.content,
+      divisionRoleTag: seed.divisionRoleTag,
+      mediaLink: seed.mediaLink,
+      accessLevel: seed.accessLevel,
+      docId: seed.docId
+    });
+  });
+  // Keep seeded Admin SOPs Admin-only even if the sheet row omits Access Level.
+  var knownAdminIds = {};
+  var knownAdminDocs = {};
+  KNOWN_LIBRARY_GUIDES.forEach(function (seed) {
+    if (seed.accessLevel !== 'admin') return;
+    if (seed.guideId) knownAdminIds[String(seed.guideId).trim().toLowerCase()] = true;
+    if (seed.docId) knownAdminDocs[String(seed.docId).trim().toLowerCase()] = true;
+  });
+  out.forEach(function (g) {
+    var id = String((g && g.guideId) || '').trim().toLowerCase();
+    var doc = String((g && g.docId) || extractGoogleDocId(g && g.mediaLink) || '').trim().toLowerCase();
+    if ((id && knownAdminIds[id]) || (doc && knownAdminDocs[doc])) {
+      g.accessLevel = 'admin';
+    }
+  });
+  return out;
+}
+
+function isActiveYes(raw) {
+  var s = String(raw == null ? '' : raw).trim().toLowerCase();
+  return s === 'yes' || s === 'y' || s === 'true' || s === '1';
+}
+
+function staffRowIsAdmin(r) {
+  if (!r) return false;
+  if (!isActiveYes(pickCol(r, ['Active', 'active', 'Enabled', 'Status']))) return false;
+  var access = String(pickCol(r, ['Access', 'access', 'Pages', 'Page Access']) || '').trim();
+  if (/full\s*access/i.test(access) || /^full$/i.test(access)) return true;
+  var role = String(pickCol(r, ['Role', 'role']) || '').trim();
+  return /^admin$/i.test(role);
+}
+
+function buildStaffAdminSet(staffRows) {
+  var set = {};
+  (staffRows || []).forEach(function (r) {
+    var email = String(pickCol(r, ['Email', 'email', 'E-mail', 'Email Address']) || '')
+      .trim()
+      .toLowerCase();
+    if (!email) return;
+    if (staffRowIsAdmin(r)) set[email] = true;
+  });
+  return set;
+}
+
+async function fetchGoogleDocPlainText(docId) {
+  var id = String(docId || '').trim();
+  if (!id) return '';
+  var cached = _docTextCache.byId[id];
+  if (cached && Date.now() - cached.at < 10 * 60 * 1000) {
+    return cached.text || '';
+  }
+  var key =
+    process.env.GOOGLE_SHEETS_API_KEY ||
+    process.env.SHEETS_API_KEY ||
+    'AIzaSyAKxn54VIagSCHmKHQ6MZeD9n8fnWWs3Wk';
+  var urls = [
+    'https://docs.google.com/document/d/' + encodeURIComponent(id) + '/export?format=txt',
+    'https://www.googleapis.com/drive/v3/files/' +
+      encodeURIComponent(id) +
+      '/export?mimeType=text/plain&key=' +
+      encodeURIComponent(key)
+  ];
+  var i;
+  for (i = 0; i < urls.length; i++) {
+    try {
+      var ac = new AbortController();
+      var timer = setTimeout(function () {
+        ac.abort();
+      }, 8000);
+      var r = await fetch(urls[i], { signal: ac.signal, redirect: 'follow' });
+      clearTimeout(timer);
+      if (!r.ok) continue;
+      var text = String(await r.text() || '').trim();
+      if (!text || text.length < 40) continue;
+      if (/<!DOCTYPE|<html[\s>]/i.test(text.slice(0, 200))) continue;
+      _docTextCache.byId[id] = { at: Date.now(), text: text.slice(0, 50000) };
+      return _docTextCache.byId[id].text;
+    } catch (e) {
+      console.warn('[ask] library doc fetch error', id, e && e.message);
+    }
+  }
+  _docTextCache.byId[id] = { at: Date.now(), text: '' };
+  return '';
+}
+
+async function hydrateLibraryGuideBodies(guides) {
+  var i;
+  for (i = 0; i < (guides || []).length; i++) {
+    var g = guides[i];
+    if (!g || String(g.content || '').trim()) continue;
+    var docId = String(g.docId || '').trim() || extractGoogleDocId(g.mediaLink);
+    if (!docId) continue;
+    try {
+      var text = await fetchGoogleDocPlainText(docId);
+      if (text) g.content = text;
+    } catch (e) {
+      console.warn('[ask] library doc hydrate failed', docId, e && e.message);
+    }
+  }
+  return guides;
+}
+
+function libraryGuideListForClient(guides) {
+  return (guides || []).map(function (g) {
+    return {
+      guideId: g.guideId || '',
+      title: g.title || '',
+      category: g.category || ''
+    };
+  });
 }
 
 function buildStaffDivisions(staffRows) {
@@ -310,8 +506,10 @@ function buildStaffDivisions(staffRows) {
 
 function getVisibleGuides(currentUser, allGuides, staffDivisions) {
   var email = String((currentUser && currentUser.email) || '').trim().toLowerCase();
+  var isAdmin = !!(currentUser && currentUser.isAdmin);
   var userDivisions = (staffDivisions[email] || []).map(tagNorm);
   return (allGuides || []).filter(function (guide) {
+    if (isGuideAdminOnly(guide)) return isAdmin;
     var tags = splitTags(guide.divisionRoleTag);
     if (tags.some(function (t) { return tagNorm(t) === 'general'; })) return true;
     return tags.some(function (tag) { return userDivisions.indexOf(tagNorm(tag)) !== -1; });
@@ -664,7 +862,7 @@ export default async function handler(req, res) {
   // ─── Library mode (BBBS Internal Hub): ground ONLY in Library_Guides ───
   // Separate path so BB AI dashboard prompting is unchanged.
   // API mode key stays "library"; page route is internal-hub.
-  // Client-supplied libraryGuides are ignored: fetch + Division filter run here.
+  // Client-supplied libraryGuides are ignored: fetch + Division + Access Level filter run here.
   if (mode === 'library') {
     const authHeader =
       (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
@@ -686,24 +884,37 @@ export default async function handler(req, res) {
     let allGuides = [];
     let staffDivisions = {};
     let sheetEmpty = true;
+    let isAdmin = false;
     try {
       const guideValues = await fetchSheetValues('Library_Guides', LIBRARY_SHEET_ID);
       const staffValues = await fetchSheetValues('Staff_Access', SHEET_ID);
-      allGuides = normalizeLibraryGuides(rowsToObjects(guideValues));
-      staffDivisions = buildStaffDivisions(rowsToObjects(staffValues));
-      sheetEmpty = !allGuides.length;
+      const staffRows = rowsToObjects(staffValues);
+      const sheetGuides = normalizeLibraryGuides(rowsToObjects(guideValues));
+      allGuides = mergeKnownLibraryGuides(sheetGuides);
+      staffDivisions = buildStaffDivisions(staffRows);
+      const staffAdmins = buildStaffAdminSet(staffRows);
+      isAdmin = !!staffAdmins[userEmail];
+      sheetEmpty = !sheetGuides.length;
     } catch (sheetErr) {
       console.warn('[ask] library sheet load failed', sheetErr && sheetErr.message);
-      allGuides = [];
+      allGuides = mergeKnownLibraryGuides([]);
       sheetEmpty = true;
+      isAdmin = false;
     }
     // Do not use client-posted libraryGuides (would bypass server-side ACL).
     void libraryGuides;
 
-    const guides = getVisibleGuides({ email: userEmail }, allGuides, staffDivisions);
+    const guides = getVisibleGuides({ email: userEmail, isAdmin: isAdmin }, allGuides, staffDivisions);
+    try {
+      await hydrateLibraryGuideBodies(guides);
+    } catch (docErr) {
+      console.warn('[ask] library doc hydrate failed', docErr && docErr.message);
+    }
     console.log(
       '[ask] library filter email=',
       userEmail || '(none)',
+      'admin=',
+      isAdmin ? 'yes' : 'no',
       'divisions=',
       (staffDivisions[userEmail] || []).join(',') || '(none)',
       'visible=',
@@ -714,8 +925,10 @@ export default async function handler(req, res) {
 
     if (action === 'bootstrap') {
       return res.status(200).json({
-        empty: sheetEmpty,
-        visibleCount: guides.length
+        empty: !guides.length,
+        visibleCount: guides.length,
+        isAdmin: isAdmin,
+        guides: libraryGuideListForClient(guides)
       });
     }
 
@@ -789,7 +1002,8 @@ export default async function handler(req, res) {
         '6) If asked who you are, say you are BB, the BBBS Internal Hub assistant. ' +
         'Do not volunteer developer or ownership details unless specifically asked; ' +
         'if asked who built this app, say Lori is your developer and the app is owned by BB Building Services. ' +
-        '7) Use CONVERSATION SO FAR only to interpret follow-up questions. It does not allow answers from general knowledge.' +
+        '7) Use CONVERSATION SO FAR only to interpret follow-up questions. It does not allow answers from general knowledge. ' +
+        '8) If a matched guide has empty Content/Steps, do not invent steps. Tell the user the guide exists and they should open the Media Link for the full SOP. ' +
         libraryJsonFormatRules() +
         historyBlock +
         '\n\nINTERNAL HUB GUIDES (sole source of truth):\n' +
@@ -1123,4 +1337,4 @@ export default async function handler(req, res) {
   return res.status(200).json({ answer: stripEmDashes(answer) });
 }
 
-export { getVisibleGuides, buildStaffDivisions, normalizeLibraryGuides, fetchSheetValues, verifyHubIdToken, isHubEmailAllowed };
+export { getVisibleGuides, buildStaffDivisions, normalizeLibraryGuides, mergeKnownLibraryGuides, buildStaffAdminSet, parseGuideAccessLevel, fetchSheetValues, verifyHubIdToken, isHubEmailAllowed };
