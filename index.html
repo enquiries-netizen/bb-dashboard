@@ -645,7 +645,7 @@
           <!-- Section 4: budget consumption scatter -->
           <div class="section-card p4-scatter-section">
             <div class="section-title">Budget consumption vs completion</div>
-            <p class="p4-chart-note">X = milestone progress · Y = known actuals as % of budget (partial until Total Actual from Xero_Bills). Bubble size = Total Budget. Colour by health status.</p>
+            <p class="p4-chart-note">X = milestone progress · Y = Total Actual as % of budget when Total Actual or Revenue is non-zero. Jobs without that data are omitted, not plotted as 0. Bubble size = Total Budget. Colour by health status.</p>
             <div class="p4-scatter-wrap">
               <canvas id="chart-p4-scatter"></canvas>
             </div>
@@ -790,7 +790,7 @@
             <div class="p5-row-two">
               <div class="section-card p5-panel">
                 <div class="section-title">Project margin health
-                  <span class="p5-section-hint">Table and bubble · incomplete = Data Incomplete</span>
+                  <span class="p5-section-hint">Table and bubble · jobs without Total Actual or Revenue stay Data Incomplete, awaiting Xero_Bills</span>
                 </div>
                 <div class="p5-chart-wrap p5-chart-wrap--bubble">
                   <canvas id="chart-p5-bubble" aria-label="Project margin bubble chart"></canvas>
@@ -806,7 +806,7 @@
                   <canvas id="chart-p5-bridge" aria-label="Margin bridge for selected project"></canvas>
                 </div>
                 <div id="p5-bridge-status" class="p5-bridge-status"></div>
-                <p class="p5-section-hint" id="p5-bridge-hint">Quoted to Forecast Margin · steps Pending until Xero_Bills and estimate fields are live</p>
+                <p class="p5-section-hint" id="p5-bridge-hint">Quoted to Forecast Margin · Materials and Subbies shown separately when actuals are live</p>
               </div>
             </div>
 
@@ -3146,16 +3146,20 @@
     }
 
     /**
-     * Live Xero_Projects fields (safe as of sync). Incomplete columns L/N/P/Q
-     * are not treated as live numbers here.
+     * Live Xero_Projects fields.
+     * J Actual-Labour, K Actual Materials, L Actual-Subbies/Contractor,
+     * M Actual-Variations, N Total Actual, O Revenue, P Gross Profit.
+     * A job has real cost data only when Total Actual (N) or Revenue (O) is non-zero.
+     * Genuine $0 on both N and O (or both blank) stays Data Incomplete, awaiting Xero_Bills.
      */
     function readXeroProjectLive(row) {
       if (!row) {
         return {
           clientName: '', brand: '', department: '',
           dateCreatedRaw: '', expectedCompletionRaw: '',
-          totalBudgetRaw: '', actualLabourRaw: '', actualVariationsRaw: '',
-          revenueRaw: ''
+          totalBudgetRaw: '', actualLabourRaw: '', actualMaterialsRaw: '',
+          actualSubbiesRaw: '', actualVariationsRaw: '',
+          totalActualRaw: '', revenueRaw: '', grossProfitRaw: ''
         };
       }
       return {
@@ -3170,16 +3174,87 @@
         actualLabourRaw: rawColByNames(row, [
           'Actual-Labour', 'Actual Labour', 'actual_labour', 'Actual Labor'
         ]),
+        actualMaterialsRaw: rawColByNames(row, [
+          'Actual Materials', 'Actual-Materials', 'actual_materials', 'Actual Material'
+        ]),
+        actualSubbiesRaw: rawColByNames(row, [
+          'Actual-Subbies/ Contractor and others',
+          'Actual-Subbies/Contractor and others',
+          'Actual-Subbies',
+          'Actual Subbies',
+          'Actual-Subcontractors',
+          'Actual Subcontractors'
+        ]),
         actualVariationsRaw: rawColByNames(row, [
           'Actual-Variations', 'Actual Variations', 'actual_variations'
         ]),
-        revenueRaw: rawColByNames(row, ['Revenue', 'revenue', 'Total Revenue'])
+        totalActualRaw: rawColByNames(row, [
+          'Total Actual', 'total_actual', 'Total Actual Cost'
+        ]),
+        revenueRaw: rawColByNames(row, ['Revenue', 'revenue', 'Total Revenue']),
+        grossProfitRaw: rawColByNames(row, [
+          'Gross Profit', 'gross_profit', 'GP', 'Gross Profit $'
+        ])
       };
     }
 
-    /** Placeholder for columns that depend on Xero_Bills (Actual-Other Costs / Total Actual / Gross Profit). */
+    function xeroRawIsPresent(raw) {
+      if (raw === '' || raw === null || raw === undefined) return false;
+      var s = String(raw).trim();
+      if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'na') {
+        return false;
+      }
+      return true;
+    }
+
+    function xeroRawIsNonZero(raw) {
+      return xeroRawIsPresent(raw) && parseNum(raw) !== 0;
+    }
+
+    function xeroParseMoney(raw) {
+      return xeroRawIsPresent(raw) ? parseNum(raw) : null;
+    }
+
+    /** True when Total Actual (N) or Revenue (O) is a real non-zero amount. */
+    function xeroProjectHasJobCostData(live) {
+      if (!live) return false;
+      return xeroRawIsNonZero(live.totalActualRaw) || xeroRawIsNonZero(live.revenueRaw);
+    }
+
+    function xeroJobCostIncompleteLabel() {
+      return 'Data Incomplete, awaiting Xero_Bills';
+    }
+
     function xeroProjectsPendingLabel() {
-      return 'Awaiting Xero_Bills';
+      return xeroJobCostIncompleteLabel();
+    }
+
+    function xeroFmtMoneyOrIncomplete(raw, hasJobData) {
+      if (!hasJobData) return xeroJobCostIncompleteLabel();
+      if (!xeroRawIsPresent(raw)) return 'Not available';
+      return formatCurrency(parseNum(raw));
+    }
+
+    function xeroGrossProfitAmount(live) {
+      if (!live || !xeroProjectHasJobCostData(live)) return null;
+      var gp = xeroParseMoney(live.grossProfitRaw);
+      if (gp != null) return gp;
+      var rev = xeroParseMoney(live.revenueRaw);
+      var totalActual = xeroParseMoney(live.totalActualRaw);
+      if (rev != null && totalActual != null) return rev - totalActual;
+      return null;
+    }
+
+    /** Forecast GM % from Gross Profit / Revenue (budget fallback). Null when incomplete. */
+    function xeroForecastGmPct(live) {
+      if (!live || !xeroProjectHasJobCostData(live)) return null;
+      var gp = xeroGrossProfitAmount(live);
+      if (gp == null) return null;
+      var rev = xeroParseMoney(live.revenueRaw);
+      var budget = xeroParseMoney(live.totalBudgetRaw);
+      if (rev != null && rev !== 0) return (gp / rev) * 100;
+      if (budget != null && budget !== 0) return (gp / budget) * 100;
+      return null;
     }
 
     function formatXeroProjectDate(raw) {
@@ -6132,7 +6207,7 @@
           p8FetchSheet(CONFIG.TABS.TARGETS),
           p8FetchSheet(CONFIG.TABS.GHL_LEADS),
           p8FetchSheet(CONFIG.TABS.GHL_PIPELINE),
-          p8FetchSheet(CONFIG.TABS.GHL_QUOTES),
+          p8FetchSheet(CONFIG.TABS.QUOTES),
           p8FetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
           p8FetchSheet(CONFIG.TABS.CAPACITY),
           p8FetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
@@ -7810,7 +7885,7 @@
           p2FetchSheet(CONFIG.TABS.MARKETING_PAID),
           p2FetchSheet(CONFIG.TABS.MARKETING_SOURCES),
           p2FetchSheet(CONFIG.TABS.TARGETS),
-          p2FetchSheet(CONFIG.TABS.GHL_QUOTES),
+          p2FetchSheet(CONFIG.TABS.QUOTES),
           p2FetchSheet(CONFIG.TABS.PIPELINE_SNAPSHOTS || 'Pipeline_Snapshots')
         ]);
         var leadsR = settled[0];
@@ -9528,26 +9603,81 @@
       { id: 'ready', label: 'Ready to Send' }
     ];
 
+    /** Soft sheet load for P3: never rejects; captures HTTP status from fetchSheet errors. */
+    function p3FetchSheet(tabName) {
+      return fetchSheet(tabName).then(function(data) {
+        return { ok: true, data: data || [], tab: tabName, status: 200 };
+      }).catch(function(err) {
+        var msg = err && err.message ? String(err.message) : String(err || '');
+        var m = msg.match(/Sheets API error\s+(\d+)/i);
+        var status = m ? parseInt(m[1], 10) : null;
+        console.warn('[P3] Sheet load failed:', tabName, status != null ? ('HTTP ' + status) : msg);
+        return { ok: false, data: [], tab: tabName, status: status, error: err };
+      });
+    }
+
     async function loadP3() {
       showLoading(true);
       removeError('p3');
       try {
-        // Single Quotes fetch (GHL_Quotes was renamed to Quotes - same tab as estimating).
-        var results = await Promise.all([
-          fetchSheet(CONFIG.TABS.QUOTES),
-          fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.ESTIMATING_ACCURACY).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
+        // Quotes tab (renamed from GHL_Quotes). Estimating_Accuracy joins Quotes to Xero.
+        var tabQuotes = CONFIG.TABS.QUOTES || 'Quotes';
+        var tabProjects = CONFIG.TABS.XERO_PROJECTS || 'Xero_Projects';
+        var tabAccuracy = CONFIG.TABS.ESTIMATING_ACCURACY || 'Estimating_Accuracy';
+        var tabTargets = CONFIG.TABS.TARGETS || 'Targets';
+
+        var settled = await Promise.all([
+          p3FetchSheet(tabQuotes),
+          p3FetchSheet(tabProjects),
+          p3FetchSheet(tabAccuracy),
+          p3FetchSheet(tabTargets)
         ]);
-        var quotesRows = results[0] || [];
-        renderP3(quotesRows, results[1], results[2], results[3], {
-          // Same physical tab as production Quotes after rename
+        var quotesR = settled[0];
+        var projectsR = settled[1];
+        var accuracyR = settled[2];
+        var targetsR = settled[3];
+
+        var missing = [];
+        if (!quotesR.ok) missing.push(tabQuotes);
+        if (!projectsR.ok) missing.push(tabProjects);
+        if (!accuracyR.ok) missing.push(tabAccuracy);
+        if (!targetsR.ok) missing.push(tabTargets);
+
+        // Quotes is required for the page; other tabs are soft-fail so partial data still shows.
+        if (!quotesR.ok && missing.length === 1) {
+          showError('p3', tabQuotes + ' could not be loaded. Check sheet permissions.');
+        } else if (!quotesR.ok) {
+          showError(
+            'p3',
+            missing.join(', ') + ' could not be loaded. Check sheet permissions.'
+          );
+        } else if (missing.length) {
+          showError(
+            'p3',
+            missing.join(', ') + ' could not be loaded, other data is showing normally'
+          );
+        }
+
+        var quotesRows = quotesR.data || [];
+        renderP3(quotesRows, projectsR.data, accuracyR.data, targetsR.data, {
+          quotesLive: Array.isArray(quotesRows) && quotesRows.length > 0,
           ghlQuotesLive: Array.isArray(quotesRows) && quotesRows.length > 0,
+          sheetMeta: {
+            quotes: { ok: quotesR.ok, status: quotesR.status },
+            projects: { ok: projectsR.ok, status: projectsR.status },
+            accuracy: { ok: accuracyR.ok, status: accuracyR.status },
+            targets: { ok: targetsR.ok, status: targetsR.status }
+          },
           loadedAt: new Date()
         });
       } catch (err) {
         console.error('P3 load error:', err);
-        showError('p3', 'Could not load Quoting & Estimating data. Check sheet permissions.');
+        var detail = (err && err.message) ? String(err.message) : 'Unknown error';
+        if (/Sheets API error|Failed to fetch|NetworkError|403|401/i.test(detail)) {
+          showError('p3', 'Could not load Quoting & Estimating data. Check sheet permissions. (' + detail + ')');
+        } else {
+          showError('p3', 'Quoting & Estimating failed to render: ' + detail);
+        }
       } finally {
         showLoading(false);
         init3DTilt();
@@ -10766,14 +10896,17 @@
 
           htmlAcc += '<div class="p3-subhead">Quote accuracy detail</div>';
           var accTableRows = accSorted.map(function(r) {
+            var quoteId = String(col(r, 'GHL Quote ID', 'Quote ID', 'QuoteID') || '').trim();
+            var jobNo = accJobNumOf(r);
             var hasActual = accHasRealActualData(r);
             var status = hasActual ? 'Actuals available' : 'Awaiting job data';
             return {
-              'Quote': col(r, 'GHL Quote ID', 'Quote ID', 'QuoteID') || '—',
+              'Quote': quoteId || jobNo || '-',
+              'Job #': jobNo || '-',
               'Date Quoted': accDateQuotedOf(r),
-              'Estimator': col(r, 'Estimator', 'Estimator Name') || '—',
-              'Brand': col(r, 'Brand', 'brand') || '—',
-              'Department': col(r, 'Department', 'department') || '—',
+              'Estimator': col(r, 'Estimator', 'Estimator Name') || '-',
+              'Brand': col(r, 'Brand', 'brand') || '-',
+              'Department': col(r, 'Department', 'department') || '-',
               'Quoted Margin %': accFmtQuotedPct(rawColByNames(r, ['Quoted Margin %', 'Quoted Margin'])),
               'Actual Margin %': accFmtActualPct(rawColByNames(r, ['Actual Margin %', 'Actual Margin']), hasActual),
               'Margin Variance %': accFmtActualPct(rawColByNames(r, ['Margin Variance %', 'Margin Variance']), hasActual),
@@ -10785,6 +10918,7 @@
           });
           htmlAcc += buildTable(accTableRows, [
             { label: 'Quote', key: 'Quote', align: 'left' },
+            { label: 'Job #', key: 'Job #', align: 'left' },
             { label: 'Date Quoted', key: 'Date Quoted', align: 'left' },
             { label: 'Estimator', key: 'Estimator', align: 'left' },
             { label: 'Brand', key: 'Brand', align: 'left' },
@@ -10835,17 +10969,17 @@
             overdue: b.overdue
           };
         }),
-        accuracyCompletedN: completedAcc.length,
-        accuracyUnavailable: completedAcc.length === 0,
+        accuracyCompletedN: accWithActuals.length,
+        accuracyUnavailable: accWithActuals.length === 0,
         sourcesLive: {
           quotes: quotesLive,
           ghlQuotes: ghlLive,
-          estimatingAccuracyCompleted: completedAcc.length > 0,
+          estimatingAccuracyCompleted: accWithActuals.length > 0,
           dueDates: hasDueDates,
           bookedHours: hasBookedHours,
           estMargin: hasMarginVals
         },
-        projectsNote: 'Live job budget vs actual lives on P4; Xero_Projects actuals incomplete without Xero_Bills',
+        projectsNote: 'Live job budget vs actual lives on P4 and P5. Estimating_Accuracy averages use only rows with real actuals.',
         marginTarget: marginTargetVal,
         lastUpdated: formatDateTimeAU(loadedAt)
       });
@@ -11277,8 +11411,17 @@
             revenueRaw: '',
             actualLabour: null,
             actualLabourRaw: '',
+            actualMaterials: null,
+            actualMaterialsRaw: '',
+            actualSubbies: null,
+            actualSubbiesRaw: '',
             actualVariations: null,
             actualVariationsRaw: '',
+            totalActual: null,
+            totalActualRaw: '',
+            grossProfit: null,
+            grossProfitRaw: '',
+            hasJobCostData: false,
             actualSoFar: null,
             totalActualComplete: false,
             forecastMargin: null,
@@ -11370,10 +11513,27 @@
           matched.actualLabourRaw = live.actualLabourRaw;
           matched.actualLabour = parseNum(live.actualLabourRaw);
         }
+        if (p4MoneyPresent(live.actualMaterialsRaw)) {
+          matched.actualMaterialsRaw = live.actualMaterialsRaw;
+          matched.actualMaterials = parseNum(live.actualMaterialsRaw);
+        }
+        if (p4MoneyPresent(live.actualSubbiesRaw)) {
+          matched.actualSubbiesRaw = live.actualSubbiesRaw;
+          matched.actualSubbies = parseNum(live.actualSubbiesRaw);
+        }
         if (p4MoneyPresent(live.actualVariationsRaw)) {
           matched.actualVariationsRaw = live.actualVariationsRaw;
           matched.actualVariations = parseNum(live.actualVariationsRaw);
         }
+        if (p4MoneyPresent(live.totalActualRaw)) {
+          matched.totalActualRaw = live.totalActualRaw;
+          matched.totalActual = parseNum(live.totalActualRaw);
+        }
+        if (p4MoneyPresent(live.grossProfitRaw)) {
+          matched.grossProfitRaw = live.grossProfitRaw;
+          matched.grossProfit = parseNum(live.grossProfitRaw);
+        }
+        matched.hasJobCostData = xeroProjectHasJobCostData(live);
         var expected = parseFlexibleDate(live.expectedCompletionRaw);
         if (expected && !matched.maxEnd) matched.maxEnd = expected;
         var created = parseFlexibleDate(live.dateCreatedRaw);
@@ -11432,12 +11592,36 @@
           soFar = p.labourCost;
           hasPartial = true;
         }
-        p.actualSoFar = hasPartial ? soFar : null;
-        p.totalActualComplete = false;
-        p.forecastMarginPending = true;
-        p.forecastCostPending = true;
-        p.forecastMargin = null;
-        p.forecastCost = null;
+
+        if (p.hasJobCostData) {
+          p.totalActualComplete = true;
+          p.actualSoFar = p.totalActual != null ? p.totalActual : (hasPartial ? soFar : null);
+          var gp = p.grossProfit;
+          var rev = p.revenue;
+          if (gp == null && rev != null && p.totalActual != null) {
+            gp = rev - p.totalActual;
+            p.grossProfit = gp;
+          }
+          if (gp != null && rev != null && rev !== 0) {
+            p.forecastMargin = (gp / rev) * 100;
+            p.forecastMarginPending = false;
+          } else if (gp != null && p.totalBudget != null && p.totalBudget !== 0) {
+            p.forecastMargin = (gp / p.totalBudget) * 100;
+            p.forecastMarginPending = false;
+          } else {
+            p.forecastMargin = null;
+            p.forecastMarginPending = true;
+          }
+          p.forecastCost = p.totalActual;
+          p.forecastCostPending = p.totalActual == null;
+        } else {
+          p.actualSoFar = hasPartial ? soFar : null;
+          p.totalActualComplete = false;
+          p.forecastMarginPending = true;
+          p.forecastCostPending = true;
+          p.forecastMargin = null;
+          p.forecastCost = null;
+        }
         p.labourVariancePending = true;
 
         if (p.totalBudget != null && p.totalBudget > 0 && p.actualSoFar != null) {
@@ -11647,7 +11831,7 @@
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
-        pendingNote: 'Forecast Gross Margin and Total Actual await Xero_Bills. Labour Variance awaits budgeted labour field.'
+        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Data Incomplete, awaiting Xero_Bills. Labour Variance awaits budgeted labour field.'
       });
 
       var activeList = filteredRollups.filter(function(p) { return p.isActive; });
@@ -11665,7 +11849,7 @@
       if (noData) {
         setKPI('kpi-p4-active', 'kpi-p4-active-sub', '-', 'Syncs every Friday 6pm via Buildpass Schedule task');
         setKPI('kpi-p4-contract', 'kpi-p4-contract-sub', '-', '');
-        setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub', 'Pending', 'Awaiting Xero_Bills');
+        setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub', 'Pending', xeroJobCostIncompleteLabel());
         setKPI('kpi-p4-labvar', 'kpi-p4-labvar-sub', 'Pending', 'Budgeted labour source TBD');
         setKPI('kpi-p4-atrisk', 'kpi-p4-atrisk-sub', '-', '');
         document.getElementById('p4-health-gantt').innerHTML =
@@ -11702,10 +11886,22 @@
       setKPI('kpi-p4-contract', 'kpi-p4-contract-sub',
         contractN ? p4FormatMoneyAbbrev(contractSum) : '-',
         contractN ? ('Sum of Total Budget · ' + contractN + ' job' + (contractN !== 1 ? 's' : '')) : 'No Total Budget on matched jobs');
-      // Forecast GM: Total Actual incomplete -> always Pending at portfolio level
-      setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub',
-        'Pending',
-        'Awaiting Xero_Bills (Total Actual incomplete)');
+      var gmVals = [];
+      activeList.forEach(function(p) {
+        if (p.hasJobCostData && !p.forecastMarginPending && p.forecastMargin != null) {
+          gmVals.push(p.forecastMargin);
+        }
+      });
+      if (gmVals.length) {
+        var gmAvg = gmVals.reduce(function(s, n) { return s + n; }, 0) / gmVals.length;
+        setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub',
+          formatPct(gmAvg),
+          'Avg on ' + gmVals.length + ' job' + (gmVals.length !== 1 ? 's' : '') + ' with actual cost data');
+      } else {
+        setKPI('kpi-p4-fgm', 'kpi-p4-fgm-sub',
+          'Pending',
+          xeroJobCostIncompleteLabel());
+      }
       setKPI('kpi-p4-labvar', 'kpi-p4-labvar-sub',
         'Pending',
         'Budgeted labour source TBD');
@@ -11970,7 +12166,7 @@
         if (!canvas) return;
 
         var points = [];
-        list.filter(function(p) { return p.isActive; }).forEach(function(p) {
+        list.filter(function(p) { return p.isActive && p.hasJobCostData; }).forEach(function(p) {
           if (p.progressAvg == null) return;
           if (p.budgetConsumedPct == null || p.totalBudget == null || p.totalBudget <= 0) return;
           var r = Math.max(4, Math.min(28, Math.sqrt(p.totalBudget) / 120));
@@ -11983,7 +12179,8 @@
             r: r,
             project: p.project,
             health: p.health,
-            bg: color
+            bg: color,
+            complete: !!p.totalActualComplete
           });
         });
 
@@ -12025,7 +12222,7 @@
                   label: function(ctx) {
                     var pt = points[ctx.dataIndex];
                     return (pt.project || '') + ': ' + Math.round(pt.x) + '% done, ' +
-                      Math.round(pt.y) + '% budget consumed (partial)';
+                      Math.round(pt.y) + '% budget consumed (Total Actual)';
                   }
                 }
               }
@@ -12039,7 +12236,7 @@
                 grid: { color: 'rgba(107,114,128,0.2)' }
               },
               y: {
-                title: { display: true, text: 'Budget consumed % (partial)', color: brandMuted },
+                title: { display: true, text: 'Budget consumed % (Total Actual)', color: brandMuted },
                 min: 0,
                 ticks: { color: brandCharcoal, callback: function(v) { return v + '%'; } },
                 grid: { color: 'rgba(107,114,128,0.2)' }
@@ -12112,14 +12309,28 @@
         var trs = shown.map(function(p, idx) {
           var endTxt = p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-';
           var budgetTxt = p.totalBudget != null ? p4FormatMoneyAbbrev(p.totalBudget) : '-';
+          var costTxt = (p.hasJobCostData && !p.forecastCostPending && p.forecastCost != null)
+            ? p4FormatMoneyAbbrev(p.forecastCost)
+            : '';
+          var marginTxt = (p.hasJobCostData && !p.forecastMarginPending && p.forecastMargin != null)
+            ? (p.forecastMargin.toFixed(1) + '%')
+            : '';
+          var costEmpty = !costTxt;
+          var marginEmpty = !marginTxt;
           return '<tr class="p4-ex-row" data-ex-idx="' + idx + '" role="button" tabindex="0">' +
             '<td class="p4-jco-td p4-jco-td--project p4-ex-sticky p4-ex-sticky--a">' + p4EscHtml(p.project) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--left p4-ex-sticky p4-ex-sticky--b">' + p4EscHtml(p.clientName || '-') + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4ProgressBarCell(p) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + endTxt + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + (budgetTxt === '-' ? '<span class="p4-jco-null">-</span>' : budgetTxt) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
-            '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' +
+              (costEmpty
+                ? '<span class="p4-jco-null">' + (p.hasJobCostData ? 'Not available' : 'Data Incomplete') + '</span>'
+                : costTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' +
+              (marginEmpty
+                ? '<span class="p4-jco-null">' + (p.hasJobCostData ? 'Not available' : 'Data Incomplete') + '</span>'
+                : marginTxt) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num"><span class="p4-jco-null">Pending</span></td>' +
             '<td class="p4-jco-td p4-jco-td--left">' + formatHealthBadge(p.health) + '</td>' +
             '</tr>';
@@ -12189,9 +12400,13 @@
           '<th class="p4-jco-th p4-jco-th--num">Hours</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Labour Cost</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Actual-Labour</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual Materials</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Actual-Subbies</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Actual-Variations</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Total Actual</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Total Budget</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Revenue</th>' +
+          '<th class="p4-jco-th p4-jco-th--num">Gross Profit</th>' +
           '<th class="p4-jco-th p4-jco-th--num">Labour cost as % of budget</th>' +
           '<th class="p4-jco-th p4-jco-th--left">Brand</th>' +
           '<th class="p4-jco-th p4-jco-th--left">Department</th>' +
@@ -12207,9 +12422,22 @@
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, !hrsTxt) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(costTxt, !costTxt) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualLabourRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualMaterialsRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualSubbiesRaw) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualVariationsRaw) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' +
+              (p.hasJobCostData
+                ? p4JcoMoneyCell(p.totalActualRaw)
+                : '<span class="p4-jco-null">Data Incomplete</span>') + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.totalBudgetRaw) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(revTxt || '-', !revTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' +
+              (p.hasJobCostData
+                ? p4JcoCell(revTxt || '-', !revTxt)
+                : '<span class="p4-jco-null">Data Incomplete</span>') + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' +
+              (p.hasJobCostData && p.grossProfit != null
+                ? formatCurrency(p.grossProfit)
+                : '<span class="p4-jco-null">' + (p.hasJobCostData ? 'Not available' : 'Data Incomplete') + '</span>') + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num p4-jco-td--pct">' + labourPctBudgetCell(p) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.brand, 'brand') + '</td>' +
             '<td class="p4-jco-td p4-jco-td--left">' + p4JcoPill(p.department, 'dept') + '</td>' +
@@ -12249,10 +12477,13 @@
           return formatLiveMoneyOrDash(raw);
         }
 
-        // Bars: Budget known; Committed N/A; Actual partial; Forecast pending
+        // Bars: Budget known; Actual = Total Actual when live; Forecast pending only if incomplete
         var budget = p.totalBudget;
-        var actual = p.actualSoFar;
-        var maxBar = Math.max(budget || 0, actual || 0, 1);
+        var actual = p.hasJobCostData && p.totalActual != null ? p.totalActual : p.actualSoFar;
+        var actualLabel = p.hasJobCostData ? 'Actual' : 'Actual (partial)';
+        var forecastPending = !p.hasJobCostData;
+        var forecastVal = p.hasJobCostData && p.totalActual != null ? p.totalActual : null;
+        var maxBar = Math.max(budget || 0, actual || 0, forecastVal || 0, 1);
         function barRow(label, valueTxt, widthPct, pending) {
           return '<div class="p4-draw-bar-row">' +
             '<div class="p4-draw-bar-meta"><span>' + label + '</span><strong>' + valueTxt + '</strong></div>' +
@@ -12267,10 +12498,17 @@
           barRow('Budget', budget != null ? formatCurrency(budget) : '-',
             budget != null ? Math.min(100, (budget / maxBar) * 100) : 0, budget == null) +
           barRow('Committed', 'Pending', 0, true) +
-          barRow('Actual (partial)', actual != null ? formatCurrency(actual) : 'Pending',
+          barRow(actualLabel, actual != null ? formatCurrency(actual) : 'Pending',
             actual != null ? Math.min(100, (actual / maxBar) * 100) : 0, actual == null) +
-          barRow('Forecast', 'Awaiting Xero_Bills', 0, true) +
+          barRow('Forecast',
+            forecastPending ? xeroJobCostIncompleteLabel() : formatCurrency(forecastVal),
+            forecastPending ? 0 : Math.min(100, ((forecastVal || 0) / maxBar) * 100),
+            forecastPending) +
           '</div>';
+
+        var gmTxt = (p.hasJobCostData && !p.forecastMarginPending && p.forecastMargin != null)
+          ? formatPct(p.forecastMargin)
+          : (p.hasJobCostData ? 'Not available' : xeroJobCostIncompleteLabel());
 
         var infoHtml =
           '<dl class="p4-ms-drawer-dl">' +
@@ -12279,10 +12517,23 @@
           '<div><dt>End date</dt><dd>' + (p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-') + '</dd></div>' +
           '<div><dt>Hours</dt><dd>' + (p.labourHours ? p.labourHours.toFixed(1) : '-') + '</dd></div>' +
           '<div><dt>Labour cost</dt><dd>' + (p.labourCost ? formatCurrency(p.labourCost) : '-') + '</dd></div>' +
+          '<div><dt>Actual-Labour</dt><dd>' + moneyOrDash(p.actualLabourRaw, p.actualLabour) + '</dd></div>' +
+          '<div><dt>Actual Materials</dt><dd>' + moneyOrDash(p.actualMaterialsRaw, p.actualMaterials) + '</dd></div>' +
+          '<div><dt>Actual-Subbies</dt><dd>' + moneyOrDash(p.actualSubbiesRaw, p.actualSubbies) + '</dd></div>' +
+          '<div><dt>Actual-Variations</dt><dd>' + moneyOrDash(p.actualVariationsRaw, p.actualVariations) + '</dd></div>' +
+          '<div><dt>Total Actual</dt><dd>' +
+            (p.hasJobCostData ? moneyOrDash(p.totalActualRaw, p.totalActual) : xeroJobCostIncompleteLabel()) +
+          '</dd></div>' +
+          '<div><dt>Revenue</dt><dd>' +
+            (p.hasJobCostData ? moneyOrDash(p.revenueRaw, p.revenue) : xeroJobCostIncompleteLabel()) +
+          '</dd></div>' +
+          '<div><dt>Gross Profit</dt><dd>' +
+            (p.hasJobCostData && p.grossProfit != null ? formatCurrency(p.grossProfit) : (p.hasJobCostData ? 'Not available' : xeroJobCostIncompleteLabel())) +
+          '</dd></div>' +
           '<div><dt>Labour cost as % of budget</dt><dd>' +
           (p.labourCostAsPctBudget != null ? p.labourCostAsPctBudget.toFixed(1) + '%' : '-') + '</dd></div>' +
           '<div><dt>Labour variance</dt><dd>Pending <span class="p4-draw-note">(Budgeted labour source TBD)</span></dd></div>' +
-          '<div><dt>Forecast margin</dt><dd>Pending <span class="p4-draw-note">(Awaiting Xero_Bills)</span></dd></div>' +
+          '<div><dt>Forecast margin</dt><dd>' + gmTxt + '</dd></div>' +
           '<div><dt>Staffing</dt><dd>' + p4EscHtml(p.handsSignal || '-') + '</dd></div>' +
           '<div><dt>Brand</dt><dd>' + p4EscHtml(p.brand || '-') + '</dd></div>' +
           '<div><dt>Department</dt><dd>' + p4EscHtml(p.department || '-') + '</dd></div>' +
@@ -12708,6 +12959,7 @@
             if (live.brand && live.department) brandDept = live.brand + ' / ' + live.department;
             else brandDept = live.brand || live.department;
           }
+          var hasJobData = xeroProjectHasJobCostData(live);
           return {
             project: r.project || '-',
             milestone: r.milestone || '-',
@@ -12724,8 +12976,13 @@
             expectedCompletion: formatXeroProjectDate(live.expectedCompletionRaw) || '-',
             totalBudget: formatLiveMoneyOrDash(live.totalBudgetRaw),
             actualLabour: formatLiveMoneyOrDash(live.actualLabourRaw),
+            actualMaterials: formatLiveMoneyOrDash(live.actualMaterialsRaw),
+            actualSubbies: formatLiveMoneyOrDash(live.actualSubbiesRaw),
             actualVariations: formatLiveMoneyOrDash(live.actualVariationsRaw),
-            revenue: formatLiveMoneyOrDash(live.revenueRaw)
+            revenue: hasJobData ? formatLiveMoneyOrDash(live.revenueRaw) : xeroJobCostIncompleteLabel(),
+            totalActual: hasJobData ? xeroFmtMoneyOrIncomplete(live.totalActualRaw, true) : xeroJobCostIncompleteLabel(),
+            grossProfit: hasJobData ? xeroFmtMoneyOrIncomplete(live.grossProfitRaw, true) : xeroJobCostIncompleteLabel(),
+            hasJobData: hasJobData
           };
         }
 
@@ -12829,10 +13086,12 @@
           '<div><dt>Completion %</dt><dd id="p4-ms-d-pct">-</dd></div>' +
           '<div><dt>Total Budget</dt><dd id="p4-ms-d-budget">-</dd></div>' +
           '<div><dt>Actual-Labour</dt><dd id="p4-ms-d-actlab">-</dd></div>' +
+          '<div><dt>Actual Materials</dt><dd id="p4-ms-d-actmat">-</dd></div>' +
+          '<div><dt>Actual-Subbies</dt><dd id="p4-ms-d-actsub">-</dd></div>' +
           '<div><dt>Actual-Variations</dt><dd id="p4-ms-d-actvar">-</dd></div>' +
           '<div><dt>Revenue</dt><dd id="p4-ms-d-rev">-</dd></div>' +
-          '<div><dt>Total Actual</dt><dd id="p4-ms-d-totalact">' + xeroProjectsPendingLabel() + '</dd></div>' +
-          '<div><dt>Gross Profit</dt><dd id="p4-ms-d-gp">' + xeroProjectsPendingLabel() + '</dd></div>' +
+          '<div><dt>Total Actual</dt><dd id="p4-ms-d-totalact">-</dd></div>' +
+          '<div><dt>Gross Profit</dt><dd id="p4-ms-d-gp">-</dd></div>' +
           '</dl>' +
           '</aside></div>';
 
@@ -12881,10 +13140,12 @@
           document.getElementById('p4-ms-d-expected').textContent = payload.expectedCompletion;
           document.getElementById('p4-ms-d-budget').textContent = payload.totalBudget;
           document.getElementById('p4-ms-d-actlab').textContent = payload.actualLabour;
+          document.getElementById('p4-ms-d-actmat').textContent = payload.actualMaterials;
+          document.getElementById('p4-ms-d-actsub').textContent = payload.actualSubbies;
           document.getElementById('p4-ms-d-actvar').textContent = payload.actualVariations;
           document.getElementById('p4-ms-d-rev').textContent = payload.revenue;
-          document.getElementById('p4-ms-d-totalact').textContent = xeroProjectsPendingLabel();
-          document.getElementById('p4-ms-d-gp').textContent = xeroProjectsPendingLabel();
+          document.getElementById('p4-ms-d-totalact').textContent = payload.totalActual;
+          document.getElementById('p4-ms-d-gp').textContent = payload.grossProfit;
           drawer.hidden = false;
           if (backdrop) backdrop.hidden = false;
           document.querySelectorAll('#p4-schedule-table .p4-ms-row-hit').forEach(function(el) {
@@ -20411,20 +20672,26 @@
       })();
 
       // ── Projects margin health ──
+      var gmTargetPct = readMarginTargetPct(targets);
       var projectRows = [];
       brandProjects.forEach(function(r) {
         var live = readXeroProjectLive(r);
         var job = xeroProjectJobKeys(r)[0] || live.clientName || 'Project';
-        var budget = hasMoneyField(live.totalBudgetRaw) ? parseNum(live.totalBudgetRaw) : null;
-        var labour = hasMoneyField(live.actualLabourRaw) ? parseNum(live.actualLabourRaw) : null;
-        var vars = hasMoneyField(live.actualVariationsRaw) ? parseNum(live.actualVariationsRaw) : null;
-        var rev = hasMoneyField(live.revenueRaw) ? parseNum(live.revenueRaw) : null;
-        // L/N/P incomplete → Data Incomplete for forecast GM
-        var dataIncomplete = true; // bills pending always for Total Actual / GP
-        var knownCost = (labour || 0) + (vars || 0);
-        var hasKnownCost = labour != null || vars != null;
+        var budget = xeroParseMoney(live.totalBudgetRaw);
+        var labour = xeroParseMoney(live.actualLabourRaw);
+        var materials = xeroParseMoney(live.actualMaterialsRaw);
+        var subbies = xeroParseMoney(live.actualSubbiesRaw);
+        var vars = xeroParseMoney(live.actualVariationsRaw);
+        var totalActual = xeroParseMoney(live.totalActualRaw);
+        var rev = xeroParseMoney(live.revenueRaw);
+        var gp = xeroGrossProfitAmount(live);
+        var hasJobData = xeroProjectHasJobCostData(live);
+        var dataIncomplete = !hasJobData;
+        var knownCost = hasJobData && totalActual != null
+          ? totalActual
+          : ((labour || 0) + (vars || 0));
+        var hasKnownCost = hasJobData ? totalActual != null : (labour != null || vars != null);
 
-        // Completion proxy from date span when available
         var startD = parseFlexibleDate(live.dateCreatedRaw);
         var endD = parseFlexibleDate(live.expectedCompletionRaw);
         var completion = null;
@@ -20435,32 +20702,39 @@
           if (completion > 100) completion = 100;
         }
 
-        // Forecast GM: cannot finalize without Total Actual
-        var forecastGm = null;
+        var forecastGm = hasJobData ? xeroForecastGmPct(live) : null;
         var status = 'Data Incomplete';
         var statusKey = 'incomplete';
         var riskAmount = 0;
 
-        if (hasKnownCost && budget != null && budget > 0) {
-          var consume = knownCost / budget;
-          if (consume >= 1.05) {
-            // genuine cost pressure even before full bills
+        if (hasJobData) {
+          if ((gp != null && gp < 0) || (forecastGm != null && forecastGm < 0)) {
+            status = 'Forecast Loss';
+            statusKey = 'loss';
+            riskAmount = gp != null && gp < 0 ? Math.abs(gp) : 0;
+          } else if (budget != null && budget > 0 && totalActual != null && totalActual >= budget * 1.05) {
             status = 'Margin Erosion';
             statusKey = 'erosion';
-            riskAmount = knownCost - budget;
-          } else if (consume >= 0.9) {
+            riskAmount = totalActual - budget;
+          } else if (forecastGm != null && gmTargetPct != null) {
+            if (forecastGm < gmTargetPct - 5) {
+              status = 'Margin Erosion';
+              statusKey = 'erosion';
+              if (rev != null) riskAmount = Math.max(0, (gmTargetPct - forecastGm) / 100 * rev);
+            } else if (forecastGm < gmTargetPct) {
+              status = 'Margin Watch';
+              statusKey = 'watch';
+            } else {
+              status = 'On Target';
+              statusKey = 'target';
+            }
+          } else if (budget != null && budget > 0 && totalActual != null && totalActual / budget >= 0.9) {
             status = 'Margin Watch';
             statusKey = 'watch';
           } else {
-            // still incomplete for final GM, but not escalated
-            status = 'Data Incomplete';
-            statusKey = 'incomplete';
+            status = 'On Target';
+            statusKey = 'target';
           }
-        }
-        if (hasKnownCost && rev != null && knownCost > rev * 1.02) {
-          status = 'Forecast Loss';
-          statusKey = 'loss';
-          riskAmount = Math.max(riskAmount, knownCost - rev);
         }
 
         projectRows.push({
@@ -20471,7 +20745,11 @@
           department: live.department || '',
           budget: budget,
           labour: labour,
+          materials: materials,
+          subbies: subbies,
           variations: vars,
+          totalActual: totalActual,
+          grossProfit: gp,
           revenue: rev,
           completion: completion,
           forecastGm: forecastGm,
@@ -20479,6 +20757,7 @@
           statusKey: statusKey,
           riskAmount: riskAmount,
           dataIncomplete: dataIncomplete,
+          hasJobCostData: hasJobData,
           knownCost: hasKnownCost ? knownCost : null,
           endMs: endD ? endD.getTime() : null
         });
@@ -20560,11 +20839,11 @@
       if (marginAtRiskN > 0) {
         pushException('High', 'Margin at risk',
           marginAtRiskN + ' project' + (marginAtRiskN !== 1 ? 's' : '') +
-            ' show cost pressure before Xero_Bills finals',
+          ' show cost pressure on live Total Actual / Gross Profit',
           marginAtRiskAmt != null ? formatCurrency(marginAtRiskAmt) : 'Review required');
         pushAction('High', 'Review project margin pressure',
           marginAtRiskAmt != null ? fmtMoneyCompactAbs(marginAtRiskAmt) : (marginAtRiskN + ' jobs'),
-          'Project leads', 'Confirm costs once supplier bills land');
+          'Project leads', 'Review live Total Actual and Gross Profit on the job');
       }
 
       if (missingTargetMonths.length) {
@@ -20577,10 +20856,12 @@
       }
 
       var incompleteProjects = projectRows.filter(function(p) { return p.dataIncomplete; }).length;
+      var completeProjects = projectRows.filter(function(p) { return p.hasJobCostData; }).length;
       if (incompleteProjects > 0) {
         pushException('Medium', 'Project costs incomplete',
-          incompleteProjects + ' projects awaiting Xero_Bills for Total Actual / Gross Profit',
-          'Data incomplete');
+          incompleteProjects + ' project' + (incompleteProjects !== 1 ? 's' : '') +
+            ' Data Incomplete, awaiting Xero_Bills',
+          'Data Incomplete');
       }
 
       // ── Data quality banner ──
@@ -20624,9 +20905,18 @@
       if (completeEl) {
         var parts = [];
         parts.push(yearFin.length ? (yearFin.length + ' financial rows') : 'Financials Pending');
-        parts.push(incompleteProjects
-          ? (incompleteProjects + ' projects Awaiting Xero_Bills')
-          : (projectRows.length ? 'Project cost finals Pending' : 'No projects'));
+        if (projectRows.length) {
+          var costBits = [];
+          if (completeProjects) {
+            costBits.push(completeProjects + ' with actual cost data');
+          }
+          if (incompleteProjects) {
+            costBits.push(incompleteProjects + ' Data Incomplete, awaiting Xero_Bills');
+          }
+          parts.push(costBits.join(' · '));
+        } else {
+          parts.push('No projects');
+        }
         parts.push(hasAgeingData ? 'AR ageing available (detail on P9)' : 'AR ageing Pending');
         completeEl.textContent = 'Data completeness: ' + parts.join(' · ');
       }
@@ -20644,7 +20934,7 @@
       setKPI('kpi-p5-revenue', 'kpi-p5-revenue-sub',
         fmtMoneyOrPending(totalRevYtd), revSub || 'YTD revenue');
 
-      setWarnDot('p5-w-gp', incompleteProjects > 0, 'Project GP finals await Xero_Bills; brand P&L GP from Xero_Financials when present');
+      setWarnDot('p5-w-gp', incompleteProjects > 0, 'Some jobs Data Incomplete, awaiting Xero_Bills; brand P&L GP from Xero_Financials when present');
       setKPI('kpi-p5-gp', 'kpi-p5-gp-sub',
         fmtMoneyOrPending(totalGpYtd),
         totalGpYtd != null ? 'From Xero_Financials YTD' : 'Pending in Xero_Financials');
@@ -20701,8 +20991,8 @@
       } else if (incompleteProjects > 0) {
         setKPI('kpi-p5-risk', 'kpi-p5-risk-sub',
           'Review required',
-          incompleteProjects + ' jobs Awaiting Xero_Bills');
-        setWarnDot('p5-w-risk', true, 'Forecast margin incomplete without supplier bills');
+          incompleteProjects + ' jobs Data Incomplete, awaiting Xero_Bills');
+        setWarnDot('p5-w-risk', true, 'Forecast margin incomplete without Total Actual or Revenue');
         setKpiCardRisk('p5-kpi-risk', 'gap');
       } else {
         setKPI('kpi-p5-risk', 'kpi-p5-risk-sub', 'Pending', 'No quantified margin risk yet');
@@ -21178,7 +21468,7 @@
 
       function drawBubble() {
         var pts = projectRows.filter(function(p) {
-          return p.budget != null && p.budget > 0;
+          return p.hasJobCostData && p.forecastGm != null && p.budget != null && p.budget > 0;
         }).slice(0, 40);
 
         if (!pts.length) {
@@ -21186,20 +21476,15 @@
           return;
         }
 
-        // Y axis: forecast GM unknown → plot labour consumption proxy inverted? No invent.
-        // Use null Y → Chart.js needs numbers. Plot completion vs known cost % of budget as interim Y,
-        // labelled clearly as cost consumption (not GM) when GM incomplete.
-        var usingProxy = pts.every(function(p) { return p.forecastGm == null; });
+        var yMin = 0;
+        pts.forEach(function(p) {
+          if (p.forecastGm < yMin) yMin = Math.floor(p.forecastGm / 10) * 10;
+        });
 
         var data = pts.map(function(p) {
-          var x = p.completion != null ? p.completion : 50;
-          var y;
-          if (p.forecastGm != null) y = p.forecastGm;
-          else if (p.budget && p.knownCost != null) y = Math.min(100, (p.knownCost / p.budget) * 100);
-          else y = 0;
           return {
-            x: x,
-            y: y,
+            x: p.completion != null ? p.completion : 50,
+            y: p.forecastGm,
             r: Math.max(4, Math.min(22, Math.sqrt(Math.max(p.budget || 0, 0)) / 120)),
             project: p
           };
@@ -21209,7 +21494,7 @@
           type: 'bubble',
           data: {
             datasets: [{
-              label: usingProxy ? 'Cost consumption % (GM Pending)' : 'Forecast GM %',
+              label: 'Forecast GM %',
               data: data,
               backgroundColor: data.map(function(d) {
                 return statusColor(d.project.statusKey) + '99';
@@ -21231,7 +21516,9 @@
                     var p = ctx.raw.project;
                     var lines = [p.job + (p.client ? ' · ' + p.client : '')];
                     lines.push('Completion: ' + (p.completion != null ? p.completion + '%' : 'Pending'));
-                    lines.push('Forecast GM: Data Incomplete (Awaiting Xero_Bills)');
+                    lines.push('Forecast GM: ' + formatPct(p.forecastGm));
+                    if (p.totalActual != null) lines.push('Total Actual: ' + formatCurrency(p.totalActual));
+                    if (p.grossProfit != null) lines.push('Gross Profit: ' + formatCurrency(p.grossProfit));
                     if (p.budget != null) lines.push('Contract: ' + formatCurrency(p.budget));
                     lines.push('Status: ' + p.status);
                     return lines;
@@ -21249,11 +21536,11 @@
               y: {
                 title: {
                   display: true,
-                  text: usingProxy ? 'Known cost % of budget (not GM)' : 'Forecast GM %',
+                  text: 'Forecast GM %',
                   color: P5.muted,
                   font: { size: 10 }
                 },
-                min: 0,
+                min: yMin,
                 ticks: { color: P5.muted, font: { size: 10 } },
                 grid: { color: 'rgba(226,228,232,0.9)' }
               }
@@ -21265,6 +21552,7 @@
               if (p) {
                 _p5SelectedProjectKey = p.key;
                 drawBridge(p);
+                renderProjectTable();
                 highlightProjectTable(p.key);
               }
             }
@@ -21275,6 +21563,30 @@
       function statusBadge(p) {
         var cls = 'p5-status p5-status--' + p.statusKey;
         return '<span class="' + cls + '">' + esc(p.status) + '</span>';
+      }
+
+      function p5MoneyCell(v, hasData) {
+        if (!hasData) return 'Data Incomplete';
+        if (v == null) return 'Not available';
+        return formatCurrency(v);
+      }
+
+      function p5CostBreakdownHtml(p) {
+        var has = !!p.hasJobCostData;
+        function bit(label, v) {
+          return '<span class="p5-cost-bit"><span class="p5-cost-lab">' + esc(label) +
+            '</span> <strong>' + esc(p5MoneyCell(v, has)) + '</strong></span>';
+        }
+        return '<div class="p5-cost-breakdown">' +
+          bit('Labour', p.labour) +
+          bit('Materials', p.materials) +
+          bit('Subbies', p.subbies) +
+          bit('Variations', p.variations) +
+          bit('Total Actual', p.totalActual) +
+          bit('Revenue', p.revenue) +
+          bit('Gross Profit', p.grossProfit) +
+          (has ? '' : '<span class="p5-gap-note">' + esc(xeroJobCostIncompleteLabel()) + '</span>') +
+          '</div>';
       }
 
       function renderProjectTable() {
@@ -21288,17 +21600,27 @@
         var show = _p5ShowAllProjects ? projectRows : projectRows.slice(0, cap);
         var html = '<div class="table-wrap"><table class="data-table p5-proj-table"><thead><tr>' +
           '<th>Job</th><th>Client</th><th>Brand</th><th class="text-right">Contract</th>' +
+          '<th class="text-right">Total Actual</th><th class="text-right">Gross Profit</th>' +
           '<th class="text-right">Completion</th><th>Forecast GM</th><th>Status</th></tr></thead><tbody>';
         show.forEach(function(p) {
-          var active = p.key === _p5SelectedProjectKey ? ' class="p5-row-active"' : '';
+          var selected = p.key === _p5SelectedProjectKey;
+          var active = selected ? ' class="p5-row-active"' : '';
+          var gmTxt = p.forecastGm != null
+            ? formatPct(p.forecastGm)
+            : (p.hasJobCostData ? 'Not available' : 'Data Incomplete');
           html += '<tr data-p5-project="' + esc(p.key) + '"' + active + '>' +
             '<td>' + esc(p.job) + '</td>' +
             '<td>' + esc(p.client || '-') + '</td>' +
             '<td>' + esc(p.brand) + '</td>' +
             '<td class="text-right">' + (p.budget != null ? formatCurrency(p.budget) : 'Pending') + '</td>' +
+            '<td class="text-right">' + esc(p5MoneyCell(p.totalActual, p.hasJobCostData)) + '</td>' +
+            '<td class="text-right">' + esc(p5MoneyCell(p.grossProfit, p.hasJobCostData)) + '</td>' +
             '<td class="text-right">' + (p.completion != null ? p.completion + '%' : 'Pending') + '</td>' +
-            '<td>Data Incomplete</td>' +
+            '<td>' + esc(gmTxt) + '</td>' +
             '<td>' + statusBadge(p) + '</td></tr>';
+          if (selected) {
+            html += '<tr class="p5-proj-detail"><td colspan="9">' + p5CostBreakdownHtml(p) + '</td></tr>';
+          }
         });
         html += '</tbody></table></div>';
         if (projectRows.length > cap) {
@@ -21319,7 +21641,7 @@
             if (!p) return;
             _p5SelectedProjectKey = key;
             drawBridge(p);
-            highlightProjectTable(key);
+            renderProjectTable();
           });
         });
         var viewBtn = document.getElementById('p5-view-all-projects-btn');
@@ -21327,7 +21649,6 @@
           viewBtn.addEventListener('click', function() {
             _p5ShowAllProjects = !_p5ShowAllProjects;
             renderProjectTable();
-            highlightProjectTable(_p5SelectedProjectKey);
           });
         }
       }
@@ -21354,28 +21675,24 @@
         if (statusEl) {
           statusEl.innerHTML = statusBadge(project) +
             (project.dataIncomplete
-              ? ' <span class="p5-gap-note">Forecast Margin: Data Incomplete · Awaiting Xero_Bills</span>'
+              ? ' <span class="p5-gap-note">' + esc(xeroJobCostIncompleteLabel()) + '</span>'
               : '');
         }
         if (hintEl) {
-          hintEl.textContent =
-            'Quoted, Scope, Material, Sub, and Unapproved variations: Pending until estimate + Xero_Bills fields are live. ' +
-            'Labour and known costs shown only when present on Xero_Projects.';
+          hintEl.textContent = project.hasJobCostData
+            ? 'Labour, Materials, and Subbies are separate actuals from Xero_Projects. Quoted and Scope stay Pending until estimate fields are live.'
+            : xeroJobCostIncompleteLabel() + '. Quoted and Scope stay Pending until estimate fields are live.';
         }
 
-        // Bridge steps - only real numbers; null → Pending grey bar of 0 height with label
         var steps = [
           { label: 'Quoted', v: null },
           { label: 'Scope', v: null },
           { label: 'Labour', v: project.labour },
-          { label: 'Material', v: null },
-          { label: 'Sub', v: null },
-          { label: 'Unapproved vars', v: project.variations },
-          { label: 'Forecast Margin', v: null }
+          { label: 'Materials', v: project.hasJobCostData ? project.materials : null },
+          { label: 'Subbies', v: project.hasJobCostData ? project.subbies : null },
+          { label: 'Variations', v: project.variations },
+          { label: 'Forecast Margin', v: project.hasJobCostData ? project.grossProfit : null }
         ];
-        // Use budget as "quoted" proxy only if labelled as total budget not margin - do not invent margin.
-        // Show budget as context bar separately from margin bridge? Spec wants Quoted→...→Forecast Margin.
-        // Keep Quoted Pending unless a quoted margin $ field exists somewhere (not available).
 
         makeChart('chart-p5-bridge', {
           type: 'bar',
@@ -21721,12 +22038,14 @@
             client: p.client,
             brand: p.brand,
             budget: p.budget,
+            totalActual: p.hasJobCostData ? p.totalActual : null,
+            grossProfit: p.hasJobCostData ? p.grossProfit : null,
             status: p.status,
-            forecastGm: 'Data Incomplete',
-            note: 'Awaiting Xero_Bills'
+            forecastGm: p.forecastGm != null ? p.forecastGm : (p.hasJobCostData ? 'Not available' : 'Data Incomplete'),
+            note: p.hasJobCostData ? '' : xeroJobCostIncompleteLabel()
           };
         }),
-        pendingNote: 'Project Total Actual / Gross Profit await Xero_Bills. Cost split waterfall steps Pending when not in Xero_Financials. Full AR ageing on P9.'
+        pendingNote: 'Jobs without non-zero Total Actual or Revenue stay Data Incomplete, awaiting Xero_Bills. Cost split waterfall steps Pending when not in Xero_Financials. Full AR ageing on P9.'
       });
     }
 
