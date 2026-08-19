@@ -3146,6 +3146,20 @@
     }
 
     /**
+     * Exclude the "Operations" placeholder project (Emily's ops log) from
+     * any Xero_Projects-sourced list so it never appears as a real job.
+     */
+    function excludeOperationsProject(rows) {
+      if (!rows || !rows.length) return rows;
+      return rows.filter(function(r) {
+        var name = String(
+          col(r, 'Project Name', 'project_name', 'Project') || ''
+        ).trim();
+        return name.toLowerCase() !== 'operations';
+      });
+    }
+
+    /**
      * Live Xero_Projects fields.
      * J Actual-Labour, K Actual Materials, L Actual-Subbies/Contractor,
      * M Actual-Variations, N Total Actual, O Revenue, P Gross Profit.
@@ -3734,7 +3748,7 @@
         : brandXero;
       var brandWeekly = filterByBrand(weeklySummary || [], activeBrand);
       var brandPipe = filterByBrand(ghlPipeline || [], activeBrand);
-      var brandProjects = filterByBrand(xeroProjects || [], activeBrand);
+      var brandProjects = excludeOperationsProject(filterByBrand(xeroProjects || [], activeBrand));
 
       function rowsForMonthKey(rows, key) {
         return (rows || []).filter(function(r) {
@@ -9919,7 +9933,7 @@
 
       // Department options
       var brandedQuotes   = applyGlobal(window._p3Quotes);
-      var brandedProjects = applyGlobal(window._p3Projects);
+      var brandedProjects = excludeOperationsProject(applyGlobal(window._p3Projects));
       var brandedAccuracy = applyGlobal(window._p3Accuracy);
 
       var deptList = uniqueDeptListFromRows([brandedQuotes, brandedProjects, brandedAccuracy]);
@@ -11164,7 +11178,7 @@
       }
       var schedRaw = applyFilters(schedule);
       var labourFiltered = applyFilters(labour);
-      var xeroFiltered = filterByBrand(xeroProjects || [], brand);
+      var xeroFiltered = excludeOperationsProject(filterByBrand(xeroProjects || [], brand));
 
       var schedFiltered = schedRaw.map(function(r) {
         var startRaw = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date', 'Planned Start');
@@ -20204,7 +20218,7 @@
             return y === filterYear || !col(r, 'Year', 'year');
           });
 
-      var brandProjects = filterByBrand(xeroProjects || [], activeBrand);
+      var brandProjects = excludeOperationsProject(filterByBrand(xeroProjects || [], activeBrand));
 
       // AR: balance (not period flow) - brand filter only, no month clip
       var brandInvoices = filterByBrand(invoices || [], activeBrand);
@@ -22241,13 +22255,15 @@
           /leave|training|holiday/.test(site.toLowerCase());
         if (isLeave) map[k].leaveHrs += h;
         var pkey = job || site || (isLeave ? '(leave/training)' : '(unassigned)');
-        if (!map[k].projects[pkey]) {
-          map[k].projects[pkey] = {
-            job: job, site: site, hours: 0, role: role, isLeave: isLeave,
-            colorIdx: p6ProjectColorIndex(pkey)
-          };
+        if (pkey.toLowerCase() !== 'operations') {
+          if (!map[k].projects[pkey]) {
+            map[k].projects[pkey] = {
+              job: job, site: site, hours: 0, role: role, isLeave: isLeave,
+              colorIdx: p6ProjectColorIndex(pkey)
+            };
+          }
+          map[k].projects[pkey].hours += h;
         }
-        map[k].projects[pkey].hours += h;
       });
       Object.keys(map).forEach(function(k) {
         map[k].hours = p6Round1(map[k].hours);
@@ -22459,8 +22475,10 @@
         var crew = p6CrewFromRow(r, dept, name);
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
-        if (job) projectSet[job] = true;
-        else if (site) projectSet[site] = true;
+        var _projLabel = job || site || '';
+        if (_projLabel && _projLabel.toLowerCase() !== 'operations') {
+          projectSet[_projLabel] = true;
+        }
         if (brand) brandSet[brand] = true;
         deptSet[dept] = true;
         crewSet[crew] = true;
@@ -22911,6 +22929,7 @@
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
         var key = job || site || '(unassigned)';
+        if (key.toLowerCase() === 'operations') return;
         if (fProject !== 'ALL' && key !== fProject && job !== fProject && site !== fProject) return;
         var en = p6DisplayName(col(r, 'Employee Name', 'employee name'));
         var dept = p6CanonDept(col(r, 'Department', 'department'));
