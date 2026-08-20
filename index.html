@@ -4621,7 +4621,7 @@
         } else {
           var tableCols = [
             { label: 'Month', key: 'Month' },
-            { label: 'Division', key: 'Division' },
+            { label: 'Department', key: 'Division' },
             { label: 'Revenue Target', key: 'Revenue Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
             { label: 'Profit Target', key: 'Profit Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
             { label: 'Gross Margin', key: 'Gross Margin Target %', format: function(v) {
@@ -4916,7 +4916,7 @@
         ['Client', rec.client || P7_NA],
         ['Project', rec.project || P7_NA],
         ['Brand', rec.brand || P7_NA],
-        ['Department / Division', rec.division || P7_NA],
+        ['Department', rec.division || P7_NA],
         ['Stage', rec.stage || 'Unspecified'],
         ['Type', rec.typeLabel || P7_NA],
         ['Platform / Source', rec.platform || rec.source || P7_NA],
