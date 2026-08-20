@@ -57,6 +57,9 @@ const CONFIG = {
     XERO_OVERHEAD:       'Xero_Overhead',
     XERO_OVERHEADS:      'Xero_Overhead', // alias — sheet tab is singular
     BUILDPASS_SCHEDULE:  'Buildpass_Schedules',
+    // Nightly AppScript rewrite of Google Calendar job events (J# tagged).
+    // P4 uses this only as fallback when a project has no Buildpass schedule rows.
+    GOOGLE_CALENDAR_SCHEDULE: 'Google_Calendar_Schedule',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     // Approved Xero timesheets (break already deducted). P6 attendance discrepancy only.
     XERO_TIMESHEETS_APPROVED: 'Xero_Timesheets_Approved',

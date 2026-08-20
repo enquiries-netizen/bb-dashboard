@@ -637,7 +637,7 @@
           <!-- Section 3: project-level health Gantt -->
           <div class="section-card p4-health-section">
             <div class="section-title">Project Health
-              <span class="p4-section-hint">One row per project · click a row for detail</span>
+              <span class="p4-section-hint">One row per project · Buildpass or Calendar source · click a row for detail</span>
             </div>
             <div id="p4-health-gantt">Loading project health...</div>
           </div>
@@ -3115,7 +3115,7 @@
     /** Job # keys on a Xero_Projects row (header names only, never column index). */
     function xeroProjectJobKeys(row) {
       return [
-        col(row, 'Job #', 'Job Number', 'job_number', 'Job No', 'JobNo'),
+        col(row, 'Project J#', 'Job #', 'Job Number', 'job_number', 'Job No', 'JobNo'),
         col(row, 'Project ID', 'project_id', 'ProjectID'),
         col(row, 'Xero Project J#', 'Xero Project ID', 'xero_project_id'),
         col(row, 'Project Name', 'project_name', 'Project')
@@ -11018,7 +11018,8 @@
 
     // ═══════════════════════════════════════════════════════════════
     // P4 - JOB PERFORMANCE (decision dashboard)
-    // Sources: Buildpass_Schedule (Scenario 10), Buildpass_Labour (Scenario 9b),
+    // Sources: Buildpass_Schedules (primary), Google_Calendar_Schedule (fallback
+    //          when a project has no Buildpass milestone rows), Buildpass_Labour,
     //          Xero_Projects (Job # match). Live data only.
     // Layout:  Filters · 5 KPIs · Project Health Gantt · scatter ·
     //          exception table (+ View all Job Costing) · collapsible milestones
@@ -11040,12 +11041,17 @@
       showLoading(true);
       removeError('p4');
       try {
+        var calTab = CONFIG.TABS.GOOGLE_CALENDAR_SCHEDULE || 'Google_Calendar_Schedule';
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
           fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
-          fetchSheet(CONFIG.TABS.XERO_PROJECTS)
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS),
+          fetchSheet(calTab).catch(function(err) {
+            console.warn('P4 Google_Calendar_Schedule load failed:', err);
+            return [];
+          })
         ]);
-        renderP4(results[0], results[1], results[2]);
+        renderP4(results[0], results[1], results[2], results[3]);
       } catch (err) {
         console.error('P4 load error:', err);
         showError('p4', 'Could not load Job Performance data. Check sheet permissions.');
@@ -11091,6 +11097,157 @@
       if (d && !isNaN(d.getTime())) return d.toLocaleDateString('en-AU');
       var s = String(rawFallback || '').trim();
       return s || '';
+    }
+
+    /** Blank / placeholder cells on Google_Calendar_Schedule (never treat as real text). */
+    function p4CalendarCellBlank(raw) {
+      var s = String(raw == null ? '' : raw).trim();
+      if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' ||
+          s.toLowerCase() === 'na' || s.toLowerCase() === 'null') {
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Job Name often embeds "Project - Names (work)" when Work Description /
+     * Team Members columns are blank. Extract those only; never invent.
+     */
+    function p4ParseCalendarJobNameExtras(jobName) {
+      var s = String(jobName || '').trim();
+      var work = '';
+      var team = '';
+      var m = s.match(/\(([^)]+)\)\s*$/);
+      if (m) work = String(m[1] || '').trim();
+      var before = m ? s.slice(0, m.index).trim() : s;
+      var dashIdx = before.indexOf(' - ');
+      if (dashIdx >= 0) team = before.slice(dashIdx + 3).trim();
+      return { work: work, team: team };
+    }
+
+    /**
+     * True when the project has real Buildpass_Schedules milestone rows.
+     * Those projects keep Buildpass unchanged (no calendar override).
+     */
+    function p4HasBuildpassSchedule(p) {
+      return !!(p && p.milestones && p.milestones.length > 0);
+    }
+
+    /** Index Google_Calendar_Schedule rows by Job # (brand-filtered). */
+    function p4BuildCalendarScheduleIndex(calendarRows, brand) {
+      var rows = filterByBrand(calendarRows || [], brand || 'ALL');
+      var byJob = {};
+      rows.forEach(function(r) {
+        var job = String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
+        if (!job) return;
+        var dateRaw = col(r, 'Date', 'date') || '';
+        var dateD = p4ParseScheduleDate(dateRaw);
+        var jobName = String(col(r, 'Job Name', 'job_name', 'Project Name') || '').trim();
+        var wdRaw = col(r, 'Work Description', 'work_description', 'Description') || '';
+        var tmRaw = col(r, 'Team Members', 'team_members', 'Assigned') || '';
+        var extras = p4ParseCalendarJobNameExtras(jobName);
+        var description = !p4CalendarCellBlank(wdRaw)
+          ? String(wdRaw).trim()
+          : (extras.work || '');
+        var team = !p4CalendarCellBlank(tmRaw)
+          ? String(tmRaw).trim()
+          : (extras.team || '');
+        var entry = {
+          job: job,
+          jobName: jobName,
+          dateRaw: dateRaw,
+          dateD: dateD,
+          description: description,
+          teamMembers: team,
+          dayOfWeek: String(col(r, 'Day of Week', 'day_of_week') || '').trim(),
+          brand: String(col(r, 'Brand', 'brand') || '').trim(),
+          department: String(col(r, 'Department', 'department') || '').trim()
+        };
+        if (!byJob[job]) byJob[job] = [];
+        byJob[job].push(entry);
+      });
+      Object.keys(byJob).forEach(function(k) {
+        byJob[k].sort(function(a, b) {
+          var ta = a.dateD && !isNaN(a.dateD.getTime()) ? a.dateD.getTime() : Infinity;
+          var tb = b.dateD && !isNaN(b.dateD.getTime()) ? b.dateD.getTime() : Infinity;
+          return ta - tb;
+        });
+      });
+      return byJob;
+    }
+
+    function p4FindCalendarEntriesForProject(byJob, projectName) {
+      var keys = Object.keys(byJob || {});
+      var matched = [];
+      var i;
+      for (i = 0; i < keys.length; i++) {
+        if (jobsMatchByNumber(projectName, keys[i])) {
+          matched = matched.concat(byJob[keys[i]]);
+        }
+      }
+      matched.sort(function(a, b) {
+        var ta = a.dateD && !isNaN(a.dateD.getTime()) ? a.dateD.getTime() : Infinity;
+        var tb = b.dateD && !isNaN(b.dateD.getTime()) ? b.dateD.getTime() : Infinity;
+        return ta - tb;
+      });
+      return matched;
+    }
+
+    /** Next calendar work on or after today. Null when none (do not invent dates). */
+    function p4PickNextCalendarWork(entries, today) {
+      if (!entries || !entries.length) return null;
+      var todayMs = today.getTime();
+      var i;
+      for (i = 0; i < entries.length; i++) {
+        if (!entries[i].dateD || isNaN(entries[i].dateD.getTime())) continue;
+        if (entries[i].dateD.getTime() >= todayMs) return entries[i];
+      }
+      return null;
+    }
+
+    /**
+     * Attach scheduleSource + calendarNext to rollups.
+     * Buildpass milestones win; calendar is fallback only; else none.
+     */
+    function p4ApplyCalendarScheduleFallback(allRollups, calendarRows, opts) {
+      opts = opts || {};
+      var brand = opts.brand != null ? opts.brand : 'ALL';
+      var today = opts.today ? new Date(opts.today.getTime()) : new Date();
+      today.setHours(0, 0, 0, 0);
+      var byJob = p4BuildCalendarScheduleIndex(calendarRows, brand);
+      (allRollups || []).forEach(function(p) {
+        if (p4HasBuildpassSchedule(p)) {
+          p.scheduleSource = 'buildpass';
+          p.calendarNext = null;
+          p.calendarMatchCount = 0;
+          return;
+        }
+        var entries = p4FindCalendarEntriesForProject(byJob, p.project);
+        p.calendarMatchCount = entries.length;
+        if (!entries.length) {
+          p.scheduleSource = 'none';
+          p.calendarNext = null;
+          return;
+        }
+        var next = p4PickNextCalendarWork(entries, today);
+        p.scheduleSource = 'calendar';
+        p.calendarNext = next;
+        if (next) {
+          if (next.brand && !p.brand) p.brand = next.brand;
+          if (next.department && !p.department) p.department = next.department;
+        }
+      });
+      return allRollups;
+    }
+
+    function p4ScheduleSourceChip(source) {
+      if (source === 'buildpass') {
+        return '<span class="p4-src-chip p4-src-chip--buildpass" title="Buildpass schedule (milestones, % complete, status)">Buildpass</span>';
+      }
+      if (source === 'calendar') {
+        return '<span class="p4-src-chip p4-src-chip--calendar" title="Google Calendar daily activity (no % complete or status)">Calendar</span>';
+      }
+      return '<span class="p4-src-chip p4-src-chip--none" title="No Buildpass or Calendar schedule matched">No schedule</span>';
     }
 
     /** Compact currency for decision view: $4.8m / $189k / $12. */
@@ -11679,10 +11836,11 @@
       };
     }
 
-    function renderP4(schedule, labour, xeroProjects) {
+    function renderP4(schedule, labour, xeroProjects, calendarSchedule) {
       window._p4ScheduleRows = schedule;
       window._p4LabourRows = labour;
       window._p4XeroProjects = xeroProjects;
+      window._p4CalendarRows = calendarSchedule || [];
 
       // P4 chart tokens: permanent Concrete & Safety Orange palette
       var brandCharcoal = '#111827';
@@ -11707,6 +11865,26 @@
       var handsDetail = ph.handsDetail;
       var isOverdueNorm = ph.isOverdueNorm;
       var p4JobsMatch = ph.p4JobsMatch;
+
+      // Calendar fallback only for projects without Buildpass milestone rows
+      p4ApplyCalendarScheduleFallback(allRollups, window._p4CalendarRows, {
+        brand: activeBrand,
+        today: today
+      });
+
+      function p4RerenderFromCache() {
+        if (window._p4ScheduleRows) {
+          renderP4(
+            window._p4ScheduleRows,
+            window._p4LabourRows,
+            window._p4XeroProjects,
+            window._p4CalendarRows
+          );
+          if (typeof init3DTilt === 'function') init3DTilt();
+        } else {
+          loadP4();
+        }
+      }
 
       function p4FindXeroProject(jobRef) {
         return findXeroProjectByJob(xeroProjects || [], jobRef);
@@ -11784,12 +11962,7 @@
           _p4DeptBound = true;
           deptSelect.addEventListener('change', function() {
             activeP4Dept = this.value || 'ALL';
-            if (window._p4ScheduleRows) {
-              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
-              if (typeof init3DTilt === 'function') init3DTilt();
-            } else {
-              loadP4();
-            }
+            p4RerenderFromCache();
           });
         }
       }
@@ -11801,12 +11974,7 @@
           _p4StatusBound = true;
           statusSelect.addEventListener('change', function() {
             activeP4Status = this.value || 'ALL';
-            if (window._p4ScheduleRows) {
-              renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
-              if (typeof init3DTilt === 'function') init3DTilt();
-            } else {
-              loadP4();
-            }
+            p4RerenderFromCache();
           });
         }
       }
@@ -11846,7 +12014,13 @@
             overdueCount: p.overdueCount,
             totalBudget: p.totalBudget,
             labourCost: p.labourCost,
-            handsSignal: p.handsSignal
+            handsSignal: p.handsSignal,
+            scheduleSource: p.scheduleSource || 'none',
+            calendarNextDate: p.calendarNext && p.calendarNext.dateD
+              ? p.calendarNext.dateD.toLocaleDateString('en-AU')
+              : null,
+            calendarNextWork: p.calendarNext ? (p.calendarNext.description || null) : null,
+            calendarAssigned: p.calendarNext ? (p.calendarNext.teamMembers || null) : null
           };
         }),
         schedules: schedFiltered.slice(0, 300).map(function(r) {
@@ -11861,7 +12035,7 @@
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
-        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field.'
+        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field. Schedule: Buildpass milestones first; Google_Calendar_Schedule is fallback only (next work date, description, assigned).'
       });
 
       var activeList = filteredRollups.filter(function(p) { return p.isActive; });
@@ -11981,6 +12155,10 @@
           (p.keyMilestones || []).forEach(function(km) {
             if (km.date) extend(km.date.getTime());
           });
+          if (p.scheduleSource === 'calendar' && p.calendarNext && p.calendarNext.dateD &&
+              !isNaN(p.calendarNext.dateD.getTime())) {
+            extend(p.calendarNext.dateD.getTime());
+          }
         });
         extend(todayMs);
         if (!isFinite(rangeMin) || !isFinite(rangeMax)) {
@@ -12037,9 +12215,10 @@
         var html =
           '<div class="p4-ph" role="region" aria-label="Project Health Gantt">' +
           '<div class="p4-ph-legend" aria-hidden="true">' +
-          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--planned"></i>Planned</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--planned"></i>Planned (Buildpass)</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--progress"></i>Progress</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--risk"></i>At risk progress</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--calendar"></i>Next calendar work</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--today"></i>Today</span>' +
           '</div>' +
           '<div class="p4-ph-hscroll-top" aria-hidden="true">' +
@@ -12059,11 +12238,20 @@
 
         activeRows.forEach(function(p, idx) {
           var riskCls = p.health === 'at-risk' ? ' p4-ph-left-row--risk' : '';
+          var src = p.scheduleSource || 'none';
+          var progressCell = p.progressAvg != null
+            ? (p.progressAvg + '%')
+            : (src === 'calendar'
+              ? '<span class="p4-jco-null" title="Calendar has daily activity only, not % complete">n/a</span>'
+              : '-');
           html +=
             '<div class="p4-ph-left-row p4-ph-row-hit' + riskCls + '" data-proj-idx="' + idx + '" role="button" tabindex="0">' +
-            '<div class="p4-ph-c-project" title="' + p4EscAttr(p.project) + '">' + p4EscHtml(p.project) + '</div>' +
+            '<div class="p4-ph-c-project" title="' + p4EscAttr(p.project) + '">' +
+            '<span class="p4-ph-proj-name">' + p4EscHtml(p.project) + '</span>' +
+            p4ScheduleSourceChip(src) +
+            '</div>' +
             '<div class="p4-ph-c-client" title="' + p4EscAttr(p.clientName || '') + '">' + p4EscHtml(p.clientName || '-') + '</div>' +
-            '<div class="p4-ph-c-num">' + (p.progressAvg != null ? p.progressAvg + '%' : '-') + '</div>' +
+            '<div class="p4-ph-c-num">' + progressCell + '</div>' +
             '<div class="p4-ph-c-num">' + marginCell(p) + '</div>' +
             '<div class="p4-ph-c-num">' + labVarCell(p) + '</div>' +
             '<div class="p4-ph-c-status">' + formatHealthBadge(p.health) + '</div>' +
@@ -12081,7 +12269,9 @@
           var bars = '';
           var t0 = p.minStart ? p.minStart.getTime() : null;
           var t1 = p.maxEnd ? p.maxEnd.getTime() : null;
-          if (t0 != null && t1 != null) {
+          var src = p.scheduleSource || 'none';
+          var nextCal = p.calendarNext;
+          if (src === 'buildpass' && t0 != null && t1 != null) {
             var x0 = xOf(t0);
             var x1 = xOf(t1);
             var L = Math.min(x0, x1);
@@ -12099,8 +12289,34 @@
                 '<div class="p4-ph-bar ' + barCls + '" style="left:' + L.toFixed(1) +
                 'px;width:' + wProg.toFixed(1) + 'px" title="Progress ' + prog + '%"></div>';
             }
-          } else {
+          } else if (src === 'buildpass') {
             bars = '<span class="p4-ph-nodates">No planned dates</span>';
+          } else if (src === 'calendar' && nextCal && nextCal.dateD && !isNaN(nextCal.dateD.getTime())) {
+            var calMs = nextCal.dateD.getTime();
+            var calX = xOf(calMs);
+            var calTitle = 'Next work ' + p4FmtDate(nextCal.dateD, nextCal.dateRaw);
+            if (nextCal.description) calTitle += ' - ' + nextCal.description;
+            if (nextCal.teamMembers) calTitle += ' · ' + nextCal.teamMembers;
+            bars +=
+              '<div class="p4-ph-bar p4-ph-bar--calendar" style="left:' + Math.max(0, calX - 4).toFixed(1) +
+              'px;width:10px" title="' + p4EscAttr(calTitle) + '"></div>' +
+              '<span class="p4-ph-cal-label" style="left:' + (calX + 8).toFixed(1) + 'px">' +
+              p4EscHtml(p4FmtDate(nextCal.dateD, nextCal.dateRaw) || 'Calendar') +
+              '</span>';
+          } else if (src === 'calendar') {
+            bars = '<span class="p4-ph-nodates">No upcoming calendar work</span>';
+          } else if (t0 != null && t1 != null) {
+            // Xero expected dates only (no Buildpass / calendar schedule)
+            var x0b = xOf(t0);
+            var x1b = xOf(t1);
+            var Lb = Math.min(x0b, x1b);
+            var Rb = Math.max(x0b, x1b);
+            bars +=
+              '<div class="p4-ph-bar p4-ph-bar--planned" style="left:' + Lb.toFixed(1) +
+              'px;width:' + Math.max(Rb - Lb, 4).toFixed(1) +
+              'px" title="Xero date window (no Buildpass or Calendar schedule)"></div>';
+          } else {
+            bars = '<span class="p4-ph-nodates">No schedule data yet</span>';
           }
           (p.keyMilestones || []).forEach(function(km) {
             if (!km.date) return;
@@ -12542,8 +12758,15 @@
 
         var infoHtml =
           '<dl class="p4-ms-drawer-dl">' +
+          '<div><dt>Schedule source</dt><dd>' + p4ScheduleSourceChip(p.scheduleSource || 'none') + '</dd></div>' +
           '<div><dt>Status</dt><dd>' + formatHealthBadge(p.health) + '</dd></div>' +
-          '<div><dt>Progress</dt><dd>' + (p.progressAvg != null ? p.progressAvg + '%' : '-') + '</dd></div>' +
+          '<div><dt>Progress</dt><dd>' +
+            (p.progressAvg != null
+              ? p.progressAvg + '%'
+              : (p.scheduleSource === 'calendar'
+                ? 'n/a <span class="p4-draw-note">(Calendar has daily activity only)</span>'
+                : '-')) +
+          '</dd></div>' +
           '<div><dt>End date</dt><dd>' + (p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-') + '</dd></div>' +
           '<div><dt>Hours</dt><dd>' + (p.labourHours ? p.labourHours.toFixed(1) : '-') + '</dd></div>' +
           '<div><dt>Labour cost</dt><dd>' + (p.labourCost ? formatCurrency(p.labourCost) : '-') + '</dd></div>' +
@@ -12569,35 +12792,63 @@
           '<div><dt>Department</dt><dd>' + p4EscHtml(p.department || '-') + '</dd></div>' +
           '</dl>';
 
-        // Milestone mini-list for this project
+        // Milestone mini-list for this project (Buildpass) or calendar next work
         var msRows = (p.milestones || []).slice().sort(function(a, b) {
           var ea = a.endD ? a.endD.getTime() : Infinity;
           var eb = b.endD ? b.endD.getTime() : Infinity;
           return ea - eb;
         });
-        var msHtml = '<div class="p4-draw-ms"><div class="p4-draw-ms-title">Milestones</div>';
-        if (!msRows.length) {
-          msHtml += '<p class="p4-draw-note">No milestone schedule rows for this project.</p>';
-        } else {
-          msHtml += '<ul class="p4-draw-ms-list">';
-          msRows.forEach(function(m) {
-            var slip = '';
-            if (isOverdueNorm(m)) {
-              var days = m.endD ? Math.round((today - m.endD) / MS_DAY) : null;
-              slip = days != null && days > 0 ? ' · +' + days + 'd' : ' · Overdue';
-            }
+        var msHtml = '';
+        if (p.scheduleSource === 'calendar') {
+          var cal = p.calendarNext;
+          msHtml = '<div class="p4-draw-ms"><div class="p4-draw-ms-title">Calendar schedule (daily activity)</div>';
+          if (!cal || !cal.dateD) {
+            msHtml += '<p class="p4-draw-note">Matched calendar rows found, but no upcoming work date on or after today.</p>';
+          } else {
             msHtml +=
-              '<li class="' + (isOverdueNorm(m) ? 'is-overdue' : '') + '">' +
-              '<span class="p4-draw-ms-name">' + p4EscHtml(m.milestone || 'Milestone') + '</span>' +
-              '<span class="p4-draw-ms-meta">' +
-              (m.endD ? m.endD.toLocaleDateString('en-AU') : '-') +
-              ' · ' + (m.pct != null ? Math.round(m.pct) + '%' : '-') +
-              slip +
-              '</span></li>';
-          });
-          msHtml += '</ul>';
+              '<dl class="p4-ms-drawer-dl p4-draw-cal-dl">' +
+              '<div><dt>Next planned work</dt><dd>' +
+              p4EscHtml(p4FmtDate(cal.dateD, cal.dateRaw) || '-') +
+              (cal.dayOfWeek ? ' (' + p4EscHtml(cal.dayOfWeek) + ')' : '') +
+              '</dd></div>' +
+              '<div><dt>What is happening</dt><dd>' +
+              (cal.description
+                ? p4EscHtml(cal.description).replace(/\n/g, '<br>')
+                : '<span class="p4-jco-null">Not specified</span>') +
+              '</dd></div>' +
+              '<div><dt>Who is assigned</dt><dd>' +
+              (cal.teamMembers
+                ? p4EscHtml(cal.teamMembers)
+                : '<span class="p4-jco-null">Not specified</span>') +
+              '</dd></div>' +
+              '</dl>';
+          }
+          msHtml += '</div>';
+        } else {
+          msHtml = '<div class="p4-draw-ms"><div class="p4-draw-ms-title">Milestones</div>';
+          if (!msRows.length) {
+            msHtml += '<p class="p4-draw-note">No schedule data yet</p>';
+          } else {
+            msHtml += '<ul class="p4-draw-ms-list">';
+            msRows.forEach(function(m) {
+              var slip = '';
+              if (isOverdueNorm(m)) {
+                var days = m.endD ? Math.round((today - m.endD) / MS_DAY) : null;
+                slip = days != null && days > 0 ? ' · +' + days + 'd' : ' · Overdue';
+              }
+              msHtml +=
+                '<li class="' + (isOverdueNorm(m) ? 'is-overdue' : '') + '">' +
+                '<span class="p4-draw-ms-name">' + p4EscHtml(m.milestone || 'Milestone') + '</span>' +
+                '<span class="p4-draw-ms-meta">' +
+                (m.endD ? m.endD.toLocaleDateString('en-AU') : '-') +
+                ' · ' + (m.pct != null ? Math.round(m.pct) + '%' : '-') +
+                slip +
+                '</span></li>';
+            });
+            msHtml += '</ul>';
+          }
+          msHtml += '</div>';
         }
-        msHtml += '</div>';
 
         body.innerHTML = barsHtml + infoHtml + msHtml;
         drawer.hidden = false;
@@ -12629,10 +12880,7 @@
           p4ShowAllProjects = !p4ShowAllProjects;
           var full = document.getElementById('p4-full-costing');
           if (full) full.hidden = !p4ShowAllProjects;
-          if (window._p4ScheduleRows) {
-            renderP4(window._p4ScheduleRows, window._p4LabourRows, window._p4XeroProjects);
-            if (typeof init3DTilt === 'function') init3DTilt();
-          }
+          p4RerenderFromCache();
         });
       }
       var fullEl = document.getElementById('p4-full-costing');

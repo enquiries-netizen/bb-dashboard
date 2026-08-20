@@ -4952,6 +4952,9 @@ body.bb-ai-off #ai-panel {
 #page-p4 .p4-ph-swatch--risk {
   background: var(--p4-accent);
 }
+#page-p4 .p4-ph-swatch--calendar {
+  background: #2563eb;
+}
 #page-p4 .p4-ph-swatch--today {
   width: 2px;
   height: 12px;
@@ -5060,8 +5063,45 @@ body.bb-ai-off #ai-panel {
 #page-p4 .p4-ph-c-project {
   font-weight: 600;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+#page-p4 .p4-ph-proj-name {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+#page-p4 .p4-src-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+  padding: 2px 5px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+#page-p4 .p4-src-chip--buildpass {
+  color: var(--p4-text);
+  border: 1px solid var(--p4-border);
+  background: transparent;
+}
+#page-p4 .p4-src-chip--calendar {
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+}
+#page-p4 .p4-src-chip--none {
+  color: var(--p4-muted);
+  border: 1px solid var(--p4-border);
+  background: transparent;
+  font-weight: 600;
 }
 #page-p4 .p4-ph-c-client {
   color: var(--p4-muted);
@@ -5153,6 +5193,23 @@ body.bb-ai-off #ai-panel {
 #page-p4 .p4-ph-bar--progress-risk {
   background: var(--p4-accent);
   z-index: 2;
+}
+#page-p4 .p4-ph-bar--calendar {
+  background: #2563eb;
+  z-index: 2;
+  border-radius: 2px;
+  top: 12px;
+  height: 16px;
+}
+#page-p4 .p4-ph-cal-label {
+  position: absolute;
+  top: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #1e40af;
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
 }
 #page-p4 .p4-ph-marker {
   position: absolute;
