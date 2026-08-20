@@ -90,7 +90,7 @@ const CONFIG = {
     // CONFIG.LIBRARY_SHEET_ID (standalone sheet, not the Master Dashboard file).
     // Expected columns (header-name match, not letter index):
     //   A Guide ID | B Title | C Category | D Content/Steps
-    //   E Division/Role Tag | F Media Link | G Access Level | H Doc ID (optional)
+    //   E Department/Role Tag (or legacy Division/Role Tag) | F Media Link | G Access Level | H Doc ID (optional)
     // Access Level: "All Staff" (default if blank) or "Admin".
     // Admin rows are omitted unless Staff_Access Role is Admin or Access is Full access.
     // Media Link / Doc ID: Google Doc URL or ID. Used when Content/Steps is empty.

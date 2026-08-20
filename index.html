@@ -2243,7 +2243,7 @@
     }
 
     function deptField(r) {
-      return col(r, 'Department', 'department', 'Deparment') || '';
+      return col(r, 'Department', 'department', 'Deparment', 'Division', 'division') || '';
     }
 
     /** Unique department labels for a dropdown, recomputed each call from current rows. */
@@ -4621,7 +4621,7 @@
         } else {
           var tableCols = [
             { label: 'Month', key: 'Month' },
-            { label: 'Department', key: 'Division' },
+            { label: 'Department', key: ['Department', 'Division'] },
             { label: 'Revenue Target', key: 'Revenue Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
             { label: 'Profit Target', key: 'Profit Target ($)', format: function(v) { return v ? formatCurrency(parseNum(v)) : '-'; } },
             { label: 'Gross Margin', key: 'Gross Margin Target %', format: function(v) {
@@ -19453,7 +19453,7 @@
 
     function p13IsTargetsAllAll(r) {
       var brand = String(col(r, 'Brand', 'brand') || '').trim().toUpperCase();
-      var div = String(col(r, 'Division', 'division') || '').trim().toUpperCase();
+      var div = String(col(r, 'Department', 'department', 'Division', 'division') || '').trim().toUpperCase();
       return brand === 'ALL' && div === 'ALL';
     }
 
@@ -25294,7 +25294,7 @@
     // ═══════════════════════════════════════════════════════════
     // BBBS INTERNAL HUB (chat + Lori gating; guide filter is server-side)
     // Does not load Library_Guides bodies in the browser. /api/ask fetches and
-    // filters by Division/Role Tag and Access Level (Admin vs All Staff) before
+    // filters by Department/Role Tag (legacy Division/Role Tag) and Access Level (Admin vs All Staff) before
     // Gemini or the client see content. Bootstrap may return title-only chips.
     // Construction how-to with no matching guide may return source: 'general'.
     // ═══════════════════════════════════════════════════════════

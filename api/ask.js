@@ -134,8 +134,9 @@ const KNOWN_LIBRARY_GUIDES = [
 
 var _docTextCache = { byId: {} };
 
-// Division tags only, keyed by email. Staff_Access "Division" column overrides
-// when present and non-blank. Does not grant Hub page access.
+// Department/Division tags only, keyed by email. Staff_Access "Department"
+// (preferred) or legacy "Division" overrides when present and non-blank.
+// Does not grant Hub page access.
 const HUB_STAFF_DIVISIONS = {
   'enquiries@bbbuildingservices.com.au': ['General', 'Admin/Office']
 };
@@ -324,6 +325,9 @@ function normalizeLibraryGuides(rows) {
       category: String(pickCol(r, ['Category', 'Cat']) || '').trim(),
       content: content,
       divisionRoleTag: String(pickCol(r, [
+        'Department/Role Tag',
+        'Department / Role Tag',
+        'Department',
         'Division/Role Tag',
         'Division / Role Tag',
         'Division',
@@ -489,6 +493,10 @@ function buildStaffDivisions(staffRows) {
       .toLowerCase();
     if (!email) return;
     var raw = pickCol(r, [
+      'Department',
+      'Departments',
+      'Department/Role Tag',
+      'Hub Department',
       'Division',
       'Divisions',
       'Division/Role Tag',
@@ -862,7 +870,7 @@ export default async function handler(req, res) {
   // ─── Library mode (BBBS Internal Hub): ground ONLY in Library_Guides ───
   // Separate path so BB AI dashboard prompting is unchanged.
   // API mode key stays "library"; page route is internal-hub.
-  // Client-supplied libraryGuides are ignored: fetch + Division + Access Level filter run here.
+  // Client-supplied libraryGuides are ignored: fetch + Department/Division + Access Level filter run here.
   if (mode === 'library') {
     const authHeader =
       (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
