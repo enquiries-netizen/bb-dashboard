@@ -2187,6 +2187,17 @@
     }
 
     /**
+     * Non-job placeholder names that must never appear as real jobs or
+     * site-worker diary groups (case-insensitive exact match).
+     * Operations: Emily's ops log.
+     * Project Oversight: Ben Broek's daily multi-job log.
+     */
+    function isNonJobProjectName(name) {
+      var n = String(name || '').trim().toLowerCase();
+      return n === 'operations' || n === 'project oversight';
+    }
+
+    /**
      * P11/P12 defensive diary filter: exclude Emily Thomas empty stub rows only.
      * Hide when Logged By is Emily Thomas AND Job #, Project/Job Name, and Work Completed
      * are all blank. If any of those three fields has content, keep the row.
@@ -2213,8 +2224,18 @@
       return true;
     }
 
+    /** True when diary Job Name / Project Name is a non-job placeholder. */
+    function diaryIsNonJobProject(r) {
+      var name = String(col(r,
+        'Job Name', 'job_name', 'Project Name', 'project_name'
+      ) || '').trim();
+      if (isNonJobProjectName(name)) return true;
+      var jn = String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
+      return isNonJobProjectName(jn);
+    }
+
     function diaryRowVisibleOnP11P12(r) {
-      return !diaryIsEmilyThomasEmptyStub(r);
+      return !diaryIsEmilyThomasEmptyStub(r) && !diaryIsNonJobProject(r);
     }
 
     /**
@@ -3156,17 +3177,23 @@
     }
 
     /**
-     * Exclude the "Operations" placeholder project (Emily's ops log) from
-     * any Xero_Projects-sourced list so it never appears as a real job.
+     * Exclude non-job placeholder projects (Operations, Project Oversight)
+     * from any Xero_Projects-sourced list so they never appear as real jobs.
+     * Kept name excludeOperationsProject for existing P1/P3/P4/P5 call sites.
      */
     function excludeOperationsProject(rows) {
       if (!rows || !rows.length) return rows;
       return rows.filter(function(r) {
         var name = String(
-          col(r, 'Project Name', 'project_name', 'Project') || ''
+          col(r, 'Project Name', 'project_name', 'Project', 'Job Name', 'job_name') || ''
         ).trim();
-        return name.toLowerCase() !== 'operations';
+        return !isNonJobProjectName(name);
       });
+    }
+
+    /** Alias: same filter as excludeOperationsProject (Operations + Project Oversight). */
+    function excludeNonJobProjects(rows) {
+      return excludeOperationsProject(rows);
     }
 
     /**
@@ -11140,9 +11167,10 @@
       rows.forEach(function(r) {
         var job = String(col(r, 'Job #', 'Job Number', 'job_number', 'Job No') || '').trim();
         if (!job) return;
+        var jobName = String(col(r, 'Job Name', 'job_name', 'Project Name') || '').trim();
+        if (isNonJobProjectName(jobName) || isNonJobProjectName(job)) return;
         var dateRaw = col(r, 'Date', 'date') || '';
         var dateD = p4ParseScheduleDate(dateRaw);
-        var jobName = String(col(r, 'Job Name', 'job_name', 'Project Name') || '').trim();
         var wdRaw = col(r, 'Work Description', 'work_description', 'Description') || '';
         var tmRaw = col(r, 'Team Members', 'team_members', 'Assigned') || '';
         var extras = p4ParseCalendarJobNameExtras(jobName);
@@ -16997,8 +17025,9 @@
         }
       }
 
-      // Job filter from diaries (include blanks as "No job #")
-      var deptsFilteredDiaries = filterByDept(brandedDiaries);
+      // Job filter from diaries (include blanks as "No job #").
+      // Drop Emily stubs and non-job placeholders (Operations, Project Oversight).
+      var deptsFilteredDiaries = filterByDept(brandedDiaries).filter(diaryRowVisibleOnP11P12);
       var jobSet = {};
       deptsFilteredDiaries.forEach(function(r) {
         var j = diaryJobNo(r);
@@ -17043,10 +17072,10 @@
       }
 
       // Apply dept + job. Keep diaries missing job/brand/dept in counts.
-      // Defensive: drop Emily Thomas stub rows (blank Job #, project name, and Work Completed).
+      // Defensive: drop Emily Thomas stubs and non-job placeholders.
       var defectsFiltered    = filterByJob(filterByDept(brandedDefects));
       var variationsFiltered = filterByJob(filterByDept(brandedVariations));
-      var diariesFiltered    = filterByJob(filterByDept(brandedDiaries)).filter(diaryRowVisibleOnP11P12);
+      var diariesFiltered    = filterByJob(deptsFilteredDiaries);
 
       var entryCount = diariesFiltered.length;
       var issueRows = diariesFiltered.filter(hasIssueContent);
@@ -22541,7 +22570,7 @@
           /leave|training|holiday/.test(site.toLowerCase());
         if (isLeave) map[k].leaveHrs += h;
         var pkey = job || site || (isLeave ? '(leave/training)' : '(unassigned)');
-        if (pkey.toLowerCase() !== 'operations') {
+        if (!isNonJobProjectName(pkey)) {
           if (!map[k].projects[pkey]) {
             map[k].projects[pkey] = {
               job: job, site: site, hours: 0, role: role, isLeave: isLeave,
@@ -22762,7 +22791,7 @@
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
         var _projLabel = job || site || '';
-        if (_projLabel && _projLabel.toLowerCase() !== 'operations') {
+        if (_projLabel && !isNonJobProjectName(_projLabel)) {
           projectSet[_projLabel] = true;
         }
         if (brand) brandSet[brand] = true;
@@ -23215,7 +23244,7 @@
         var job = String(col(r, 'Xero Project J#', 'xero project j#') || '').trim();
         var site = String(col(r, 'Site / Area', 'site / area') || '').trim();
         var key = job || site || '(unassigned)';
-        if (key.toLowerCase() === 'operations') return;
+        if (isNonJobProjectName(key)) return;
         if (fProject !== 'ALL' && key !== fProject && job !== fProject && site !== fProject) return;
         var en = p6DisplayName(col(r, 'Employee Name', 'employee name'));
         var dept = p6CanonDept(col(r, 'Department', 'department'));
