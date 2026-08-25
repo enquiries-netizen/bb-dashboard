@@ -11097,16 +11097,35 @@
           window._p4UpcomingLoadError = err && err.message ? err.message : String(err);
           return [];
         });
+        // Calendar is fallback-only. Do not await it in Promise.all: a hung
+        // Google_Calendar_Schedule fetch would leave the overlay up.
+        var calendarPromise = fetchSheet(calTab).then(function(rows) {
+          window._p4CalendarRows = rows || [];
+          return window._p4CalendarRows;
+        }).catch(function(err) {
+          console.warn('P4 Google_Calendar_Schedule load failed:', err);
+          window._p4CalendarRows = [];
+          return [];
+        });
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
           fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
-          fetchSheet(CONFIG.TABS.XERO_PROJECTS),
-          fetchSheet(calTab).catch(function(err) {
-            console.warn('P4 Google_Calendar_Schedule load failed:', err);
-            return [];
-          })
+          fetchSheet(CONFIG.TABS.XERO_PROJECTS)
         ]);
-        renderP4(results[0], results[1], results[2], results[3]);
+        renderP4(results[0], results[1], results[2], window._p4CalendarRows);
+        calendarPromise.then(function(rows) {
+          window._p4CalendarRows = rows || [];
+          if (window._p4ScheduleRows) {
+            renderP4(
+              window._p4ScheduleRows,
+              window._p4LabourRows,
+              window._p4XeroProjects,
+              window._p4CalendarRows,
+              window._p4UpcomingRows
+            );
+            if (typeof init3DTilt === 'function') init3DTilt();
+          }
+        });
         upcomingPromise.then(function(rows) {
           window._p4UpcomingRows = rows || [];
           if (window._p4ScheduleRows) {
@@ -12082,7 +12101,9 @@
       window._p4ScheduleRows = schedule;
       window._p4LabourRows = labour;
       window._p4XeroProjects = xeroProjects;
-      window._p4CalendarRows = calendarSchedule || [];
+      if (calendarSchedule !== undefined) {
+        window._p4CalendarRows = calendarSchedule || [];
+      }
       var upcomingPack = {
         items: [],
         hasBrandCol: false,

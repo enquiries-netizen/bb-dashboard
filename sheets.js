@@ -3,10 +3,24 @@
 // ═══════════════════════════════════════════════════════════════
 
 const _cache = {};
+const _inflight = {};
+const FETCH_SHEET_TIMEOUT_MS = 20000;
 
 async function fetchSheet(tabName) {
   if (_cache[tabName]) return _cache[tabName];
+  if (_inflight[tabName]) return _inflight[tabName];
 
+  _inflight[tabName] = loadSheetTab(tabName).then(function(data) {
+    delete _inflight[tabName];
+    return data;
+  }, function(err) {
+    delete _inflight[tabName];
+    throw err;
+  });
+  return _inflight[tabName];
+}
+
+async function loadSheetTab(tabName) {
   if (!CONFIG.API_KEY || CONFIG.API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
     console.warn('[Sheets] API key not set in config.js — returning empty data.');
     return [];
@@ -17,7 +31,23 @@ async function fetchSheet(tabName) {
     CONFIG.SHEET_ID + '/values/' +
     encodeURIComponent(tabName) + '?key=' + CONFIG.API_KEY;
 
-  const response = await fetch(url);
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timeoutId = null;
+  if (controller) {
+    timeoutId = setTimeout(function() { controller.abort(); }, FETCH_SHEET_TIMEOUT_MS);
+  }
+
+  var response;
+  try {
+    response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+  } catch (err) {
+    if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+      throw new Error('Sheet load timed out for tab: ' + tabName);
+    }
+    throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
   if (!response.ok) throw new Error('Sheets API error ' + response.status + ' for tab: ' + tabName);
 
   const json = await response.json();
