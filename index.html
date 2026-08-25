@@ -11086,6 +11086,17 @@
       try {
         var calTab = CONFIG.TABS.GOOGLE_CALENDAR_SCHEDULE || 'Google_Calendar_Schedule';
         var upcomingTab = CONFIG.TABS.BUILDPASS_PROJECT_SYNC || 'Buildpass_Project_Sync';
+        window._p4UpcomingLoadError = '';
+        // Do not await Upcoming in Promise.all: a hung Buildpass_Project_Sync
+        // fetch would leave the overlay up and block the rest of P4.
+        var upcomingPromise = fetchSheet(upcomingTab).then(function(rows) {
+          window._p4UpcomingLoadError = '';
+          return rows || [];
+        }).catch(function(err) {
+          console.warn('P4 Buildpass_Project_Sync load failed:', err);
+          window._p4UpcomingLoadError = err && err.message ? err.message : String(err);
+          return [];
+        });
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
           fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
@@ -11093,17 +11104,22 @@
           fetchSheet(calTab).catch(function(err) {
             console.warn('P4 Google_Calendar_Schedule load failed:', err);
             return [];
-          }),
-          fetchSheet(upcomingTab).then(function(rows) {
-            window._p4UpcomingLoadError = '';
-            return rows;
-          }).catch(function(err) {
-            console.warn('P4 Buildpass_Project_Sync load failed:', err);
-            window._p4UpcomingLoadError = err && err.message ? err.message : String(err);
-            return [];
           })
         ]);
-        renderP4(results[0], results[1], results[2], results[3], results[4]);
+        renderP4(results[0], results[1], results[2], results[3]);
+        upcomingPromise.then(function(rows) {
+          window._p4UpcomingRows = rows || [];
+          if (window._p4ScheduleRows) {
+            renderP4(
+              window._p4ScheduleRows,
+              window._p4LabourRows,
+              window._p4XeroProjects,
+              window._p4CalendarRows,
+              window._p4UpcomingRows
+            );
+            if (typeof init3DTilt === 'function') init3DTilt();
+          }
+        });
       } catch (err) {
         console.error('P4 load error:', err);
         showError('p4', 'Could not load Job Performance data. Check sheet permissions.');
@@ -12067,9 +12083,37 @@
       window._p4LabourRows = labour;
       window._p4XeroProjects = xeroProjects;
       window._p4CalendarRows = calendarSchedule || [];
-      window._p4UpcomingRows = upcomingProjects || window._p4UpcomingRows || [];
-      var upcomingPack = p4CollectUpcomingProjects(window._p4UpcomingRows);
-      p4PaintUpcomingSection(upcomingPack);
+      var upcomingPack = {
+        items: [],
+        hasBrandCol: false,
+        hasDeptCol: false,
+        totalEstimated: null,
+        amountKnownCount: 0,
+        missingAmountCount: 0
+      };
+      if (upcomingProjects !== undefined) {
+        window._p4UpcomingRows = upcomingProjects || [];
+      }
+      if (window._p4UpcomingRows !== undefined) {
+        try {
+          upcomingPack = p4CollectUpcomingProjects(window._p4UpcomingRows);
+          p4PaintUpcomingSection(upcomingPack);
+        } catch (upcomingErr) {
+          console.warn('P4 upcoming render failed:', upcomingErr);
+          window._p4UpcomingLoadError = upcomingErr && upcomingErr.message
+            ? upcomingErr.message
+            : String(upcomingErr);
+          upcomingPack = {
+            items: [],
+            hasBrandCol: false,
+            hasDeptCol: false,
+            totalEstimated: null,
+            amountKnownCount: 0,
+            missingAmountCount: 0
+          };
+          try { p4PaintUpcomingSection(upcomingPack); } catch (e2) { /* keep Job Performance visible */ }
+        }
+      }
 
       // P4 chart tokens: permanent Concrete & Safety Orange palette
       var brandCharcoal = '#111827';
