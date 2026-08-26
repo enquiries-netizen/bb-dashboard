@@ -60,9 +60,6 @@ const CONFIG = {
     // Nightly AppScript rewrite of Google Calendar job events (J# tagged).
     // P4 uses this only as fallback when a project has no Buildpass schedule rows.
     GOOGLE_CALENDAR_SCHEDULE: 'Google_Calendar_Schedule',
-    // Buildpass project list (UPCOMING / IN_PROGRESS). P4 Upcoming Projects
-    // uses UPCOMING rows only. IN_PROGRESS jobs stay on Xero_Projects.
-    BUILDPASS_PROJECT_SYNC: 'Buildpass_Project_Sync',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     // Approved Xero timesheets (break already deducted). P6 attendance discrepancy only.
     XERO_TIMESHEETS_APPROVED: 'Xero_Timesheets_Approved',
