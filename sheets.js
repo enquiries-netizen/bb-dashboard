@@ -38,8 +38,13 @@ async function loadSheetTab(tabName) {
   }
 
   var response;
+  var json;
   try {
     response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    if (!response.ok) throw new Error('Sheets API error ' + response.status + ' for tab: ' + tabName);
+    // Keep the abort timer until JSON is parsed. Clearing it after headers
+    // only allowed a hung body/json() to block callers forever.
+    json = await response.json();
   } catch (err) {
     if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
       throw new Error('Sheet load timed out for tab: ' + tabName);
@@ -48,9 +53,6 @@ async function loadSheetTab(tabName) {
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
-  if (!response.ok) throw new Error('Sheets API error ' + response.status + ' for tab: ' + tabName);
-
-  const json = await response.json();
   const rows = json.values || [];
 
   if (rows.length < 2) {
