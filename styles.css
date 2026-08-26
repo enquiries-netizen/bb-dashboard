@@ -5482,6 +5482,89 @@ body.bb-ai-off #ai-panel {
 #page-p4 .p4-upcoming-section .p4-chart-note {
   margin: 0 0 12px;
 }
+#page-p4 .p4-upcoming-dept {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--p4-card, #fff);
+  border: 1px solid var(--p4-border);
+}
+#page-p4 .p4-upcoming-dept-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+#page-p4 .p4-upcoming-dept-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--p4-muted);
+}
+#page-p4 .p4-upcoming-dept-overall {
+  font-size: 12px;
+  color: var(--p4-muted);
+  white-space: nowrap;
+}
+#page-p4 .p4-upcoming-dept-overall strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--p4-text);
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+}
+#page-p4 .p4-upcoming-dept-row {
+  margin-bottom: 8px;
+}
+#page-p4 .p4-upcoming-dept-row:last-child {
+  margin-bottom: 0;
+}
+#page-p4 .p4-upcoming-dept-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+#page-p4 .p4-upcoming-dept-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--p4-text);
+}
+#page-p4 .p4-upcoming-dept-amt {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--p4-text);
+  white-space: nowrap;
+}
+#page-p4 .p4-upcoming-dept-share {
+  min-width: 36px;
+  text-align: right;
+  color: var(--p4-muted);
+  font-variant-numeric: tabular-nums;
+}
+#page-p4 .p4-upcoming-dept-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(107, 114, 128, 0.14);
+  overflow: hidden;
+}
+#page-p4 .p4-upcoming-dept-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--p4-action, #2563EB);
+}
+#page-p4 .p4-upcoming-dept-row.is-unassigned .p4-upcoming-dept-fill {
+  background: var(--p4-muted);
+}
+#page-p4 .p4-upcoming-dept-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--p4-muted);
+}
 
 /* END page palette block*/
 
