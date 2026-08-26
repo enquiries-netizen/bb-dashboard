@@ -5229,6 +5229,126 @@ body.bb-ai-off #ai-panel {
   font-size: 11px;
   color: var(--p4-muted);
 }
+#page-p4 .p4-ph-left-row--group {
+  min-height: 28px;
+  cursor: default;
+  background: #f1f5f9;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#page-p4 .p4-ph-left-row--precon-group {
+  background: #ecfeff;
+  color: #0f766e;
+  border-left: 3px solid #0f766e;
+}
+#page-p4 .p4-ph-left-row--build-group {
+  background: #f8fafc;
+  color: var(--p4-muted);
+}
+#page-p4 .p4-ph-c-group {
+  grid-column: 1 / -1;
+}
+#page-p4 .p4-ph-left-row--precon {
+  background: #f0fdfa;
+}
+#page-p4 .p4-ph-lane--group {
+  min-height: 28px;
+  height: 28px;
+  cursor: default;
+  background: #f8fafc;
+}
+#page-p4 .p4-ph-lane--precon-group {
+  background: #ecfeff;
+}
+#page-p4 .p4-ph-lane--precon {
+  background: rgba(15, 118, 110, 0.04);
+}
+#page-p4 .p4-ph-bar--precon-planned {
+  background: repeating-linear-gradient(
+    -55deg,
+    rgba(15, 118, 110, 0.12),
+    rgba(15, 118, 110, 0.12) 4px,
+    rgba(15, 118, 110, 0.22) 4px,
+    rgba(15, 118, 110, 0.22) 8px
+  );
+  border: 1px solid #0f766e;
+  box-sizing: border-box;
+}
+#page-p4 .p4-ph-bar--precon-progress {
+  background: #0f766e;
+}
+#page-p4 .p4-ph-swatch--precon-plan {
+  background: repeating-linear-gradient(
+    -55deg,
+    rgba(15, 118, 110, 0.2),
+    rgba(15, 118, 110, 0.2) 3px,
+    rgba(15, 118, 110, 0.45) 3px,
+    rgba(15, 118, 110, 0.45) 6px
+  );
+  border: 1px solid #0f766e;
+}
+#page-p4 .p4-ph-swatch--precon-prog {
+  background: #0f766e;
+}
+#page-p4 .p4-ph-marker--precon {
+  background: #0f766e;
+  opacity: 0.7;
+}
+#page-p4 .p4-ph-left-row--precon-empty,
+#page-p4 .p4-ph-lane--precon-empty {
+  min-height: 52px;
+  height: auto;
+}
+#page-p4 .p4-ph-precon-empty {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #0f766e;
+  white-space: normal;
+}
+#page-p4 .p4-precon-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+  padding: 2px 5px;
+  border-radius: 2px;
+  color: #0f766e;
+  border: 1px solid #5eead4;
+  background: #ccfbf1;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+#page-p4 .p4-health-pill--muted {
+  color: var(--p4-muted);
+  border: 1px solid var(--p4-border);
+  background: transparent;
+}
+#page-p4 .p4-ms-left-row--precon,
+#page-p4 .p4-ms-lane--precon {
+  background: #f0fdfa;
+}
+#page-p4 .p4-ms-bar--precon {
+  background: repeating-linear-gradient(
+    -55deg,
+    rgba(15, 118, 110, 0.18),
+    rgba(15, 118, 110, 0.18) 3px,
+    rgba(15, 118, 110, 0.32) 3px,
+    rgba(15, 118, 110, 0.32) 6px
+  );
+  border: 1px solid #0f766e;
+  box-sizing: border-box;
+}
 
 /* Project drawer extras */
 #page-p4 .p4-draw-bars {

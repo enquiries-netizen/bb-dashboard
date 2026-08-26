@@ -57,6 +57,9 @@ const CONFIG = {
     XERO_OVERHEAD:       'Xero_Overhead',
     XERO_OVERHEADS:      'Xero_Overhead', // alias — sheet tab is singular
     BUILDPASS_SCHEDULE:  'Buildpass_Schedules',
+    // P4 joins IN_PROGRESS (construction) and UPCOMING (pre-construction) Job #s
+    // to this tab. Nightly pull should include UPCOMING milestones when present.
+    // Status filter is not in this repo (Make.com / Apps Script).
     // Nightly AppScript rewrite of Google Calendar job events (J# tagged).
     // P4 uses this only as fallback when a project has no Buildpass schedule rows.
     GOOGLE_CALENDAR_SCHEDULE: 'Google_Calendar_Schedule',

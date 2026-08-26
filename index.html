@@ -652,7 +652,7 @@
           <!-- Section 3: project-level health Gantt -->
           <div class="section-card p4-health-section">
             <div class="section-title">Project Health
-              <span class="p4-section-hint">One row per project · Buildpass or Calendar source · click a row for detail</span>
+              <span class="p4-section-hint">Construction and Pre-construction are separate groups · Buildpass or Calendar source · click a row for detail</span>
             </div>
             <div id="p4-health-gantt">Loading project health...</div>
           </div>
@@ -1819,7 +1819,7 @@
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
       P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall from Pipeline_Snapshots (GHL ID join; Pending until 2+ snapshot dates; approximate note when history does not cover the selected period). (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value $1 display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy from Estimating_Accuracy by Date Quoted: Estimator, Brand, Department, Quoted vs Actual Margin, Margin/Labour/Materials Variance, Accuracy Score. Blank J-Q actuals show Awaiting job data, never 0%. Averages and per-estimator rollup use only rows with real actuals. Quotes without Job # stay visible as Awaiting job data. Live job cost on P4/P5. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
-      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Awaiting Data), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Upcoming Projects from Buildpass_Project_Sync: Buildpass Status UPCOMING only (not IN_PROGRESS). Columns: Project Name, Job #, Estimated (quoted, not invoiced), Date First Added. Estimated total sums known amounts only; blank Estimated is Not available, never $0. Brand/Department filters apply only if those columns exist on the tab. Placeholder Operations / Project Oversight jobs excluded. Separate from in-progress Project Health. Loads on its own timer; if the tab fails or times out this section shows Upcoming Projects unavailable and the rest of P4 still loads. (4) Project Health Gantt: one row per project with progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (5) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (6) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (7) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (8) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule, Buildpass_Project_Sync. Never invent $0 for incomplete formulas.',
+      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Awaiting Data), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Upcoming Projects from Buildpass_Project_Sync: Buildpass Status UPCOMING only (not IN_PROGRESS). Columns: Project Name, Job #, Estimated (quoted, not invoiced), Date First Added. Estimated total sums known amounts only; blank Estimated is Not available, never $0. Brand/Department filters apply only if those columns exist on the tab. Placeholder Operations / Project Oversight jobs excluded. Separate from in-progress Project Health. Loads on its own timer; if the tab fails or times out this section shows Upcoming Projects unavailable and the rest of P4 still loads. (4) Project Health Gantt: Pre-construction (Upcoming Job #s joined to Buildpass_Schedules) is a separate group from Construction, with distinct bars. Empty upcoming jobs show a prompt, never a blank bar or invented dates. Construction rows: progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (5) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (6) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (7) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (8) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule, Buildpass_Project_Sync. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM from Gross Profit / Revenue, size contract, colour status; Total Actual and Gross Profit shown directly; jobs with both Total Actual and Revenue at $0 or blank stay Awaiting Data; Materials and Subbies as separate line items) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
@@ -2209,7 +2209,7 @@
      */
     function isNonJobProjectName(name) {
       var n = String(name || '').trim().toLowerCase();
-      return n === 'operations' || n === 'project oversight';
+      return n === 'operations' || n === 'project oversight' || n === 'project oversight';
     }
 
     /**
@@ -3202,7 +3202,10 @@
         var name = String(
           col(r, 'Project Name', 'project_name', 'Project', 'Job Name', 'job_name') || ''
         ).trim();
-        return !isNonJobProjectName(name);
+        var job = String(
+          col(r, 'Job #', 'Job Number', 'job_number', 'Job No', 'Job No.') || ''
+        ).trim();
+        return !isNonJobProjectName(name) && !isNonJobProjectName(job);
       });
     }
 
@@ -11132,7 +11135,7 @@
      */
     function p4ReadPctComplete(row) {
       var raw = rawColByNames(row, [
-        '% Complete', '% Done', 'percent_complete', 'Percent Complete', 'Progress'
+        '% Complete', '% Done', '% Done', 'percent_complete', 'Percent Complete', 'Progress'
       ]);
       var s = String(raw == null ? '' : raw).trim();
       if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' ||
@@ -11479,6 +11482,14 @@
           window._p4UpcomingLoadError = '';
           window._p4UpcomingRows = rows || [];
           p4RefreshUpcomingSection();
+          if (window._p4ScheduleRows) {
+            renderP4(
+              window._p4ScheduleRows,
+              window._p4LabourRows,
+              window._p4XeroProjects,
+              window._p4CalendarRows
+            );
+          }
         }).catch(function(err) {
           if (gen !== window._p4UpcomingFetchGen) return;
           console.warn('P4 Upcoming Projects load failed:', err);
@@ -11710,6 +11721,238 @@
       return /commenc|start on site|possession|handover|practical completion|pc\b|roof|lock[- ]?up|slab/.test(s);
     }
 
+    var P4_PRECON_EMPTY_MSG =
+      'No preconstruction milestones yet, ask the site supervisor to add them in Buildpass.';
+
+    function p4MatchLabels(value) {
+      if (value && typeof value === 'object') {
+        return [value.job, value.project, value.clientName, value.name].filter(function(s) {
+          return String(s || '').trim();
+        });
+      }
+      var s = String(value || '').trim();
+      return s ? [s] : [];
+    }
+
+    function p4IsUpcomingTrackedJob(labelOrRow, upcomingItems) {
+      var labels = p4MatchLabels(labelOrRow);
+      var list = upcomingItems || [];
+      var i, j, k, it, label, itemLabels;
+      for (i = 0; i < list.length; i++) {
+        it = list[i];
+        itemLabels = [];
+        if (it && it.job) itemLabels.push(it.job);
+        if (it && it.name) itemLabels.push(it.name);
+        for (j = 0; j < labels.length; j++) {
+          label = labels[j];
+          for (k = 0; k < itemLabels.length; k++) {
+            if (jobsMatchByNumber(itemLabels[k], label)) return true;
+          }
+          var a = String(it && it.name ? it.name : '').trim().toLowerCase();
+          var b = String(label || '').trim().toLowerCase();
+          if (a && b && a === b) return true;
+        }
+      }
+      return false;
+    }
+
+    function p4PreconBadge() {
+      return '<span class="p4-precon-badge" title="Pre-construction milestones, not on-site build">Pre-construction</span>';
+    }
+
+    /** Map Buildpass_Schedules rows. Does not invent dates or % Complete. */
+    function p4MapScheduleRows(rows, todayRef) {
+      var today = todayRef ? new Date(todayRef.getTime()) : new Date();
+      today.setHours(0, 0, 0, 0);
+      return (rows || []).map(function(r) {
+        var startRaw = col(r, 'Planned Start Date', 'Start Date', 'startDate', 'start_date', 'Planned Start');
+        var endRaw = col(r, 'Planned End Date', 'Planned End date', 'End Date', 'endDate', 'end_date', 'Planned End');
+        var startD = p4ParseScheduleDate(startRaw);
+        var endD = p4ParseScheduleDate(endRaw);
+        var dateFlag = null;
+        if (startD && endD && startD.getTime() > endD.getTime()) {
+          dateFlag = 'Start after End';
+        }
+
+        var pctInfo = p4ReadPctComplete(r);
+        var statusRaw = String(col(r, 'Status', 'status') || '').trim();
+        var status = statusRaw;
+        var statusLower = statusRaw.toLowerCase();
+        var pct = pctInfo.hasValue ? pctInfo.value : null;
+
+        if (statusLower === 'not started' || statusLower === 'not-started') {
+          if (pct === null) {
+            pct = 0;
+            pctInfo = { raw: pctInfo.raw, hasValue: false, value: 0, inferred: true };
+          } else if (pct >= 100) {
+            pct = 0;
+            pctInfo = {
+              raw: pctInfo.raw,
+              hasValue: true,
+              value: 0,
+              correctedFrom: 100,
+              reason: 'Progress data unavailable, showing as not started'
+            };
+          }
+        }
+
+        if (pct !== null && pct >= 100 &&
+            statusLower !== 'cancelled' && statusLower !== 'canceled') {
+          if (!(statusLower === 'not started' || statusLower === 'not-started')) {
+            status = 'Completed';
+            statusLower = 'completed';
+            pct = 100;
+          }
+        }
+
+        var isPastEnd = endD && !isNaN(endD.getTime()) && endD < today;
+        var unfinished = statusLower !== 'complete' && statusLower !== 'completed' &&
+          statusLower !== 'cancelled' && statusLower !== 'canceled';
+        if (isPastEnd && unfinished) {
+          if (statusLower === 'not started' || statusLower === 'not-started' ||
+              statusLower === 'overdue' || !statusRaw) {
+            status = 'Overdue';
+            statusLower = 'overdue';
+          }
+          if (pct !== null && pct >= 100) {
+            pct = 0;
+            pctInfo = {
+              raw: pctInfo.raw,
+              hasValue: pctInfo.hasValue,
+              value: 0,
+              correctedFrom: 100,
+              reason: 'Progress data unavailable, showing as not started'
+            };
+          }
+        }
+
+        return {
+          _src: r,
+          project: col(r, 'Project Name', 'project_name', 'project') || '',
+          job: col(r, 'Job #', 'Job Number', 'job_number', 'Job No', 'Job No.') || '',
+          milestone: col(r, 'Phase Name', 'Phase Name', 'Phase/Milestone Name', 'Milestone/Task Name', 'Task Name', 'title', 'name') || '',
+          startRaw: startRaw,
+          endRaw: endRaw,
+          startD: startD,
+          endD: endD,
+          dateFlag: dateFlag,
+          status: status,
+          statusRaw: statusRaw,
+          pct: pct,
+          pctInfo: pctInfo,
+          brand: col(r, 'Brand', 'brand') || '',
+          department: col(r, 'Department', 'department') || '',
+          actualEndRaw: col(r, 'Actual End date', 'Actual End Date', 'Actual End'),
+          slippageRaw: col(r, 'Slippage', 'Slippage', 'slippage')
+        };
+      });
+    }
+
+    /**
+     * Upcoming Job #s joined to Buildpass_Schedules (no month/year filter).
+     * Empty jobs keep a prompt only: no fabricated dates or 0% bars.
+     */
+    function p4BuildUpcomingGanttRollups(upcomingItems, scheduleRows) {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var MS_DAY = 86400000;
+      var items = upcomingItems || [];
+      var brandRows = filterByBrand(excludeOperationsProject(scheduleRows || []), activeBrand);
+      var mapped = p4MapScheduleRows(brandRows, today);
+
+      function rowOverdue(row) {
+        var st = String(row.status || '').toLowerCase();
+        if (st === 'complete' || st === 'completed' ||
+            st === 'cancelled' || st === 'canceled') return false;
+        if (st === 'overdue') return true;
+        if (!row.endD || isNaN(row.endD.getTime())) return false;
+        return row.endD < today;
+      }
+
+      return items.map(function(it) {
+        var label = String(it.name || it.job || '').trim();
+        var rows = mapped.filter(function(r) {
+          return p4IsUpcomingTrackedJob(r, [it]);
+        });
+        var model = {
+          project: label,
+          job: it.job || '',
+          clientName: it.name || '',
+          isUpcomingPrecon: true,
+          hasPreconSchedule: rows.length > 0,
+          isActive: true,
+          isCompleted: false,
+          isCancelled: false,
+          scheduleSource: rows.length ? 'buildpass' : 'none',
+          milestones: rows,
+          progressVals: [],
+          progressAvg: null,
+          maxSlipDays: 0,
+          overdueCount: 0,
+          minStart: null,
+          maxEnd: null,
+          keyMilestones: [],
+          health: 'on-track',
+          forecastMarginPending: true,
+          labourVariancePending: true,
+          forecastMargin: null,
+          calendarNext: null,
+          handsSignal: ''
+        };
+        if (!rows.length) return model;
+
+        rows.forEach(function(r) {
+          if (r.pctInfo && r.pctInfo.hasValue && r.pct != null) {
+            model.progressVals.push(r.pct);
+          }
+          if (rowOverdue(r)) model.overdueCount++;
+          var slip = null;
+          if (r.slippageRaw !== '' && r.slippageRaw !== null && r.slippageRaw !== undefined) {
+            var sd = parseInt(r.slippageRaw, 10);
+            if (!isNaN(sd)) slip = sd;
+          }
+          if (slip === null && rowOverdue(r) && r.endD) {
+            slip = Math.round((today - r.endD) / MS_DAY);
+          }
+          if (slip != null && slip > model.maxSlipDays) model.maxSlipDays = slip;
+          if (r.startD && (!model.minStart || r.startD < model.minStart)) model.minStart = r.startD;
+          if (r.endD && (!model.maxEnd || r.endD > model.maxEnd)) model.maxEnd = r.endD;
+          if (r.endD) {
+            model.keyMilestones.push({ name: r.milestone, date: r.endD, pct: r.pct });
+          }
+        });
+        if (model.progressVals.length) {
+          model.progressAvg = Math.round(
+            model.progressVals.reduce(function(s, n) { return s + n; }, 0) / model.progressVals.length
+          );
+        }
+        if (model.minStart && model.maxEnd &&
+            !isNaN(model.minStart.getTime()) && !isNaN(model.maxEnd.getTime())) {
+          var span = model.maxEnd - model.minStart;
+          if (span > 0) {
+            model.timeElapsedFrac = Math.max(0, Math.min(1.5, (today - model.minStart) / span));
+          }
+        }
+        var allCancelled = rows.every(function(m) {
+          var s = String(m.status || '').toLowerCase();
+          return s === 'cancelled' || s === 'canceled';
+        });
+        var allDone = rows.every(function(m) {
+          var s = String(m.status || '').toLowerCase();
+          return s === 'complete' || s === 'completed' || s === 'cancelled' || s === 'canceled';
+        });
+        var anyOpen = rows.some(function(m) {
+          var s = String(m.status || '').toLowerCase();
+          return s !== 'complete' && s !== 'completed' && s !== 'cancelled' && s !== 'canceled';
+        });
+        model.isCancelled = allCancelled;
+        model.isCompleted = !model.isCancelled && allDone && !anyOpen;
+        model.isActive = !model.isCompleted && !model.isCancelled;
+        model.health = p4ClassifyProjectHealth(model);
+        return model;
+      });
+    }
+
     /**
      * Shared project-health rollup (P1 portfolio + P4 Job Performance).
      * Same status algorithm: p4ClassifyProjectHealth (schedule slippage,
@@ -11812,7 +12055,7 @@
           brand: col(r, 'Brand', 'brand') || '',
           department: col(r, 'Department', 'department') || '',
           actualEndRaw: col(r, 'Actual End date', 'Actual End Date', 'Actual End'),
-          slippageRaw: col(r, 'Slippage', 'slippage')
+          slippageRaw: col(r, 'Slippage', 'Slippage', 'slippage')
         };
       });
 
@@ -12399,10 +12642,18 @@
         return String(a.project).localeCompare(String(b.project));
       });
 
-      window._p4ProjectRollups = filteredRollups;
+      var upcomingItems = upcomingPack.items || [];
+      var upcomingGanttModels = (window._p4UpcomingRows === undefined)
+        ? []
+        : p4BuildUpcomingGanttRollups(upcomingItems, window._p4ScheduleRows);
+      var constructionRollups = filteredRollups.filter(function(p) {
+        return !p4IsUpcomingTrackedJob(p.project, upcomingItems);
+      });
+
+      window._p4ProjectRollups = constructionRollups;
 
       setBBPageData('P4', 'P4: Job Performance', {
-        projects: filteredRollups.slice(0, 200).map(function(p) {
+        projects: constructionRollups.slice(0, 200).map(function(p) {
           return {
             project: p.project,
             client: p.clientName,
@@ -12433,7 +12684,7 @@
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
-        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field. Schedule: Buildpass milestones first; Google_Calendar_Schedule is fallback only (next work date, description, assigned). Upcoming Projects come from Buildpass_Project_Sync (UPCOMING only). Estimated is quoted value, not invoiced. Brand and Department are not on that tab, so those filters do not apply to Upcoming.',
+        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field. Schedule: Buildpass milestones first; Google_Calendar_Schedule is fallback only (next work date, description, assigned). Upcoming Projects come from Buildpass_Project_Sync (UPCOMING only). Estimated is quoted value, not invoiced. Brand and Department are not on that tab, so those filters do not apply to Upcoming. Pre-construction Gantt joins those Job #s to Buildpass_Schedules without inventing dates.',
         upcomingProjects: (upcomingPack.items || []).slice(0, 50).map(function(it) {
           return {
             project: it.name,
@@ -12446,8 +12697,8 @@
         upcomingCount: (upcomingPack.items || []).length
       });
 
-      var activeList = filteredRollups.filter(function(p) { return p.isActive; });
-      var noData = filteredRollups.length === 0 && schedFiltered.length === 0 && labourFiltered.length === 0;
+      var activeList = constructionRollups.filter(function(p) { return p.isActive; });
+      var noData = constructionRollups.length === 0 && schedFiltered.length === 0 && labourFiltered.length === 0 && !upcomingItems.length;
 
       function destroyP4Charts() {
         ['chart-p4-scatter', 'chart-p4-completion', 'chart-p4-labour-top5'].forEach(function(id) {
@@ -12537,11 +12788,12 @@
       }
 
       // ── Section 3: Project Health Gantt ─
-      function renderProjectHealthGantt(list) {
+      function renderProjectHealthGantt(list, upcomingModels) {
         var el = document.getElementById('p4-health-gantt');
         if (!el) return;
-        var activeRows = list.filter(function(p) { return p.isActive; });
-        if (!activeRows.length) {
+        var constructionRows = (list || []).filter(function(p) { return p.isActive; });
+        var upcomingRows = upcomingModels || [];
+        if (!constructionRows.length && !upcomingRows.length) {
           el.innerHTML = '<p class="no-data-msg">No active projects for the current filters.</p>';
           return;
         }
@@ -12557,7 +12809,8 @@
           if (t < rangeMin) rangeMin = t;
           if (t > rangeMax) rangeMax = t;
         }
-        activeRows.forEach(function(p) {
+        function extendProjectDates(p) {
+          if (p.isUpcomingPrecon && !p.hasPreconSchedule) return;
           if (p.minStart) extend(p.minStart.getTime());
           if (p.maxEnd) extend(p.maxEnd.getTime());
           (p.keyMilestones || []).forEach(function(km) {
@@ -12567,7 +12820,9 @@
               !isNaN(p.calendarNext.dateD.getTime())) {
             extend(p.calendarNext.dateD.getTime());
           }
-        });
+        }
+        constructionRows.forEach(extendProjectDates);
+        upcomingRows.forEach(extendProjectDates);
         extend(todayMs);
         if (!isFinite(rangeMin) || !isFinite(rangeMax)) {
           rangeMin = todayMs - MS_DAY * 30;
@@ -12626,6 +12881,8 @@
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--planned"></i>Planned (Buildpass)</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--progress"></i>Progress</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--risk"></i>At risk progress</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--precon-plan"></i>Pre-construction planned</span>' +
+          '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--precon-prog"></i>Pre-construction progress</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--calendar"></i>Next calendar work</span>' +
           '<span class="p4-ph-legend-item"><i class="p4-ph-swatch p4-ph-swatch--today"></i>Today</span>' +
           '</div>' +
@@ -12644,27 +12901,68 @@
           '<div class="p4-ph-c-status">Status</div>' +
           '</div>';
 
-        activeRows.forEach(function(p, idx) {
+        var clickTargets = [];
+        function leftRowHtml(p, idx) {
+          var precon = !!p.isUpcomingPrecon;
+          var emptyPrecon = precon && !p.hasPreconSchedule;
           var riskCls = p.health === 'at-risk' ? ' p4-ph-left-row--risk' : '';
+          var groupCls = precon ? ' p4-ph-left-row--precon' : '';
+          if (emptyPrecon) groupCls += ' p4-ph-left-row--precon-empty';
           var src = p.scheduleSource || 'none';
-          var progressCell = p.progressAvg != null
-            ? (p.progressAvg + '%')
-            : (src === 'calendar'
-              ? '<span class="p4-jco-null" title="Calendar has daily activity only, not % complete">n/a</span>'
-              : '-');
-          html +=
-            '<div class="p4-ph-left-row p4-ph-row-hit' + riskCls + '" data-proj-idx="' + idx + '" role="button" tabindex="0">' +
+          var progressCell = emptyPrecon
+            ? '<span class="p4-jco-null">-</span>'
+            : (p.progressAvg != null
+              ? (p.progressAvg + '%')
+              : (src === 'calendar'
+                ? '<span class="p4-jco-null" title="Calendar has daily activity only, not % complete">n/a</span>'
+                : '-'));
+          var statusCell = emptyPrecon
+            ? '<span class="p4-health-pill p4-health-pill--muted">Upcoming</span>'
+            : formatHealthBadge(p.health);
+          var hitCls = emptyPrecon ? '' : ' p4-ph-row-hit';
+          var hitAttrs = emptyPrecon
+            ? ''
+            : ' data-proj-idx="' + idx + '" role="button" tabindex="0"';
+          return (
+            '<div class="p4-ph-left-row' + hitCls + riskCls + groupCls + '"' + hitAttrs + '>' +
             '<div class="p4-ph-c-project" title="' + p4EscAttr(p.project) + '">' +
             '<span class="p4-ph-proj-name">' + p4EscHtml(p.project) + '</span>' +
-            p4ScheduleSourceChip(src) +
+            (precon ? p4PreconBadge() : '') +
+            (emptyPrecon ? '' : p4ScheduleSourceChip(src)) +
             '</div>' +
             '<div class="p4-ph-c-client" title="' + p4EscAttr(p.clientName || '') + '">' + p4EscHtml(p.clientName || '-') + '</div>' +
             '<div class="p4-ph-c-num">' + progressCell + '</div>' +
-            '<div class="p4-ph-c-num">' + marginCell(p) + '</div>' +
-            '<div class="p4-ph-c-num">' + labVarCell(p) + '</div>' +
-            '<div class="p4-ph-c-status">' + formatHealthBadge(p.health) + '</div>' +
-            '</div>';
-        });
+            '<div class="p4-ph-c-num">' + (emptyPrecon ? '<span class="p4-jco-null">-</span>' : marginCell(p)) + '</div>' +
+            '<div class="p4-ph-c-num">' + (emptyPrecon ? '<span class="p4-jco-null">-</span>' : labVarCell(p)) + '</div>' +
+            '<div class="p4-ph-c-status">' + statusCell + '</div>' +
+            '</div>'
+          );
+        }
+        function groupHeadLeft(label, extraCls) {
+          return (
+            '<div class="p4-ph-left-row p4-ph-left-row--group ' + extraCls + '">' +
+            '<div class="p4-ph-c-group">' + p4EscHtml(label) + '</div></div>'
+          );
+        }
+
+        if (upcomingRows.length) {
+          html += groupHeadLeft('Pre-construction', 'p4-ph-left-row--precon-group');
+          upcomingRows.forEach(function(p) {
+            var idx = clickTargets.length;
+            clickTargets.push(p.hasPreconSchedule ? p : null);
+            html += leftRowHtml(p, idx);
+          });
+        }
+        if (constructionRows.length) {
+          if (upcomingRows.length) {
+            html += groupHeadLeft('Construction', 'p4-ph-left-row--build-group');
+          }
+          constructionRows.forEach(function(p) {
+            var idx = clickTargets.length;
+            clickTargets.push(p);
+            html += leftRowHtml(p, idx);
+          });
+        }
 
         html +=
           '</div>' +
@@ -12673,25 +12971,34 @@
           '<div class="p4-ph-months">' + monthsHtml + '</div>' + todayLine +
           '</div>';
 
-        activeRows.forEach(function(p, idx) {
+        function groupHeadLane(extraCls) {
+          return '<div class="p4-ph-lane p4-ph-lane--group ' + extraCls + '" style="width:' + timelineW + 'px"></div>';
+        }
+        function laneHtml(p, idx) {
           var bars = '';
+          var precon = !!p.isUpcomingPrecon;
+          var emptyPrecon = precon && !p.hasPreconSchedule;
           var t0 = p.minStart ? p.minStart.getTime() : null;
           var t1 = p.maxEnd ? p.maxEnd.getTime() : null;
           var src = p.scheduleSource || 'none';
           var nextCal = p.calendarNext;
-          if (src === 'buildpass' && t0 != null && t1 != null) {
+          if (emptyPrecon) {
+            bars = '<span class="p4-ph-precon-empty">' + p4EscHtml(P4_PRECON_EMPTY_MSG) + '</span>';
+          } else if (src === 'buildpass' && t0 != null && t1 != null) {
             var x0 = xOf(t0);
             var x1 = xOf(t1);
             var L = Math.min(x0, x1);
             var R = Math.max(x0, x1);
             var wPlan = Math.max(R - L, 4);
+            var planCls = precon ? ' p4-ph-bar--precon-planned' : '';
             bars +=
-              '<div class="p4-ph-bar p4-ph-bar--planned" style="left:' + L.toFixed(1) +
-              'px;width:' + wPlan.toFixed(1) + 'px" title="Planned window"></div>';
-            // Progress fill: portion of planned span by progressAvg
+              '<div class="p4-ph-bar p4-ph-bar--planned' + planCls + '" style="left:' + L.toFixed(1) +
+              'px;width:' + wPlan.toFixed(1) + 'px" title="' +
+              (precon ? 'Pre-construction planned window' : 'Planned window') + '"></div>';
             var prog = p.progressAvg != null ? Math.max(0, Math.min(100, p.progressAvg)) : 0;
             var wProg = Math.max((wPlan * prog) / 100, prog > 0 ? 3 : 0);
             var barCls = p.health === 'at-risk' ? 'p4-ph-bar--progress-risk' : 'p4-ph-bar--progress';
+            if (precon) barCls += ' p4-ph-bar--precon-progress';
             if (wProg > 0) {
               bars +=
                 '<div class="p4-ph-bar ' + barCls + '" style="left:' + L.toFixed(1) +
@@ -12714,7 +13021,6 @@
           } else if (src === 'calendar') {
             bars = '<span class="p4-ph-nodates">No upcoming calendar work</span>';
           } else if (t0 != null && t1 != null) {
-            // Xero expected dates only (no Buildpass / calendar schedule)
             var x0b = xOf(t0);
             var x1b = xOf(t1);
             var Lb = Math.min(x0b, x1b);
@@ -12726,20 +13032,45 @@
           } else {
             bars = '<span class="p4-ph-nodates">No schedule data yet</span>';
           }
-          (p.keyMilestones || []).forEach(function(km) {
-            if (!km.date) return;
-            var mx = xOf(km.date.getTime());
-            bars +=
-              '<div class="p4-ph-marker" style="left:' + mx.toFixed(1) +
-              'px" title="' + p4EscAttr(km.name) + '"></div>';
-          });
+          if (!emptyPrecon) {
+            (p.keyMilestones || []).forEach(function(km) {
+              if (!km.date) return;
+              var mx = xOf(km.date.getTime());
+              bars +=
+                '<div class="p4-ph-marker' + (precon ? ' p4-ph-marker--precon' : '') + '" style="left:' + mx.toFixed(1) +
+                'px" title="' + p4EscAttr(km.name) + '"></div>';
+            });
+          }
           var riskCls = p.health === 'at-risk' ? ' p4-ph-lane--risk' : '';
-          html +=
-            '<div class="p4-ph-lane p4-ph-row-hit' + riskCls + '" data-proj-idx="' + idx +
-            '" role="button" tabindex="0" style="width:' + timelineW + 'px">' +
+          var preconCls = precon ? ' p4-ph-lane--precon' : '';
+          if (emptyPrecon) preconCls += ' p4-ph-lane--precon-empty';
+          var hitCls = emptyPrecon ? '' : ' p4-ph-row-hit';
+          var hitAttrs = emptyPrecon
+            ? ''
+            : ' data-proj-idx="' + idx + '" role="button" tabindex="0"';
+          return (
+            '<div class="p4-ph-lane' + hitCls + riskCls + preconCls + '"' + hitAttrs +
+            ' style="width:' + timelineW + 'px">' +
             '<div class="p4-ph-lane-today" style="left:' + todayX.toFixed(1) + 'px"></div>' +
-            bars + '</div>';
-        });
+            bars + '</div>'
+          );
+        }
+
+        var laneIdx = 0;
+        if (upcomingRows.length) {
+          html += groupHeadLane('p4-ph-lane--precon-group');
+          upcomingRows.forEach(function(p) {
+            html += laneHtml(p, laneIdx);
+            laneIdx += 1;
+          });
+        }
+        if (constructionRows.length) {
+          if (upcomingRows.length) html += groupHeadLane('p4-ph-lane--build-group');
+          constructionRows.forEach(function(p) {
+            html += laneHtml(p, laneIdx);
+            laneIdx += 1;
+          });
+        }
 
         html += '</div></div></div></div>';
         el.innerHTML = html;
@@ -12747,13 +13078,13 @@
         el.querySelectorAll('.p4-ph-row-hit').forEach(function(node) {
           node.addEventListener('click', function() {
             var idx = parseInt(node.getAttribute('data-proj-idx'), 10);
-            if (!isNaN(idx) && activeRows[idx]) openProjectDrawer(activeRows[idx]);
+            if (!isNaN(idx) && clickTargets[idx]) openProjectDrawer(clickTargets[idx]);
           });
           node.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               var idx = parseInt(node.getAttribute('data-proj-idx'), 10);
-              if (!isNaN(idx) && activeRows[idx]) openProjectDrawer(activeRows[idx]);
+              if (!isNaN(idx) && clickTargets[idx]) openProjectDrawer(clickTargets[idx]);
             }
           });
         });
@@ -13306,10 +13637,10 @@
         });
       }
 
-      renderProjectHealthGantt(filteredRollups);
-      renderScatter(filteredRollups);
-      renderExceptionTable(filteredRollups);
-      renderFullJobCosting(filteredRollups);
+      renderProjectHealthGantt(constructionRollups, upcomingGanttModels);
+      renderScatter(constructionRollups);
+      renderExceptionTable(constructionRollups);
+      renderFullJobCosting(constructionRollups);
 
       // ── Milestone Schedule (collapsible; existing Gantt logic preserved) ─
       var tableEl = document.getElementById('p4-schedule-table');
@@ -13341,6 +13672,9 @@
 
       function p4ScheduleDefaultVisible(r) {
         var key = p4TimelineStatusKey(r);
+        if (r.isUpcomingPrecon) {
+          return key !== 'cancelled' && key !== 'completed';
+        }
         return key === 'overdue' || key === 'in-progress';
       }
 
@@ -13451,14 +13785,27 @@
       }
 
       // Filter milestones by department/status via project rollup
+      var upcomingItemsMs = upcomingPack.items || [];
       var allowedProjects = {};
-      filteredRollups.forEach(function(p) { allowedProjects[p.project] = true; });
-      var schedForMs = schedFiltered.filter(function(r) {
+      constructionRollups.forEach(function(p) { allowedProjects[p.project] = true; });
+      var constructionMsRows = schedFiltered.filter(function(r) {
+        if (p4IsUpcomingTrackedJob(r, upcomingItemsMs)) return false;
         if (activeP4Dept !== 'ALL' || activeP4Status !== 'ALL') {
           return !!allowedProjects[r.project];
         }
         return true;
       });
+      var upcomingMsRows = [];
+      if (upcomingItemsMs.length) {
+        upcomingMsRows = p4MapScheduleRows(
+          filterByBrand(excludeOperationsProject(window._p4ScheduleRows || []), activeBrand),
+          today
+        ).filter(function(r) {
+          return p4IsUpcomingTrackedJob(r, upcomingItemsMs);
+        });
+        upcomingMsRows.forEach(function(r) { r.isUpcomingPrecon = true; });
+      }
+      var schedForMs = upcomingMsRows.concat(constructionMsRows);
 
       function renderP4MilestoneSchedule(sortedSched) {
         if (!tableEl) return;
@@ -13592,7 +13939,7 @@
           var endLabel = p4FmtDate(r.endD, r.endRaw) || '-';
           var plannedTitle = 'Planned ' + startLabel + ' to ' + endLabel;
           var htmlB = '';
-          htmlB += barSlice(x0, x1, 'p4-ms-bar--planned', plannedTitle);
+          htmlB += barSlice(x0, x1, 'p4-ms-bar--planned' + (r.isUpcomingPrecon ? ' p4-ms-bar--precon' : ''), plannedTitle);
           if (statusKey === 'completed') {
             htmlB += barSlice(x0, x1, 'p4-ms-bar--completed', 'Completed');
             if (actualMs !== null && actualMs > tEnd) {
@@ -13628,7 +13975,7 @@
           var slipClass = slip.delayed ? ' p4-ms-c-slip--late' : ' p4-ms-c-slip--ok';
           return (
             '<div class="p4-ms-cell p4-ms-c-project" title="' + p4EscAttr(r.project || '') + '">' +
-            p4EscHtml(r.project || '') + '</div>' +
+            p4EscHtml(r.project || '') + (r.isUpcomingPrecon ? p4PreconBadge() : '') + '</div>' +
             '<div class="p4-ms-cell p4-ms-c-milestone" title="' + p4EscAttr(r.milestone || '') + '">' +
             p4EscHtml(r.milestone || '') + '</div>' +
             '<div class="p4-ms-cell p4-ms-c-slip' + slipClass + '">' + p4EscHtml(slip.text) + '</div>'
@@ -13720,8 +14067,9 @@
 
         visible.forEach(function(r, idx) {
           var risk = isOverdueNorm(r) ? ' p4-ms-left-row--risk' : '';
+          var preconRow = r.isUpcomingPrecon ? ' p4-ms-left-row--precon' : '';
           html +=
-            '<div class="p4-ms-left-row' + risk + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0">' +
+            '<div class="p4-ms-left-row' + risk + preconRow + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0">' +
             '<div class="p4-ms-left-grid">' + rowLeftCells(r, false) + '</div></div>';
         });
 
@@ -13737,8 +14085,9 @@
 
         visible.forEach(function(r, idx) {
           var risk = isOverdueNorm(r) ? ' p4-ms-lane--risk' : '';
+          var preconLane = r.isUpcomingPrecon ? ' p4-ms-lane--precon' : '';
           html +=
-            '<div class="p4-ms-lane' + risk + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0" ' +
+            '<div class="p4-ms-lane' + risk + preconLane + ' p4-ms-row-hit" data-ms-idx="' + idx + '" role="button" tabindex="0" ' +
             'style="width:' + timelineW + 'px">' +
             '<div class="p4-ms-lane-grid">' + weekLinesHtml +
             (todayX !== null
@@ -13879,6 +14228,9 @@
 
       if (schedForMs.length > 0) {
         var sortedSched = schedForMs.slice().sort(function(a, b) {
+          var ua = a.isUpcomingPrecon ? 0 : 1;
+          var ub = b.isUpcomingPrecon ? 0 : 1;
+          if (ua !== ub) return ua - ub;
           var oa = isOverdueNorm(a) ? 0 : 1;
           var ob = isOverdueNorm(b) ? 0 : 1;
           if (oa !== ob) return oa - ob;
