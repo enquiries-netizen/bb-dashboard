@@ -68,6 +68,8 @@ const CONFIG = {
     // Department is a column on this tab (Buildpass GET /projects/{id}), not a Xero join.
     BUILDPASS_PROJECT_SYNC: 'Buildpass_Project_Sync',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
+    // Hourly pay rates. P4 hours-based Labour Cost (col A name, col B hourly rate).
+    EMPLOYEES_RATE:      'Employees rate',
     // Approved Xero timesheets (break already deducted). P6 attendance discrepancy only.
     XERO_TIMESHEETS_APPROVED: 'Xero_Timesheets_Approved',
     // Xero leave applications. P6 On Leave (current/upcoming) and util labels only.

@@ -11102,6 +11102,9 @@
         // Upcoming is optional and isolated. Do not await it here: a hung
         // Buildpass_Project_Sync fetch must not leave the overlay up.
         p4StartUpcomingLoad();
+        // Employee rates are optional. Isolated fetch; missing rates show
+        // Rate Unknown rather than blocking Job Performance.
+        p4StartEmployeeRatesLoad();
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.BUILDPASS_SCHEDULE),
           fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR),
@@ -11342,6 +11345,7 @@
     }
 
     var P4_UPCOMING_FETCH_TIMEOUT_MS = 5000;
+    var P4_EMPLOYEE_RATES_FETCH_TIMEOUT_MS = 5000;
 
     function p4SheetHasCol(rows, names) {
       if (!rows || !rows.length) return false;
@@ -11523,6 +11527,280 @@
         console.warn('P4 upcoming start failed:', e);
         try { p4PaintUpcomingUnavailable(); } catch (e2) { /* keep Job Performance visible */ }
       }
+    }
+
+    function p4MapEmployeeRatesValues(json) {
+      var rows = (json && json.values) || [];
+      if (rows.length < 2) return [];
+      var headers = rows[0].map(function(h) { return String(h == null ? '' : h).trim(); });
+      console.info('[P4 Labour Cost] Employees rate headers: ' + headers.filter(Boolean).join(', '));
+      return rows.slice(1).map(function(row) {
+        var obj = {
+          // Col A = employee name, col B = hourly rate (sheet contract).
+          _colA: row[0] !== undefined ? row[0] : '',
+          _colB: row[1] !== undefined ? row[1] : ''
+        };
+        headers.forEach(function(h, i) {
+          if (!h) return;
+          obj[h] = row[i] !== undefined ? row[i] : '';
+        });
+        return obj;
+      }).filter(function(row) {
+        return String(row._colA || '').trim() !== '' ||
+          Object.keys(row).some(function(k) { return String(row[k] || '').trim() !== ''; });
+      });
+    }
+
+    /**
+     * Isolated Employees rate fetch. Does not use fetchSheet cache or inflight.
+     * 5s timeout covers headers + JSON. Never awaited by loadP4.
+     */
+    function p4FetchEmployeeRatesIsolated() {
+      return new Promise(function(resolve, reject) {
+        var settled = false;
+        var timeoutId = null;
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        function done(err, rows) {
+          if (settled) return;
+          settled = true;
+          if (timeoutId) clearTimeout(timeoutId);
+          if (err) reject(err);
+          else resolve(rows);
+        }
+        timeoutId = setTimeout(function() {
+          try { if (controller) controller.abort(); } catch (e) { /* ignore */ }
+          done(new Error('Employees rate timed out'));
+        }, P4_EMPLOYEE_RATES_FETCH_TIMEOUT_MS);
+        try {
+          var tab = (CONFIG.TABS && CONFIG.TABS.EMPLOYEES_RATE) || 'Employees rate';
+          var sheetId = CONFIG.SHEET_ID;
+          var apiKey = CONFIG.API_KEY;
+          if (!apiKey || apiKey === 'PASTE_YOUR_API_KEY_HERE') {
+            done(new Error('API key not set'));
+            return;
+          }
+          var url = 'https://sheets.googleapis.com/v4/spreadsheets/' +
+            sheetId + '/values/' + encodeURIComponent(tab) + '?key=' + apiKey;
+          fetch(url, controller ? { signal: controller.signal } : undefined)
+            .then(function(res) {
+              if (!res.ok) throw new Error('Sheets API error ' + res.status + ' for tab: ' + tab);
+              return res.json();
+            })
+            .then(function(json) {
+              if (json && json.error) {
+                throw new Error(json.error.message || 'Sheets API error');
+              }
+              done(null, p4MapEmployeeRatesValues(json));
+            })
+            .catch(function(err) {
+              if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+                done(new Error('Employees rate timed out'));
+                return;
+              }
+              done(err || new Error('Employees rate unavailable'));
+            });
+        } catch (e) {
+          done(e);
+        }
+      });
+    }
+
+    function p4StartEmployeeRatesLoad() {
+      try {
+        window._p4EmployeeRatesFetchGen = (window._p4EmployeeRatesFetchGen || 0) + 1;
+        var gen = window._p4EmployeeRatesFetchGen;
+        window._p4EmployeeRatesError = '';
+        window._p4EmployeeRatesStatus = 'loading';
+        window._p4EmployeeRates = undefined;
+        p4FetchEmployeeRatesIsolated().then(function(rows) {
+          if (gen !== window._p4EmployeeRatesFetchGen) return;
+          window._p4EmployeeRatesError = '';
+          window._p4EmployeeRates = rows || [];
+          window._p4EmployeeRatesStatus = 'ok';
+          if (window._p4ScheduleRows) {
+            renderP4(
+              window._p4ScheduleRows,
+              window._p4LabourRows,
+              window._p4XeroProjects,
+              window._p4CalendarRows
+            );
+          }
+        }).catch(function(err) {
+          if (gen !== window._p4EmployeeRatesFetchGen) return;
+          console.warn('P4 Employees rate load failed:', err);
+          window._p4EmployeeRatesError = err && err.message ? err.message : String(err);
+          window._p4EmployeeRates = [];
+          window._p4EmployeeRatesStatus = 'missing';
+          if (window._p4ScheduleRows) {
+            renderP4(
+              window._p4ScheduleRows,
+              window._p4LabourRows,
+              window._p4XeroProjects,
+              window._p4CalendarRows
+            );
+          }
+        });
+      } catch (e) {
+        console.warn('P4 employee rates start failed:', e);
+        window._p4EmployeeRates = [];
+        window._p4EmployeeRatesStatus = 'missing';
+      }
+    }
+
+    function p4NormEmpName(s) {
+      if (typeof p6NormEmpName === 'function') return p6NormEmpName(s);
+      return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    /** Real Job # only. Leave, admin, and unassigned hours are not attributed. */
+    function p4LabourCostJobId(row) {
+      var job = String(col(row,
+        'Xero Project J#', 'Xero Project J#', 'Job #', 'Job Number', 'Job Number', 'Job#'
+      ) || '').trim();
+      if (!job) return '';
+      if (isNonJobProjectName(job)) return '';
+      if (!jobNumberPrefix(job)) return '';
+      return job;
+    }
+
+    function p4ParsePayRate(raw) {
+      if (raw === null || raw === undefined) return null;
+      var s = String(raw).trim();
+      if (!s || s === '-' || s === '\u2014' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'na') {
+        return null;
+      }
+      var n = parseFloat(s.replace(/[$,%\s]/g, '').replace(/,/g, ''));
+      if (isNaN(n) || n <= 0) return null;
+      return n;
+    }
+
+    function p4BuildEmployeeRateMap(rateRows) {
+      var map = {};
+      (rateRows || []).forEach(function(r) {
+        var name = String(
+          r._colA != null ? r._colA : col(r, 'Employee Name', 'Employee Name', 'Employee', 'Name') || ''
+        ).trim();
+        var key = p4NormEmpName(name);
+        if (!key) return;
+        var rate = p4ParsePayRate(
+          r._colB != null ? r._colB : col(r, 'Pay Rate', 'Hourly Rate', 'Hourly Rate ($)', 'Rate')
+        );
+        if (map[key] !== undefined) return;
+        map[key] = rate;
+      });
+      return map;
+    }
+
+    /**
+     * Hours-based Labour Cost from Buildpass_Labour x Employees rate.
+     * Does not replace Xero Actual-Labour or change forecast margin.
+     */
+    function p4ApplyHoursLabourCost(rollups, labourRows, rateRows, rateStatus) {
+      var list = rollups || [];
+      var status = rateStatus || (rateRows ? 'ok' : 'missing');
+      var rateMap = (status === 'ok') ? p4BuildEmployeeRateMap(rateRows) : {};
+      var byJob = {};
+
+      (labourRows || []).forEach(function(r) {
+        var job = p4LabourCostJobId(r);
+        if (!job) return;
+        var hrs = parseNum(col(r,
+          'Hours (daily)', 'Hours (daily)', 'Hours', 'Total Hours', 'hours', 'Duration', 'Hrs', 'hrs'
+        ));
+        if (!hrs) return;
+        var emp = String(col(r, 'Employee Name', 'Employee Name', 'Employee', 'Name') || '').trim();
+        var empKey = p4NormEmpName(emp);
+        if (!byJob[job]) {
+          byJob[job] = { hours: 0, knownCost: 0, knownHours: 0, unknownHours: 0, unknownPeople: {} };
+        }
+        byJob[job].hours += hrs;
+        if (status === 'loading') return;
+        var rate = empKey ? rateMap[empKey] : null;
+        if (rate == null) {
+          byJob[job].unknownHours += hrs;
+          if (emp) byJob[job].unknownPeople[emp] = true;
+        } else {
+          byJob[job].knownHours += hrs;
+          byJob[job].knownCost += hrs * rate;
+        }
+      });
+
+      list.forEach(function(p) {
+        var matched = null;
+        Object.keys(byJob).forEach(function(job) {
+          if (matched) return;
+          if (jobsMatchByNumber(p.project, job)) matched = byJob[job];
+        });
+        var hours = matched ? matched.hours : 0;
+        var unknownHrs = matched ? matched.unknownHours : 0;
+        var unknownPeople = matched ? Object.keys(matched.unknownPeople).length : 0;
+        var knownCost = matched ? matched.knownCost : 0;
+        var knownHours = matched ? matched.knownHours : 0;
+
+        p.labourHours = hours;
+        p.hoursLabourUnknownHours = unknownHrs;
+        p.hoursLabourUnknownPeople = unknownPeople;
+
+        if (!hours) {
+          p.labourCost = 0;
+          p.hoursLabourStatus = 'none';
+          p.labourCostAsPctBudget = null;
+          return;
+        }
+        if (status === 'loading') {
+          p.labourCost = 0;
+          p.hoursLabourStatus = 'rates-loading';
+          p.labourCostAsPctBudget = null;
+          return;
+        }
+        if (status === 'missing') {
+          p.labourCost = 0;
+          p.hoursLabourStatus = 'rates-missing';
+          p.labourCostAsPctBudget = null;
+          return;
+        }
+        if (knownHours && unknownHrs) {
+          p.labourCost = knownCost;
+          p.hoursLabourStatus = 'partial';
+        } else if (knownHours) {
+          p.labourCost = knownCost;
+          p.hoursLabourStatus = 'complete';
+        } else {
+          p.labourCost = 0;
+          p.hoursLabourStatus = 'unknown';
+        }
+        if (p.totalBudget != null && p.totalBudget > 0 && knownCost > 0) {
+          p.labourCostAsPctBudget = (knownCost / p.totalBudget) * 100;
+        } else {
+          p.labourCostAsPctBudget = null;
+        }
+      });
+    }
+
+    function p4HoursLabourHoursText(p) {
+      if (!p || !p.labourHours) return 'No labour logged yet';
+      return parseFloat(p.labourHours).toFixed(1);
+    }
+
+    function p4HoursLabourCostText(p) {
+      if (!p) return 'No labour logged yet';
+      if (!p.labourHours) return 'No labour logged yet';
+      if (p.hoursLabourStatus === 'rates-loading') return 'Loading rates';
+      if (p.hoursLabourStatus === 'rates-missing' || p.hoursLabourStatus === 'unknown') {
+        return 'Rate Unknown';
+      }
+      if (p.hoursLabourStatus === 'partial') {
+        return formatCurrency(p.labourCost);
+      }
+      if (p.labourCost) return formatCurrency(p.labourCost);
+      return 'Rate Unknown';
+    }
+
+    function p4HoursLabourUnknownNote(p) {
+      if (!p || !p.hoursLabourUnknownHours) return '';
+      var people = p.hoursLabourUnknownPeople || 0;
+      var hrs = parseFloat(p.hoursLabourUnknownHours).toFixed(1);
+      return 'Rate Unknown: ' + hrs + ' hrs' + (people ? ' (' + people + ' people)' : '');
     }
 
     /**
@@ -12613,6 +12891,14 @@
         today: today
       });
 
+      // Hours-based Labour Cost (Employees rate). Isolated rates; do not hang overlay.
+      p4ApplyHoursLabourCost(
+        allRollups,
+        filterByBrand(labour || [], activeBrand),
+        window._p4EmployeeRates,
+        window._p4EmployeeRatesStatus || (window._p4EmployeeRates ? 'ok' : 'loading')
+      );
+
       function p4RerenderFromCache() {
         if (window._p4ScheduleRows) {
           renderP4(
@@ -12914,7 +13200,7 @@
           return;
         }
 
-        var LEFT_W = 520;
+        var LEFT_W = 600;
         var PX = 8;
         var rangeMin = Infinity;
         var rangeMax = -Infinity;
@@ -12990,6 +13276,15 @@
           if (p.labourVariancePending) return '<span class="p4-jco-null">Pending</span>';
           return '-';
         }
+        function labourCostPhCell(p) {
+          var txt = p4HoursLabourCostText(p);
+          var note = p4HoursLabourUnknownNote(p);
+          var isNull = !p.labourHours || p.hoursLabourStatus === 'rates-loading' ||
+            p.hoursLabourStatus === 'rates-missing' || p.hoursLabourStatus === 'unknown' ||
+            p.hoursLabourStatus === 'none';
+          return '<span class="p4-ph-labour-cost' + (isNull ? ' p4-jco-null' : '') + '" title="' +
+            p4EscAttr(note || txt) + '">' + p4EscHtml(txt) + '</span>';
+        }
 
         var html =
           '<div class="p4-ph" role="region" aria-label="Project Health Gantt">' +
@@ -13013,6 +13308,7 @@
           '<div class="p4-ph-c-client">Client</div>' +
           '<div class="p4-ph-c-num">Progress</div>' +
           '<div class="p4-ph-c-num">Margin</div>' +
+          '<div class="p4-ph-c-num">Labour Cost</div>' +
           '<div class="p4-ph-c-num">Labour Var</div>' +
           '<div class="p4-ph-c-status">Status</div>' +
           '</div>';
@@ -13049,6 +13345,7 @@
             '<div class="p4-ph-c-client" title="' + p4EscAttr(p.clientName || '') + '">' + p4EscHtml(p.clientName || '-') + '</div>' +
             '<div class="p4-ph-c-num">' + progressCell + '</div>' +
             '<div class="p4-ph-c-num">' + (emptyPrecon ? '<span class="p4-jco-null">-</span>' : marginCell(p)) + '</div>' +
+            '<div class="p4-ph-c-num">' + (emptyPrecon ? '<span class="p4-jco-null">-</span>' : labourCostPhCell(p)) + '</div>' +
             '<div class="p4-ph-c-num">' + (emptyPrecon ? '<span class="p4-jco-null">-</span>' : labVarCell(p)) + '</div>' +
             '<div class="p4-ph-c-status">' + statusCell + '</div>' +
             '</div>'
@@ -13514,14 +13811,23 @@
           '<th class="p4-jco-th p4-jco-th--left">Status</th>';
 
         var trs = rows.map(function(p) {
-          var hrsTxt = p.labourHours ? parseFloat(p.labourHours).toFixed(1) : '';
-          var costTxt = p.labourCost ? formatCurrency(p.labourCost) : '';
+          var hrsTxt = p4HoursLabourHoursText(p);
+          var costTxt = p4HoursLabourCostText(p);
+          var unkNote = p4HoursLabourUnknownNote(p);
+          var hrsEmpty = !p.labourHours;
+          var costEmpty = !p.labourHours || p.hoursLabourStatus === 'unknown' ||
+            p.hoursLabourStatus === 'rates-missing' || p.hoursLabourStatus === 'rates-loading' ||
+            p.hoursLabourStatus === 'none';
+          var costHtml = p4JcoCell(costTxt, costEmpty);
+          if (unkNote) {
+            costHtml += '<div class="p4-rate-unknown-note">' + p4EscHtml(unkNote) + '</div>';
+          }
           var revTxt = p.revenue != null ? formatCurrency(p.revenue) : '';
           return '<tr class="p4-ex-row" data-project="' + p4EscAttr(p.project) + '">' +
             '<td class="p4-jco-td p4-jco-td--project">' + p4JcoCell(p4EscHtml(p.project || '-'), !p.project) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--left">' + p4JcoCell(p4EscHtml(p.clientName || '-'), !p.clientName) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, !hrsTxt) + '</td>' +
-            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(costTxt, !costTxt) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + p4JcoCell(hrsTxt, hrsEmpty) + '</td>' +
+            '<td class="p4-jco-td p4-jco-td--num">' + costHtml + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualLabourRaw) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualMaterialsRaw) + '</td>' +
             '<td class="p4-jco-td p4-jco-td--num">' + p4JcoMoneyCell(p.actualSubbiesRaw) + '</td>' +
@@ -13623,8 +13929,12 @@
                 : '-')) +
           '</dd></div>' +
           '<div><dt>End date</dt><dd>' + (p.endDate ? p.endDate.toLocaleDateString('en-AU') : '-') + '</dd></div>' +
-          '<div><dt>Hours</dt><dd>' + (p.labourHours ? p.labourHours.toFixed(1) : '-') + '</dd></div>' +
-          '<div><dt>Labour cost</dt><dd>' + (p.labourCost ? formatCurrency(p.labourCost) : '-') + '</dd></div>' +
+          '<div><dt>Hours</dt><dd>' + p4EscHtml(p4HoursLabourHoursText(p)) + '</dd></div>' +
+          '<div><dt>Labour cost (hours)</dt><dd>' + p4EscHtml(p4HoursLabourCostText(p)) +
+            (p4HoursLabourUnknownNote(p)
+              ? '<span class="p4-draw-note"> ' + p4EscHtml(p4HoursLabourUnknownNote(p)) + '</span>'
+              : '') +
+          '</dd></div>' +
           '<div><dt>Actual-Labour</dt><dd>' + moneyOrDash(p.actualLabourRaw, p.actualLabour) + '</dd></div>' +
           '<div><dt>Actual Materials</dt><dd>' + moneyOrDash(p.actualMaterialsRaw, p.actualMaterials) + '</dd></div>' +
           '<div><dt>Actual-Subbies</dt><dd>' + moneyOrDash(p.actualSubbiesRaw, p.actualSubbies) + '</dd></div>' +

@@ -4655,6 +4655,22 @@ body.bb-ai-off #ai-panel {
   color: var(--p4-muted);
   opacity: 0.55;
 }
+#page-p4 .p4-rate-unknown-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--p4-muted);
+  line-height: 1.2;
+  white-space: normal;
+}
+#page-p4 .p4-ph-labour-cost {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+  font-size: 10px;
+}
 
 /* Labour % progress */
 #page-p4 .p4-jco-pct {
@@ -5022,7 +5038,7 @@ body.bb-ai-off #ai-panel {
   display: grid;
 
   /* minmax(0, fr) so fr tracks can shrink; fixed mins + gaps exceeded sticky width */
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.05fr) 56px 56px 64px 84px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.05fr) 56px 56px 72px 64px 84px;
   gap: 4px;
   align-items: center;
   min-height: 40px;
