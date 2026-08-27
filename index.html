@@ -25218,6 +25218,7 @@
       // Attendance analysis uses selectable Fri-Thu payroll week (not planning ISO week).
       html += p6RenderAttendanceSection(m.attendanceMetrics);
       html += p6RenderTimesheetDiscrepancySection(m.timesheetDiscrepancies);
+      html += p6RenderOnLeaveSection(m);
 
       p6SetBB(m);
       return html;
@@ -25305,8 +25306,6 @@
         html += '<button type="button" class="p6-risk-banner-close" onclick="p6DismissRiskBanner()" aria-label="Dismiss warning">×</button>';
         html += '</div>';
       }
-
-      html += p6RenderOnLeaveSection(m);
 
       html += '<div class="p6-section-card p6-main-gantt p6-main-gantt--full">';
       html += '<div class="p6-section-head">';
@@ -25424,8 +25423,6 @@
         k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
         'Once per employee-week. vs budget: Pending', 'gap');
       html += '</div>';
-
-      html += p6RenderOnLeaveSection(m);
 
       html += '<div class="p6-section-card">';
       html += '<div class="p6-section-title">Timesheet completeness · Week ' + m.selectedWeek + '</div>';
