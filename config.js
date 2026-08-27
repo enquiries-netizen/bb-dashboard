@@ -65,6 +65,7 @@ const CONFIG = {
     GOOGLE_CALENDAR_SCHEDULE: 'Google_Calendar_Schedule',
     // Buildpass project list (UPCOMING / IN_PROGRESS). P4 Upcoming Projects
     // uses UPCOMING rows only. IN_PROGRESS jobs stay on Xero_Projects.
+    // Department is a column on this tab (Buildpass GET /projects/{id}), not a Xero join.
     BUILDPASS_PROJECT_SYNC: 'Buildpass_Project_Sync',
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     // Approved Xero timesheets (break already deducted). P6 attendance discrepancy only.

@@ -1820,7 +1820,7 @@
       P1: 'Executive Snapshot (decision cockpit). Layout: (1) Six KPI cards: Revenue, Gross Margin, Operating Profit, Cash Position, Secured Workload, Project Health. Actual is hero; target/variance secondary; status On track/Watch/Off track. Jobs won and leads are P2 only. (2) Performance vs plan chart (Revenue / Gross Profit / Operating Profit toggle). (3) Portfolio health with P4 status rules + link to P4. (4) Cash outlook and Workload/capacity. (5) Executive action panel from real exceptions only. Pending or Awaiting data when sources not live - never invent numbers. Answer only from live page data.',
       P2: 'Sales & Pipeline (decision dashboard). Period filters: Date Created on leads and opportunities (labelled on page). Layout: (1) Six primary KPIs: Open Pipeline Value, Weighted Pipeline (value x Probability %), Target Coverage (weighted / future revenue targets - pending if no targets), Quotes Outstanding (count + $), Quote Win Rate by count and by value (wins / closed quotes ONLY - not lead-to-win), Stalled Pipeline (14+ days no activity - threshold confirm with Lori/Ben). Secondary: avg won job value, median sales cycle, pipeline added this month, funnel rates Lead-to-Quote / Quote-to-Win / Lead-to-Win labelled separately. (2) Pipeline funnel stages New Lead → Qualified → Site Visit → Quote Sent → Follow-up/Negotiation → Won/Lost with count/value toggle (default Value). (3) Revenue forecast by Expected Close month: committed / likely / early-stage stack + target line when Targets live. (4) Pipeline movement waterfall from Pipeline_Snapshots (GHL ID join; Pending until 2+ snapshot dates; approximate note when history does not cover the selected period). (5) Source quality table + bubble chart; channel concentration risk callout if one source ~80-85%+ of leads; CPL labelled paid leads only when from Marketing_Paid; full ad analysis on P10. (6) Opportunities requiring action (exceptions first) + View all; deal-ageing Gantt top 10. Placeholder Value $1 display "Value not entered" and exclude from weighted totals. Pending/Awaiting when sheet or columns empty - never invent numbers. For week-over-week Sales go to P8.',
       P3: 'Quoting & Estimating (production-control dashboard). Period filters: Date Sent on Quotes / Date Quoted on accuracy (labelled). Layout: (1) Last updated line. (2) Six operational KPIs: In Progress, Due Next 7 Days, Overdue (accent only when overdue), Awaiting Decision ($), Average Turnaround with sample size and low-sample caveat when n is small, Average Quoted Margin (Pending if Est Margin blank - never fake 0%). (3) Quoting Work Queue stages in production order Brief Received to Scope Complete to Estimating to Internal Review to Sent/Awaiting Decision: count, value, avg days in stage, overdue, estimators - NOT a conversion funnel. (4) Production Schedule (collapsible): quote-production Gantt Scope/Site Measure/Estimating/Internal Review/Ready to Send with today line, submission milestone, overdue accent, margin-warning, unassigned hatched; missing inputs; upcoming submissions. (5) Estimator Capacity (hours preferred; pending/proxy if no booking hours) + Client-Decision Ageing value buckets 0-7 / 8-14 / 15-30 / 31+ days. (6) Action table exceptions first + View all quotes. (7) Estimating Accuracy from Estimating_Accuracy by Date Quoted: Estimator, Brand, Department, Quoted vs Actual Margin, Margin/Labour/Materials Variance, Accuracy Score. Blank J-Q actuals show Awaiting job data, never 0%. Averages and per-estimator rollup use only rows with real actuals. Quotes without Job # stay visible as Awaiting job data. Live job cost on P4/P5. Quotes is the production quoting source (formerly GHL_Quotes; same sheet after rename). Never invent hours or 0% accuracy gauges. Answer only from live page data.',
-      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Awaiting Data), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Upcoming Projects from Buildpass_Project_Sync: Buildpass Status UPCOMING only (not IN_PROGRESS). Columns: Project Name, Job #, Department (joined from Xero_Projects on Job #; Unassigned if no match), Estimated (quoted, not invoiced). Estimated by department bars sit above the table with overall estimated total. Estimated total sums known amounts only; blank Estimated is Not available, never $0. Department filter applies via the Xero_Projects join. Brand is not on Buildpass_Project_Sync so the brand filter does not apply to Upcoming. Placeholder Operations / Project Oversight jobs excluded. Separate from in-progress Project Health. Loads on its own timer; if the tab fails or times out this section shows Upcoming Projects unavailable and the rest of P4 still loads. (4) Project Health Gantt: Pre-construction (Upcoming Job #s joined to Buildpass_Schedules) is a separate group from Construction, with distinct bars. Empty upcoming jobs show a prompt, never a blank bar or invented dates. Construction rows: progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (5) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (6) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (7) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (8) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule, Buildpass_Project_Sync. Never invent $0 for incomplete formulas.',
+      P4: 'Job Performance (decision dashboard). Layout: (1) Filters: global Brand/Month/Year plus page Department and Status (On track / Watch / At risk). No Project Manager filter unless field exists in sheets. (2) Five KPIs: Active Projects, Contract Value (sum Total Budget, abbreviated), Forecast Gross Margin (Gross Profit / Revenue when Total Actual or Revenue is non-zero, else Awaiting Data), Labour Variance (Pending - budgeted labour source TBD), Projects at Risk (orange accent only for risk). (3) Upcoming Projects from Buildpass_Project_Sync: Buildpass Status UPCOMING only (not IN_PROGRESS). Columns: Project Name, Job #, Department (from Buildpass_Project_Sync Department column, filled by Buildpass GET /projects/{id}; Unassigned if blank on that row), Estimated (quoted, not invoiced). Estimated by department bars sit above the table with overall estimated total. Estimated total sums known amounts only; blank Estimated is Not available, never $0. Department filter applies via the Buildpass_Project_Sync Department column. Brand is not on Buildpass_Project_Sync so the brand filter does not apply to Upcoming. Placeholder Operations / Project Oversight jobs excluded. Separate from in-progress Project Health. Loads on its own timer; if the tab fails or times out this section shows Upcoming Projects unavailable and the rest of P4 still loads. (4) Project Health Gantt: Pre-construction (Upcoming Job #s joined to Buildpass_Schedules) is a separate group from Construction, with distinct bars. Empty upcoming jobs show a prompt, never a blank bar or invented dates. Construction rows: progress, pending margin/labour variance, status dots; muted planned bar + progress bar (orange only if at risk); Today dashed line; key milestone markers. (5) Budget consumption vs completion bubble chart (Y = Total Actual as % of budget when Total Actual or Revenue is non-zero; incomplete jobs omitted, not plotted as 0). (6) Exceptions table: top At risk then Watch; View all expands Job Costing Overview with exact figures and Labour cost as % of budget. (7) Project drawer: budget/actual/forecast bars (pending where incomplete) + milestone list. (8) Milestone Schedule Gantt preserved in collapsible section. Health rules: At risk = Needs More Hands, slip>=21d, overdue>=2, or late progress vs time; Watch = mild slip/understaffed/1 overdue; else On track. Live data only from Xero_Projects, Buildpass_Labour, Milestone Schedule, Buildpass_Project_Sync. Never invent $0 for incomplete formulas.',
       P5: 'Profitability (exception-led financial dashboard, monthly not weekly). Layout: (1) Data-quality banner + Last updated + completeness; Partial when supplier bills incomplete, AR unassigned, Jul-Aug targets missing. (2) Six KPIs: Revenue YTD, Gross Profit YTD, Gross Margin, Net/Operating Profit, Overhead Variance (Favourable/Adverse), Margin at Risk. Small overdue debtors indicator only; full AR on P9 Cash Flow. (3) Metric-switch trend chart (Revenue/GP/Net Profit/GM%) for all 12 months: actual to current month, target line (Target not set when missing, never zero), forecast for future, prior year, current-month break mark; GM swings (e.g. May vs June) flagged as anomaly for validation. (4) Profit waterfall Revenue→Materials→Direct Labour→Subcontractors→Other Direct→GP→Overheads→Net with Consolidated/BBBS/RMH/Department toggles; Pending partial steps when cost splits unavailable. (5) Project margin health table + bubble (X completion %, Y forecast GM from Gross Profit / Revenue, size contract, colour status; Total Actual and Gross Profit shown directly; jobs with both Total Actual and Revenue at $0 or blank stay Awaiting Data; Materials and Subbies as separate line items) and margin bridge for selected project. (6) Overhead exception heatmap categories x months + top exceptions table + Action panel max 5 real exceptions. Never invent numbers. Orange only for real margin/cost risk; data gaps use neutral grey. Answer only from live P5 page data.',
       P6: 'Capacity & Labour (dual-mode resource-planning workspace). Modes: Capacity Planning (default) | Actuals & Timesheets. Every visual shares one selected ISO planning week (not Month/Year primary). Planning KPIs: Available Capacity, Scheduled Hours, Forecast Utilisation (Scheduled/Available), Overallocated Capacity (people + excess hours), Unallocated Capacity, Forecast Labour Cost (vs project labour budget Pending when incomplete). Layout planning: full-width Crew Allocation Gantt (Dept → Crew → Employee, crews collapsed by default; People/Project view; daily weeks 1-4 + weekly 5-12); lower Planned vs Actual/Forecast chart + 8-week dept capacity heatmap + Capacity Actions; hybrid Weekly Capacity bars (available vs scheduled from Capacity series, util bands) + Assignment Summary (Project/Role/Planned/Actual/Labour Variance/Status from labour + projects; Pending when demand/role missing). Employee capacity detail table is drill-down only, not primary. Actuals mode: logged vs planned/available, productive/non-productive, overtime (not auto timesheet error), missing/unusual timesheets, labour cost once per employee-week, timesheet detail tables live here. Low logged is not spare capacity until missing timesheets ruled out. Never invent hours. Live: Capacity, Buildpass_Labour (deduped). Forward schedule, diaries allocation, project demand, labour budgets: Pending. Week-over-week Capacity totals on P8. Answer only from live page data.',
       P7: 'Client Satisfaction. Data types kept separate: CX Surveys (Quote Experience, Pre-construction, During-construction, Handover, 30-day post), Public Reputation (Google/Facebook/etc), Service Recovery (complaints/defects). Incomplete Client_Reviews rows (missing client, project, platform, rating, review content) go to a data-quality queue and are excluded from main KPIs. Only records with a valid score OR comment count as feedback. Missing rating is never treated as zero; average rating is "Not available" when no valid ratings. Six KPIs: CSAT (valid surveys only), NPS (only from a true 0-10 recommend question - never derived from 5-star), Survey Response Rate, At-Risk Clients, Resolution SLA, Public Reputation (Client_Reviews count with average and status); optional Review Conversion only when invite data exists. Layout: type strip, KPIs, theme drivers with n= sample sizes (low-n greyed), recent feedback table + side drawer, monthly trend when sample is enough. Journey satisfaction and at-risk action tables are not shown until a CX survey source exists. Orange only for at-risk/high severity. Pending/Not available for missing sources. Never invent numbers. Answer only from live P7 page data.',
@@ -11066,7 +11066,8 @@
     // P4 - JOB PERFORMANCE (decision dashboard)
     // Sources: Buildpass_Schedules (primary), Google_Calendar_Schedule (fallback
     //          when a project has no Buildpass milestone rows), Buildpass_Labour,
-    //          Xero_Projects (Job # match). Live data only.
+    //          Xero_Projects (Job # match). Upcoming Department is on
+    //          Buildpass_Project_Sync (Buildpass GET /projects/{id}), not Xero.
     // Layout:  Filters · 5 KPIs · Project Health Gantt · scatter ·
     //          exception table (+ View all Job Costing) · collapsible milestones
     // ═══════════════════════════════════════════════════════════════
@@ -11365,6 +11366,7 @@
       return {
         items: [],
         hasBrandCol: false,
+        hasDeptCol: false,
         totalEstimated: null,
         amountKnownCount: 0,
         missingAmountCount: 0,
@@ -11372,14 +11374,13 @@
       };
     }
 
-    /** Department from Xero_Projects via Job #. No match or blank department is Unassigned. */
-    function p4UpcomingDepartmentFromXero(job) {
-      var jobRef = String(job || '').trim();
-      if (!jobRef) return 'Unassigned';
-      var found = findXeroProjectByJob(window._p4XeroProjects || [], jobRef);
-      if (!found) return 'Unassigned';
-      var live = readXeroProjectLive(found);
-      var can = canonicalDeptName(live && live.department);
+    /**
+     * Department from Buildpass_Project_Sync (Buildpass GET /projects/{id}).
+     * Blank or missing Department is Unassigned for that row only. No Xero join.
+     */
+    function p4UpcomingDepartmentFromSync(row) {
+      var raw = col(row, 'Department', 'department', 'Dept', 'dept');
+      var can = canonicalDeptName(raw);
       return can || 'Unassigned';
     }
 
@@ -11526,13 +11527,15 @@
 
     /**
      * Confirmed Buildpass jobs that have not started (Status UPCOMING only).
-     * Department is joined from Xero_Projects on Job # (Unassigned if no match).
+     * Department comes from the Department column on Buildpass_Project_Sync.
+     * Blank or missing Department is Unassigned for that row only. No Xero join.
      * Brand filter applies only when Brand exists on Buildpass_Project_Sync.
      * Department filter is applied by the caller after the page control is resolved.
      */
     function p4CollectUpcomingProjects(rawRows) {
       var source = rawRows || [];
       var hasBrandCol = p4SheetHasCol(source, ['Brand', 'brand']);
+      var hasDeptCol = p4SheetHasCol(source, ['Department', 'department', 'Dept', 'dept']);
       var rows = excludeOperationsProject(source);
       if (hasBrandCol) rows = filterByBrand(rows, activeBrand);
       var items = [];
@@ -11555,7 +11558,7 @@
           job: job,
           amount: amount,
           amountRaw: amtRaw,
-          department: p4UpcomingDepartmentFromXero(job)
+          department: p4UpcomingDepartmentFromSync(r)
         });
       });
       items.sort(function(a, b) {
@@ -11568,7 +11571,8 @@
       });
       return {
         items: items,
-        hasBrandCol: hasBrandCol
+        hasBrandCol: hasBrandCol,
+        hasDeptCol: hasDeptCol
       };
     }
 
@@ -11579,7 +11583,7 @@
       });
     }
 
-    function p4BuildUpcomingPack(items, hasBrandCol) {
+    function p4BuildUpcomingPack(items, hasBrandCol, hasDeptCol) {
       items = items || [];
       var total = 0;
       var known = 0;
@@ -11611,6 +11615,7 @@
       return {
         items: items,
         hasBrandCol: !!hasBrandCol,
+        hasDeptCol: !!hasDeptCol,
         totalEstimated: known ? total : null,
         amountKnownCount: known,
         missingAmountCount: items.length - known,
@@ -11648,7 +11653,10 @@
 
       var noteParts = [];
       noteParts.push('Estimated is quoted value, not invoiced revenue. In-progress jobs stay in Project Health below.');
-      noteParts.push('Department is joined from Xero_Projects on Job #. Jobs with no matching Xero_Projects row show Unassigned.');
+      noteParts.push('Department comes from the Department column on Buildpass_Project_Sync (Buildpass project API). Blank Department on a row shows Unassigned for that row only.');
+      if (!pack.hasDeptCol) {
+        noteParts.push('Department is not on Buildpass_Project_Sync yet, so every row shows Unassigned until the sync writes that column.');
+      }
       if (!pack.hasBrandCol) {
         noteParts.push('Brand is not on Buildpass_Project_Sync, so the brand filter does not apply here.');
       }
@@ -11762,7 +11770,8 @@
       var collected = p4CollectUpcomingProjects(window._p4UpcomingRows);
       var pack = p4BuildUpcomingPack(
         p4FilterUpcomingByDept(collected.items),
-        collected.hasBrandCol
+        collected.hasBrandCol,
+        collected.hasDeptCol
       );
       p4PaintUpcomingSection(pack);
       return pack;
@@ -12791,7 +12800,7 @@
         handsSignals: handsByProject,
         handsDetail: handsDetail,
         healthRules: 'At risk: Needs More Hands, slip>=21d, overdue>=2, or time>=75% with progress<40. Watch: Understaffed, slip>=7d, 1 overdue, or mild progress lag. Else On track.',
-        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field. Schedule: Buildpass milestones first; Google_Calendar_Schedule is fallback only (next work date, description, assigned). Upcoming Projects come from Buildpass_Project_Sync (UPCOMING only). Estimated is quoted value, not invoiced. Department is joined from Xero_Projects on Job # (Unassigned if no match) and the department filter applies. Brand is not on Buildpass_Project_Sync, so the brand filter does not apply to Upcoming. Pre-construction Gantt joins those Job #s to Buildpass_Schedules without inventing dates.',
+        pendingNote: 'Forecast Gross Margin uses Gross Profit / Revenue when Total Actual or Revenue is non-zero. Otherwise Awaiting Data. Labour Variance awaits budgeted labour field. Schedule: Buildpass milestones first; Google_Calendar_Schedule is fallback only (next work date, description, assigned). Upcoming Projects come from Buildpass_Project_Sync (UPCOMING only). Estimated is quoted value, not invoiced. Department comes from the Department column on Buildpass_Project_Sync (Buildpass project API). Blank Department on a row shows Unassigned for that row only. The department filter applies. Brand is not on Buildpass_Project_Sync, so the brand filter does not apply to Upcoming. Pre-construction Gantt joins those Job #s to Buildpass_Schedules without inventing dates.',
         upcomingProjects: (upcomingPack.items || []).slice(0, 50).map(function(it) {
           return {
             project: it.name,
