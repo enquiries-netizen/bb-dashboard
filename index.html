@@ -23276,6 +23276,166 @@
       return String(s || '').replace(/\s+/g, ' ').trim();
     }
 
+    function p6DayStart(d) {
+      if (!d || isNaN(d.getTime())) return null;
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function p6FmtLeaveDate(d) {
+      d = p6DayStart(d);
+      if (!d) return '';
+      try {
+        return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (e) {
+        return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
+      }
+    }
+
+    /** Fri-Thu payroll week for a Capacity ISO week number. */
+    function p6PayrollWeekRange(year, week) {
+      var fri = null;
+      var thu = null;
+      if (typeof p8PayrollFridayStart === 'function') {
+        fri = p8PayrollFridayStart(year, week);
+      }
+      if (typeof p8PayrollThursday === 'function') {
+        thu = p8PayrollThursday(year, week);
+      }
+      if (!fri || isNaN(fri.getTime())) {
+        var mon = typeof p6IsoWeekMonday === 'function' ? p6IsoWeekMonday(year, week) : null;
+        if (mon && !isNaN(mon.getTime())) {
+          fri = new Date(mon);
+          fri.setDate(mon.getDate() + 4);
+          fri.setHours(0, 0, 0, 0);
+        }
+      }
+      if (!thu || isNaN(thu.getTime())) {
+        if (fri && !isNaN(fri.getTime())) {
+          thu = new Date(fri);
+          thu.setDate(fri.getDate() + 6);
+          thu.setHours(0, 0, 0, 0);
+        }
+      }
+      return { start: p6DayStart(fri), end: p6DayStart(thu) };
+    }
+
+    function p6DatesOverlap(a0, a1, b0, b1) {
+      if (!a0 || !b0) return false;
+      var aEnd = a1 || a0;
+      var bEnd = b1 || b0;
+      return a0.getTime() <= bEnd.getTime() && aEnd.getTime() >= b0.getTime();
+    }
+
+    function p6LeaveNameKeys(name) {
+      var n = p6NormEmpName(name);
+      if (!n) return [];
+      var keys = [n];
+      var stripped = n.replace(/[-''`]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (stripped && stripped !== n) keys.push(stripped);
+      return keys;
+    }
+
+    function p6LeaveStatusNorm(raw) {
+      return String(raw || '').trim().toUpperCase();
+    }
+
+    /**
+     * Map Xero_Leave rows by live header names (probed: Employee, Leave Type,
+     * Start Date, End Date, Hours, Status, Paid/Unpaid).
+     */
+    function p6ParseLeaveRows(rows) {
+      var out = [];
+      var logged = false;
+      (rows || []).forEach(function(r, idx) {
+        if (!logged && idx === 0) {
+          logged = true;
+          try {
+            console.info('[P6 On Leave] Xero_Leave headers: ' + Object.keys(r || {}).join(', '));
+          } catch (e) { /* ignore */ }
+        }
+        var employee = p6DisplayName(col(r,
+          'Employee', 'Employee Name', 'Name', 'Employee Full Name'
+        ));
+        if (!employee) return;
+        var start = p6DayStart(parseFlexibleDate(col(r,
+          'Start Date', 'Start', 'From Date', 'Leave Start Date'
+        )));
+        if (!start) return;
+        var endRaw = parseFlexibleDate(col(r,
+          'End Date', 'End', 'To Date', 'Leave End Date'
+        ));
+        var end = p6DayStart(endRaw) || start;
+        var status = p6LeaveStatusNorm(col(r, 'Status', 'Leave Status', 'state'));
+        out.push({
+          employee: employee,
+          leaveType: p6DisplayName(col(r, 'Leave Type', 'Type', 'Leave Type Name', 'LeaveType')),
+          start: start,
+          end: end,
+          hours: col(r, 'Hours', 'Hours Taken', 'Total Hours'),
+          status: status,
+          paidUnpaid: p6DisplayName(col(r,
+            'Paid/Unpaid', 'Paid / Unpaid', 'Paid or Unpaid', 'Payment', 'Paid'
+          ))
+        });
+      });
+      return out;
+    }
+
+    /** Current/upcoming only: SCHEDULED (not already ended) or PROCESSED still overlapping today. */
+    function p6LeaveKeepForSection(row, today) {
+      if (!row || !row.start) return false;
+      var end = row.end || row.start;
+      var todayMs = today.getTime();
+      if (row.status === 'SCHEDULED') return end.getTime() >= todayMs;
+      if (row.status === 'PROCESSED') {
+        return row.start.getTime() <= todayMs && end.getTime() >= todayMs;
+      }
+      return false;
+    }
+
+    function p6BuildLeavePack(rawRows, year, week, loadState) {
+      var parsed = p6ParseLeaveRows(rawRows);
+      var today = p6DayStart(new Date()) || new Date();
+      var bounds = p6PayrollWeekRange(year, week);
+      var upcoming = parsed.filter(function(r) { return p6LeaveKeepForSection(r, today); });
+      upcoming.sort(function(a, b) {
+        var ds = a.start.getTime() - b.start.getTime();
+        if (ds) return ds;
+        return String(a.employee).localeCompare(String(b.employee));
+      });
+      var byName = {};
+      parsed.forEach(function(r) {
+        p6LeaveNameKeys(r.employee).forEach(function(k) {
+          if (!byName[k]) byName[k] = [];
+          byName[k].push(r);
+        });
+      });
+      return {
+        loadState: loadState || (parsed.length ? 'ok' : 'ok'),
+        parsed: parsed,
+        upcoming: upcoming,
+        byName: byName,
+        weekStart: bounds.start,
+        weekEnd: bounds.end
+      };
+    }
+
+    function p6PersonOnLeaveThisWeek(name, leavePack) {
+      if (!leavePack || !leavePack.byName) return false;
+      var start = leavePack.weekStart;
+      var end = leavePack.weekEnd;
+      if (!start || !end) return false;
+      var keys = p6LeaveNameKeys(name);
+      var i, j, rows;
+      for (i = 0; i < keys.length; i++) {
+        rows = leavePack.byName[keys[i]] || [];
+        for (j = 0; j < rows.length; j++) {
+          if (p6DatesOverlap(rows[j].start, rows[j].end, start, end)) return true;
+        }
+      }
+      return false;
+    }
+
     /** Standardise General Building & Maintenance spelling on P6 only. */
     function p6CanonDept(s) {
       var raw = canonicalDeptName(s) || String(s || '').trim();
@@ -24840,6 +25000,40 @@
       return html;
     }
 
+    function p6RefreshLeaveUi() {
+      var el = document.getElementById('p6-content');
+      if (!el || !window._p6Raw) return;
+      p6Remount();
+    }
+
+    /**
+     * Isolated Xero_Leave fetch. Not awaited by loadP6 so a miss/timeout
+     * cannot block Capacity, Labour, attendance, or timesheets (P4 Upcoming pattern).
+     */
+    function p6KickLeaveLoad() {
+      var tab = (CONFIG.TABS && CONFIG.TABS.XERO_LEAVE) || 'Xero_Leave';
+      window._p6LeaveFetchGen = (window._p6LeaveFetchGen || 0) + 1;
+      var gen = window._p6LeaveFetchGen;
+      if (!Array.isArray(window._p6LeaveRows)) {
+        window._p6LeaveRows = [];
+        window._p6LeaveLoadState = 'loading';
+      }
+      fetchSheet(tab).then(function(rows) {
+        if (gen !== window._p6LeaveFetchGen) return;
+        window._p6LeaveRows = rows || [];
+        window._p6LeaveLoadState = 'ok';
+        if (window._p6Raw) window._p6Raw.leave = window._p6LeaveRows;
+        p6RefreshLeaveUi();
+      }).catch(function(err) {
+        if (gen !== window._p6LeaveFetchGen) return;
+        console.warn('P6 Xero_Leave load failed:', err);
+        window._p6LeaveRows = [];
+        window._p6LeaveLoadState = 'error';
+        if (window._p6Raw) window._p6Raw.leave = [];
+        p6RefreshLeaveUi();
+      });
+    }
+
     async function loadP6(opts) {
       opts = opts || {};
       var silent = !!opts.silent;
@@ -24860,7 +25054,8 @@
           capacity: results[0] || [],
           labour: results[1] || [],
           attendance: results[2] || [],
-          timesheetsApproved: results[3] || []
+          timesheetsApproved: results[3] || [],
+          leave: window._p6LeaveRows || []
         };
         if (!preserve) {
           window._p6SelectedWeek = null;
@@ -24873,6 +25068,7 @@
             window._p6Filters.brand = activeBrand;
           }
         }
+        p6KickLeaveLoad();
         document.getElementById('p6-content').innerHTML = renderP6();
         setTimeout(function() { p6MountCharts(); }, 80);
       } catch (err) {
@@ -24929,7 +25125,7 @@
     }
 
     function renderP6() {
-      var raw = window._p6Raw || { capacity: [], labour: [], attendance: [], timesheetsApproved: [] };
+      var raw = window._p6Raw || { capacity: [], labour: [], attendance: [], timesheetsApproved: [], leave: [] };
       var labRows = p6FilterLabour(raw.labour);
       var capRows = p6FilterCapacity(raw.capacity);
       if (!capRows.length) capRows = raw.capacity || [];
@@ -24946,6 +25142,17 @@
         raw.timesheetsApproved || [],
         probe.attendanceMetrics.weekKey
       );
+      var leaveState = window._p6LeaveLoadState ||
+        ((raw.leave && raw.leave.length) ? 'ok' : 'loading');
+      probe.leave = p6BuildLeavePack(
+        raw.leave || window._p6LeaveRows || [],
+        probe.year,
+        probe.selectedWeek,
+        leaveState
+      );
+      (probe.people || []).forEach(function(p) {
+        p.onLeaveThisWeek = p6PersonOnLeaveThisWeek(p.name, probe.leave);
+      });
       window._p6Model = probe;
       window._p6SelectedWeek = probe.selectedWeek;
 
@@ -25027,6 +25234,40 @@
       return h;
     }
 
+    function p6RenderOnLeaveSection(m) {
+      var pack = (m && m.leave) || {};
+      var html = '<div class="p6-section-card p6-leave-card" id="p6-leave-section">';
+      html += '<div class="p6-section-title">On Leave</div>';
+      html += '<p class="p6-section-hint">Current and upcoming leave from Xero. Scheduled leave, or processed leave that is still in progress. Past processed leave is excluded.</p>';
+      if (pack.loadState === 'loading') {
+        html += '<p class="no-data-msg">Loading leave...</p></div>';
+        return html;
+      }
+      if (pack.loadState === 'error') {
+        html += '<p class="no-data-msg">Leave data unavailable. Other capacity figures are unchanged.</p></div>';
+        return html;
+      }
+      var rows = pack.upcoming || [];
+      if (!rows.length) {
+        html += '<p class="no-data-msg">No upcoming leave</p></div>';
+        return html;
+      }
+      html += '<div class="table-wrap"><table class="data-table p6-leave-table"><thead><tr>';
+      html += '<th>Employee</th><th>Leave Type</th><th>Start Date</th><th>End Date</th><th>Paid/Unpaid</th>';
+      html += '</tr></thead><tbody>';
+      rows.forEach(function(r) {
+        html += '<tr>';
+        html += '<td>' + p6Esc(r.employee) + '</td>';
+        html += '<td>' + p6Esc(r.leaveType) + '</td>';
+        html += '<td>' + p6Esc(p6FmtLeaveDate(r.start)) + '</td>';
+        html += '<td>' + p6Esc(p6FmtLeaveDate(r.end)) + '</td>';
+        html += '<td>' + p6Esc(r.paidUnpaid || '') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+      return html;
+    }
+
     function p6RenderPlanningMode(m) {
       var k = m.kpis;
       var html = '';
@@ -25064,6 +25305,8 @@
         html += '<button type="button" class="p6-risk-banner-close" onclick="p6DismissRiskBanner()" aria-label="Dismiss warning">×</button>';
         html += '</div>';
       }
+
+      html += p6RenderOnLeaveSection(m);
 
       html += '<div class="p6-section-card p6-main-gantt p6-main-gantt--full">';
       html += '<div class="p6-section-head">';
@@ -25181,6 +25424,8 @@
         k.labourCost != null ? formatCurrency(k.labourCost) : 'Pending',
         'Once per employee-week. vs budget: Pending', 'gap');
       html += '</div>';
+
+      html += p6RenderOnLeaveSection(m);
 
       html += '<div class="p6-section-card">';
       html += '<div class="p6-section-title">Timesheet completeness · Week ' + m.selectedWeek + '</div>';
@@ -25848,7 +26093,18 @@
         t += '<td class="text-right">' + (p.productive != null ? p6FmtHours(p.productive) : '-') + '</td>';
         t += '<td class="text-right">' + p6FmtHours(p.overtimeHrs) + '</td>';
         var utilShow = m.weekInProgress && p.actualUtil != null ? p.actualUtil : p.forecastUtil;
-        t += '<td class="text-right">' + (utilShow != null ? p6FmtPct(utilShow) : '-') + '</td>';
+        t += '<td class="text-right">';
+        if (p.onLeaveThisWeek) {
+          t += '<div class="p6-util-onleave">';
+          t += '<span class="p6-chip p6-chip--action p6-chip--pill">On Leave</span>';
+          if (utilShow != null) {
+            t += '<span class="p6-muted">' + p6FmtPct(utilShow) + '</span>';
+          }
+          t += '</div>';
+        } else {
+          t += utilShow != null ? p6FmtPct(utilShow) : '-';
+        }
+        t += '</td>';
         t += '<td>' + p6StatusChip(p.planningStatus, 'planning') + '</td>';
         t += '<td>' + p6StatusChip(p.timesheetStatus, 'timesheet') + '</td>';
         t += '</tr>';

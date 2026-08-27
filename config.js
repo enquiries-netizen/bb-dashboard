@@ -70,6 +70,9 @@ const CONFIG = {
     BUILDPASS_LABOUR:    'Buildpass_Labour',
     // Approved Xero timesheets (break already deducted). P6 attendance discrepancy only.
     XERO_TIMESHEETS_APPROVED: 'Xero_Timesheets_Approved',
+    // Xero leave applications. P6 On Leave (current/upcoming) and util labels only.
+    // Not an input to At Capacity / overload.
+    XERO_LEAVE: 'Xero_Leave',
     // Sheet tab is "Buildpass_Site Diaries" (space, not underscore)
     BUILDPASS_DIARIES:      'Buildpass_Site Diaries',
     BUILDPASS_SITE_DIARIES: 'Buildpass_Site Diaries', // alias
