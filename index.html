@@ -3311,6 +3311,9 @@
         var a = parseInt(parts[0], 10);
         var b = parseInt(parts[1], 10);
         var c = parseInt(parts[2], 10);
+        // Expand 2-digit years so AU D/M/Y wins over native Date US M/D/Y
+        // (e.g. Quotes "12/07/26" must be 12 Jul 2026, not 7 Dec 2026).
+        if (!isNaN(c) && c >= 0 && c < 100) c += 2000;
         if (a > 1900 && b >= 1 && b <= 12) {
           // Y-M-D
           return new Date(a, b - 1, parseInt(parts[2], 10) || 1);
@@ -6425,6 +6428,100 @@
       return k === weekKey;
     }
 
+    /**
+     * True when Weekly_Summary has non-blank Revenue or Leads for this week.
+     * "0" counts as present (known zero); blank/null does not.
+     * Used to exclude future placeholder / empty weeks from the picker and default.
+     */
+    function p8SummaryHasRealData(weeklyRows, weekKey) {
+      var p = p8ParseWeekKey(weekKey);
+      if (!p) return false;
+      var wStart = p8PayrollFridayStart(p.year, p.week);
+      var wEnd = p8PayrollThursday(p.year, p.week);
+      var rows = weeklyRows || [];
+      var i;
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (!p8SummaryMatchesWeek(r, weekKey, wStart, wEnd)) continue;
+        var rRaw = rawColByNames(r, ['Revenue ($)', 'Revenue', 'Total Revenue ($)']);
+        var lRaw = rawColByNames(r, ['Leads (week)', 'Leads', 'Total Leads']);
+        if (p8MoneyKnown(rRaw) || p8MoneyKnown(lRaw)) return true;
+      }
+      return false;
+    }
+
+    /**
+     * Meaningful summary values (not blank and not a zero-only placeholder).
+     */
+    function p8SummaryHasMeaningfulData(weeklyRows, weekKey) {
+      var p = p8ParseWeekKey(weekKey);
+      if (!p) return false;
+      var wStart = p8PayrollFridayStart(p.year, p.week);
+      var wEnd = p8PayrollThursday(p.year, p.week);
+      var rows = weeklyRows || [];
+      var revKnown = false;
+      var leadsKnown = false;
+      var revSum = 0;
+      var leadsSum = 0;
+      var i;
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (!p8SummaryMatchesWeek(r, weekKey, wStart, wEnd)) continue;
+        var rRaw = rawColByNames(r, ['Revenue ($)', 'Revenue', 'Total Revenue ($)']);
+        var lRaw = rawColByNames(r, ['Leads (week)', 'Leads', 'Total Leads']);
+        if (p8MoneyKnown(rRaw)) { revKnown = true; revSum += parseNum(rRaw); }
+        if (p8MoneyKnown(lRaw)) { leadsKnown = true; leadsSum += parseNum(lRaw); }
+      }
+      if (!revKnown && !leadsKnown) return false;
+      return (revKnown && revSum !== 0) || (leadsKnown && leadsSum !== 0);
+    }
+
+    /**
+     * UX choice: exclude weeks with no real Weekly_Summary Revenue/Leads from
+     * the picker. Also drop future weeks beyond the current payroll week unless
+     * they have meaningful (non-zero) Revenue or Leads. Always keep current week.
+     * Default prefers the most recent meaningful-data week so load never lands
+     * on a blank future placeholder (all KPIs Not available).
+     */
+    function p8PickWeekKeysForUi(allKeys, weeklyRows, curKey) {
+      var sorted = sortWeekKeys(allKeys || []);
+      var curParts = p8ParseWeekKey(curKey);
+      var curEnd = curParts
+        ? p8PayrollThursday(curParts.year, curParts.week)
+        : new Date();
+      var withData = [];
+      var meaningful = [];
+      var i;
+      for (i = 0; i < sorted.length; i++) {
+        var k = sorted[i];
+        var p = p8ParseWeekKey(k);
+        if (!p) continue;
+        var end = p8PayrollThursday(p.year, p.week);
+        var hasData = p8SummaryHasRealData(weeklyRows, k);
+        var hasMeaning = p8SummaryHasMeaningfulData(weeklyRows, k);
+        var isFuture = end.getTime() > curEnd.getTime();
+        if (isFuture && !hasMeaning) continue;
+        if (hasData) withData.push(k);
+        if (hasMeaning) meaningful.push(k);
+      }
+      var keys = withData.slice();
+      if (curKey && keys.indexOf(curKey) < 0) keys.push(curKey);
+      keys = sortWeekKeys(keys);
+      if (!keys.length) {
+        keys = sorted.filter(function(k) {
+          var p = p8ParseWeekKey(k);
+          if (!p) return false;
+          return p8PayrollThursday(p.year, p.week).getTime() <= curEnd.getTime();
+        });
+        if (!keys.length) keys = sorted.slice();
+      }
+      var defaultKey = meaningful.length
+        ? meaningful[meaningful.length - 1]
+        : (withData.length ? withData[withData.length - 1] : null);
+      if (!defaultKey) defaultKey = curKey || (keys.length ? keys[keys.length - 1] : null);
+      return { weekKeys: keys, defaultKey: defaultKey };
+    }
+
     function p8PrevWeekKey(key) {
       var p = p8ParseWeekKey(key);
       if (!p) return null;
@@ -6570,10 +6667,12 @@
       var curKey = cur.key || (cur.year + '-W' + (cur.week < 10 ? '0' : '') + cur.week);
       weekSet[curKey] = true;
 
-      var weekKeys = sortWeekKeys(Object.keys(weekSet));
-      // Prefer most recent complete week default when current week has little data
+      var weekPick = p8PickWeekKeysForUi(Object.keys(weekSet), weekly, curKey);
+      var weekKeys = weekPick.weekKeys;
+      // Default to most recent week with real Weekly_Summary Revenue or Leads.
+      // Do not default to future placeholder / empty weeks (all KPIs Not available).
       if (!_p8SelectedWeekKey || weekKeys.indexOf(_p8SelectedWeekKey) < 0) {
-        _p8SelectedWeekKey = weekKeys.length ? weekKeys[weekKeys.length - 1] : curKey;
+        _p8SelectedWeekKey = weekPick.defaultKey || curKey;
       }
 
       var sel = p8ParseWeekKey(_p8SelectedWeekKey);
@@ -11523,7 +11622,10 @@
       return true;
     }
 
-    var P4_UPCOMING_FETCH_TIMEOUT_MS = 5000;
+    // Match sheets.js FETCH_SHEET_TIMEOUT_MS. 5s was too aggressive under
+    // concurrent P4 sheet traffic (Upcoming is Sheets Buildpass_Project_Sync,
+    // not a live Buildpass API call from the browser).
+    var P4_UPCOMING_FETCH_TIMEOUT_MS = 20000;
     var P4_EMPLOYEE_RATES_FETCH_TIMEOUT_MS = 5000;
 
     function p4SheetHasCol(rows, names) {
@@ -11592,8 +11694,9 @@
     }
 
     /**
-     * Isolated Buildpass_Project_Sync fetch. Does not use fetchSheet cache or
-     * inflight. 5s timeout covers headers + JSON. Never awaited by loadP4.
+     * Isolated Buildpass_Project_Sync Sheets fetch (not Buildpass API).
+     * Does not use fetchSheet cache or inflight. Timeout covers headers + JSON.
+     * Never awaited by loadP4 so Job Performance stays independent.
      */
     function p4FetchUpcomingIsolated() {
       return new Promise(function(resolve, reject) {
@@ -11804,6 +11907,16 @@
               window._p4CalendarRows
             );
           }
+          if (window._p5Cache) {
+            renderP5(
+              window._p5Cache.financials,
+              window._p5Cache.invoices,
+              window._p5Cache.overhead,
+              window._p5Cache.xeroProjects,
+              window._p5Cache.targets,
+              window._p5Cache.labour || []
+            );
+          }
         }).catch(function(err) {
           if (gen !== window._p4EmployeeRatesFetchGen) return;
           console.warn('P4 Employees rate load failed:', err);
@@ -11816,6 +11929,16 @@
               window._p4LabourRows,
               window._p4XeroProjects,
               window._p4CalendarRows
+            );
+          }
+          if (window._p5Cache) {
+            renderP5(
+              window._p5Cache.financials,
+              window._p5Cache.invoices,
+              window._p5Cache.overhead,
+              window._p5Cache.xeroProjects,
+              window._p5Cache.targets,
+              window._p5Cache.labour || []
             );
           }
         });
@@ -21604,9 +21727,11 @@
 // ═══════════════════════════════════════════════════════════════
     // P5 - PROFITABILITY (exception-led financial dashboard)
     // Sources: Xero_Financials · Xero_Invoices · Xero_Overhead
-    //          · Xero_Projects · Targets
+    //          · Xero_Projects · Targets · Buildpass_Labour · Employees rate
     // Rules: never invent; Target not set (not zero); orange = real
     //        margin/cost risk only; data gaps use neutral grey
+    // Hours Labour Cost: same P4 pattern (hours x pay rate by Employee Name).
+    // Soft-fail rates/labour; Rate Unknown / No labour logged yet, never $0.
     // ═══════════════════════════════════════════════════════════════
     var _p5TrendMetric = 'revenue';
     var _p5WaterfallView = 'consolidated';
@@ -21619,14 +21744,25 @@
       showLoading(true);
       removeError('p5');
       try {
+        // Soft-start Employees rate (shared with P4). Never blocks P5 render.
+        if (typeof p4StartEmployeeRatesLoad === 'function' &&
+            window._p4EmployeeRatesStatus !== 'ok' &&
+            window._p4EmployeeRatesStatus !== 'loading') {
+          p4StartEmployeeRatesLoad();
+        }
         var results = await Promise.all([
           fetchSheet(CONFIG.TABS.XERO_FINANCIALS).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_INVOICES).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_OVERHEAD).catch(function() { return []; }),
           fetchSheet(CONFIG.TABS.XERO_PROJECTS).catch(function() { return []; }),
-          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; })
+          fetchSheet(CONFIG.TABS.TARGETS).catch(function() { return []; }),
+          // Soft-fail: hours Labour Cost uses Buildpass_Labour; missing tab must not hang P5.
+          fetchSheet(CONFIG.TABS.BUILDPASS_LABOUR).catch(function(err) {
+            console.warn('P5 Buildpass_Labour load failed:', err);
+            return [];
+          })
         ]);
-        renderP5(results[0], results[1], results[2], results[3], results[4]);
+        renderP5(results[0], results[1], results[2], results[3], results[4], results[5]);
       } catch (err) {
         console.error('P5 load error:', err);
         showError('p5', 'Could not load Profitability data. Check sheet permissions.');
@@ -21663,10 +21799,11 @@
       });
     }
 
-    function renderP5(financials, invoices, overhead, xeroProjects, targets) {
+    function renderP5(financials, invoices, overhead, xeroProjects, targets, labourRows) {
       _p5Cache = {
         financials: financials, invoices: invoices, overhead: overhead,
-        xeroProjects: xeroProjects, targets: targets
+        xeroProjects: xeroProjects, targets: targets,
+        labour: labourRows || []
       };
 
       var P5 = {
@@ -22411,11 +22548,13 @@
 
         projectRows.push({
           key: String(job) + '|' + (live.clientName || ''),
+          project: job,
           job: job,
           client: live.clientName || '',
           brand: normalizeBrandLabel(live.brand) || live.brand || 'Unassigned',
           department: live.department || '',
           budget: budget,
+          totalBudget: budget,
           labour: labour,
           materials: materials,
           subbies: subbies,
@@ -22431,9 +22570,24 @@
           dataIncomplete: dataIncomplete,
           hasJobCostData: hasJobData,
           knownCost: hasKnownCost ? knownCost : null,
-          endMs: endD ? endD.getTime() : null
+          endMs: endD ? endD.getTime() : null,
+          labourHours: 0,
+          labourCost: 0,
+          hoursLabourStatus: 'none',
+          hoursLabourUnknownHours: 0,
+          hoursLabourUnknownPeople: 0,
+          labourCostAsPctBudget: null
         });
       });
+
+      // Hours-based Labour Cost (same P4 pattern: Buildpass_Labour x Employees rate).
+      // Soft rates: never hang P5; Rate Unknown / No labour logged yet, never $0.
+      p4ApplyHoursLabourCost(
+        projectRows,
+        filterByBrand(labourRows || [], activeBrand),
+        window._p4EmployeeRates,
+        window._p4EmployeeRatesStatus || (window._p4EmployeeRates ? 'ok' : 'loading')
+      );
 
       projectRows.sort(function(a, b) {
         var rank = { loss: 0, erosion: 1, watch: 2, incomplete: 3, target: 4 };
@@ -23249,8 +23403,24 @@
           return '<span class="p5-cost-bit"><span class="p5-cost-lab">' + esc(label) +
             '</span> <strong>' + esc(p5MoneyCell(v, has)) + '</strong></span>';
         }
+        function hoursLabBit() {
+          var costTxt = typeof p4HoursLabourCostText === 'function'
+            ? p4HoursLabourCostText(p) : 'No labour logged yet';
+          var hrsTxt = typeof p4HoursLabourHoursText === 'function'
+            ? p4HoursLabourHoursText(p) : 'No labour logged yet';
+          var unk = typeof p4HoursLabourUnknownNote === 'function'
+            ? p4HoursLabourUnknownNote(p) : '';
+          var meta = (p.labourHours
+            ? (hrsTxt + ' hrs')
+            : '') + (unk ? (p.labourHours ? ' · ' : '') + unk : '');
+          return '<span class="p5-cost-bit"><span class="p5-cost-lab">Labour Cost (hours)</span> <strong>' +
+            esc(costTxt) + '</strong>' +
+            (meta ? '<span class="p5-gap-note"> · ' + esc(meta) + '</span>' : '') +
+            '</span>';
+        }
         return '<div class="p5-cost-breakdown">' +
-          bit('Labour', p.labour) +
+          hoursLabBit() +
+          bit('Xero Direct Labour', p.labour) +
           bit('Materials', p.materials) +
           bit('Subbies', p.subbies) +
           bit('Variations', p.variations) +
@@ -23352,14 +23522,34 @@
         }
         if (hintEl) {
           hintEl.textContent = project.hasJobCostData
-            ? 'Labour, Materials, and Subbies are separate actuals from Xero_Projects. Quoted and Scope stay Pending until estimate fields are live.'
+            ? 'Labour Cost (hours) is Buildpass hours x pay rate. Xero Direct Labour is a separate actual from Xero_Projects. Quoted and Scope stay Pending until estimate fields are live.'
             : xeroJobCostIncompleteLabel() + '. Quoted and Scope stay Pending until estimate fields are live.';
+        }
+
+        var hoursLabReady = project.labourHours &&
+          (project.hoursLabourStatus === 'complete' || project.hoursLabourStatus === 'partial') &&
+          project.labourCost > 0;
+        var hoursLabLabel = 'Labour Cost (hours)';
+        if (!project.labourHours) hoursLabLabel = 'Labour Cost (hours)';
+        else if (project.hoursLabourStatus === 'rates-loading') hoursLabLabel = 'Labour Cost (loading rates)';
+        else if (project.hoursLabourStatus === 'rates-missing' || project.hoursLabourStatus === 'unknown') {
+          hoursLabLabel = 'Labour Cost (Rate Unknown)';
         }
 
         var steps = [
           { label: 'Quoted', v: null },
           { label: 'Scope', v: null },
-          { label: 'Labour', v: project.labour },
+          {
+            label: hoursLabLabel,
+            v: hoursLabReady ? project.labourCost : null,
+            pendingText: typeof p4HoursLabourCostText === 'function'
+              ? p4HoursLabourCostText(project) : 'No labour logged yet'
+          },
+          {
+            label: 'Xero Direct Labour',
+            v: project.labour,
+            xero: true
+          },
           { label: 'Materials', v: project.hasJobCostData ? project.materials : null },
           { label: 'Subbies', v: project.hasJobCostData ? project.subbies : null },
           { label: 'Variations', v: project.variations },
@@ -23388,7 +23578,11 @@
                 callbacks: {
                   label: function(ctx) {
                     var s = steps[ctx.dataIndex];
-                    if (s.v == null) return s.label + ': Pending / Data Incomplete';
+                    if (s.pendingText && s.v == null) return s.label + ': ' + s.pendingText;
+                    if (s.v == null) {
+                      if (s.xero && !project.hasJobCostData) return s.label + ': Data Incomplete';
+                      return s.label + ': Pending / Data Incomplete';
+                    }
                     return s.label + ': ' + formatCurrency(s.v);
                   }
                 }
@@ -23919,6 +24113,32 @@
       for (i = 0; i < keys.length; i++) {
         rows = leavePack.byName[keys[i]] || [];
         for (j = 0; j < rows.length; j++) {
+          if (p6DatesOverlap(rows[j].start, rows[j].end, start, end)) return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * True when worker has Xero_Leave overlapping the Fri-Thu payroll week
+     * with Status SCHEDULED or PROCESSED (paid or unpaid). Used to suppress
+     * "Timesheet hours, no matching attendance" only. Does not affect capacity flags.
+     */
+    function p6PersonOnLeaveOverlappingWeek(name, leavePack, weekKey) {
+      if (!leavePack || !leavePack.byName || !name) return false;
+      var bounds = typeof p6DiscPayrollWeekBounds === 'function'
+        ? p6DiscPayrollWeekBounds(weekKey)
+        : null;
+      var start = bounds && bounds.fri ? p6DayStart(bounds.fri) : (leavePack.weekStart || null);
+      var end = bounds && bounds.thu ? p6DayStart(bounds.thu) : (leavePack.weekEnd || null);
+      if (!start || !end) return false;
+      var keys = p6LeaveNameKeys(name);
+      var i, j, rows, st;
+      for (i = 0; i < keys.length; i++) {
+        rows = leavePack.byName[keys[i]] || [];
+        for (j = 0; j < rows.length; j++) {
+          st = p6LeaveStatusNorm(rows[j].status);
+          if (st !== 'SCHEDULED' && st !== 'PROCESSED') continue;
           if (p6DatesOverlap(rows[j].start, rows[j].end, start, end)) return true;
         }
       }
@@ -25267,8 +25487,10 @@
     /**
      * Flag worker+job pairs where Buildpass_Attendance Hours On Site (present only)
      * diverge from deduped Xero_Timesheets_Approved hours in the same Fri-Thu payroll week.
+     * leavePack (optional): suppress "Timesheet hours, no matching attendance" when the
+     * worker has SCHEDULED/PROCESSED Xero_Leave overlapping that week (paid or unpaid).
      */
-    function p6BuildTimesheetDiscrepancies(attRows, tsRows, weekKey) {
+    function p6BuildTimesheetDiscrepancies(attRows, tsRows, weekKey, leavePack) {
       var flags = [];
       if (!weekKey) {
         return {
@@ -25415,6 +25637,9 @@
         var lab = labMap[lId];
         lab.hours = p6Round1(lab.hours);
         if (lab.hours === 0) return;
+        // On leave (SCHEDULED/PROCESSED overlapping this payroll week): do not flag
+        // timesheet-without-attendance. Capacity / overload flags are untouched.
+        if (p6PersonOnLeaveOverlappingWeek(lab.name, leavePack, weekKey)) return;
         flags.push({
           worker: lab.name,
           job: lab.displayJob || lab.jobKey || 'Unknown',
@@ -25448,7 +25673,7 @@
       var html = '';
       html += '<div class="p6-section-card p6-attendance-card p6-ts-disc-card">';
       html += '<div class="p6-section-title">Attendance vs timesheet flags</div>';
-      html += '<p class="p6-section-hint">Buildpass_Attendance Hours On Site includes break time (blank hours excluded). Xero_Timesheets_Approved is paid hours after breaks. Flagged when attendance has no matching timesheet, timesheet has no matching attendance, or the weekly gap is larger than 30 minutes per day with recorded hours plus a 30 minute buffer. Same payroll week as Attendance above. Job match uses J# keys (P12-style).</p>';
+      html += '<p class="p6-section-hint">Buildpass_Attendance Hours On Site includes break time (blank hours excluded). Xero_Timesheets_Approved is paid hours after breaks. Flagged when attendance has no matching timesheet, timesheet has no matching attendance (skipped when the worker has SCHEDULED or PROCESSED Xero_Leave overlapping this week), or the weekly gap is larger than 30 minutes per day with recorded hours plus a 30 minute buffer. Same payroll week as Attendance above. Job match uses J# keys (P12-style).</p>';
 
       if (d.noTimesheetCoverage) {
         html += '<p class="no-data-msg">No timesheet data available for this period.</p></div>';
@@ -25626,11 +25851,6 @@
         raw.attendance || [],
         window._p6AttendanceWeekKey
       );
-      probe.timesheetDiscrepancies = p6BuildTimesheetDiscrepancies(
-        raw.attendance || [],
-        raw.timesheetsApproved || [],
-        probe.attendanceMetrics.weekKey
-      );
       var leaveState = window._p6LeaveLoadState ||
         ((raw.leave && raw.leave.length) ? 'ok' : 'loading');
       probe.leave = p6BuildLeavePack(
@@ -25638,6 +25858,12 @@
         probe.year,
         probe.selectedWeek,
         leaveState
+      );
+      probe.timesheetDiscrepancies = p6BuildTimesheetDiscrepancies(
+        raw.attendance || [],
+        raw.timesheetsApproved || [],
+        probe.attendanceMetrics.weekKey,
+        probe.leave
       );
       (probe.people || []).forEach(function(p) {
         p.onLeaveThisWeek = p6PersonOnLeaveThisWeek(p.name, probe.leave);
