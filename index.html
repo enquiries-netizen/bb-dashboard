@@ -7927,13 +7927,13 @@
     var _p2LastPayload = null;
     // Per-tab load meta for debug strip / soft banners (status = HTTP when known)
     var _p2SheetMeta = {
-      leads: { ok: false, status: null },
-      pipeline: { ok: false, status: null },
-      marketing: { ok: false, status: null },
-      sources: { ok: false, status: null },
-      targets: { ok: false, status: null },
-      quotes: { ok: false, status: null },
-      snapshots: { ok: false, status: null }
+      leads: { ok: false, status: null, loading: false, timedOut: false },
+      pipeline: { ok: false, status: null, loading: false, timedOut: false },
+      marketing: { ok: false, status: null, loading: false, timedOut: false },
+      sources: { ok: false, status: null, loading: false, timedOut: false },
+      targets: { ok: false, status: null, loading: false, timedOut: false },
+      quotes: { ok: false, status: null, loading: false, timedOut: false },
+      snapshots: { ok: false, status: null, loading: false, timedOut: false }
     };
 
     // confirm threshold with Lori/Ben
@@ -7952,14 +7952,85 @@
     /** Soft sheet load for P2: never rejects; captures HTTP status from fetchSheet errors. */
     function p2FetchSheet(tabName) {
       return fetchSheet(tabName).then(function(data) {
-        return { ok: true, data: data || [], tab: tabName, status: 200 };
+        return { ok: true, data: data || [], tab: tabName, status: 200, timedOut: false };
       }).catch(function(err) {
         var msg = err && err.message ? String(err.message) : String(err || '');
+        var timedOut = /timed out/i.test(msg);
         var m = msg.match(/Sheets API error\s+(\d+)/i);
         var status = m ? parseInt(m[1], 10) : null;
-        console.warn('[P2] Sheet load failed:', tabName, status != null ? ('HTTP ' + status) : msg);
-        return { ok: false, data: [], tab: tabName, status: status, error: err };
+        console.warn('[P2] Sheet load failed:', tabName, timedOut ? 'timed out' : (status != null ? ('HTTP ' + status) : msg));
+        return { ok: false, data: [], tab: tabName, status: status, timedOut: timedOut, error: err };
       });
+    }
+
+    function p2MetaFromResult(r, loading) {
+      return {
+        ok: loading ? null : !!(r && r.ok),
+        status: r && r.status != null ? r.status : null,
+        loading: !!loading,
+        timedOut: !!(r && r.timedOut)
+      };
+    }
+
+    function p2RerenderFromCache() {
+      if (!_p2LastPayload || P2_PLACEHOLDER) return;
+      renderP2(
+        _p2LastPayload.leads,
+        _p2LastPayload.pipeline,
+        _p2LastPayload.marketing,
+        _p2LastPayload.sources,
+        _p2LastPayload.targets,
+        _p2LastPayload.ghlQuotes,
+        _p2LastPayload.snapshots
+      );
+      if (typeof init3DTilt === 'function') init3DTilt();
+    }
+
+    /**
+     * Optional P2 tabs (Marketing_Paid, Marketing_Sources, Pipeline_Snapshots).
+     * Fire-and-forget like P4 Upcoming: never awaited by loadP2 so core KPIs
+     * stay independent under concurrent sheet traffic. Uses sheets.js 20s timeout.
+     */
+    function p2StartSoftSheetsLoad() {
+      try {
+        window._p2SoftFetchGen = (window._p2SoftFetchGen || 0) + 1;
+        var gen = window._p2SoftFetchGen;
+        window._p2CoreReady = false;
+        _p2SheetMeta.marketing = { ok: null, status: null, loading: true, timedOut: false };
+        _p2SheetMeta.sources = { ok: null, status: null, loading: true, timedOut: false };
+        _p2SheetMeta.snapshots = { ok: null, status: null, loading: true, timedOut: false };
+        window._p2SoftHold = { marketing: [], sources: [], snapshots: [] };
+
+        var paidTab = CONFIG.TABS.MARKETING_PAID || 'Marketing_Paid';
+        var sourcesTab = CONFIG.TABS.MARKETING_SOURCES || 'Marketing_Sources';
+        var snapTab = CONFIG.TABS.PIPELINE_SNAPSHOTS || 'Pipeline_Snapshots';
+
+        function applySoft(key, rowsKey, result) {
+          if (gen !== window._p2SoftFetchGen) return;
+          _p2SheetMeta[key] = p2MetaFromResult(result, false);
+          var rows = (result && result.data) || [];
+          if (!window._p2SoftHold) window._p2SoftHold = { marketing: [], sources: [], snapshots: [] };
+          window._p2SoftHold[rowsKey] = rows;
+          if (_p2LastPayload) _p2LastPayload[rowsKey] = rows;
+          // Do not paint soft sections until core GHL sheets have rendered once.
+          if (!window._p2CoreReady) return;
+          try { p2RerenderFromCache(); } catch (e) {
+            console.warn('[P2] Soft sheet re-render failed:', key, e);
+          }
+        }
+
+        p2FetchSheet(paidTab).then(function(r) { applySoft('marketing', 'marketing', r); });
+        p2FetchSheet(sourcesTab).then(function(r) { applySoft('sources', 'sources', r); });
+        p2FetchSheet(snapTab).then(function(r) { applySoft('snapshots', 'snapshots', r); });
+      } catch (e) {
+        console.warn('[P2] Soft sheet start failed:', e);
+        _p2SheetMeta.marketing = { ok: false, status: null, loading: false, timedOut: false };
+        _p2SheetMeta.sources = { ok: false, status: null, loading: false, timedOut: false };
+        _p2SheetMeta.snapshots = { ok: false, status: null, loading: false, timedOut: false };
+        if (window._p2CoreReady) {
+          try { p2RerenderFromCache(); } catch (e2) { /* keep core P2 visible */ }
+        }
+      }
     }
 
     function p2EndOfToday() {
@@ -8225,34 +8296,26 @@
           return;
         }
 
-        // Critical: GHL_Leads + GHL_Pipeline. Optional: marketing/sources/targets/Quotes.
+        // Critical: GHL_Leads + GHL_Pipeline. Soft (non-blocking): Marketing_Paid,
+        // Marketing_Sources, Pipeline_Snapshots. Targets + Quotes stay with core.
         // Never full-page fail when only an optional tab (e.g. Quotes) is missing.
+        p2StartSoftSheetsLoad();
         var settled = await Promise.all([
           p2FetchSheet(CONFIG.TABS.GHL_LEADS),
           p2FetchSheet(CONFIG.TABS.GHL_PIPELINE),
-          p2FetchSheet(CONFIG.TABS.MARKETING_PAID),
-          p2FetchSheet(CONFIG.TABS.MARKETING_SOURCES),
           p2FetchSheet(CONFIG.TABS.TARGETS),
-          p2FetchSheet(CONFIG.TABS.QUOTES),
-          p2FetchSheet(CONFIG.TABS.PIPELINE_SNAPSHOTS || 'Pipeline_Snapshots')
+          p2FetchSheet(CONFIG.TABS.QUOTES)
         ]);
         var leadsR = settled[0];
         var pipeR = settled[1];
-        var mktR = settled[2];
-        var srcR = settled[3];
-        var tgtR = settled[4];
-        var quotesR = settled[5];
-        var snapR = settled[6];
+        var tgtR = settled[2];
+        var quotesR = settled[3];
 
-        _p2SheetMeta = {
-          leads: { ok: leadsR.ok, status: leadsR.status },
-          pipeline: { ok: pipeR.ok, status: pipeR.status },
-          marketing: { ok: mktR.ok, status: mktR.status },
-          sources: { ok: srcR.ok, status: srcR.status },
-          targets: { ok: tgtR.ok, status: tgtR.status },
-          quotes: { ok: quotesR.ok, status: quotesR.status },
-          snapshots: { ok: snapR.ok, status: snapR.status }
-        };
+        // Preserve soft-load meta already set by p2StartSoftSheetsLoad (loading / settled).
+        _p2SheetMeta.leads = p2MetaFromResult(leadsR, false);
+        _p2SheetMeta.pipeline = p2MetaFromResult(pipeR, false);
+        _p2SheetMeta.targets = p2MetaFromResult(tgtR, false);
+        _p2SheetMeta.quotes = p2MetaFromResult(quotesR, false);
 
         var leadsOk = !!leadsR.ok;
         var pipeOk = !!pipeR.ok;
@@ -8278,8 +8341,19 @@
           );
         }
 
-        // Quote KPIs still derive from pipeline stages; quotes rows reserved for when tab exists
-        renderP2(leadsR.data, pipeR.data, mktR.data, srcR.data, tgtR.data, quotesR.data, snapR.data);
+        // Soft tabs may still be loading; flip core-ready first so a soft settle
+        // during this paint can re-render, then render from the latest soft hold.
+        window._p2CoreReady = true;
+        var hold = window._p2SoftHold || {};
+        renderP2(
+          leadsR.data,
+          pipeR.data,
+          hold.marketing || [],
+          hold.sources || [],
+          tgtR.data,
+          quotesR.data,
+          hold.snapshots || []
+        );
       } catch (err) {
         console.error('P2 load error:', err);
         var detail = (err && err.message) ? String(err.message) : 'Unknown error';
@@ -9245,10 +9319,14 @@
       var allSnapRows = snapshots || [];
       var tabGroup = p2GroupSnapshotsByDate(allSnapRows);
       var blankInTab = p2CountBlankGhl(allSnapRows);
-      if (snapMeta.ok === false) {
+      if (snapMeta.loading || snapMeta.ok == null) {
         p2ShowWaterfallPending(
-          '<p class="p2-pending-line">Pending, building snapshot history. Pipeline_Snapshots could not be loaded' +
-          (snapMeta.status != null ? ' (API ' + snapMeta.status + ')' : '') + '.</p>'
+          '<p class="p2-pending-line">Loading pipeline movement...</p>'
+        );
+        window._p2WaterfallLast = { pending: true, reason: 'loading', skippedBlankId: blankInTab };
+      } else if (snapMeta.ok === false) {
+        p2ShowWaterfallPending(
+          '<p class="p2-pending-line">Pipeline movement unavailable</p>'
         );
         window._p2WaterfallLast = { pending: true, reason: 'load-failed', skippedBlankId: blankInTab };
       } else if (tabGroup.dateList.length < 2) {
@@ -9559,7 +9637,12 @@
 
       var cplNote = document.getElementById('p2-source-cpl-note');
       if (cplNote) {
-        if (cplPaid != null) {
+        var mktMetaCpl = (_p2SheetMeta && _p2SheetMeta.marketing) || {};
+        if (mktMetaCpl.loading || mktMetaCpl.ok == null) {
+          cplNote.textContent = 'CPL (paid leads only): Loading marketing spend...';
+        } else if (mktMetaCpl.ok === false) {
+          cplNote.textContent = 'CPL (paid leads only): Marketing spend unavailable';
+        } else if (cplPaid != null) {
           cplNote.innerHTML = 'CPL (paid leads only): <strong>' + formatCurrency(cplPaid) +
             '</strong> = ad spend ' + formatCurrency(paidSpend) + ' ÷ ' + paidLeads +
             ' paid leads · full campaign detail on <button type="button" class="p2-link-btn" data-goto="p10">P10 Marketing</button>';
@@ -9714,17 +9797,7 @@
           viewBtn._p2Bound = true;
           viewBtn.addEventListener('click', function() {
             p2ShowAllOpps = !p2ShowAllOpps;
-            if (_p2LastPayload) {
-              renderP2(
-                _p2LastPayload.leads,
-                _p2LastPayload.pipeline,
-                _p2LastPayload.marketing,
-                _p2LastPayload.sources,
-                _p2LastPayload.targets,
-                _p2LastPayload.ghlQuotes,
-                _p2LastPayload.snapshots
-              );
-            }
+            p2RerenderFromCache();
           });
         }
       }
@@ -9828,7 +9901,12 @@
       // ── Campaign scorecard (small) ──
       var campEl = document.getElementById('p2-campaign-scorecard');
       if (campEl) {
-        if (!mktFiltered.length) {
+        var mktMeta = (_p2SheetMeta && _p2SheetMeta.marketing) || {};
+        if (mktMeta.loading || mktMeta.ok == null) {
+          campEl.innerHTML = '<p class="p2-pending-line">Loading marketing spend...</p>';
+        } else if (mktMeta.ok === false) {
+          campEl.innerHTML = '<p class="p2-pending-line">Marketing spend unavailable</p>';
+        } else if (!mktFiltered.length) {
           campEl.innerHTML = '<p class="p2-pending-line">Awaiting Marketing_Paid · see P10 for full analysis.</p>';
         } else {
           var camps = {};
@@ -9902,7 +9980,7 @@
           snapshots: _p2SheetMeta.snapshots
         },
         waterfall: window._p2WaterfallLast || { pending: true },
-        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Pipeline movement waterfall uses Pipeline_Snapshots (GHL ID join). Quotes tab is optional (soft load; quote KPIs still from pipeline).'
+        note: 'Quote Win Rate = wins / closed quotes only. For week-over-week Sales go to P8. Pipeline movement waterfall uses Pipeline_Snapshots (GHL ID join). Marketing_Paid, Marketing_Sources, and Pipeline_Snapshots soft-load (non-blocking; quote KPIs still from pipeline).'
       });
     }
 
