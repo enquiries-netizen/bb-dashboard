@@ -8,6 +8,11 @@
  *   node automations/backfill-buildpass-project-sync-department.cjs --fetch
  *   node automations/backfill-buildpass-project-sync-department.cjs --fetch --write
  *
+ * Sheet writes belong in Apps Script:
+ *   backfillBuildpassProjectSyncDepartment
+ *   fillEmptyBuildpassProjectSyncDepartment
+ *   createDepartmentFillTrigger
+ *
  * Env (do not commit):
  *   BUILDPASS_API_KEY or BUILDPASS_TOKEN   - same key as Make Scenario 9b
  *   GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_SERVICE_ACCOUNT_JSON  - required for --write
