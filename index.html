@@ -24,6 +24,10 @@
       <button type="button" id="auth-google-btn" class="auth-google-btn" hidden>Sign in with Google</button>
       <button type="button" id="auth-gate-signout-btn" class="auth-gate-signout-btn" hidden>Sign out</button>
       <p id="auth-gate-error" class="auth-gate-error" role="alert" hidden></p>
+      <p id="auth-gate-iframe" class="auth-gate-iframe" hidden>
+        Google sign-in is blocked in this window. Open the dashboard in a new browser tab, sign in there, then come back.
+        <a id="auth-open-tab" class="auth-open-tab" href="https://bb-dashboard-eight.vercel.app" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+      </p>
     </div>
   </div>
 
@@ -115,6 +119,7 @@
           <li class="nav-item" data-page="p11">P11: Site Diary Quality &amp; Variations Exceptions</li>
           <li class="nav-item" data-page="p12">P12: Site Diaries</li>
           <li class="nav-item" data-page="p13">P13: Tender Pipeline</li>
+          <li class="nav-item" data-page="p14" id="nav-p14">P14: Employee Files</li>
           <li class="nav-item" data-page="internal-hub" id="nav-internal-hub" hidden>BBBS Internal Hub</li>
         </ul>
         <div class="sidebar-footer">BB Building Services &amp; Rapid Modular Homes &copy; 2026</div>
@@ -1809,6 +1814,63 @@
           </div>
         </section>
 
+        <!-- ─── P14: Employee Files (HR and Management, private endpoint only) ─── -->
+        <section id="page-p14" class="page">
+          <div class="p14-layout">
+            <div class="page-header">
+              <span class="page-badge">P14</span>
+              <h1 class="page-title">Employee Files</h1>
+              <span class="p14-access-tag">HR and Management only</span>
+              <button type="button" class="page-about-btn" data-about-page="p14" aria-label="About this page" title="About this page">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
+                  <path d="M12 10.5v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                  <circle cx="12" cy="7.5" r="1.15" fill="currentColor"></circle>
+                </svg>
+              </button>
+            </div>
+            <p class="p14-banner" id="p14-banner" hidden></p>
+            <p class="p14-iframe-note" id="p14-iframe-note" hidden>
+              If Google sign-in is blocked in this window, open the dashboard in a new browser tab, sign in there, then come back.
+              <a href="https://bb-dashboard-eight.vercel.app" target="_blank" rel="noopener noreferrer">Open in new tab</a>
+            </p>
+            <div class="p14-filters" id="p14-filters">
+              <div class="p14-kind-row">
+                <div class="p14-kind" role="group" aria-label="People">
+                  <button type="button" class="p14-kind-btn active" data-p14-kind="employees">Employees</button>
+                  <button type="button" class="p14-kind-btn" data-p14-kind="subcontractors">Subcontractors</button>
+                  <button type="button" class="p14-kind-btn" data-p14-kind="vas">VAs</button>
+                </div>
+                <label class="p14-check"><input type="checkbox" id="p14-archived"> Show archived</label>
+              </div>
+              <label class="p14-search-label" for="p14-search">Search</label>
+              <input type="search" id="p14-search" class="filter-select p14-search" placeholder="Name, position, department, or company" autocomplete="off">
+              <label class="p14-search-label" for="p14-brand">Brand</label>
+              <select id="p14-brand" class="filter-select"></select>
+              <label class="p14-search-label" for="p14-dept">Department</label>
+              <select id="p14-dept" class="filter-select"></select>
+              <label class="p14-search-label" for="p14-status">Compliance</label>
+              <select id="p14-status" class="filter-select">
+                <option value="">All statuses</option>
+                <option>Valid</option>
+                <option>Expiring in 60 days</option>
+                <option>Expiring in 30 days</option>
+                <option>Expiring in 7 days</option>
+                <option>Expired</option>
+                <option>Missing</option>
+              </select>
+            </div>
+            <div id="p14-summary" class="p14-summary" hidden>
+              <div class="p14-sum p14-sum-expired"><span id="p14-sum-expired">0</span><span>Expired documents</span></div>
+              <div class="p14-sum p14-sum-7"><span id="p14-sum-urgent">0</span><span>Expiring in 7 days or missing</span></div>
+              <div class="p14-sum p14-sum-30"><span id="p14-sum-soon">0</span><span>Expiring in 30 to 60 days</span></div>
+              <div class="p14-sum p14-sum-valid"><span id="p14-sum-valid">0</span><span>Valid documents</span></div>
+            </div>
+            <div id="p14-grid" class="p14-grid" aria-live="polite"></div>
+            <div id="p14-file" class="p14-file" hidden></div>
+          </div>
+        </section>
+
         <!-- ─── BBBS Internal Hub (Phase 1 shell: chat + gating, no guide content yet) ── -->
         <section id="page-internal-hub" class="page">
           <div class="lib-layout">
@@ -1934,6 +1996,7 @@
       p11: 'P11, Site Diary Quality & Variations Exceptions. Pulls from Buildpass_Site Diaries, Variations_Log, and Defects_Rework. Site issues and variations used to surface only if someone remembered to raise them. This page is built to catch missing or incomplete diary entries and flag exceptions automatically, so problems get caught early.',
       p12: 'P12, Site Diaries, staff-only. Pulls from Buildpass_Site Diaries, Ops_Daily_Log, and Project_Oversight_Log. Site staff had no dedicated place to log daily activity that fed directly into oversight. This gives them one, restricted to staff access, feeding day-to-day visibility upstream into P4 and P11.',
       p13: 'P13, Tender Pipeline, admin-gated. Pulls from Tenders. Tender opportunities used to be tracked separately and inconsistently, with no visibility for leadership. This page centralizes them for admin access only, though the tab itself is currently stale and needs its automation checked.',
+      p14: 'P14, Employee Files. Shown only when the employee files service allows this signed-in account. It lists staff files, licences, tickets and documents. Pay review and performance folders are never linked from this page.',
       'internal-hub': 'BBBS Internal Hub. Still just a Phase 1 shell with sparse content, allowlisted access only.'
     };
 
@@ -2552,6 +2615,8 @@
     var _authUser = null;
     var _accessTier = 'none';
     var _customPages = null; // when tier === 'custom': allowlist from Access column
+    var _p14Allowed = false;
+    var _p14Payload = null;
     var _staffAccessMap = null;
     var _authReady = false;
     var _authStateGen = 0;
@@ -2617,6 +2682,7 @@
       else if (t === 'custom' && _customPages && _customPages.length) pages = _customPages.slice();
       else return [];
       if (canSeeLibraryNav() && pages.indexOf('internal-hub') < 0) pages.push('internal-hub');
+      if (_p14Allowed && pages.indexOf('p14') < 0) pages.push('p14');
       return pages;
     }
 
@@ -2839,6 +2905,11 @@
         if (opts.showSignOut) gateOutBtn.removeAttribute('hidden');
         else gateOutBtn.setAttribute('hidden', '');
       }
+      var iframeEl = document.getElementById('auth-gate-iframe');
+      if (iframeEl) {
+        if (opts.showIframeHelp) iframeEl.removeAttribute('hidden');
+        else iframeEl.setAttribute('hidden', '');
+      }
     }
 
     function showAuthGate() {
@@ -2870,6 +2941,7 @@
       if (typeof loadCurrentPage === 'function') loadCurrentPage();
       if (typeof init3DTilt === 'function') init3DTilt();
       _appBooted = true;
+      if (typeof p14ProbeAccess === 'function') p14ProbeAccess();
     }
 
     function lockAppUnauthorized(message) {
@@ -2962,12 +3034,17 @@
           // No hd domain restriction - personal emails allowed.
           firebase.auth().signInWithPopup(provider).catch(function(err) {
             console.error('[Auth] sign-in failed:', err);
+            var code = (err && err.code) ? String(err.code) : '';
             var msg = (err && err.message) ? String(err.message) : 'Sign-in failed. Try again.';
+            var blocked = code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request' || /popup-blocked|popup closed/i.test(msg);
             setAuthGateUI({
-              status: 'Sign in with your Google account to continue.',
-              error: msg,
+              status: blocked
+                ? 'Google sign-in is blocked in this window.'
+                : 'Sign in with your Google account to continue.',
+              error: blocked ? '' : msg,
               showGoogle: true,
               showSignOut: false,
+              showIframeHelp: blocked,
               busy: false
             });
           });
@@ -2978,6 +3055,8 @@
         clearLegacyP12GateStorage();
         _accessTier = 'none';
         _customPages = null;
+        _p14Allowed = false;
+        _p14Payload = null;
         _staffAccessMap = null;
         _appBooted = false;
         if (typeof firebase !== 'undefined' && firebase.auth) {
@@ -3712,7 +3791,7 @@
         pageId = defaultLandingPage(getAccessTier()) || allowedPages()[0] || 'p12';
         showPage(pageId);
       }
-      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, p13: loadP13, 'internal-hub': loadLibrary };
+      var loaders = { p1: loadP1, p2: loadP2, p3: loadP3, p4: loadP4, p5: loadP5, p6: loadP6, p7: loadP7, p8: loadP8, p9: loadP9, p10: loadP10, p11: loadP11, p12: loadP12, p13: loadP13, p14: loadP14, 'internal-hub': loadLibrary };
       var placeholders = {};
       var fn = loaders[pageId];
       // Belt and braces: never run a loader outside the role allow-list
@@ -21167,6 +21246,553 @@
         valueSource: valueSource,
         finalFallback: finalFallback
       };
+    }
+
+    function p14Esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+      });
+    }
+
+    function p14OpenHref() {
+      try {
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+          return String(location.href || '').split('#')[0];
+        }
+      } catch (e) { /* ignore */ }
+      return 'https://bb-dashboard-eight.vercel.app';
+    }
+
+    function p14InFrame() {
+      try { return window.self !== window.top; } catch (e) { return true; }
+    }
+
+    function p14LocalPreviewHost() {
+      var host = '';
+      try { host = String(location.hostname || '').toLowerCase(); } catch (e) { host = ''; }
+      return host === 'localhost' || host === '127.0.0.1';
+    }
+
+    function p14SafeDriveLink(url) {
+      var s = String(url || '').trim();
+      if (!/^https:\/\//i.test(s)) return '';
+      var low = s.toLowerCase();
+      if (low.indexOf('01. pay review') >= 0 || low.indexOf('01.%20pay%20review') >= 0) return '';
+      if (low.indexOf('03. performance') >= 0 || low.indexOf('03.%20performance') >= 0) return '';
+      if (low.indexOf('pay%20review') >= 0 || low.indexOf('pay review') >= 0) return '';
+      return s;
+    }
+
+    function p14Initials(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '?';
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    function p14PhotoUrl(url) {
+      var s = p14SafeDriveLink(url);
+      if (!s) return '';
+      if (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(s)) return s;
+      return '';
+    }
+
+    function p14StatusKey(status) {
+      var s = String(status || '').toLowerCase();
+      if (s === 'valid') return 'valid';
+      if (s.indexOf('60') >= 0) return '60';
+      if (s.indexOf('30') >= 0) return '30';
+      if (s.indexOf('7') >= 0) return '7';
+      if (s === 'expired') return 'expired';
+      if (s === 'missing') return 'missing';
+      return 'missing';
+    }
+
+    function p14TimeLeft(row) {
+      if (p14StatusKey(row && row.status) === 'missing') return 'Not available';
+      var raw = row ? row.daysToExpiry : '';
+      if (raw === '' || raw == null) return 'Not available';
+      var n = Number(String(raw).replace(/,/g, ''));
+      if (!isFinite(n)) return 'Not available';
+      if (n < 0) return Math.abs(Math.round(n)) + ' days ago';
+      if (n === 0) return 'Today';
+      return Math.round(n) + ' days';
+    }
+
+    function p14IsArchived(emp) {
+      return String(emp && emp.status || '').trim().toLowerCase() === 'archived';
+    }
+
+    function p14IsSub(emp) {
+      return String(emp && emp.employmentType || '').trim().toLowerCase() === 'subcontractor';
+    }
+
+    function p14IsVa(emp) {
+      return String(emp && emp.employmentType || '').trim().toLowerCase() === 'va';
+    }
+
+    function p14VaOrg(emp) {
+      var company = String(emp && emp.company || '').trim();
+      var agency = String(emp && emp.agency || '').trim();
+      if (company) return { label: 'Company', text: company };
+      if (agency) return { label: 'Agency', text: agency };
+      return null;
+    }
+
+    function p14DocsFor(emp, compliance) {
+      var id = String(emp && emp.employeeId || '').trim().toLowerCase();
+      var name = String(emp && emp.name || '').trim().toLowerCase();
+      return (compliance || []).filter(function(row) {
+        var rid = String(row.employeeId || '').trim().toLowerCase();
+        var rname = String(row.employeeName || '').trim().toLowerCase();
+        if (id && rid && id === rid) return true;
+        if (name && rname && name === rname) return true;
+        return false;
+      });
+    }
+
+    function p14Summary(docs) {
+      if (!docs || !docs.length) return 'No documents yet';
+      var expired = 0, missing = 0, expiring = 0, valid = 0;
+      docs.forEach(function(row) {
+        var key = p14StatusKey(row.status);
+        if (key === 'expired') expired += 1;
+        else if (key === 'missing') missing += 1;
+        else if (key === 'valid') valid += 1;
+        else expiring += 1;
+      });
+      if (!expired && !missing && !expiring && valid) return 'All documents valid';
+      var bits = [];
+      if (expiring) bits.push(expiring + ' expiring');
+      if (expired) bits.push(expired + ' expired');
+      if (missing) bits.push(missing + ' missing');
+      if (valid) bits.push(valid + ' valid');
+      return bits.join(', ') || 'No documents yet';
+    }
+
+    function p14WorstChip(docs) {
+      if (!docs || !docs.length) return '<span class="p14-card-summary">No documents yet</span>';
+      var order = ['expired', 'missing', '7', '30', '60', 'valid'];
+      var labels = {
+        expired: 'Expired',
+        missing: 'Missing',
+        '7': 'Expiring in 7 days',
+        '30': 'Expiring in 30 days',
+        '60': 'Expiring in 60 days',
+        valid: 'All valid'
+      };
+      var seen = {};
+      docs.forEach(function(row) { seen[p14StatusKey(row.status)] = true; });
+      var key = 'valid';
+      for (var i = 0; i < order.length; i++) {
+        if (seen[order[i]]) { key = order[i]; break; }
+      }
+      return '<span class="p14-chip p14-chip-' + key + '">' + p14Esc(labels[key]) + '</span>';
+    }
+
+    function p14DocCounts(people) {
+      var counts = { expired: 0, urgent: 0, soon: 0, valid: 0 };
+      var compliance = (_p14Payload && _p14Payload.compliance) || [];
+      (people || []).forEach(function(emp) {
+        p14DocsFor(emp, compliance).forEach(function(row) {
+          var key = p14StatusKey(row.status);
+          if (key === 'expired') counts.expired += 1;
+          else if (key === '7' || key === 'missing') counts.urgent += 1;
+          else if (key === '30' || key === '60') counts.soon += 1;
+          else if (key === 'valid') counts.valid += 1;
+        });
+      });
+      return counts;
+    }
+
+    function p14PaintSummary(people, show) {
+      var el = document.getElementById('p14-summary');
+      if (!el) return;
+      if (!show) {
+        el.hidden = true;
+        return;
+      }
+      var counts = p14DocCounts(people);
+      var ids = {
+        'p14-sum-expired': counts.expired,
+        'p14-sum-urgent': counts.urgent,
+        'p14-sum-soon': counts.soon,
+        'p14-sum-valid': counts.valid
+      };
+      Object.keys(ids).forEach(function(id) {
+        var node = document.getElementById(id);
+        if (node) node.textContent = String(ids[id]);
+      });
+      el.hidden = false;
+    }
+
+    function p14YesNo(raw) {
+      var s = String(raw == null ? '' : raw).trim().toLowerCase();
+      if (s === 'y' || s === 'yes' || s === 'true' || s === '1') return 'Yes';
+      if (s === 'n' || s === 'no' || s === 'false' || s === '0') return 'No';
+      return 'Not set yet';
+    }
+
+    function p14ReminderNote(docs) {
+      var lines = [];
+      (docs || []).forEach(function(row) {
+        var key = p14StatusKey(row.status);
+        var windowLabel = key === '60' ? '60 day reminder' : key === '30' ? '30 day reminder' : key === '7' ? '7 day reminder' : '';
+        if (!windowLabel) return;
+        var line = (row.documentType || 'Document') + ': ' + windowLabel;
+        var sent = String(row.lastReminderSent || '').trim();
+        if (sent) line += '. Last sent ' + sent;
+        lines.push(line);
+      });
+      if (!lines.length) {
+        return 'Reminders are scheduled at 60 days, 30 days, and 7 days before expiry. No expiry reminders are scheduled for these documents.';
+      }
+      return 'Reminders are scheduled at 60 days, 30 days, and 7 days before expiry. ' + lines.join('. ') + '.';
+    }
+
+    function p14LocalSample() {
+      return {
+        mode: 'sample',
+        localPreview: true,
+        employees: [
+          { employeeId: 'SAMPLE-001', name: 'Alex Sample', position: 'Site Supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/02/2024', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'alex.sample@example.com', emergencyContactOnFile: 'Y', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-002', name: 'Jordan Sample', position: 'Administrator', brand: 'BBBS', department: 'Administration', employmentType: 'Part time', startDate: '15/06/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'jordan.sample@example.com', emergencyContactOnFile: 'N', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-003', name: 'Riley Sample', position: 'Trade contractor', brand: 'RMH', department: 'Tradesmen', employmentType: 'Subcontractor', startDate: '01/08/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'riley.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Trade Co', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-004', name: 'Casey Sample', position: 'Former supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/01/2020', reportsTo: '', workPhone: '', workEmail: 'casey.sample@example.com', emergencyContactOnFile: 'Y', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Archived', archivedDate: '01/05/2026' },
+          { employeeId: 'SAMPLE-005', name: 'Morgan Sample', position: 'Virtual assistant', brand: 'BBBS', department: 'Administration', employmentType: 'VA', startDate: '01/03/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'morgan.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Admin Co', agency: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-006', name: 'Taylor Sample', position: 'Virtual assistant', brand: 'RMH', department: 'Administration', employmentType: 'VA', startDate: '12/04/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'taylor.sample@example.com', emergencyContactOnFile: 'N', company: '', agency: 'Sample Support Agency', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' }
+        ],
+        compliance: [
+          { employeeId: 'SAMPLE-001', employeeName: 'Alex Sample', documentType: 'White card', issueDate: '01/03/2024', expiryDate: '', daysToExpiry: '', status: 'Valid', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-001', employeeName: 'Alex Sample', documentType: 'First aid', issueDate: '01/09/2023', expiryDate: '01/11/2026', daysToExpiry: '45', status: 'Expiring in 60 days', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-002', employeeName: 'Jordan Sample', documentType: 'Driver licence', issueDate: '01/01/2024', expiryDate: '01/11/2026', daysToExpiry: '20', status: 'Expiring in 30 days', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-002', employeeName: 'Jordan Sample', documentType: 'Working at heights', issueDate: '01/06/2026', expiryDate: '20/10/2026', daysToExpiry: '5', status: 'Expiring in 7 days', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-003', employeeName: 'Riley Sample', documentType: 'Public liability', issueDate: '01/01/2025', expiryDate: '01/01/2026', daysToExpiry: '-200', status: 'Expired', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-003', employeeName: 'Riley Sample', documentType: 'White card', issueDate: '', expiryDate: '', daysToExpiry: '', status: 'Missing', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-005', employeeName: 'Morgan Sample', documentType: 'White card', issueDate: '01/03/2026', expiryDate: '', daysToExpiry: '', status: 'Valid', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-005', employeeName: 'Morgan Sample', documentType: 'First aid', issueDate: '01/04/2026', expiryDate: '01/12/2026', daysToExpiry: '40', status: 'Expiring in 60 days', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-006', employeeName: 'Taylor Sample', documentType: 'First aid', issueDate: '01/05/2026', expiryDate: '01/11/2026', daysToExpiry: '18', status: 'Expiring in 30 days', driveLink: '', lastReminderSent: '' },
+          { employeeId: 'SAMPLE-006', employeeName: 'Taylor Sample', documentType: 'White card', issueDate: '', expiryDate: '', daysToExpiry: '', status: 'Missing', driveLink: '', lastReminderSent: '' }
+        ]
+      };
+    }
+
+    function p14SetFrameLinks() {
+      var href = p14OpenHref();
+      var gate = document.getElementById('auth-open-tab');
+      if (gate) gate.setAttribute('href', href);
+      var pageLink = document.querySelector('#p14-iframe-note a');
+      if (pageLink) pageLink.setAttribute('href', href);
+    }
+
+    function p14FillSelect(select, values, allLabel) {
+      if (!select) return;
+      var current = select.value;
+      var html = '<option value="">' + p14Esc(allLabel) + '</option>';
+      values.forEach(function(v) { html += '<option>' + p14Esc(v) + '</option>'; });
+      select.innerHTML = html;
+      if (current) select.value = current;
+    }
+
+    function p14FilteredEmployees() {
+      var data = _p14Payload || { employees: [], compliance: [] };
+      var employees = data.employees || [];
+      var searchEl = document.getElementById('p14-search');
+      var brandEl = document.getElementById('p14-brand');
+      var deptEl = document.getElementById('p14-dept');
+      var statusEl = document.getElementById('p14-status');
+      var archivedEl = document.getElementById('p14-archived');
+      var q = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
+      var brand = brandEl ? String(brandEl.value || '') : '';
+      var dept = deptEl ? String(deptEl.value || '') : '';
+      var status = statusEl ? String(statusEl.value || '') : '';
+      var showArchived = !!(archivedEl && archivedEl.checked);
+      var kind = _p14Kind || 'employees';
+      return employees.filter(function(emp) {
+        var archived = p14IsArchived(emp);
+        if (!showArchived && archived) return false;
+        if (kind === 'subcontractors') {
+          if (!p14IsSub(emp)) return false;
+        } else if (kind === 'vas') {
+          if (!p14IsVa(emp)) return false;
+        } else if (p14IsSub(emp) || p14IsVa(emp)) {
+          return false;
+        }
+        if (brand && String(emp.brand || '') !== brand) return false;
+        if (dept && String(emp.department || '') !== dept) return false;
+        if (q) {
+          var hay = [emp.name, emp.position, emp.department, emp.company, emp.agency, emp.brand].join(' ').toLowerCase();
+          if (hay.indexOf(q) < 0) return false;
+        }
+        if (status) {
+          var docs = p14DocsFor(emp, data.compliance);
+          var hit = docs.some(function(row) { return String(row.status || '') === status; });
+          if (!hit) return false;
+        }
+        return true;
+      });
+    }
+
+    function p14RenderFile(emp) {
+      var file = document.getElementById('p14-file');
+      var grid = document.getElementById('p14-grid');
+      if (!file || !emp) return;
+      var docs = p14DocsFor(emp, (_p14Payload && _p14Payload.compliance) || []);
+      var folder = p14SafeDriveLink(emp.employeeDriveFolderLink);
+      var photo = p14PhotoUrl(emp.photoDriveLink);
+      var avatar = photo
+        ? '<img class="p14-photo-img" src="' + p14Esc(photo) + '" alt="">'
+        : '<span class="p14-photo" aria-hidden="true">' + p14Esc(p14Initials(emp.name)) + '</span>';
+      var upload = folder
+        ? '<a class="p14-upload" href="' + p14Esc(folder) + '" target="_blank" rel="noopener noreferrer">Upload photo</a>'
+        : '<span class="p14-upload p14-upload-missing">Upload photo: Drive folder not set yet</span>';
+      var rows = docs.map(function(row) {
+        var link = p14SafeDriveLink(row.driveLink);
+        var linkCell = link
+          ? '<a href="' + p14Esc(link) + '" target="_blank" rel="noopener noreferrer">Open in Drive</a>'
+          : 'No Drive link';
+        var expiry = String(row.expiryDate || '').trim() || 'Not available';
+        var statusText = row.status || 'Missing';
+        return '<tr><td>' + p14Esc(row.documentType || 'Document') + '</td><td>' + p14Esc(expiry) + '</td><td>' + p14Esc(p14TimeLeft(row)) + '</td><td><span class="p14-chip p14-chip-' + p14StatusKey(row.status) + '">' + p14Esc(statusText) + '</span></td><td>' + linkCell + '</td></tr>';
+      }).join('');
+      if (!rows) {
+        rows = '<tr><td colspan="5">No licences, tickets, or documents on file yet.</td></tr>';
+      }
+      var org = p14IsVa(emp) ? p14VaOrg(emp) : null;
+      var companyLine = p14IsSub(emp)
+        ? '<p><span>Company</span> ' + p14Esc(emp.company || 'Not set yet') + '</p>'
+        : (org ? '<p><span>' + p14Esc(org.label) + '</span> ' + p14Esc(org.text) + '</p>' : '');
+      file.hidden = false;
+      if (grid) grid.hidden = true;
+      p14PaintSummary(null, false);
+      file.innerHTML =
+        '<button type="button" class="p14-back" id="p14-back">Back to employees</button>' +
+        '<div class="p14-file-head"><div class="p14-photo-wrap">' + avatar + upload + '</div>' +
+        '<div><h2>' + p14Esc(emp.name || 'Unnamed') + '</h2>' +
+        '<p class="p14-meta">' + p14Esc(emp.position || 'Position not set yet') + '</p></div></div>' +
+        '<div class="p14-details">' +
+        '<p><span>Employee ID</span> ' + p14Esc(emp.employeeId || 'Not set yet') + '</p>' +
+        '<p><span>Position</span> ' + p14Esc(emp.position || 'Not set yet') + '</p>' +
+        '<p><span>Department</span> ' + p14Esc(emp.department || 'Not set yet') + '</p>' +
+        '<p><span>Brand</span> ' + p14Esc(emp.brand || 'Not set yet') + '</p>' +
+        '<p><span>Employment type</span> ' + p14Esc(emp.employmentType || 'Not set yet') + '</p>' +
+        companyLine +
+        '<p><span>Start date</span> ' + p14Esc(emp.startDate || 'Not set yet') + '</p>' +
+        '<p><span>Reports to</span> ' + p14Esc(emp.reportsTo || 'Not set yet') + '</p>' +
+        '<p><span>Work phone</span> ' + p14Esc(emp.workPhone || 'Not set yet') + '</p>' +
+        '<p><span>Work email</span> ' + p14Esc(emp.workEmail || 'Not set yet') + '</p>' +
+        '<p><span>Emergency contact on file</span> ' + p14Esc(p14YesNo(emp.emergencyContactOnFile)) + '</p>' +
+        '</div>' +
+        '<div class="table-wrap"><table class="p14-table"><thead><tr><th>Document Type</th><th>Expiry Date</th><th>Time Left</th><th>Status</th><th>Open in Drive</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<p class="p14-status-key">Green = valid, Amber = expiring soon, Red = urgent, expired or missing.</p>' +
+        '<p class="p14-reminders">' + p14Esc(p14ReminderNote(docs)) + '</p>';
+      var back = document.getElementById('p14-back');
+      if (back) back.addEventListener('click', function() {
+        _p14OpenId = '';
+        p14RenderGrid();
+      });
+      file.querySelectorAll('.p14-photo-img').forEach(function(img) {
+        img.addEventListener('error', function() {
+          var span = document.createElement('span');
+          span.className = 'p14-photo';
+          span.setAttribute('aria-hidden', 'true');
+          span.textContent = p14Initials(emp.name);
+          img.replaceWith(span);
+        });
+      });
+    }
+
+    function p14RenderGrid() {
+      var grid = document.getElementById('p14-grid');
+      var file = document.getElementById('p14-file');
+      if (!grid) return;
+      var people = p14FilteredEmployees();
+      if (_p14OpenId) {
+        var open = people.filter(function(emp) { return String(emp.employeeId) === _p14OpenId; })[0];
+        if (!open) {
+          var all = (_p14Payload && _p14Payload.employees) || [];
+          open = all.filter(function(emp) { return String(emp.employeeId) === _p14OpenId; })[0];
+        }
+        if (open) {
+          p14RenderFile(open);
+          return;
+        }
+      }
+      if (file) { file.hidden = true; file.innerHTML = ''; }
+      grid.hidden = false;
+      if (!people.length) {
+        grid.innerHTML = '<p class="p14-empty">No employee files match these filters.</p>';
+        p14PaintSummary([], true);
+        return;
+      }
+      grid.innerHTML = people.map(function(emp) {
+        var docs = p14DocsFor(emp, (_p14Payload && _p14Payload.compliance) || []);
+        var photo = p14PhotoUrl(emp.photoDriveLink);
+        var avatar = photo
+          ? '<img class="p14-avatar-img" src="' + p14Esc(photo) + '" alt="">'
+          : '<span class="p14-avatar" aria-hidden="true">' + p14Esc(p14Initials(emp.name)) + '</span>';
+        var orgCard = p14IsVa(emp) ? p14VaOrg(emp) : null;
+        var company = p14IsSub(emp)
+          ? '<p class="p14-company">' + p14Esc(emp.company || 'Company not set yet') + '</p>'
+          : (orgCard ? '<p class="p14-company">' + p14Esc(orgCard.text) + '</p>' : '');
+        return '<button type="button" class="p14-card" data-p14-id="' + p14Esc(emp.employeeId) + '">' +
+          avatar +
+          '<span class="p14-card-name">' + p14Esc(emp.name || 'Unnamed') + '</span>' +
+          '<span class="p14-card-role">' + p14Esc(emp.position || 'Position not set yet') + '</span>' +
+          '<span class="p14-card-meta">' + p14Esc(emp.brand || 'Brand not set') + ' | ' + p14Esc(emp.department || 'Department not set') + '</span>' +
+          company +
+          p14WorstChip(docs) +
+          '<span class="p14-card-summary">' + p14Esc(p14Summary(docs)) + '</span>' +
+          '</button>';
+      }).join('');
+      grid.querySelectorAll('.p14-card').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          _p14OpenId = btn.getAttribute('data-p14-id') || '';
+          p14RenderGrid();
+        });
+      });
+      grid.querySelectorAll('.p14-avatar-img').forEach(function(img) {
+        img.addEventListener('error', function() {
+          var span = document.createElement('span');
+          span.className = 'p14-avatar';
+          span.setAttribute('aria-hidden', 'true');
+          var card = img.closest('.p14-card');
+          var name = card ? card.querySelector('.p14-card-name') : null;
+          span.textContent = p14Initials(name ? name.textContent : '');
+          img.replaceWith(span);
+        });
+      });
+      p14PaintSummary(people, true);
+    }
+
+    function p14BindFilters() {
+      if (_p14FiltersBound) return;
+      _p14FiltersBound = true;
+      ['p14-search', 'p14-brand', 'p14-dept', 'p14-status', 'p14-archived'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', p14RenderGrid);
+        el.addEventListener('change', p14RenderGrid);
+      });
+      document.querySelectorAll('.p14-kind-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          _p14Kind = btn.getAttribute('data-p14-kind') || 'employees';
+          document.querySelectorAll('.p14-kind-btn').forEach(function(other) {
+            other.classList.toggle('active', other === btn);
+          });
+          _p14OpenId = '';
+          p14RenderGrid();
+        });
+      });
+    }
+
+    var _p14OpenId = '';
+    var _p14Kind = 'employees';
+    var _p14FiltersBound = false;
+
+    function p14ShowMessage(text) {
+      var grid = document.getElementById('p14-grid');
+      var file = document.getElementById('p14-file');
+      var filters = document.getElementById('p14-filters');
+      if (file) { file.hidden = true; file.innerHTML = ''; }
+      if (filters) filters.hidden = true;
+      p14PaintSummary(null, false);
+      if (grid) {
+        grid.hidden = false;
+        grid.innerHTML = '<p class="p14-empty">' + p14Esc(text) + '</p>';
+      }
+    }
+
+    async function p14ProbeAccess() {
+      p14SetFrameLinks();
+      _p14Allowed = false;
+      _p14Payload = null;
+      var token = '';
+      try { token = await getHubIdToken(); } catch (e) { token = ''; }
+      var localFallback = false;
+      if (token) {
+        try {
+          var response = await fetch('/api/employee-files', {
+            method: 'GET',
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          if (response.status === 200) {
+            var data = await response.json();
+            if (data && Array.isArray(data.employees)) {
+              _p14Allowed = true;
+              _p14Payload = data;
+            }
+          } else if (p14LocalPreviewHost() && (response.status === 503 || response.status === 404)) {
+            localFallback = true;
+          }
+        } catch (err) {
+          if (p14LocalPreviewHost()) localFallback = true;
+        }
+      } else if (p14LocalPreviewHost()) {
+        localFallback = true;
+      }
+      if (localFallback) {
+        _p14Allowed = true;
+        _p14Payload = p14LocalSample();
+      }
+      if (typeof applyAccessChrome === 'function') applyAccessChrome();
+      if (getActivePageId() === 'p14' && typeof loadP14 === 'function') loadP14();
+    }
+
+    async function loadP14() {
+      showLoading(true);
+      removeError('p14');
+      try {
+        p14SetFrameLinks();
+        var note = document.getElementById('p14-iframe-note');
+        if (note) {
+          if (p14InFrame()) note.removeAttribute('hidden');
+          else note.setAttribute('hidden', '');
+        }
+        var banner = document.getElementById('p14-banner');
+        var filters = document.getElementById('p14-filters');
+        if (!_p14Allowed || !_p14Payload) {
+          if (banner) banner.setAttribute('hidden', '');
+          p14ShowMessage('You do not have access to employee files.');
+          return;
+        }
+        if (filters) filters.hidden = false;
+        if (banner) {
+          if (_p14Payload.localPreview) {
+            banner.hidden = false;
+            banner.textContent = 'Sample names on this computer only. The employee files service is not running here.';
+          } else if (_p14Payload.mode === 'sample') {
+            banner.hidden = false;
+            banner.textContent = 'Sample names only. Real employee files are not loaded yet.';
+          } else {
+            banner.setAttribute('hidden', '');
+            banner.textContent = '';
+          }
+        }
+        var employees = _p14Payload.employees || [];
+        if (!employees.length) {
+          if (filters) filters.hidden = true;
+          p14ShowMessage('No employee files yet.');
+          return;
+        }
+        var brands = [];
+        var depts = [];
+        employees.forEach(function(emp) {
+          if (emp.brand && brands.indexOf(emp.brand) < 0) brands.push(emp.brand);
+          if (emp.department && depts.indexOf(emp.department) < 0) depts.push(emp.department);
+        });
+        brands.sort();
+        depts.sort();
+        p14FillSelect(document.getElementById('p14-brand'), brands, 'All brands');
+        p14FillSelect(document.getElementById('p14-dept'), depts, 'All departments');
+        p14BindFilters();
+        p14RenderGrid();
+      } catch (err) {
+        console.error('P14 load error:', err);
+        p14ShowMessage('Employee files could not be shown. Try again in a moment.');
+      } finally {
+        showLoading(false);
+      }
     }
 
     async function loadP13() {
