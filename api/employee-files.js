@@ -132,12 +132,12 @@ function loadServiceAccount() {
   }
 }
 
-async function serviceAccountToken(cred) {
+async function serviceAccountToken(cred, scope) {
   var now = Math.floor(Date.now() / 1000);
   var header = b64urlJson({ alg: 'RS256', typ: 'JWT' });
   var claim = b64urlJson({
     iss: cred.client_email,
-    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    scope: scope || 'https://www.googleapis.com/auth/spreadsheets.readonly',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600
@@ -222,6 +222,32 @@ function safeLink(link) {
   return s;
 }
 
+function driveFileIdFromLink(link) {
+  var s = safeLink(link);
+  if (!/^https:\/\//i.test(s)) return '';
+  var url;
+  try { url = new URL(s); } catch (e) { return ''; }
+  var host = String(url.hostname || '').toLowerCase();
+  if (host !== 'drive.google.com' && host !== 'docs.google.com') return '';
+  var ids = [];
+  var pathMatch = String(url.pathname || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (pathMatch) ids.push(pathMatch[1]);
+  var queryId = '';
+  try { queryId = url.searchParams.get('id') || ''; } catch (e2) { queryId = ''; }
+  if (/^[a-zA-Z0-9_-]+$/.test(queryId)) ids.push(queryId);
+  var unique = [];
+  ids.forEach(function (id) {
+    if (unique.indexOf(id) < 0) unique.push(id);
+  });
+  if (unique.length !== 1) return '';
+  if (unique[0].length < 10 || unique[0].length > 128) return '';
+  return unique[0];
+}
+
+function profileHasPhoto(link) {
+  return !!driveFileIdFromLink(link);
+}
+
 function lastStaffRow(rows, email) {
   var found = null;
   (rows || []).forEach(function (r) {
@@ -248,7 +274,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'alex.sample@example.com',
         emergencyContactOnFile: 'Y',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Active',
         archivedDate: '',
@@ -266,7 +292,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'jordan.sample@example.com',
         emergencyContactOnFile: 'N',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Active',
         archivedDate: '',
@@ -284,7 +310,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'riley.sample@example.com',
         emergencyContactOnFile: 'Y',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Active',
         archivedDate: '',
@@ -303,7 +329,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'casey.sample@example.com',
         emergencyContactOnFile: 'Y',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Archived',
         archivedDate: '01/05/2026',
@@ -322,7 +348,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'morgan.sample@example.com',
         emergencyContactOnFile: 'Y',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Active',
         archivedDate: '',
@@ -341,7 +367,7 @@ function samplePayload() {
         workPhone: '',
         workEmail: 'taylor.sample@example.com',
         emergencyContactOnFile: 'N',
-        photoDriveLink: '',
+        hasPhoto: false,
         employeeDriveFolderLink: '',
         status: 'Active',
         archivedDate: '',
@@ -499,7 +525,7 @@ function shapeProfile(row) {
     emergencyContactOnFile: pick(row, ['Emergency Contact on file (Y/N)', 'Emergency Contact on file']),
     company: pick(row, ['Company', 'Company Name']),
     agency: pick(row, ['Agency', 'Agency Name']),
-    photoDriveLink: safeLink(pick(row, ['Photo Drive Link'])),
+    hasPhoto: profileHasPhoto(pick(row, ['Photo Drive Link'])),
     employeeDriveFolderLink: safeLink(pick(row, ['Employee Drive Folder Link'])),
     status: pick(row, ['Status (Active or Archived)', 'Status']),
     archivedDate: pick(row, ['Archived Date'])
@@ -588,5 +614,15 @@ export {
   isActiveYes,
   isHrRole,
   blockedDriveLink,
+  driveFileIdFromLink,
+  profileHasPhoto,
+  parseBearer,
+  verifyFirebaseIdToken,
+  loadServiceAccount,
+  serviceAccountToken,
+  readTab,
+  rowsToObjects,
+  pick,
+  lastStaffRow,
   samplePayload
 };

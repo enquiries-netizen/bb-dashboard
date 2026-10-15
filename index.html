@@ -21290,11 +21290,150 @@
       return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
     }
 
-    function p14PhotoUrl(url) {
-      var s = p14SafeDriveLink(url);
-      if (!s) return '';
-      if (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(s)) return s;
-      return '';
+    var _p14BlobUrls = [];
+    var _p14PhotoObserver = null;
+
+    function p14RevokeUrl(url) {
+      if (!url) return;
+      try { URL.revokeObjectURL(url); } catch (e) {}
+      var kept = [];
+      for (var i = 0; i < _p14BlobUrls.length; i++) {
+        if (_p14BlobUrls[i] !== url) kept.push(_p14BlobUrls[i]);
+      }
+      _p14BlobUrls = kept;
+    }
+
+    function p14RevokeTracked() {
+      var urls = _p14BlobUrls.slice();
+      _p14BlobUrls = [];
+      for (var i = 0; i < urls.length; i++) {
+        try { URL.revokeObjectURL(urls[i]); } catch (e) {}
+      }
+      if (_p14PhotoObserver) {
+        try { _p14PhotoObserver.disconnect(); } catch (e2) {}
+      }
+    }
+
+    function p14FetchPhotoBlobUrl(employeeId) {
+      var id = String(employeeId || '').trim();
+      if (!id) return Promise.resolve('');
+      var token = '';
+      return Promise.resolve().then(function() {
+        return getHubIdToken();
+      }).then(function(value) {
+        token = value || '';
+        if (!token) return null;
+        return fetch('/api/employee-photo?employeeId=' + encodeURIComponent(id), {
+          method: 'GET',
+          headers: { Authorization: 'Bearer ' + token },
+          cache: 'no-store'
+        });
+      }).then(function(response) {
+        if (!response) return '';
+        if (!response.ok) return '';
+        var type = String(response.headers.get('content-type') || '').toLowerCase().split(';')[0].trim();
+        if (type !== 'image/jpeg' && type !== 'image/png' && type !== 'image/webp') return '';
+        return response.blob().then(function(blob) {
+          if (!blob || !blob.size || blob.size > 2097152) return '';
+          try { return URL.createObjectURL(blob); } catch (e3) { return ''; }
+        });
+      }).catch(function() {
+        return '';
+      });
+    }
+
+    function p14RestoreInitials(host, spanClass) {
+      if (!host) return;
+      var blob = host.getAttribute('data-p14-blob') || '';
+      if (blob) {
+        p14RevokeUrl(blob);
+        host.removeAttribute('data-p14-blob');
+      }
+      var img = host.querySelector('img');
+      if (!img) return;
+      var span = document.createElement('span');
+      span.className = spanClass;
+      span.setAttribute('aria-hidden', 'true');
+      span.textContent = host.getAttribute('data-p14-initials') || '';
+      try { img.replaceWith(span); } catch (e4) {}
+    }
+
+    function p14ShowPhoto(host, url, imgClass, spanClass) {
+      if (!host || !url || !host.isConnected) {
+        p14RevokeUrl(url);
+        return;
+      }
+      _p14BlobUrls.push(url);
+      host.setAttribute('data-p14-blob', url);
+      var img = document.createElement('img');
+      img.className = imgClass;
+      img.alt = '';
+      img.addEventListener('error', function() {
+        p14RestoreInitials(host, spanClass);
+        host.setAttribute('data-p14-photo-state', 'failed');
+      });
+      var span = host.querySelector('.' + spanClass);
+      if (span) span.replaceWith(img);
+      else host.insertBefore(img, host.firstChild);
+      img.src = url;
+      host.setAttribute('data-p14-photo-state', 'shown');
+    }
+
+    function p14BeginPhoto(host, employeeId, imgClass, spanClass) {
+      if (!host || host.getAttribute('data-p14-has-photo') !== '1') return;
+      var state = host.getAttribute('data-p14-photo-state') || '';
+      if (state === 'loading' || state === 'shown' || state === 'failed') return;
+      host.setAttribute('data-p14-photo-state', 'loading');
+      var gen = String(Date.now()) + '-' + String(Math.random()).slice(2);
+      host.setAttribute('data-p14-photo-gen', gen);
+      p14FetchPhotoBlobUrl(employeeId).then(function(url) {
+        if (!host.isConnected || host.getAttribute('data-p14-photo-gen') !== gen) {
+          p14RevokeUrl(url);
+          return;
+        }
+        if (!url) {
+          host.setAttribute('data-p14-photo-state', 'failed');
+          return;
+        }
+        p14ShowPhoto(host, url, imgClass, spanClass);
+      }).catch(function() {
+        if (host.isConnected && host.getAttribute('data-p14-photo-gen') === gen) {
+          host.setAttribute('data-p14-photo-state', 'failed');
+        }
+      });
+    }
+
+    function p14ClearHostPhoto(host, spanClass) {
+      if (!host) return;
+      host.setAttribute('data-p14-photo-gen', '');
+      if (host.getAttribute('data-p14-photo-state') === 'failed') return;
+      p14RestoreInitials(host, spanClass);
+      host.setAttribute('data-p14-photo-state', 'idle');
+    }
+
+    function p14EnsurePhotoObserver() {
+      if (_p14PhotoObserver) return _p14PhotoObserver;
+      if (typeof IntersectionObserver !== 'function') return null;
+      _p14PhotoObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          var card = entry.target;
+          if (!card) return;
+          if (entry.isIntersecting) {
+            p14BeginPhoto(card, card.getAttribute('data-p14-id') || '', 'p14-avatar-img', 'p14-avatar');
+          } else {
+            p14ClearHostPhoto(card, 'p14-avatar');
+          }
+        });
+      }, { root: null, rootMargin: '0px', threshold: 0.01 });
+      return _p14PhotoObserver;
+    }
+
+    function p14WatchCards(root) {
+      var observer = p14EnsurePhotoObserver();
+      if (!observer || !root) return;
+      root.querySelectorAll('.p14-card[data-p14-has-photo="1"]').forEach(function(card) {
+        try { observer.observe(card); } catch (e5) {}
+      });
     }
 
     function p14StatusKey(status) {
@@ -21455,12 +21594,12 @@
         mode: 'sample',
         localPreview: true,
         employees: [
-          { employeeId: 'SAMPLE-001', name: 'Alex Sample', position: 'Site Supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/02/2024', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'alex.sample@example.com', emergencyContactOnFile: 'Y', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
-          { employeeId: 'SAMPLE-002', name: 'Jordan Sample', position: 'Administrator', brand: 'BBBS', department: 'Administration', employmentType: 'Part time', startDate: '15/06/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'jordan.sample@example.com', emergencyContactOnFile: 'N', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
-          { employeeId: 'SAMPLE-003', name: 'Riley Sample', position: 'Trade contractor', brand: 'RMH', department: 'Tradesmen', employmentType: 'Subcontractor', startDate: '01/08/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'riley.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Trade Co', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
-          { employeeId: 'SAMPLE-004', name: 'Casey Sample', position: 'Former supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/01/2020', reportsTo: '', workPhone: '', workEmail: 'casey.sample@example.com', emergencyContactOnFile: 'Y', company: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Archived', archivedDate: '01/05/2026' },
-          { employeeId: 'SAMPLE-005', name: 'Morgan Sample', position: 'Virtual assistant', brand: 'BBBS', department: 'Administration', employmentType: 'VA', startDate: '01/03/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'morgan.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Admin Co', agency: '', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
-          { employeeId: 'SAMPLE-006', name: 'Taylor Sample', position: 'Virtual assistant', brand: 'RMH', department: 'Administration', employmentType: 'VA', startDate: '12/04/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'taylor.sample@example.com', emergencyContactOnFile: 'N', company: '', agency: 'Sample Support Agency', photoDriveLink: '', employeeDriveFolderLink: '', status: 'Active', archivedDate: '' }
+          { employeeId: 'SAMPLE-001', name: 'Alex Sample', position: 'Site Supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/02/2024', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'alex.sample@example.com', emergencyContactOnFile: 'Y', company: '', hasPhoto: false, employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-002', name: 'Jordan Sample', position: 'Administrator', brand: 'BBBS', department: 'Administration', employmentType: 'Part time', startDate: '15/06/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'jordan.sample@example.com', emergencyContactOnFile: 'N', company: '', hasPhoto: false, employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-003', name: 'Riley Sample', position: 'Trade contractor', brand: 'RMH', department: 'Tradesmen', employmentType: 'Subcontractor', startDate: '01/08/2025', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'riley.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Trade Co', hasPhoto: false, employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-004', name: 'Casey Sample', position: 'Former supervisor', brand: 'BBBS', department: 'Supervisors', employmentType: 'Full time', startDate: '01/01/2020', reportsTo: '', workPhone: '', workEmail: 'casey.sample@example.com', emergencyContactOnFile: 'Y', company: '', hasPhoto: false, employeeDriveFolderLink: '', status: 'Archived', archivedDate: '01/05/2026' },
+          { employeeId: 'SAMPLE-005', name: 'Morgan Sample', position: 'Virtual assistant', brand: 'BBBS', department: 'Administration', employmentType: 'VA', startDate: '01/03/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'morgan.sample@example.com', emergencyContactOnFile: 'Y', company: 'Sample Admin Co', agency: '', hasPhoto: false, employeeDriveFolderLink: '', status: 'Active', archivedDate: '' },
+          { employeeId: 'SAMPLE-006', name: 'Taylor Sample', position: 'Virtual assistant', brand: 'RMH', department: 'Administration', employmentType: 'VA', startDate: '12/04/2026', reportsTo: 'Sam Sample', workPhone: '', workEmail: 'taylor.sample@example.com', emergencyContactOnFile: 'N', company: '', agency: 'Sample Support Agency', hasPhoto: false, employeeDriveFolderLink: '', status: 'Active', archivedDate: '' }
         ],
         compliance: [
           { employeeId: 'SAMPLE-001', employeeName: 'Alex Sample', documentType: 'White card', issueDate: '01/03/2024', expiryDate: '', daysToExpiry: '', status: 'Valid', driveLink: '', lastReminderSent: '' },
@@ -21537,12 +21676,12 @@
       var file = document.getElementById('p14-file');
       var grid = document.getElementById('p14-grid');
       if (!file || !emp) return;
+      p14RevokeTracked();
       var docs = p14DocsFor(emp, (_p14Payload && _p14Payload.compliance) || []);
       var folder = p14SafeDriveLink(emp.employeeDriveFolderLink);
-      var photo = p14PhotoUrl(emp.photoDriveLink);
-      var avatar = photo
-        ? '<img class="p14-photo-img" src="' + p14Esc(photo) + '" alt="">'
-        : '<span class="p14-photo" aria-hidden="true">' + p14Esc(p14Initials(emp.name)) + '</span>';
+      var initials = p14Initials(emp.name);
+      var avatar = '<span class="p14-photo" aria-hidden="true">' + p14Esc(initials) + '</span>';
+      var photoFlag = emp.hasPhoto === true ? ' data-p14-has-photo="1"' : '';
       var upload = folder
         ? '<a class="p14-upload" href="' + p14Esc(folder) + '" target="_blank" rel="noopener noreferrer">Upload photo</a>'
         : '<span class="p14-upload p14-upload-missing">Upload photo: Drive folder not set yet</span>';
@@ -21567,7 +21706,7 @@
       p14PaintSummary(null, false);
       file.innerHTML =
         '<button type="button" class="p14-back" id="p14-back">Back to employees</button>' +
-        '<div class="p14-file-head"><div class="p14-photo-wrap">' + avatar + upload + '</div>' +
+        '<div class="p14-file-head"><div class="p14-photo-wrap" id="p14-photo-host" data-p14-initials="' + p14Esc(initials) + '"' + photoFlag + '>' + avatar + upload + '</div>' +
         '<div><h2>' + p14Esc(emp.name || 'Unnamed') + '</h2>' +
         '<p class="p14-meta">' + p14Esc(emp.position || 'Position not set yet') + '</p></div></div>' +
         '<div class="p14-details">' +
@@ -21591,21 +21730,15 @@
         _p14OpenId = '';
         p14RenderGrid();
       });
-      file.querySelectorAll('.p14-photo-img').forEach(function(img) {
-        img.addEventListener('error', function() {
-          var span = document.createElement('span');
-          span.className = 'p14-photo';
-          span.setAttribute('aria-hidden', 'true');
-          span.textContent = p14Initials(emp.name);
-          img.replaceWith(span);
-        });
-      });
+      var photoHost = document.getElementById('p14-photo-host');
+      if (photoHost && emp.hasPhoto === true) p14BeginPhoto(photoHost, emp.employeeId, 'p14-photo-img', 'p14-photo');
     }
 
     function p14RenderGrid() {
       var grid = document.getElementById('p14-grid');
       var file = document.getElementById('p14-file');
       if (!grid) return;
+      p14RevokeTracked();
       var people = p14FilteredEmployees();
       if (_p14OpenId) {
         var open = people.filter(function(emp) { return String(emp.employeeId) === _p14OpenId; })[0];
@@ -21627,15 +21760,14 @@
       }
       grid.innerHTML = people.map(function(emp) {
         var docs = p14DocsFor(emp, (_p14Payload && _p14Payload.compliance) || []);
-        var photo = p14PhotoUrl(emp.photoDriveLink);
-        var avatar = photo
-          ? '<img class="p14-avatar-img" src="' + p14Esc(photo) + '" alt="">'
-          : '<span class="p14-avatar" aria-hidden="true">' + p14Esc(p14Initials(emp.name)) + '</span>';
+        var initials = p14Initials(emp.name);
+        var avatar = '<span class="p14-avatar" aria-hidden="true">' + p14Esc(initials) + '</span>';
+        var photoFlag = emp.hasPhoto === true ? ' data-p14-has-photo="1"' : '';
         var orgCard = p14IsVa(emp) ? p14VaOrg(emp) : null;
         var company = p14IsSub(emp)
           ? '<p class="p14-company">' + p14Esc(emp.company || 'Company not set yet') + '</p>'
           : (orgCard ? '<p class="p14-company">' + p14Esc(orgCard.text) + '</p>' : '');
-        return '<button type="button" class="p14-card" data-p14-id="' + p14Esc(emp.employeeId) + '">' +
+        return '<button type="button" class="p14-card" data-p14-id="' + p14Esc(emp.employeeId) + '" data-p14-initials="' + p14Esc(initials) + '"' + photoFlag + '>' +
           avatar +
           '<span class="p14-card-name">' + p14Esc(emp.name || 'Unnamed') + '</span>' +
           '<span class="p14-card-role">' + p14Esc(emp.position || 'Position not set yet') + '</span>' +
@@ -21651,17 +21783,7 @@
           p14RenderGrid();
         });
       });
-      grid.querySelectorAll('.p14-avatar-img').forEach(function(img) {
-        img.addEventListener('error', function() {
-          var span = document.createElement('span');
-          span.className = 'p14-avatar';
-          span.setAttribute('aria-hidden', 'true');
-          var card = img.closest('.p14-card');
-          var name = card ? card.querySelector('.p14-card-name') : null;
-          span.textContent = p14Initials(name ? name.textContent : '');
-          img.replaceWith(span);
-        });
-      });
+      p14WatchCards(grid);
       p14PaintSummary(people, true);
     }
 
@@ -21691,6 +21813,7 @@
     var _p14FiltersBound = false;
 
     function p14ShowMessage(text) {
+      p14RevokeTracked();
       var grid = document.getElementById('p14-grid');
       var file = document.getElementById('p14-file');
       var filters = document.getElementById('p14-filters');

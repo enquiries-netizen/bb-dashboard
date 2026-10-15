@@ -10,5 +10,14 @@ The allow-list is the Staff_Access tab on the private spreadsheet (EMPLOYEE_FILE
 1. No Authorization header. Expect HTTP 401 and the message "Sign-in required." The body must not contain an employees list or a compliance list.
 2. A valid token for a signed-in person who is not on the private Staff_Access tab, or whose last row there is not Active yes with Role hr or management. An admin on the master sheet is in this group unless the private tab also allows them. Expect HTTP 403 and the message "You do not have access to employee files." The body must not contain rows.
 3. EMPLOYEE_FILES_SHEET_ID unset, or EMPLOYEE_FILES_SERVICE_ACCOUNT unset. Expect HTTP 503 and the message "Employee files are not configured." No rows.
-4. Both variables set, and the private Staff_Access last row for that email is Active yes and Role hr or management. If Employees_Profile has no rows, expect HTTP 200, mode sample, and the built-in sample people. If Employees_Profile has rows, expect HTTP 200 and mode live. The body must not include pay review or performance folder links, licence numbers, or free-text notes.
+4. Both variables set, and the private Staff_Access last row for that email is Active yes and Role hr or management. If Employees_Profile has no rows, expect HTTP 200, mode sample, and the built-in sample people. If Employees_Profile has rows, expect HTTP 200 and mode live. Each person has hasPhoto true or false. The body must not include photoDriveLink. The body must not include pay review or performance folder links, licence numbers, or free-text notes.
 5. With the public browser Sheets key, request the private employee spreadsheet. That request must fail. The private file must not be shared as anyone with the link.
+
+Photo route: GET /api/employee-photo?employeeId= then the person id from Employees_Profile. Same Authorization header. The route does not accept a Drive file id. Cache-Control on every response is private, no-store. Any failure returns an empty 404 so the page keeps the initials circle.
+
+1. No token. Expect 404 with an empty body. 401 would also mean no image. This route uses 404.
+2. A signed-in person who is not Active yes with Role hr or management on the private Staff_Access tab. Expect no image (404, empty body).
+3. An employeeId with no Photo Drive Link, or a link that is not a Drive file. Expect 404.
+4. The Photo Drive Link points at a file that is not jpeg, png, or webp. Expect 404.
+5. The file is over 2 MB. Expect 404.
+6. The file, or any parent folder, has a name containing pay review, 01. Pay Review, 03. Performance, or performance. Expect 404. If the parent folder names cannot be read, expect 404 as well.
