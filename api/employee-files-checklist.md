@@ -12,6 +12,7 @@ The allow-list is the Staff_Access tab on the private spreadsheet (EMPLOYEE_FILE
 3. EMPLOYEE_FILES_SHEET_ID unset, or EMPLOYEE_FILES_SERVICE_ACCOUNT unset. Expect HTTP 503 and the message "Employee files are not configured." No rows.
 4. Both variables set, and the private Staff_Access last row for that email is Active yes and Role hr or management. If Employees_Profile has no rows, expect HTTP 200, mode sample, and the built-in sample people. If Employees_Profile has rows, expect HTTP 200 and mode live. Each person has hasPhoto true or false. The body must not include photoDriveLink. The body must not include pay review or performance folder links, licence numbers, or free-text notes.
 5. With the public browser Sheets key, request the private employee spreadsheet. That request must fail. The private file must not be shared as anyone with the link.
+6. If the service account cannot read a Drive file, or a parent folder of that file, the link is left blank. The rest of the employee file is still returned. The same blanking applies to a link that is still unchecked when the 4 second parent check ends.
 
 Photo route: GET /api/employee-photo?employeeId= then the person id from Employees_Profile. Same Authorization header. The route does not accept a Drive file id. Cache-Control on every response is private, no-store. Any failure returns an empty 404 so the page keeps the initials circle.
 

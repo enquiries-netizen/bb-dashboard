@@ -10,7 +10,8 @@ import {
   isHrRole,
   lastStaffRow,
   blockedDriveLink,
-  driveFileIdFromLink
+  driveFileIdFromLink,
+  applyCors
 } from './employee-files.js';
 
 var PHOTO_MAX_BYTES = 2 * 1024 * 1024;
@@ -21,6 +22,17 @@ var PHOTO_SCOPES = [
 ].join(' ');
 
 var profileCache = { at: 0, sheetId: '', rows: null };
+var tokenCache = Object.create(null);
+var TOKEN_CACHE_MS = 50 * 60 * 1000;
+
+async function cachedAccessToken(cred, scope) {
+  var now = Date.now();
+  var hit = tokenCache[scope];
+  if (hit && hit.token && now - hit.at < TOKEN_CACHE_MS) return hit.token;
+  var token = await serviceAccountToken(cred, scope);
+  tokenCache[scope] = { at: now, token: token };
+  return token;
+}
 
 function notFound(res) {
   res.setHeader('Cache-Control', 'private, no-store');
@@ -146,6 +158,8 @@ async function readImageBytes(fileId, accessToken) {
 }
 
 export default async function handler(req, res) {
+  applyCors(req, res);
+  if (req && req.method === 'OPTIONS') return res.status(204).end();
   if (!req || req.method !== 'GET') return notFound(res);
 
   var token = parseBearer(req.headers && (req.headers.authorization || req.headers.Authorization));
@@ -168,7 +182,7 @@ export default async function handler(req, res) {
 
   var accessToken;
   try {
-    accessToken = await serviceAccountToken(cred, PHOTO_SCOPES);
+    accessToken = await cachedAccessToken(cred, PHOTO_SCOPES);
   } catch (e2) {
     return notFound(res);
   }
@@ -206,7 +220,7 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', mime);
     res.setHeader('Cache-Control', 'private, no-store');
-    res.setHeader('Vary', 'Authorization');
+    res.setHeader('Vary', 'Origin, Authorization');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.status(200).end(bytes);
   } catch (e3) {

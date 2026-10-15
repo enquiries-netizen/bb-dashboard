@@ -11320,7 +11320,8 @@ body.page-about-open {
   color: #0b4a1f;
   border-color: #1e8a3c;
 }
-#page-p14 .p14-chip-60 {
+#page-p14 .p14-chip-60,
+#page-p14 .p14-chip-check {
   background: #fff1c2;
   color: #5c4300;
   border-color: #d99a00;

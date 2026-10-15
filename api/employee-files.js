@@ -248,6 +248,197 @@ function profileHasPhoto(link) {
   return !!driveFileIdFromLink(link);
 }
 
+var ALLOWED_ORIGINS = {
+  'https://bb-dashboard-eight.vercel.app': true,
+  'http://localhost:3000': true,
+  'http://localhost:5500': true
+};
+
+function applyCors(req, res) {
+  var origin = '';
+  if (req && req.headers) origin = req.headers.origin || req.headers.Origin || '';
+  origin = String(origin || '').trim();
+  if (ALLOWED_ORIGINS[origin]) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
+}
+
+function driveItemIdFromLink(link) {
+  var fileId = driveFileIdFromLink(link);
+  if (fileId) return fileId;
+  var s = safeLink(link);
+  if (!/^https:\/\//i.test(s)) return '';
+  var url;
+  try { url = new URL(s); } catch (e) { return ''; }
+  var host = String(url.hostname || '').toLowerCase();
+  if (host !== 'drive.google.com' && host !== 'docs.google.com') return '';
+  var match = String(url.pathname || '').match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (!match) return '';
+  if (match[1].length < 10 || match[1].length > 128) return '';
+  return match[1];
+}
+
+function ancestorNameBlocked(name) {
+  var s = String(name || '').toLowerCase();
+  return s.indexOf('pay review') >= 0 || s.indexOf('performance') >= 0;
+}
+
+var LINK_SCREEN_MS = 4000;
+var LINK_SCREEN_BATCH = 5;
+
+function createFolderMetaCache() {
+  return { values: Object.create(null), pending: Object.create(null) };
+}
+
+async function driveItemMeta(fileId, accessToken, cache, signal) {
+  if (!fileId) return null;
+  if (Object.prototype.hasOwnProperty.call(cache.values, fileId)) return cache.values[fileId];
+  if (cache.pending[fileId]) return cache.pending[fileId];
+  var task = (async function () {
+    if (signal && signal.aborted) return null;
+    var url =
+      'https://www.googleapis.com/drive/v3/files/' +
+      encodeURIComponent(fileId) +
+      '?supportsAllDrives=true&fields=' +
+      encodeURIComponent('id,name,parents');
+    try {
+      var response = await fetch(url, {
+        headers: { Authorization: 'Bearer ' + accessToken },
+        signal: signal
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (e) {
+      return null;
+    }
+  })();
+  cache.pending[fileId] = task;
+  try {
+    var meta = await task;
+    cache.values[fileId] = meta;
+    return meta;
+  } finally {
+    delete cache.pending[fileId];
+  }
+}
+
+async function ancestorsBlockLink(startId, accessToken, cache, signal, expired) {
+  if (!startId || expired()) return true;
+  var start = await driveItemMeta(startId, accessToken, cache, signal);
+  if (!start || expired()) return true;
+  var seen = {};
+  var queue = Array.isArray(start.parents) ? start.parents.slice() : [];
+  var depth = 1;
+  var guard = 0;
+  while (queue.length) {
+    if (expired() || depth > 8 || guard > 40) return true;
+    var next = [];
+    for (var i = 0; i < queue.length; i++) {
+      guard += 1;
+      var id = queue[i];
+      if (!id || seen[id]) continue;
+      seen[id] = true;
+      var node = await driveItemMeta(id, accessToken, cache, signal);
+      if (!node || expired()) return true;
+      if (ancestorNameBlocked(node.name || '')) return true;
+      var parents = Array.isArray(node.parents) ? node.parents : [];
+      for (var p = 0; p < parents.length; p++) {
+        if (parents[p] && !seen[parents[p]]) next.push(parents[p]);
+      }
+    }
+    queue = next;
+    depth += 1;
+  }
+  return false;
+}
+
+async function screenOneLink(link, accessToken, cache, signal, expired) {
+  var s = safeLink(link);
+  if (!s || !accessToken || expired()) return '';
+  var id = driveItemIdFromLink(s);
+  if (!id) return '';
+  var blocked = true;
+  try {
+    blocked = await ancestorsBlockLink(id, accessToken, cache, signal, expired);
+  } catch (e) {
+    blocked = true;
+  }
+  if (expired()) return '';
+  return blocked ? '' : s;
+}
+
+async function screenPeopleLinks(employees, compliance, accessToken) {
+  var jobs = [];
+  function queueLink(obj, key) {
+    var current = obj ? obj[key] : '';
+    if (obj) obj[key] = '';
+    if (!obj || !safeLink(current)) return;
+    jobs.push({ obj: obj, key: key, link: current, checked: false });
+  }
+  (employees || []).forEach(function (person) {
+    queueLink(person, 'employeeDriveFolderLink');
+  });
+  (compliance || []).forEach(function (row) {
+    queueLink(row, 'driveLink');
+  });
+  if (!jobs.length || !accessToken) return;
+
+  var closed = false;
+  var deadline = Date.now() + LINK_SCREEN_MS;
+  var controller = new AbortController();
+  function expired() {
+    return closed || controller.signal.aborted || Date.now() >= deadline;
+  }
+  var timer = setTimeout(function () {
+    closed = true;
+    try { controller.abort(); } catch (e) {}
+  }, LINK_SCREEN_MS);
+  var cache = createFolderMetaCache();
+
+  try {
+    for (var i = 0; i < jobs.length; i += LINK_SCREEN_BATCH) {
+      if (expired()) break;
+      var remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      var batch = jobs.slice(i, i + LINK_SCREEN_BATCH);
+      var timedOut = false;
+      var batchTimer;
+      var work = Promise.all(batch.map(function (job) {
+        return screenOneLink(job.link, accessToken, cache, controller.signal, expired).then(function (value) {
+          if (expired()) return;
+          job.obj[job.key] = value;
+          job.checked = true;
+        }).catch(function () {});
+      }));
+      await Promise.race([
+        work,
+        new Promise(function (resolve) {
+          batchTimer = setTimeout(function () {
+            timedOut = true;
+            resolve();
+          }, remaining);
+        })
+      ]);
+      clearTimeout(batchTimer);
+      if (timedOut || expired()) {
+        closed = true;
+        try { controller.abort(); } catch (e2) {}
+        break;
+      }
+    }
+  } finally {
+    clearTimeout(timer);
+    closed = true;
+    try { controller.abort(); } catch (e3) {}
+    for (var j = 0; j < jobs.length; j++) {
+      if (!jobs[j].checked) jobs[j].obj[jobs[j].key] = '';
+    }
+  }
+}
+
 function lastStaffRow(rows, email) {
   var found = null;
   (rows || []).forEach(function (r) {
@@ -549,10 +740,8 @@ function shapeCompliance(row) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  applyCors(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return deny(res, 405, 'Method not allowed.');
 
   var token = parseBearer(req.headers.authorization || req.headers.Authorization);
@@ -597,6 +786,13 @@ export default async function handler(req, res) {
       var sample = samplePayload();
       return res.status(200).json(sample);
     }
+    var driveToken = null;
+    try {
+      driveToken = await serviceAccountToken(cred, 'https://www.googleapis.com/auth/drive.readonly');
+    } catch (eDrive) {
+      driveToken = null;
+    }
+    await screenPeopleLinks(employees, compliance, driveToken);
     return res.status(200).json({
       mode: 'live',
       employees: employees,
@@ -624,5 +820,8 @@ export {
   rowsToObjects,
   pick,
   lastStaffRow,
+  applyCors,
+  driveItemIdFromLink,
+  ancestorNameBlocked,
   samplePayload
 };
