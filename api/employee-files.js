@@ -120,6 +120,10 @@ function isHrRole(raw) {
   return role === 'hr' || role === 'management';
 }
 
+var GOOGLE_TOKEN_CACHE_MS = 50 * 60 * 1000;
+var googleTokenCache = Object.create(null);
+var SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+
 function loadServiceAccount() {
   var raw = process.env.EMPLOYEE_FILES_SERVICE_ACCOUNT || '';
   if (!raw.trim()) return null;
@@ -132,32 +136,146 @@ function loadServiceAccount() {
   }
 }
 
+function oidcSettings() {
+  var number = String(process.env.GCP_PROJECT_NUMBER || '').trim();
+  var email = String(process.env.GCP_SERVICE_ACCOUNT_EMAIL || '').trim();
+  var pool = String(process.env.GCP_WORKLOAD_IDENTITY_POOL_ID || '').trim();
+  var provider = String(process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID || '').trim();
+  if (!number || !email || !pool || !provider) return null;
+  return {
+    email: email,
+    audience:
+      '//iam.googleapis.com/projects/' + number +
+      '/locations/global/workloadIdentityPools/' + pool +
+      '/providers/' + provider
+  };
+}
+
+function scopeList(scope) {
+  var raw = String(scope || SHEETS_SCOPE).trim();
+  var parts = raw.split(/\s+/).filter(Boolean);
+  if (!parts.length) parts = [SHEETS_SCOPE];
+  return parts;
+}
+
+function pickNamedExport(mod, name) {
+  if (mod && typeof mod[name] === 'function') return mod[name];
+  if (mod && mod.default && typeof mod.default[name] === 'function') return mod.default[name];
+  return null;
+}
+
+async function googleTokenFromKey(cred, scope) {
+  try {
+    var now = Math.floor(Date.now() / 1000);
+    var header = b64urlJson({ alg: 'RS256', typ: 'JWT' });
+    var claim = b64urlJson({
+      iss: cred.client_email,
+      scope: scopeList(scope).join(' '),
+      aud: 'https://oauth2.googleapis.com/token',
+      iat: now,
+      exp: now + 3600
+    });
+    var signer = createSign('RSA-SHA256');
+    signer.update(header + '.' + claim);
+    signer.end();
+    var sig = signer.sign(cred.private_key).toString('base64url');
+    var r = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: header + '.' + claim + '.' + sig
+      })
+    });
+    if (!r.ok) throw new Error('token');
+    var data = await r.json();
+    if (!data || !data.access_token) throw new Error('token');
+    return data.access_token;
+  } catch (e) {
+    throw new Error('token');
+  }
+}
+
+async function googleTokenFromOidc(scope) {
+  var settings = oidcSettings();
+  if (!settings) return null;
+  var oidcMod;
+  var authMod;
+  try {
+    oidcMod = await import('@vercel/oidc');
+    authMod = await import('google-auth-library');
+  } catch (e) {
+    console.error('package import failed');
+    return null;
+  }
+  var getVercelOidcToken = pickNamedExport(oidcMod, 'getVercelOidcToken');
+  var ExternalAccountClient = pickNamedExport(authMod, 'ExternalAccountClient');
+  if (!getVercelOidcToken || !ExternalAccountClient || !ExternalAccountClient.fromJSON) {
+    console.error('OIDC client setup failed');
+    return null;
+  }
+  var scopes = scopeList(scope);
+  var authClient;
+  try {
+    authClient = ExternalAccountClient.fromJSON({
+      type: 'external_account',
+      audience: settings.audience,
+      subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+      token_url: 'https://sts.googleapis.com/v1/token',
+      service_account_impersonation_url:
+        'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/' +
+        settings.email +
+        ':generateAccessToken',
+      scopes: scopes,
+      subject_token_supplier: {
+        getSubjectToken: function () {
+          return getVercelOidcToken();
+        }
+      }
+    });
+  } catch (e) {
+    console.error('OIDC client setup failed');
+    return null;
+  }
+  if (!authClient) {
+    console.error('OIDC client setup failed');
+    return null;
+  }
+  authClient.scopes = scopes;
+  try {
+    var result = await authClient.getAccessToken();
+    var token = '';
+    if (typeof result === 'string') token = result;
+    else if (result && typeof result.token === 'string') token = result.token;
+    if (!token) {
+      console.error('token exchange failed');
+      return null;
+    }
+    return token;
+  } catch (e2) {
+    console.error('token exchange failed');
+    return null;
+  }
+}
+
 async function serviceAccountToken(cred, scope) {
-  var now = Math.floor(Date.now() / 1000);
-  var header = b64urlJson({ alg: 'RS256', typ: 'JWT' });
-  var claim = b64urlJson({
-    iss: cred.client_email,
-    scope: scope || 'https://www.googleapis.com/auth/spreadsheets.readonly',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600
-  });
-  var signer = createSign('RSA-SHA256');
-  signer.update(header + '.' + claim);
-  signer.end();
-  var sig = signer.sign(cred.private_key).toString('base64url');
-  var r = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: header + '.' + claim + '.' + sig
-    })
-  });
-  if (!r.ok) throw new Error('token');
-  var data = await r.json();
-  if (!data || !data.access_token) throw new Error('token');
-  return data.access_token;
+  var key = scopeList(scope).join(' ');
+  var now = Date.now();
+  var hit = googleTokenCache[key];
+  if (hit && hit.token && now - hit.at < GOOGLE_TOKEN_CACHE_MS) return hit.token;
+  var token = null;
+  try {
+    token = await googleTokenFromOidc(key);
+  } catch (e) {
+    token = null;
+  }
+  if (!token) {
+    if (!cred || !cred.client_email || !cred.private_key) throw new Error('token');
+    token = await googleTokenFromKey(cred, key);
+  }
+  if (!token) throw new Error('token');
+  googleTokenCache[key] = { at: Date.now(), token: token };
+  return token;
 }
 
 async function readTab(spreadsheetId, tabName, accessToken) {
@@ -757,7 +875,9 @@ export default async function handler(req, res) {
 
   var privateSheetId = String(process.env.EMPLOYEE_FILES_SHEET_ID || '').trim();
   var cred = loadServiceAccount();
-  if (!privateSheetId || !cred) return deny(res, 503, 'Employee files are not configured.');
+  if (!privateSheetId || (!cred && !oidcSettings())) {
+    return deny(res, 503, 'Employee files are not configured.');
+  }
 
   var accessToken;
   var staffValues;

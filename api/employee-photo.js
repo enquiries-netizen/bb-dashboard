@@ -178,7 +178,7 @@ export default async function handler(req, res) {
 
   var privateSheetId = String(process.env.EMPLOYEE_FILES_SHEET_ID || '').trim();
   var cred = loadServiceAccount();
-  if (!privateSheetId || !cred) return notFound(res);
+  if (!privateSheetId) return notFound(res);
 
   var accessToken;
   try {
